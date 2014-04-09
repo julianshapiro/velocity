@@ -1,8 +1,6 @@
 Velocity
 ========
 
-Accelerated JavaScript Animation.
+Velocity is currently undergoing private testing. Documentation will be publicly released alongside Velocity's official release.
 
-This repo is a placeholder. Velocity is currently undergoing private testing.
-
-Watch and star this repo to stay on top of Velocity's release.
+Watch and star this repo to stay on top of updates.
