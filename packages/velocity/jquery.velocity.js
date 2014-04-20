@@ -928,7 +928,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             }
 
             /* If a value wasn't produced via hook extraction or normalization, query the DOM. */
-            if (!/^\d/.test(propertyValue)) {
+            if (!/^[\d-]/.test(propertyValue)) {
                 propertyValue = computePropertyValue(element, CSS.Names.prefixCheck(property)[0]); /* GET */
             }
 
@@ -1399,7 +1399,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             endValue = valueData[0];
 
                             /* Two-item array format: If the second item is a number or a function, treat it as a start value since easings can only be strings. */
-                            if (/^\d/.test(valueData[1]) || isFunction(valueData[1])) {
+                            if (/^[\d-]/.test(valueData[1]) || isFunction(valueData[1])) {
                                 startValue = valueData[1];
                             /* Two or three-item array: If the second item is a string, treat it as an easing. */
                             } else if (typeof valueData[1] === "string") {
