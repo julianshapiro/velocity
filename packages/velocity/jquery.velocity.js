@@ -1,10 +1,56 @@
+/***************
+    Details
+***************/
+
 /*
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.0 -- DO NOT REDISTRIBUTE. PRIVATE RELEASE. FINAL VERSION COMING SHORTLY.
+* @version 1.0.0
 * @requires jQuery.js
 * @docs julian.com/research/velocity
 * @copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License.
 */    
+
+/***************
+     T.O.C.
+***************/
+
+/*
+- Helper Functions
+- Aborting
+- Easings
+- Constants
+- Utility Function & State
+- CSS Class Extraction
+- CSS Stack
+- $.fn.velocity
+  - Pre-Queueing
+  - Queueing
+  - Pushing
+- Tick
+- Complete Call
+*/
+
+/****************
+     Summary
+****************/
+
+/*
+Velocity recreates the entirety of jQuery's CSS stack then builds a custom animation layer on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
+Whenever Velocity triggers a DOM query (a GET) or a DOM update (a SET), a comment indicating as much is placed next to the offending line of code.
+Watch these talks to learn about the nuances of DOM performance: https://www.youtube.com/watch?v=cmZqLzPy0XE and https://www.youtube.com/watch?v=n8ep4leoN9A
+
+Velocity is structured into five sections: Setup, CSS Stack, $.fn.velocity (divided into Pre-Queueing, Queueing, and Pushing), Tick, and completeCall.
+- CSS Stack: Works independently from the rest of Velocity.
+- $.fn.velocity is the jQuery object extension that, when triggered, iterates over the targeted element set and queues the incoming Velocity animation onto each element individually. This process consists of:
+  - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options argument.
+  - Queueing: The logic that runs once the call has reached its point of execution in the element's $.queue() stack. Most logic is placed here to avoid risking it becoming stale.
+  - Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
+- Tick: The single requestAnimationFrame loop responsible for tweening all in-progress calls.
+- completeCall: Handles the cleanup process for each Velocity call.
+
+To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for all queuing logic. This has the byproduct of slightly bloating our codebase since $.queue()'s behavior is not straightforward.
+The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for CSS properties that consist of multiple subvalues (e.g. "textShadow: 0px 0px 0px black" and "transform: skew(45) scale(1.5)").
+*/
 
 ;(function ($, window, document, undefined) {  
 
@@ -76,17 +122,73 @@
         Aborting
     ****************/
 
-    /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them. Simply revert to jQuery. */
+    /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them. Simply revert to jQuery (and lose Velocity's extra features). */
     if (IE <= 7) {
         /* Revert to $.animate() and abort this Velocity declaration. */
-        // $.fn.velocity = $.fn.animate;
+        $.fn.velocity = $.fn.animate;
 
-        // return;
+        return;
     } else if ($.velocity !== undefined || $.fn.velocity !== undefined) {
-        console.log("Velocity is already loaded or its namespace is taken.");
+        console.log("Velocity is already loaded or its namespace is occupied.");
 
         return;
     } 
+
+    /**************
+        Easings
+    **************/
+
+    /* Velocity embeds jQuery UI's easings to save users from having to include an additionaln library on their page. */
+    /* Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
+    (function () {
+        var baseEasings = {};
+
+        $.each(["Quad", "Cubic", "Quart", "Quint", "Expo"], function(i, name) {
+            baseEasings[name] = function(p) {
+                return Math.pow(p, i + 2);
+            };
+        });
+
+        $.extend(baseEasings, {
+            Sine: function (p) {
+                return 1 - Math.cos(p * Math.PI / 2);
+            },
+            Circ: function (p) {
+                return 1 - Math.sqrt(1 - p * p);
+            },
+            Elastic: function(p) {
+                return p === 0 || p === 1 ? p :
+                    -Math.pow(2, 8 * (p - 1)) * Math.sin(((p - 1) * 80 - 7.5) * Math.PI / 15);
+            },
+            Back: function(p) {
+                return p * p * (3 * p - 2);
+            },
+            Bounce: function (p) {
+                var pow2,
+                    bounce = 4;
+
+                while (p < ((pow2 = Math.pow(2, --bounce)) - 1) / 11) {}
+                return 1 / Math.pow(4, 3 - bounce) - 7.5625 * Math.pow((pow2 * 3 - 2) / 22 - p, 2);
+            }
+        });
+
+        $.each(baseEasings, function(name, easeIn) {
+            $.easing["easeIn" + name] = easeIn;
+            $.easing["easeOut" + name] = function(p) {
+                return 1 - easeIn(1 - p);
+            };
+            $.easing["easeInOut" + name] = function(p) {
+                return p < 0.5 ?
+                    easeIn(p * 2) / 2 :
+                    1 - easeIn(p * -2 + 2) / 2;
+            };
+        });
+
+        /* Bonus spring easing. */
+        $.easing["spring"] = function(p) {
+            return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
+        };
+    })(); 
 
     /*****************
         Constants
@@ -94,9 +196,9 @@
 
     var NAME = "velocity";
 
-    /*****************************
-       Names Function & State
-    *****************************/
+    /******************************
+       Utility Function & State
+    ******************************/
 
     /* In addition to extending jQuery's $.fn object, Velocity also registers itself as a jQuery utility ($.) function so that certain features are accessible beyond just a per-element scope. */
     /* Note: The utility function doubles as a publicly-accessible data store for the purposes of unit testing. */
@@ -105,7 +207,7 @@
         State: {
             /* Detect mobile devices to determine if mobileHA should be turned on. */
             isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-            /* Cache an element for re-use when checking for CSS property prefixes. */
+            /* Create a cached element for re-use when checking for CSS property prefixes. */
             prefixElement: document.createElement("div"),
             /* Cache every prefix match to avoid repeating lookups. */
             prefixMatches: {},
@@ -120,22 +222,9 @@
             /* Function to allow users to force stylesheet re-extraction. */
             extract: function() { /* Defined below. */ }
         },
-        /* Animation performance monitoring parameters. */
-        Performance: {
-            /* Sample window duration. */
-            windowDuration: 3000,
-            /* Sample window's average tick time threshold (in ms). */
-            averageThreshold: 11,
-            /* Time when the current sample window started. */
-            windowStartTime: 0,
-            /* Tick time samples from the current window. */
-            samples: [],
-            /* Optional user-defined callback that gets triggered when threshold is reached. */
-            callback: null
-        },
         /* Velocity's full re-implementation of jQuery's CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
-        /* Names function's alias of $.fn.velocity(). Used for raw DOM element animation. */
+        /* Utility function's alias of $.fn.velocity(). Used for raw DOM element animation. */
         animate: function () { /* Defined below. */ },
         /* Set to 1 or 2 (most verbose) to log debug info to console. */
         debug: false
@@ -146,9 +235,12 @@
     *************************/
 
     /* Crawl all same-domain stylesheets for classes formatted as .animate_{Name}. Store matches onto $.velocity.Classes.extracted for reference during runtime, e.g. $element.velocity("Name", optionsObject). */
-    /* Extraction involves processing flattened cssText strings for each CSS rule, such as ".animate_{Name} { width: 100 }" then appending an object onto $.velocity.Classes with a name equal to the Name and property:value pairs equal to the rule's property map. */
-    /* Note: To reduce overhead, extraction occurs once -- when Velocity's script is loaded. Thus, either ensure that the relevant stylesheets are parsed before Velocity, or manually force a re-extraction at any point by calling $.velocity.Classes.extract(). */
-    /* Note: Whereas jQuery UI's class animation works by momentarily apply the class to an element then diffing the results to attain properly cascaded values, Velocity treats the class a literal property map container in order to avoid the layout thrashing associated with CSS value diffing. Thus, Velocity does not respect the hierarchical selector position of the .animate_{Name} classes that it extracts. */
+    /* Extraction involves processing flattened cssText strings for each CSS rule, such as ".animate_{Name} { width: 100 }" then appending an object onto $.velocity.Classes with a name equal to the Name and
+       property:value pairs equal to the rule's property map. */
+    /* Note: To reduce overhead, extraction occurs once -- when Velocity's script is loaded. Thus, either ensure that the relevant stylesheets are parsed before Velocity, or manually force a re-extraction at
+       any point by calling $.velocity.Classes.extract(). */
+    /* Note: Whereas jQuery UI's class animation works by momentarily apply the class to an element then diffing the results to attain properly cascaded values, Velocity treats the class a literal property map
+       container in order to avoid the layout thrashing associated with CSS value diffing. Thus, Velocity does not respect the hierarchical selector position of the .animate_{Name} classes that it extracts. */
     /* Note: Browsers do not parse classes defined in the <head> element the same way they do stylesheet classes. Avoid setting styles inside HTML. */
     $.velocity.Classes.extract = function() {
         var styleSheets = document.styleSheets,
@@ -215,7 +307,7 @@
                     }
                 }
                 
-            } catch(e) { /* Do nothing. There's no workaround for cross-domain blocking. */ }
+            } catch(e) { /* Do nothing. There's no workaround for cross-domain access prevention. */ }
         }
         
         $.velocity.Classes.extracted = extracted;
@@ -240,10 +332,10 @@
         *************/
 
         RegEx: {
-            /* Unwrap a compound property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
+            /* Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
             valueUnwrap: /^[A-z]+\((.*)\)$/i,
             wrappedValueAlreadyExtracted: /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
-            /* Split a compound property into an array of subproperties, e.g. "rgba(4, 3, 2, 1) 4px 3px 2px 1px" ==> [ "rgba(4, 3, 2, 1)", "4px", "3px", "2px", "1px" ]. */
+            /* Split a multi-value property into an array of subvalues, e.g. "rgba(4, 3, 2, 1) 4px 3px 2px 1px" ==> [ "rgba(4, 3, 2, 1)", "4px", "3px", "2px", "1px" ]. */
             valueSplit: /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/ig
         },
 
@@ -261,7 +353,8 @@
             /* Templates are a concise way of indicating which subproperties must be individually registered for each compound-value CSS property. */
             /* Each template consists of the compound-value's base name, its constituent subproperty names, and those subproperties' default values. */
             templates: {
-                /* Note: Colors are defaulted to white -- as opposed to black -- since colors that are currently set to "transparent" default to their respective template below when color-animated, and white is typically a closer match to transparent than black is. */
+                /* Note: Colors are defaulted to white -- as opposed to black -- since colors that are currently set to "transparent" default to their respective template below when color-animated,
+                   and white is typically a closer match to transparent than black is. */
                 "color": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "backgroundColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "borderColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
@@ -276,7 +369,8 @@
 
             /* A "registered" hook is one that has been converted from its template form into a live, tweenable property. It contains data to associate it with its root property. */
             registered: {
-                /* Note: A registered hook looks like this ==> textShadowBlur: [ "textShadow", 3 ], which consists of the subproperty's name, the associated root property's name, and the subproperty's position in the root's value. */
+                /* Note: A registered hook looks like this ==> textShadowBlur: [ "textShadow", 3 ], which consists of the subproperty's name, the associated root property's name,
+                   and the subproperty's position in the root's value. */
             },
             /* Convert the templates into individual hooks then append them to the registered object above. */
             register: function () {
@@ -397,7 +491,6 @@
 
         /* Normalizations standardize CSS property manipulation by pollyfilling browser-specific implementations (e.g. opacity) and reformatting special properties (e.g. clip, rgba) to look like standard ones. */
         Normalizations: {
-
             /* Normalizations are passed a normalization vector (either the property's name, its extracted value, or its injected value), the targeted element (which may need to be queried), and the targeted property value. */
             registered: {
                 clip: function(type, element, propertyValue) {
@@ -773,14 +866,17 @@
                     }
                 }
 
-                /* For top, right, bottom, and left values that are set to "auto" on elements of "fixed" or "absolute" position, defer to jQuery for converting "auto" to a numeric value. Their codepath for this is as fast as it can be.
-                   For elements with a "static" or "relative" position, "auto" has the same effect as being set to 0, so no conversion is necessary. */
+                /* For top, right, bottom, and left (TRBL) values that are set to "auto" on elements of "fixed" or "absolute" position, defer to jQuery for converting "auto" to a numeric value.
+                   (For elements with a "static" or "relative" position, "auto" has the same effect as being set to 0, so no conversion is necessary.) */
+                /* An example of why numeric conversion is necessary: When an element with "position:absolute" has an untouched "left" property, which reverts to "auto", left's value is 0 relative to its parent element,
+                   but is often non-zero relative to its *containing* (not parent) element, which is the nearest "position:relative" ancestor or the viewport (and always the viewport in the case of "position:fixed"). */
                 if (computedValue === "auto" && /^(top|right|bottom|left)$/i.test(property)) {
                     var position = computePropertyValue(element, "position"); /* GET */
 
-                    /* For absolute positioning, jQuery's $.position() only returns values for top and left; right and bottom will have their "auto" value ultimately reverted to 0. */
+                    /* For absolute positioning, jQuery's $.position() only returns values for top and left; right and bottom will have their "auto" value reverted to 0. */
                     /* Note: A jQuery object must be created here since jQuery doesn't have a low-level alias for $.position(). Not a big deal since we're currently in a GET batch anyway. */
                     if (position === "fixed" || (position === "absolute" && /top|left/i.test(property))) {
+                        /* Note: jQuery strips the pixel unit from its returned values; we re-add it here to conform with computePropertyValue's behavior. */
                         computedValue = $(element).position()[property] + "px"; /* GET */
                     }
                 }
@@ -923,7 +1019,7 @@
     CSS.Normalizations.register();
 
     /*******************
-        Velocity.js
+       $.fn.velocity
     *******************/
 
     /* Simultaneously assign the jQuery plugin function ($elements.velocity()) and the utility alias ($.velocity.animate(elements)). */
@@ -1062,9 +1158,10 @@
            Element Processing
         ************************/ 
 
-        /* Element processing consists of two parts -- data processing that cannot go stale and data processing that *can* go stale (i.e. third-party style modifications):
-           Pre-Queueing: 1) Element-wide variables, including the element's data storage, are instantiated. 2) Options are prepared for animation. 3) If triggered, the Stop action is executed.
-           Queueing: 2) The logic that runs once this call has reached its point of execution in the element's $.queue() stack. Most logic is placed here to avoid risking it becoming stale.
+        /* Element processing consists of three parts -- data processing that cannot go stale and data processing that *can* go stale (i.e. third-party style modifications):
+           1) Pre-Queueing: Element-wide variables, including the element's data storage, are instantiated. 2) Options are prepared for animation. 3) If triggered, the Stop action is executed.
+           2) Queueing: The logic that runs once this call has reached its point of execution in the element's $.queue() stack. Most logic is placed here to avoid risking it becoming stale.
+           3) Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
         */
 
         function processElement () {
@@ -1412,7 +1509,7 @@
                             var unitType,
                                 numericValue;
 
-                            numericValue = value
+                            numericValue = (value || 0)
                                 .toString()
                                 .toLowerCase()
                                 /* Match the unit type at the end of the value. */
@@ -1668,9 +1765,9 @@
                     tweensContainer.element = element;
                 }
 
-                /*******************
-                    Call Pushing
-                *******************/
+                /***************
+                    Pushing
+                ***************/
 
                 /* Note: tweensContainer can be empty if all of the properties in this call's property map were skipped due to not being supported by the browser.
                    The element property is used as a proxy for checking that the tweensContainer has been appended to. */
@@ -1771,7 +1868,11 @@
             for (var x = 0; x < (opts.loop * 2) - 1; x++) {
                 /* Since the logic for the reverse action occurs inside Queueing and thus this call's options object isn't parsed until then as well, the current call's delay option must be explicitly passed
                    into the reverse call so that the delay logic that occurs inside *Pre-Queueing* can process this delay. */
-                $.velocity.animate(elements, "reverse", { delay: opts.delay });
+                if (isJquery) {
+                    elements.velocity("reverse", { delay: opts.delay });
+                } else {
+                    $.velocity.animate(elements, "reverse", { delay: opts.delay });
+                }
             }
         }
 
@@ -1804,7 +1905,7 @@
             /* Iterate through each active call. */
             for (var i = 0, callsLength = $.velocity.State.calls.length; i < callsLength; i++) {
                 /* When a velocity call is completed, its calls array entry is set to false. Continue on to the next call. */
-                if ($.velocity.State.calls[i] === false) {
+                if (!$.velocity.State.calls[i]) {
                     continue;
                 }
 
@@ -1838,6 +1939,11 @@
                 for (var j = 0, callLength = call.length; j < callLength; j++) {
                     var tweensContainer = call[j],
                         element = tweensContainer.element;
+
+                    /* Check to see if this element has been deleted midway through the animation by checking for the continued existence of its data cache. If it's gone, skip animating this element. */
+                    if (!$.data(element, NAME)) {
+                        continue;
+                    }
 
                     var transformPropertyExists = false;
 
@@ -1971,42 +2077,6 @@
                     completeCall(i);
                 }
             }
-
-            /******************
-                Performance
-            ******************/
-
-            /* Note: See Velocity's documentation for a full explanation of performance monitoring: http://julian.com/research/velocity/ */
-
-            /* Append the time delta between the start and the end of this tick pass onto the performance samples array. */
-            $.velocity.Performance.samples.push(((new Date).getTime() - timeCurrent));
-
-            /* If ticking has just started, default windowStartTime to the current time. */
-            if ($.velocity.Performance.windowStartTime === 0) {
-                $.velocity.Performance.windowStartTime = timeCurrent;
-            /* Once the window duration has been reached, process the tick time samples collected within it. */
-            } else if ((timeCurrent - $.velocity.Performance.windowStartTime) >= $.velocity.Performance.windowDuration) {
-                var sampleTotalTime = 0,
-                    sampleAverageTime = 0;
-
-                /* Sum all the samples. */
-                for (var k = 0, samplesLength = $.velocity.Performance.samples.length; k < samplesLength; k++) {
-                    sampleTotalTime += $.velocity.Performance.samples[k];
-                }
-
-                /* Calculate the samples' average. */
-                sampleAverageTime = sampleTotalTime / samplesLength;
-
-                /* If the samples' average exceeded the predefined average threshold, trigger the Performance callback if one has been defined. */
-                if (sampleAverageTime > $.velocity.Performance.averageThreshold && $.velocity.Performance.callback) {
-                    $.velocity.Performance.callback.call(null, sampleAverageTime);
-                }
-
-                /* Reset the windowStartTime so that the next window starts from now. */
-                $.velocity.Performance.windowStartTime = timeCurrent;
-                /* Reset the samples length to prepare for the next. */
-                $.velocity.Performance.samples.length = 0;
-            }
         }
 
         /* Note: completeCall() contains the logic for setting the isTicking flag to false (which occurs when the last active call on $.velocity.State.calls has completed). */
@@ -2044,10 +2114,13 @@
             /* If the element's queue is empty (if only the "inprogress" item is left at position 0) or if its queue is about to run a non-Velocity-initiated entry, turn off the isAnimating flag. 
                A non-Velocity-initiatied queue entry's logic might alter an element's CSS values and thereby cause Velocity's cached value data to go stale. To detect if a queue entry was initiated by Velocity,
                we check for the existence of our special $.velocity.queueEntryFlag declaration, which minifiers won't rename since the flag is assigned to jQuery's global $ object and thus exists out of Velocity's own scope. */
-            if ($.queue(element)[1] === undefined || !/\$\.velocity\.queueEntryFlag/i.test($.queue(element)[1])) {
-                $.data(element, NAME).isAnimating = false;
-                /* Clear the element's rootPropertyValueCache, which will also become stale. */
-                $.data(element, NAME).rootPropertyValueCache = {};
+            if ($.queue(element)[1] === undefined || !/\$\.velocity\.queueEntryFlag/i.test($.queue(element)[1])) {     
+                /* The element may have been deleted. Ensure that its data cache still exists before acting on it. */
+                if ($.data(element, NAME)) {
+                    $.data(element, NAME).isAnimating = false;
+                    /* Clear the element's rootPropertyValueCache, which will become stale. */
+                    $.data(element, NAME).rootPropertyValueCache = {};
+                }
             }
 
             /* Fire the next call in the queue chain. */
@@ -2074,9 +2147,6 @@
         if (remainingCallsExist === false) {
             /* tick() will detect this flag upon its next iteration and subsequently turn itself off. */
             $.velocity.State.isTicking = false;
-
-            /* When ticking has stopped, set windowStartTime to 0 so that the next tick pass defaults it to the appropriate value. */
-            $.velocity.Performance.windowStartTime = 0;
 
             /* Clear the calls array so that its length is reset. */
             delete $.velocity.State.calls;
@@ -2112,59 +2182,3 @@ $.fn.velocity.defaults = {
     /* Advanced: Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
     _cacheValues: true
 };
-
-/**************
-    Easings
-**************/
-
-/* Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
-/* Velocity embeds easings to save users from having to include jQuery UI on their page. */
-(function () {
-    var baseEasings = {};
-
-    $.each(["Quad", "Cubic", "Quart", "Quint", "Expo"], function(i, name) {
-        baseEasings[name] = function(p) {
-            return Math.pow(p, i + 2);
-        };
-    });
-
-    $.extend(baseEasings, {
-        Sine: function (p) {
-            return 1 - Math.cos(p * Math.PI / 2);
-        },
-        Circ: function (p) {
-            return 1 - Math.sqrt(1 - p * p);
-        },
-        Elastic: function(p) {
-            return p === 0 || p === 1 ? p :
-                -Math.pow(2, 8 * (p - 1)) * Math.sin(((p - 1) * 80 - 7.5) * Math.PI / 15);
-        },
-        Back: function(p) {
-            return p * p * (3 * p - 2);
-        },
-        Bounce: function (p) {
-            var pow2,
-                bounce = 4;
-
-            while (p < ((pow2 = Math.pow(2, --bounce)) - 1) / 11) {}
-            return 1 / Math.pow(4, 3 - bounce) - 7.5625 * Math.pow((pow2 * 3 - 2) / 22 - p, 2);
-        }
-    });
-
-    $.each(baseEasings, function(name, easeIn) {
-        $.easing["easeIn" + name] = easeIn;
-        $.easing["easeOut" + name] = function(p) {
-            return 1 - easeIn(1 - p);
-        };
-        $.easing["easeInOut" + name] = function(p) {
-            return p < 0.5 ?
-                easeIn(p * 2) / 2 :
-                1 - easeIn(p * -2 + 2) / 2;
-        };
-    });
-
-    /* Bonus spring easing. */
-    $.easing["spring"] = function(p) {
-        return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
-    };
-})(); 
