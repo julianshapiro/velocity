@@ -10,9 +10,31 @@
 * @copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License.
 */    
 
-/***************
-     T.O.C.
-***************/
+/****************
+     Summary
+****************/
+
+/*
+Velocity recreates the entirety of jQuery's CSS stack and builds a concise animation layer on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
+Whenever Velocity triggers a DOM query (a GET) or a DOM update (a SET), a comment indicating as much is placed next to the offending line of code.
+Watch these talks to learn about the nuances of DOM performance: https://www.youtube.com/watch?v=cmZqLzPy0XE and https://www.youtube.com/watch?v=n8ep4leoN9A
+
+Velocity is structured into five sections: Setup, CSS Stack, $.fn.velocity (divided into Pre-Queueing, Queueing, and Pushing), Tick, and completeCall.
+- CSS Stack: Works independently from the rest of Velocity.
+- $.fn.velocity is the jQuery object extension that, when triggered, iterates over the targeted element set and queues the incoming Velocity animation onto each element individually. This process consists of:
+  - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options argument.
+  - Queueing: The logic that runs once the call has reached its point of execution in the element's $.queue() stack. Most logic is placed here to avoid risking it becoming stale.
+  - Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
+- Tick: The single requestAnimationFrame loop responsible for tweening all in-progress calls.
+- completeCall: Handles the cleanup process for each Velocity call.
+
+To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for all queuing logic. This has the byproduct of slightly bloating our codebase since $.queue()'s behavior is not straightforward.
+The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for CSS properties that consist of multiple subvalues (e.g. "textShadow: 0px 0px 0px black" and "transform: skew(45) scale(1.5)").
+*/
+
+/*****************
+    Structure
+*****************/
 
 /*
 - Helper Functions
@@ -28,28 +50,6 @@
   - Pushing
 - Tick
 - Complete Call
-*/
-
-/****************
-     Summary
-****************/
-
-/*
-Velocity recreates the entirety of jQuery's CSS stack then builds a custom animation layer on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
-Whenever Velocity triggers a DOM query (a GET) or a DOM update (a SET), a comment indicating as much is placed next to the offending line of code.
-Watch these talks to learn about the nuances of DOM performance: https://www.youtube.com/watch?v=cmZqLzPy0XE and https://www.youtube.com/watch?v=n8ep4leoN9A
-
-Velocity is structured into five sections: Setup, CSS Stack, $.fn.velocity (divided into Pre-Queueing, Queueing, and Pushing), Tick, and completeCall.
-- CSS Stack: Works independently from the rest of Velocity.
-- $.fn.velocity is the jQuery object extension that, when triggered, iterates over the targeted element set and queues the incoming Velocity animation onto each element individually. This process consists of:
-  - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options argument.
-  - Queueing: The logic that runs once the call has reached its point of execution in the element's $.queue() stack. Most logic is placed here to avoid risking it becoming stale.
-  - Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
-- Tick: The single requestAnimationFrame loop responsible for tweening all in-progress calls.
-- completeCall: Handles the cleanup process for each Velocity call.
-
-To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for all queuing logic. This has the byproduct of slightly bloating our codebase since $.queue()'s behavior is not straightforward.
-The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for CSS properties that consist of multiple subvalues (e.g. "textShadow: 0px 0px 0px black" and "transform: skew(45) scale(1.5)").
 */
 
 ;(function ($, window, document, undefined) {  
@@ -184,7 +184,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             };
         });
 
-        /* Bonus spring easing. */
+        /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
         $.easing["spring"] = function(p) {
             return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
         };
@@ -360,6 +360,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 "borderColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "outlineColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "textShadow": [ "Color X Y Blur", "black 0px 0px 0px" ],
+                /* Todo: Add support for inset boxShadows. (webkit places it last whereas IE places it first.) */
                 "boxShadow": [ "Color X Y Blur Spread", "black 0px 0px 0px 0px" ],
                 "clip": [ "Top Right Bottom Left", "0px 0px 0px 0px" ],
                 "backgroundPosition": [ "X Y", "0% 0%" ],
@@ -993,6 +994,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         },
 
         /* To increase performance by batching transform updates into a single SET, transforms are not directly applied to an element until flushTransformCache() is called. */
+        /* Note: Velocity does not apply transform values in the same order that they were defined in the call's property map. Doing so would become problematic since there'd
+           be no indication of how an element's existing transforms should be re-ordered along with the new ones. */
         flushTransformCache: function(element) {
             var transformString = "",
                 transformName,
@@ -1138,7 +1141,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 lastPercentToPxHeight: null,
                 lastEmToPx: null,
                 /* The rem==>px ratio is relative to the document's fontSize -- not any property belonging to the element. Thus, it is automatically call-wide cached whenever the rem unit is being animated. */
-                remToPx: null
+                remToPxRatio: null
             };
 
         /* A container for all the ensuing tween data and metadata associated with this call. This container gets pushed to the page-wide $.velocity.State.calls array that is processed during animation ticking. */
@@ -1598,62 +1601,80 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             unitConversionRatios.lastFontSize = sameRatioIndicators.fontSize;
 
                             /* Whereas % and em ratios are determined on a per-element basis, the rem unit type only needs to be checked once per call since it is exclusively dependant upon the body element's fontSize.
-                               If this is the first time that calculateUnitRatios() is being run during this call, the remToPx value will be null, so we calculate it now. */
-                            if (unitConversionRatios.remToPx === null) {
+                               If this is the first time that calculateUnitRatios() is being run during this call, the remToPxRatio value will be null, so we calculate it now. */
+                            if (unitConversionRatios.remToPxRatio === null) {
                                 /* Default to most browsers' default fontSize of 16px in the case of 0. */
-                                unitConversionRatios.remToPx = parseFloat(CSS.getPropertyValue(document.body, "fontSize")) || 16; /* GET */
+                                unitConversionRatios.remToPxRatio = parseFloat(CSS.getPropertyValue(document.body, "fontSize")) || 16; /* GET */
                             }
 
                             var originalValues = {
-                                    paddingLeft: null,
+                                    /* width and height act as our proxy properties for measuring the horizontal and vertical % ratios. Since they can be artificially constrained by their min-/max- equivalents, those properties are changed as well. */
+                                    width: null,
+                                    minWidth: null,
+                                    maxWidth: null,
                                     height: null,
-                                    minWidth: null
+                                    minHeight: null,
+                                    maxHeight: null,
+                                    /* paddingLeft acts as our proxy for the em ratio. */
+                                    paddingLeft: null
                                 },
                                 elementUnitRatios = {},
                                 /* Note: IE<=8 round to the nearest pixel when returning CSS values, thus we perform conversions using a measurement of 10 (instead of 1) to give our ratios a precision of at least 1 decimal value. */
                                 measurement = 10;
 
                             /* For organizational purposes, active ratios are consolidated onto the elementUnitRatios object. */
-                            elementUnitRatios.remToPx = unitConversionRatios.remToPx;
+                            elementUnitRatios.remToPxRatio = unitConversionRatios.remToPxRatio;
 
                             /* Since % values are relative to their respective axes, ratios are calculated for both width and height. In contrast, only a single ratio is required for rem and em. */
                             /* Note: To minimize layout thrashing, the ensuing unit conversion logic is split into batches to synchronize GETs and SETs. */
-                            /* Todo: Switch paddingLeft to width then store the original values (and skip re-setting) if we're animating height or width in the properties map. */
-                            originalValues.paddingLeft = CSS.getPropertyValue(element, "paddingLeft"); /* GET */
+                            /* Note: max-width/height must default to "none" when 0 is returned, otherwise the element cannot have its width/height set. */
+                            /* Todo: Store the original values and skip re-setting if we're animating height or width in the properties map. */
+                            originalValues.width = CSS.getPropertyValue(element, "width"); /* GET */
+                            originalValues.minWidth = CSS.getPropertyValue(element, "minWidth"); /* GET */
+                            originalValues.maxWidth = CSS.getPropertyValue(element, "maxWidth") || "none"; /* GET */
+
                             originalValues.height = CSS.getPropertyValue(element, "height"); /* GET */
-                            originalValues.fontSize = CSS.getPropertyValue(element, "fontSize"); /* GET */
+                            originalValues.minHeight = CSS.getPropertyValue(element, "minHeight"); /* GET */
+                            originalValues.maxHeight = CSS.getPropertyValue(element, "maxHeight") || "none"; /* GET */
+
+                            originalValues.paddingLeft = CSS.getPropertyValue(element, "paddingLeft"); /* GET */
 
                             if (sameBasePercent) {
                                 elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth;
                                 elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight;
                             } else {
-                                CSS.setPropertyValue(element, "paddingLeft", measurement + "%"); /* SET */
+                                CSS.setPropertyValue(element, "width", measurement + "%"); /* SET */
+                                CSS.setPropertyValue(element, "minWidth", measurement + "%"); /* SET */
+                                CSS.setPropertyValue(element, "maxWidth", measurement + "%"); /* SET */
+
                                 CSS.setPropertyValue(element, "height",  measurement + "%"); /* SET */
+                                CSS.setPropertyValue(element, "minHeight",  measurement + "%"); /* SET */
+                                CSS.setPropertyValue(element, "maxHeight",  measurement + "%"); /* SET */
                             }
 
                             if (sameBaseEm) {
                                 elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx;
                             } else {
-                                CSS.setPropertyValue(element, "fontSize", measurement + "em"); /* SET */
+                                CSS.setPropertyValue(element, "paddingLeft", measurement + "em"); /* SET */
                             }
 
                             /* The following pixel-value GETs cannot be batched with the prior GETs since they depend upon the values temporarily set immediately above; layout thrashing cannot be avoided here. */
                             if (!sameBasePercent) {
                                 /* Divide the returned value by the measurement value to get the ratio between 1% and 1px. */
-                                elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) / measurement; /* GET */
+                                elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(element, "width")) || 0) / measurement; /* GET */
                                 elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(element, "height")) || 0) / measurement; /* GET */
                             }
 
                             if (!sameBaseEm) {
-                                elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx = (parseFloat(CSS.getPropertyValue(element, "fontSize")) || 0) / measurement; /* GET */
+                                elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx = (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) / measurement; /* GET */
                             }
 
                             /* Revert each test property to its original value. */
                             for (var originalValueProperty in originalValues) {
-                                CSS.setPropertyValue(element, originalValueProperty, originalValues[originalValueProperty]); /* SET */
+                                CSS.setPropertyValue(element, originalValueProperty, originalValues[originalValueProperty]); /* SETs */
                             }
 
-                            if ($.velocity.debug >= 2) console.log("Unit ratios: " + JSON.stringify(elementUnitRatios), element);
+                            if ($.velocity.debug >= 1) console.log("Unit ratios: " + JSON.stringify(elementUnitRatios), element);
 
                             return elementUnitRatios;
                         }
@@ -1682,6 +1703,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                 /* In order to avoid generating n^2 bespoke conversion functions, unit conversion is a two-step process: 1) Convert startValue into pixels. 2) Convert this new pixel value into endValue's unit type. */
                                 switch (startValueUnitType) {
                                     case "%":
+                                        /* Note: translateX and translateY are the only properties that are %-relative to an element's own dimensions -- not its parent's dimensions. Velocity does not include a special conversion process
+                                           for these properties due of the additional DOM overhead it would entail. Therefore, animating translateX/Y from a % value to a non-% value will produce an incorrect start value. Fortunately, 
+                                           this sort of cross-unit conversion is rarely done by users in practice. */
                                         startValue *= (axis === "x" ? elementUnitRatios.percentToPxRatioWidth : elementUnitRatios.percentToPxRatioHeight); 
                                         break;
 
@@ -1690,7 +1714,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                         break;
 
                                     case "rem":
-                                        startValue *= elementUnitRatios.remToPx;
+                                        startValue *= elementUnitRatios.remToPxRatio;
                                         break;
 
                                     case "px":
@@ -1709,7 +1733,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                         break;
 
                                     case "rem":
-                                        startValue *= 1 / elementUnitRatios.remToPx;
+                                        startValue *= 1 / elementUnitRatios.remToPxRatio;
                                         break;
 
                                     case "px":
