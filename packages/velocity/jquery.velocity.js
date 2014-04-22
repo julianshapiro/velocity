@@ -4,7 +4,7 @@
 
 /*
 * Velocity.js: Accelerated JavaScript animation.
-* @version 1.0.0
+* @version 0.0.0
 * @requires jQuery.js
 * @docs julian.com/research/velocity
 * @copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License.
@@ -1582,6 +1582,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         /* Note: Even if only one of these unit types is being animated, all unit ratios are calculated at once since the overhead of batching the SETs and GETs together upfront outweights the potential overhead
                                  of layout thrashing caused by re-querying for uncalculated ratios for subsequently-processed properties. */
                         /* Todo: Shift this logic into the calls' first tick instance so that it's synced with RAF. */
+                        /* Todo: Store the original values and skip re-setting if we're animating height or width in the properties map. */
                         function calculateUnitRatios () {
                             /* The properties below are used to determine whether the element differs sufficiently from this call's prior element to also differ in its unit conversion ratio.
                                If the properties match up with those of the prior element, the prior element's conversion ratios are used. Like most optimizations in Velocity, this is done to minimize DOM querying. */
@@ -1608,6 +1609,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             }
 
                             var originalValues = {
+                                    /* To accurately and consistently calculate conversion ratios, the element's box-sizing is temporarily reverted to content-box (its default value). */
+                                    boxSizing: null,
                                     /* width and height act as our proxy properties for measuring the horizontal and vertical % ratios. Since they can be artificially constrained by their min-/max- equivalents, those properties are changed as well. */
                                     width: null,
                                     minWidth: null,
@@ -1622,15 +1625,16 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                 /* Note: IE<=8 round to the nearest pixel when returning CSS values, thus we perform conversions using a measurement of 10 (instead of 1) to give our ratios a precision of at least 1 decimal value. */
                                 measurement = 10;
 
-                            /* For organizational purposes, active ratios are consolidated onto the elementUnitRatios object. */
+                            /* For organizational purposes, active ratios calculations are consolidated onto the elementUnitRatios object. */
                             elementUnitRatios.remToPxRatio = unitConversionRatios.remToPxRatio;
 
                             /* Since % values are relative to their respective axes, ratios are calculated for both width and height. In contrast, only a single ratio is required for rem and em. */
                             /* Note: To minimize layout thrashing, the ensuing unit conversion logic is split into batches to synchronize GETs and SETs. */
-                            /* Note: max-width/height must default to "none" when 0 is returned, otherwise the element cannot have its width/height set. */
-                            /* Todo: Store the original values and skip re-setting if we're animating height or width in the properties map. */
+                            originalValues.boxSizing = CSS.getPropertyValue(element, "boxSizing"); /* GET */
+
                             originalValues.width = CSS.getPropertyValue(element, "width"); /* GET */
                             originalValues.minWidth = CSS.getPropertyValue(element, "minWidth"); /* GET */
+                            /* Note: max-width/height must default to "none" when 0 is returned, otherwise the element cannot have its width/height set. */
                             originalValues.maxWidth = CSS.getPropertyValue(element, "maxWidth") || "none"; /* GET */
 
                             originalValues.height = CSS.getPropertyValue(element, "height"); /* GET */
@@ -1643,6 +1647,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                 elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth;
                                 elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight;
                             } else {
+                                CSS.setPropertyValue(element, "boxSizing",  "content-box"); /* SET */
+
                                 CSS.setPropertyValue(element, "width", measurement + "%"); /* SET */
                                 CSS.setPropertyValue(element, "minWidth", measurement + "%"); /* SET */
                                 CSS.setPropertyValue(element, "maxWidth", measurement + "%"); /* SET */
