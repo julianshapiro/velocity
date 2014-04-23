@@ -211,6 +211,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             prefixElement: document.createElement("div"),
             /* Cache every prefix match to avoid repeating lookups. */
             prefixMatches: {},
+            /* Cache the anchor used for animating window scrolling. */
+            scrollAnchor: null,
+            /* Cache the property name associated with the scroll anchor. */
+            scrollProperty: null,
             /* Keep track of whether our RAF tick is running. */
             isTicking: false,
             /* Container for every in-progress call to Velocity. */
@@ -229,6 +233,15 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         /* Set to 1 or 2 (most verbose) to log debug info to console. */
         debug: false
     };
+
+    /* Retrieve the appropriate scroll anchor and property name for this browser. Learn more here: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
+    if (window.pageYOffset !== undefined) {
+        $.velocity.State.scrollAnchor = window;
+        $.velocity.State.scrollProperty = "pageYOffset";
+    } else {
+        $.velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
+        $.velocity.State.scrollProperty = "scrollTop";
+    }
 
     /*************************
        CSS Class Extraction
@@ -287,7 +300,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     if (animateClass) {
                         /* Extract the name after the underscore. */
                         var className = animateClass[1],
-                            /* Extract properties block then extract an array its property maps. */
+                            /* Extract the properties block then extract an array its property maps. */
                             /* Example RegEx behavior: http://regex101.com/r/fI1tZ3 */
                             /* Note: <=IE8 capitalize properties, so we normalize case. */
                             propertiesMap = ruleText.toLowerCase().match(/\{([\S\s]*)\}/)[1].match(/[A-z-][^;]+/g);
@@ -299,10 +312,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
                         for (var k = 0, propertiesMapLength = propertiesMap.length; k < propertiesMapLength; k++) {
                             /* Separate the property's name from its value, and strip out the ": " characters in between. */
-                            var propertyMapParts = propertiesMap[k].split(/:\s*/);
+                            var propertyMapParts = propertiesMap[k].match(/([^:]+):\s*(.+)/);
 
                             /* Register this map (e.g. "width: 100") onto its class name. */
-                            extracted[className][propertyMapParts[0]] = propertyMapParts[1];
+                            extracted[className][propertyMapParts[1]] = propertyMapParts[2];
                         }
                     }
                 }
@@ -433,7 +446,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             cleanRootPropertyValue: function(rootProperty, rootPropertyValue) {
                 /* If the rootPropertyValue is wrapped with "rgb()", "clip()", etc., remove the wrapping to normalize the value before manipulation. */
                 if (CSS.RegEx.valueUnwrap.test(rootPropertyValue)) {                        
-                    rootPropertyValue = rootPropertyValue.match(CSS.Hooks.CSS.RegEx.valueUnwrap)[1];
+                    rootPropertyValue = rootPropertyValue.match(CSS.Hooks.RegEx.valueUnwrap)[1];
                 }
 
                 /* If rootPropertyValue is a CSS null-value (from which there's inherently no hook value to extract), default to the root's default value as defined in CSS.Hooks.templates. */
@@ -821,11 +834,21 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         ****************************/
 
         /* The singular getPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
-        getPropertyValue: function (element, property, rootPropertyValue) {
+        getPropertyValue: function (element, property, rootPropertyValue, forceStyleLookup) {
             /* Get an element's computed property value. */
             /* Note: Retrieving the value of a CSS property cannot simply be performed by checking an element's style attribute (which only reflects user-defined values).
                Instead, the browser must be queried for a property's *computed* value. You can read more about getComputedStyle here: https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle */
             function computePropertyValue (element, property) {
+                /* When box-sizing isn't set to border-box, height and width style values are incorrectly computed when an element's scrollbars are visible (which expands the element's dimensions). Thus, we defer
+                   to the more accurate offsetHeight/Width property, which includes the total dimensions for interior, border, padding, and scrollbar. We subtract border and padding to get the sum of interior + scrollbar. */
+                if (!forceStyleLookup) {
+                    if (property === "height" && CSS.getPropertyValue(element, "boxSizing").toLowerCase() !== "border-box") {
+                        return element.offsetHeight - (parseFloat(CSS.getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingBottom")) || 0);
+                    } else if (property === "width" && CSS.getPropertyValue(element, "boxSizing").toLowerCase() !== "border-box") {
+                        return element.offsetWidth - (parseFloat(CSS.getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingRight")) || 0);
+                    }
+                }
+
                 var computedValue = 0;
 
                 /* IE<=8 doesn't support window.getComputedStyle, thus we defer to jQuery, which has an extensive array of hacks to accurately retrieve IE8 property values.
@@ -945,48 +968,55 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         /* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
         setPropertyValue: function(element, property, propertyValue, rootPropertyValue) {
-            var propertyName;    
+            var propertyName = property;    
 
-            /* Transforms (translateX, rotateZ, etc.) are applied to a per-element transformCache object, which is manually flushed via flushTransformCache(). Thus, for now, we merely cache transforms being SET. */
-            if (CSS.Normalizations.registered[property] && CSS.Normalizations.registered[property]("name", element) === "transform") {
-                /* Perform a normalization injection. */
-                /* Note: The normalization logic handles the transformCache updating. */
-                CSS.Normalizations.registered[property]("inject", element, propertyValue);
-
-                propertyName = "transform";
-                propertyValue = $.data(element, NAME).transformCache[property];
+            /* In order to be subjected to call options and element queueing, the scroll action's tweening is routed through Velocity as if it were a standard CSS property. We handle its special case here. */
+            /* Note: The browser's horizontal scroll position will be reset to 0. */
+            if (property === "scroll") {
+                window.scrollTo(null, propertyValue);
             } else {
-                /* Inject hooks. */
-                if (CSS.Hooks.registered[property]) {
-                    var hookName = property,
-                        hookRoot = CSS.Hooks.getRoot(property);
 
-                    /* If a cached rootPropertyValue was not provided, query the DOM for the hookRoot's current value. */
-                    rootPropertyValue = rootPropertyValue || CSS.getPropertyValue(element, hookRoot); /* GET */
+                /* Transforms (translateX, rotateZ, etc.) are applied to a per-element transformCache object, which is manually flushed via flushTransformCache(). Thus, for now, we merely cache transforms being SET. */
+                if (CSS.Normalizations.registered[property] && CSS.Normalizations.registered[property]("name", element) === "transform") {
+                    /* Perform a normalization injection. */
+                    /* Note: The normalization logic handles the transformCache updating. */
+                    CSS.Normalizations.registered[property]("inject", element, propertyValue);
 
-                    propertyValue = CSS.Hooks.injectValue(hookName, propertyValue, rootPropertyValue);
-                    property = hookRoot;
-                }   
-
-                /* Normalize names and values. */
-                if (CSS.Normalizations.registered[property]) {
-                    propertyValue = CSS.Normalizations.registered[property]("inject", element, propertyValue);
-                    property = CSS.Normalizations.registered[property]("name", element);  
-                }
-
-                /* Assign the appropriate vendor prefix before perform an official style update. */
-                propertyName = CSS.Names.prefixCheck(property)[0];
-
-                /* A try/catch is used for IE<=8, which throws an error when "invalid" CSS values are set, e.g. a negative width. Try/catch is avoided for other browsers since it incurs a performance overhead. */
-                if (IE <= 8) {
-                    try {
-                        element.style[propertyName] = propertyValue;
-                    } catch (e) { console.log("Error setting [" + propertyName + "] to [" + propertyValue + "]"); }
+                    propertyName = "transform";
+                    propertyValue = $.data(element, NAME).transformCache[property];
                 } else {
-                    element.style[propertyName] = propertyValue;
-                }
+                    /* Inject hooks. */
+                    if (CSS.Hooks.registered[property]) {
+                        var hookName = property,
+                            hookRoot = CSS.Hooks.getRoot(property);
 
-                if ($.velocity.debug >= 2) console.log("Set " + property + " (" + propertyName + "): " + propertyValue);
+                        /* If a cached rootPropertyValue was not provided, query the DOM for the hookRoot's current value. */
+                        rootPropertyValue = rootPropertyValue || CSS.getPropertyValue(element, hookRoot); /* GET */
+
+                        propertyValue = CSS.Hooks.injectValue(hookName, propertyValue, rootPropertyValue);
+                        property = hookRoot;
+                    }   
+
+                    /* Normalize names and values. */
+                    if (CSS.Normalizations.registered[property]) {
+                        propertyValue = CSS.Normalizations.registered[property]("inject", element, propertyValue);
+                        property = CSS.Normalizations.registered[property]("name", element);  
+                    }
+
+                    /* Assign the appropriate vendor prefix before perform an official style update. */
+                    propertyName = CSS.Names.prefixCheck(property)[0];
+
+                    /* A try/catch is used for IE<=8, which throws an error when "invalid" CSS values are set, e.g. a negative width. Try/catch is avoided for other browsers since it incurs a performance overhead. */
+                    if (IE <= 8) {
+                        try {
+                            element.style[propertyName] = propertyValue;
+                        } catch (e) { console.log("Error setting [" + propertyName + "] to [" + propertyValue + "]"); }
+                    } else {
+                        element.style[propertyName] = propertyValue;
+                    }
+
+                    if ($.velocity.debug >= 2) console.log("Set " + property + " (" + propertyName + "): " + propertyValue);
+                }
             }
 
             /* Return the normalized property name and value in case the caller wants to know how these values were modified before being applied to the DOM. */
@@ -1061,11 +1091,15 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
            Action Detection
         **********************/
 
-        /* Velocity's behavior is categorized into "actions": Animations can be started, stopped, and reversed. If a literal or referenced properties map is passed in as Velocity's first argument,
-           the associated action is "start". Alternatively, "reverse" or "stop" can be passed in instead of a properties map. */
+        /* Velocity's behavior is categorized into "actions": Elements can either be specially scrolled into view, or they can be started, stopped, or reversed. If a literal or referenced properties map is passed
+           in as Velocity's first argument, the associated action is "start". Alternatively, "scroll", "reverse", or "stop" can be passed in instead of a properties map. */
         var action;
 
         switch (propertiesMap) {
+            case "scroll":
+                action = "scroll";
+                break;
+
             case "reverse":
                 action = "reverse";
                 break;
@@ -1303,6 +1337,31 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
                 $.velocity.queueEntryFlag = true;
 
+                /*****************************************
+                   Tween Data Construction (for Scroll)
+                *****************************************/
+
+                /* Note: In order to be subjected to call options and element queueing, the scroll action's tweening is routed through Velocity as if it were a standard CSS property animation. */
+                if (action === "scroll") {   
+                    /* Note: Unlike other properties animated with Velocity, the browser's scroll position is never cached since it continuously changes due to the user's interaction with the page. */
+                    var scrollPositionCurrent = $.velocity.State.scrollAnchor[$.velocity.State.scrollProperty],
+                        /* The scroll action optionally takes a unique "offset" option, specified in pixels, which offsets the target scroll position. */
+                        scrollOffset = parseFloat(opts.offset) || 0;
+
+                    /* Since there's only one format that scroll's associated tweensContainer can take, we create it manually. */
+                    tweensContainer = {
+                        scroll: {
+                            rootPropertyValue: false,
+                            startValue: scrollPositionCurrent,
+                            currentValue: scrollPositionCurrent,
+                            /* jQuery does not offer a utility alias for offset(), so we have to force jQuery object conversion here. This syncs up with an ensuing batch of GETs, so it thankfully does not trigger layout thrashing. */
+                            endValue: $(element).offset().top + scrollOffset, /* GET */
+                            unitType: "",
+                            easing: opts.easing
+                        },
+                        element: element
+                    };
+
                 /******************************************
                    Tween Data Construction (for Reverse)
                 ******************************************/
@@ -1312,7 +1371,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* Note: Reverse can be directly called via the "reverse" parameter, or it can be indirectly triggered via the loop option. (Loops are composed of multiple reverses.) */
                 /* Note: Reverse calls do not need to be consecutively chained onto a currently-animating element in order to operate on cached values; there is no harm to reverse being called on a potentially stale data cache since
                    reverse's behavior is simply defined as reverting to the element's values as they were prior to the previous *Velocity* call. */
-                if (action === "reverse") {   
+                } else if (action === "reverse") {   
                     /* Abort if there is no prior animation data to reverse to. */
                     if (!$.data(element, NAME).tweensContainer) {
                         /* Dequeue the element so that this queue entry releases itself immediately, allowing subsequent queue entries to run. */
@@ -1609,7 +1668,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             }
 
                             var originalValues = {
-                                    /* To accurately and consistently calculate conversion ratios, the element's box-sizing is temporarily reverted to content-box (its default value). */
+                                    /* To accurately and consistently calculate conversion ratios, the element's overflow and box-sizing are temporarily disabled. Overflow must be manipulated on a per-axis basis
+                                       since the plain overflow property overwrites its subproperties' values. */
+                                    overflowX: null,
+                                    overflowY: null,
                                     boxSizing: null,
                                     /* width and height act as our proxy properties for measuring the horizontal and vertical % ratios. Since they can be artificially constrained by their min-/max- equivalents, those properties are changed as well. */
                                     width: null,
@@ -1623,21 +1685,24 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                 },
                                 elementUnitRatios = {},
                                 /* Note: IE<=8 round to the nearest pixel when returning CSS values, thus we perform conversions using a measurement of 10 (instead of 1) to give our ratios a precision of at least 1 decimal value. */
-                                measurement = 10;
+                                measurement = 10;                                
 
                             /* For organizational purposes, active ratios calculations are consolidated onto the elementUnitRatios object. */
                             elementUnitRatios.remToPxRatio = unitConversionRatios.remToPxRatio;
 
-                            /* Since % values are relative to their respective axes, ratios are calculated for both width and height. In contrast, only a single ratio is required for rem and em. */
                             /* Note: To minimize layout thrashing, the ensuing unit conversion logic is split into batches to synchronize GETs and SETs. */
+                            originalValues.overflowX = CSS.getPropertyValue(element, "overflowX"); /* GET */
+                            originalValues.overflowY = CSS.getPropertyValue(element, "overflowY"); /* GET */
                             originalValues.boxSizing = CSS.getPropertyValue(element, "boxSizing"); /* GET */
 
-                            originalValues.width = CSS.getPropertyValue(element, "width"); /* GET */
+                            /* Since % values are relative to their respective axes, ratios are calculated for both width and height. In contrast, only a single ratio is required for rem and em. */
+                            /* When calculating % values, we set a flag to indiciate that we want the computed value instead of offsetWidth/Height, which incorporate additional dimensions (such as padding and border-width) into their values. */
+                            originalValues.width = CSS.getPropertyValue(element, "width", null, true); /* GET */
                             originalValues.minWidth = CSS.getPropertyValue(element, "minWidth"); /* GET */
                             /* Note: max-width/height must default to "none" when 0 is returned, otherwise the element cannot have its width/height set. */
                             originalValues.maxWidth = CSS.getPropertyValue(element, "maxWidth") || "none"; /* GET */
 
-                            originalValues.height = CSS.getPropertyValue(element, "height"); /* GET */
+                            originalValues.height = CSS.getPropertyValue(element, "height", null, true); /* GET */
                             originalValues.minHeight = CSS.getPropertyValue(element, "minHeight"); /* GET */
                             originalValues.maxHeight = CSS.getPropertyValue(element, "maxHeight") || "none"; /* GET */
 
@@ -1647,6 +1712,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                 elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth;
                                 elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight;
                             } else {
+                                CSS.setPropertyValue(element, "overflowX",  "hidden"); /* SET */
+                                CSS.setPropertyValue(element, "overflowY",  "hidden"); /* SET */
                                 CSS.setPropertyValue(element, "boxSizing",  "content-box"); /* SET */
 
                                 CSS.setPropertyValue(element, "width", measurement + "%"); /* SET */
@@ -1667,8 +1734,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             /* The following pixel-value GETs cannot be batched with the prior GETs since they depend upon the values temporarily set immediately above; layout thrashing cannot be avoided here. */
                             if (!sameBasePercent) {
                                 /* Divide the returned value by the measurement value to get the ratio between 1% and 1px. */
-                                elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(element, "width")) || 0) / measurement; /* GET */
-                                elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(element, "height")) || 0) / measurement; /* GET */
+                                elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(element, "width", null, true)) || 0) / measurement; /* GET */
+                                elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(element, "height", null, true)) || 0) / measurement; /* GET */
                             }
 
                             if (!sameBaseEm) {
@@ -1967,6 +2034,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
                 /* For every call, iterate through each of the elements in its set. */
                 for (var j = 0, callLength = call.length; j < callLength; j++) {
+
                     var tweensContainer = call[j],
                         element = tweensContainer.element;
 
@@ -2212,3 +2280,9 @@ $.fn.velocity.defaults = {
     /* Advanced: Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
     _cacheValues: true
 };
+
+/******************
+   Known Issues
+******************/
+
+/* When animating height or width to a % value on an element *without* box-sizing:border-box and *with* visible scrollbars on *both* axes, the opposite axis (e.g. height vs width) will be shortened by the height/width of its scrollbar. */
