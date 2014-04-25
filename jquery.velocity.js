@@ -113,7 +113,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         return result;
     }
 
-    /* Determine if variable is a function. */
+    /* Determine if a variable is a function. */
     function isFunction(variable) {
         return Object.prototype.toString.call(variable) === "[object Function]";
     }
@@ -138,7 +138,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         Easings
     **************/
 
-    /* Velocity embeds jQuery UI's easings to save users from having to include an additionaln library on their page. */
+    /* Velocity embeds jQuery UI's easings to save users from having to include an additional library to their page. */
     /* Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
     (function () {
         var baseEasings = {};
@@ -247,13 +247,13 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
        CSS Class Extraction
     *************************/
 
-    /* Crawl all same-domain stylesheets for classes formatted as .animate_{Name}. Store matches onto $.velocity.Classes.extracted for reference during runtime, e.g. $element.velocity("Name", optionsObject). */
-    /* Extraction involves processing flattened cssText strings for each CSS rule, such as ".animate_{Name} { width: 100 }" then appending an object onto $.velocity.Classes with a name equal to the Name and
+    /* Crawl all same-domain stylesheets for classes formatted as .animate_{name}. Store matches onto $.velocity.Classes.extracted for reference during runtime, e.g. $element.velocity("name", optionsObject). */
+    /* Extraction involves processing flattened cssText strings for each CSS rule, such as ".animate_{name} { width: 100 }" then appending an object onto $.velocity.Classes with a name equal to the Name and
        property:value pairs equal to the rule's property map. */
     /* Note: To reduce overhead, extraction occurs once -- when Velocity's script is loaded. Thus, either ensure that the relevant stylesheets are parsed before Velocity, or manually force a re-extraction at
        any point by calling $.velocity.Classes.extract(). */
     /* Note: Whereas jQuery UI's class animation works by momentarily apply the class to an element then diffing the results to attain properly cascaded values, Velocity treats the class a literal property map
-       container in order to avoid the layout thrashing associated with CSS value diffing. Thus, Velocity does not respect the hierarchical selector position of the .animate_{Name} classes that it extracts. */
+       container in order to avoid the layout thrashing associated with CSS value diffing. Thus, Velocity does not respect the hierarchical selector position of the .animate_{name} classes that it extracts. */
     /* Note: Browsers do not parse classes defined in the <head> element the same way they do stylesheet classes. Avoid setting styles inside HTML. */
     $.velocity.Classes.extract = function() {
         var styleSheets = document.styleSheets,
@@ -588,7 +588,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* Transforms are the subproperties contained by the CSS "transform" property. Transforms must undergo normalization so that they can be referenced in a properties map by their individual names. */
                 /* Note: When transforms are "set", they are actually assigned to a per-element transformCache. When all transform setting is complete complete, CSS.flushTransformCache() must be manually called to flush the values to the DOM. 
                    Transform setting is batched in this way to improve performance: the transform style only needs to be updated once when multiple transform subproperties are being animated simultaneously. */
-                var transformProperties = [ "translateX", "translateY", "scaleX", "scaleY", "skewX", "skewY", "rotateZ" ];
+                var transformProperties = [ "translateX", "translateY", "scale", "scaleX", "scaleY", "skewX", "skewY", "rotateZ" ];
 
                 /* IE9 has support for 2D -- but not 3D -- transforms. Since animating unsupported transform properties results in the browser ignoring the *entire* transform string, we prevent these 3D values from being normalized for these
                    browsers so that Tween Calculation logic skips animating these properties altogether (since it will detect that they're unsupported and unnormalized.) */
@@ -819,7 +819,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             getUnitType: function (property) {
                 if (/^(rotate|skew)/i.test(property)) {
                     return "deg";
-                } else if (/(^(scaleX|scaleY|scaleZ|opacity|alpha|fillOpacity|flexGrow|flexHeight|zIndex|fontWeight)$)|color/i.test(property)) {
+                } else if (/(^(scale|scaleX|scaleY|scaleZ|opacity|alpha|fillOpacity|flexGrow|flexHeight|zIndex|fontWeight)$)|color/i.test(property)) {
                     /* The above properties are unitless. */
                     return "";
                 } else {
