@@ -132,7 +132,70 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         console.log("Velocity is already loaded or its namespace is occupied.");
 
         return;
-    } 
+    }   
+
+    /*****************
+     $Utils, minjQuery
+     ****************/
+
+    /* Basic jQuery-like object compilation, complete with the .fn. object and the $.methods(). */
+    var $Utils = (function () {
+        var el;
+
+        /* Declaration of the actual jQuery object, window.jQuery */
+        var $Utils = function (selector, context) {
+            if (!(this instanceof $Utils))
+                return new $Utils.fn.init(selector, context);
+        };
+
+
+        /*****************
+         $Utils().methods()
+         ****************/
+        /* Creation of the fn prototype alias, used in the $().method calls */
+        $Utils.fn = $Utils.prototype = {
+            init: function(selector, context) {
+                el = fetchHtmlElement(selector);
+
+                return this;
+            },
+            offset: function () {
+                /* youmightnotneedjquery.com */
+                var rect = el.getBoundingClientRect();
+                return {
+                    top: rect.top + document.body.scrollTop,
+                    left: rect.left + document.body.scrollLeft
+                };
+            }
+        };
+        $Utils.fn.init.prototype = $Utils.fn;
+
+        /*****************
+         $Utils.methods()
+         ****************/
+
+        /* Creation of the jQuery.methods()  */
+        $Utils.each = function () {
+            return false;
+        };
+
+        /*****************
+         $Utils Private methods
+         ****************/
+
+        /* At the moment, we only allow the manipulation of one DOM element. */
+        function fetchHtmlElement (selector) {
+            console.log(arguments);
+            if (selector.substr(0, 1) === '#') {
+                return document.getElementById(selector.substr(1));
+            } else if (selector.substr(0, 1) === '.') {
+                return document.getElementsByClassName(selector.substr(1))[0];
+            }
+            return document.getElementsByTagName(selector)[0];
+        }
+
+        return $Utils;
+    })();
 
     /**************
         Easings
