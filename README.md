@@ -1,10 +1,10 @@
 Velocity.js
 ========
 
-Velocity is undergoing testing. Full public release is scheduled for April 30th.
+Velocity is undergoing testing. Full release is scheduled for April 30th.
 
-Documentation can be found at http://VelocityJS.org. Testing suite coming shortly.
+Documentation can be found at http://VelocityJS.org. Test suite coming shortly.
 
-Watch and star this repo to stay on top of updates.
+Watch / star this repo to stay on top of updates.
 
 
