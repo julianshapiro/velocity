@@ -2,12 +2,12 @@
     Details
 ***************/
 
-/*
+/*!
 * Velocity.js: Accelerated JavaScript animation.
 * @version 0.0.0
 * @requires jQuery.js
 * @docs julian.com/research/velocity
-* @copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License.
+* @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */    
 
 /****************
@@ -2073,15 +2073,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                Current Value Calculation
                             ******************************/
 
+                            /* If this is the last tick pass (if we've reached 100% completion for this tween), ensure that currentValue is explicitly set to its target endValue so that it's not subjected to any rounding. */
                             if (percentComplete === 1) {
-                                /* When top, bottom, right, and left properties are done being animated toward 0, they should be reverted to "auto" so that they subsequently play well with their same-axis sibling;
-                                   Left, for example, cannot be animated when right isn't set to "auto". */
-                                if (/^(top|bottom|right|left)$/.test(property) && tween.endValue === 0) {
-                                    currentValue = "auto";
-                                } else {
-                                    /* If this is the last tick pass (if we've reached 100% completion for this tween), ensure that currentValue is explicitly set to its target endValue so that it's not subjected to any rounding. */
-                                    currentValue = tween.endValue;
-                                }
+                                currentValue = tween.endValue;
                             /* Otherwise, calculate currentValue based on the current delta from startValue. */
                             } else {
                                 currentValue = tween.startValue + ((tween.endValue - tween.startValue) * $.easing[tween.easing](percentComplete));
@@ -2148,6 +2142,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             }
                         }
                     }
+
+                    /****************
+                        mobileHA
+                    ****************/
 
                     /* If mobileHA is enabled, set the translate3d transform to null to force hardware acceleration. It's safe to override this property since Velocity doesn't naturally support its animation (hooks are used in its place). */
                     if (opts.mobileHA) {
