@@ -11,6 +11,6 @@ MIT License.
 
 Want to learn more?
 
-http://css-tricks.com/improving-ui-animation-workflow-velocity-js/
+Velocity workflow: http://css-tricks.com/improving-ui-animation-workflow-velocity-js/
 
-http://davidwalsh.name/css-js-animation
+Velocity speed: http://davidwalsh.name/css-js-animation
