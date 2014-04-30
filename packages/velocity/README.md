@@ -1,7 +1,7 @@
 Velocity.js
 ========
 
-Documentation: http://VelocityJS.org
+**Documentation**: http://VelocityJS.org
 
 Velocity is undergoing testing. Full release (including test suite) is scheduled for May 5th.
 
