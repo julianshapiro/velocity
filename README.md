@@ -9,9 +9,9 @@ Star the repo and check back shortly for updates.
 
 **Want to learn more?**
 
-Velocity workflow: http://css-tricks.com/improving-ui-animation-workflow-velocity-js/
+Velocity's workflow: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
-Velocity speed: http://davidwalsh.name/css-js-animation
+Velocity's speed: http://davidwalsh.name/css-js-animation
 
 ========
 
