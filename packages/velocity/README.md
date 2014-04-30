@@ -7,6 +7,10 @@ Velocity is undergoing testing. Full release (including test suite) is scheduled
 
 Star the repo and check back shortly for updates.
 
+**Try it out:**
+
+`<script src="//oss.maxcdn.com/jquery.velocity/0.0.0/jquery.velocity.min.js"></script>`
+
 **Want to learn more?**
 
 Velocity's workflow: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
