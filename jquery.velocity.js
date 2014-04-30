@@ -166,6 +166,13 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     top: rect.top + document.body.scrollTop,
                     left: rect.left + document.body.scrollLeft
                 };
+            },
+            position: function () {
+                /* youmightnotneedjquery.com */
+                return {
+                    top: el.offsetTop,
+                    left: el.offsetLeft
+                };
             }
         };
         $Utils.fn.init.prototype = $Utils.fn;
@@ -185,8 +192,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         /* At the moment, we only allow the manipulation of one DOM element. */
         function fetchHtmlElement (selector) {
-            console.log(arguments);
-            if (selector.substr(0, 1) === '#') {
+            if(typeof selector === 'object') {
+                return selector;
+            } else if (selector.substr(0, 1) === '#') {
                 return document.getElementById(selector.substr(1));
             } else if (selector.substr(0, 1) === '.') {
                 return document.getElementsByClassName(selector.substr(1))[0];
@@ -964,7 +972,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     /* Note: A jQuery object must be created here since jQuery doesn't have a low-level alias for $.position(). Not a big deal since we're currently in a GET batch anyway. */
                     if (position === "fixed" || (position === "absolute" && /top|left/i.test(property))) {
                         /* Note: jQuery strips the pixel unit from its returned values; we re-add it here to conform with computePropertyValue's behavior. */
-                        computedValue = $(element).position()[property] + "px"; /* GET */
+                        computedValue = $Utils(element).position()[property] + "px"; /* GET */
                     }
                 }
 
@@ -1418,7 +1426,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             startValue: scrollPositionCurrent,
                             currentValue: scrollPositionCurrent,
                             /* jQuery does not offer a utility alias for offset(), so we have to force jQuery object conversion here. This syncs up with an ensuing batch of GETs, so it thankfully does not trigger layout thrashing. */
-                            endValue: $(element).offset().top + scrollOffset, /* GET */
+                            endValue: $Utils(element).offset().top + scrollOffset, /* GET */
                             unitType: "",
                             easing: opts.easing
                         },
