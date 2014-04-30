@@ -2266,7 +2266,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 ***************/
 
 /* Page-wide option defaults, which can be overriden by the user. */
-$.fn.velocity.defaults = {
+jQuery.fn.velocity.defaults = {
     queue: "",
     duration: 400,
     easing: "swing",
