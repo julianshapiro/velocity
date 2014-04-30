@@ -23,7 +23,7 @@ Famo.us is a full-fledged app framework built around a physics engine. It has th
 
 GSAP is a full-fledged animation suite with a ton of power. Its features are nearly limitless -- as is the love its creator (Jack Doyle) puts into it. GSAP is what inspired me to pursue the development of Velocity.
 
-As for Velocity, its focus is being a very lightweight, very fast tool for drastically improving UI animation performance and workflow. I've dedicated the last three months of my life to it.
+As for Velocity, its focus is on being a very lightweight, very fast tool for drastically improving UI animation performance and workflow. I've dedicated the last three months of my life to it.
 
 With each of these solutions, we're comparing options that are the product of nothing but pure love -- for performance and for the Web. Enjoy them for what they are. Choose whichever is best suited to your task at-hand.
 
