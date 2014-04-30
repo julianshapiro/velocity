@@ -132,7 +132,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         console.log("Velocity is already loaded or its namespace is occupied.");
 
         return;
-    }   
+    }
 
     /*****************
      $Utils, minjQuery
@@ -140,7 +140,42 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
     /* Basic jQuery-like object compilation, complete with the .fn. object and the $.methods(). */
     var $Utils = (function () {
-        var el;
+        /*****************
+         Private methods
+         ****************/
+
+        var hasOwn = ({}).hasOwnProperty;
+        /* The functions kept internal and with a $ heading identifier are supposed to be added as $.methods() in the jQuery library, but are of no use outside here. */
+        function $isWindow(obj) {
+            /* jQuery original code */
+            /* jshint eqeqeq: false */
+            return obj != null && obj == obj.window;
+        }
+        function $type(obj) {
+            /* jQuery altered original code */
+            if (obj == null) {
+                return obj + "";
+            }
+            return typeof obj === "object" || typeof obj === "function" ?
+                {}[toString.call(obj)] || "object" :
+                typeof obj;
+        }
+        function isArraylike(obj) {
+            /* jQuery altered code */
+            var length = obj.length,
+                type = $type(obj);
+
+            if (type === "function" || $isWindow(obj)) {
+                return false;
+            }
+
+            if (obj.nodeType === 1 && length) {
+                return true;
+            }
+
+            return type === "array" || length === 0 ||
+                typeof length === "number" && length > 0 && (length - 1) in obj;
+        }
 
         /* Declaration of the actual jQuery object, window.jQuery */
         var $Utils = function (selector, context) {
@@ -154,14 +189,26 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
          ****************/
         /* Creation of the fn prototype alias, used in the $().method calls */
         $Utils.fn = $Utils.prototype = {
-            init: function(selector, context) {
-                el = fetchHtmlElement(selector);
+            init: function(selector/*, context*/) {
+                var match, elem;
 
-                return this;
+                // HANDLE: $(""), $(null), $(undefined), $(false)
+                if (!selector) {
+                    return this;
+                }
+
+                // HANDLE: $(DOMElement)
+                if (selector.nodeType) {
+                    this[0] = selector;
+                    console.log(this);
+                    return this;
+                }
+
+                throw new Error('$Utils: This init case has not yet been implemented.');
             },
             offset: function () {
                 /* youmightnotneedjquery.com */
-                var rect = el.getBoundingClientRect();
+                var rect = this[0].getBoundingClientRect();
                 return {
                     top: rect.top + document.body.scrollTop,
                     left: rect.left + document.body.scrollLeft
@@ -170,8 +217,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             position: function () {
                 /* youmightnotneedjquery.com */
                 return {
-                    top: el.offsetTop,
-                    left: el.offsetLeft
+                    top: this[0].offsetTop,
+                    left: this[0].offsetLeft
                 };
             }
         };
@@ -182,25 +229,123 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
          ****************/
 
         /* Creation of the jQuery.methods()  */
-        $Utils.each = function () {
+        $Utils.each = function(obj, callback, args) {
+            /* jQuery altered code */
+            var value,
+                i = 0,
+                length = obj.length,
+                isArray = isArraylike(obj);
+
+            if (args) {
+                if (isArray) {
+                    for (; i < length; i++) {
+                        value = callback.apply(obj[i], args);
+
+                        if (value === false) {
+                            break;
+                        }
+                    }
+                } else {
+                    for (i in obj) {
+                        value = callback.apply(obj[i], args);
+
+                        if (value === false) {
+                            break;
+                        }
+                    }
+                }
+
+                // A special, fast, case for the most common use of each
+            } else {
+                if (isArray) {
+                    for (; i < length; i++) {
+                        value = callback.call(obj[i], i, obj[i]);
+
+                        if (value === false) {
+                            break;
+                        }
+                    }
+                } else {
+                    for (i in obj) {
+                        value = callback.call(obj[i], i, obj[i]);
+
+                        if (value === false) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return obj;
+        };
+        $Utils.data = function () {
             return false;
         };
-
-        /*****************
-         $Utils Private methods
-         ****************/
-
-        /* At the moment, we only allow the manipulation of one DOM element. */
-        function fetchHtmlElement (selector) {
-            if(typeof selector === 'object') {
-                return selector;
-            } else if (selector.substr(0, 1) === '#') {
-                return document.getElementById(selector.substr(1));
-            } else if (selector.substr(0, 1) === '.') {
-                return document.getElementsByClassName(selector.substr(1))[0];
+        $Utils.queue = function () {
+            return false;
+        };
+        $Utils.dequeue = function () {
+            return false;
+        };
+        $Utils.isEmptyObject = function (obj) {
+            /* jQuery original code */
+            var name;
+            for(name in obj) {
+                return false;
             }
-            return document.getElementsByTagName(selector)[0];
-        }
+            return true;
+        };
+        $Utils.isPlainObject = function (obj) {
+            /* jQuery altered code */
+            var key;
+
+            // Must be an Object.
+            // Because of IE, we also have to check the presence of the constructor property.
+            // Make sure that DOM nodes and window objects don't pass through, as well
+            if (!obj || $type(obj) !== "object" || obj.nodeType || $isWindow(obj)) {
+                return false;
+            }
+
+            try {
+                // Not own constructor property must be Object
+                if (obj.constructor &&
+                    !hasOwn.call(obj, "constructor") &&
+                    !hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
+                    return false;
+                }
+            } catch (e) {
+                // IE8,9 Will throw exceptions on certain host objects #9897
+                return false;
+            }
+
+
+            // Support: IE<9
+            // Iteration over object's inherited properties before its own
+            var _ownLast;
+            {
+                var i;
+                /* TODO check if this works, originally:
+                 for (i in jQuery(support)) { // support = {} */
+                for (i in {}) {
+                    break;
+                }
+                _ownLast = i !== "0";
+            }
+
+            // Support: IE<9
+            // Handle iteration over inherited properties before own properties.
+            if (_ownLast) {
+                for (key in obj) {
+                    return hasOwn.call(obj, key);
+                }
+            }
+
+            // Own properties are enumerated firstly, so to speed up,
+            // if last one is own, then all properties are own.
+            for (key in obj) {}
+
+            return key === undefined || hasOwn.call(obj, key);
+        };
 
         return $Utils;
     })();
@@ -214,7 +359,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     (function () {
         var baseEasings = {};
 
-        $.each(["Quad", "Cubic", "Quart", "Quint", "Expo"], function(i, name) {
+        $Utils.each(["Quad", "Cubic", "Quart", "Quint", "Expo"], function(i, name) {
             baseEasings[name] = function(p) {
                 return Math.pow(p, i + 2);
             };
@@ -243,7 +388,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             }
         });
 
-        $.each(baseEasings, function(name, easeIn) {
+        $Utils.each(baseEasings, function(name, easeIn) {
             $.easing["easeIn" + name] = easeIn;
             $.easing["easeOut" + name] = function(p) {
                 return 1 - easeIn(1 - p);
@@ -1181,7 +1326,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
             default:
                 /* Treat a plain, non-empty object as a literal properties map. */
-                if ($.isPlainObject(propertiesMap) && !$.isEmptyObject(propertiesMap)) {
+                if ($Utils.isPlainObject(propertiesMap) && !$Utils.isEmptyObject(propertiesMap)) {
                     action = "start";
                 /* Treat a string as a CSS class reference. (See CSS Class Extraction above.) */
                 } else if (typeof propertiesMap === "string" && $.velocity.Classes.extracted[propertiesMap]) {
