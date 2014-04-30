@@ -12,7 +12,6 @@ Want to learn more?
 Velocity workflow: http://css-tricks.com/improving-ui-animation-workflow-velocity-js/
 
 Velocity speed: http://davidwalsh.name/css-js-animation
-
 ========
 
 MIT License.
