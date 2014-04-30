@@ -2079,17 +2079,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             /* Otherwise, calculate currentValue based on the current delta from startValue. */
                             } else {
                                 currentValue = tween.startValue + ((tween.endValue - tween.startValue) * $.easing[tween.easing](percentComplete));
-
-                                /* So long as we're away from the edges of the tween (where frame dropping is hyper-perceptible by users), skip updating styles that have changed less than 0.05% from their previous value if:
-                                   1) We're not tweening transform translations, which produce visually perceptible changes even at extremely small changes due to their subpixel rendering or
-                                   2) We're working with a relative unit whose appearingly "minor" changes can compound relative to their base values. */ 
-                                /* Note: This optimization only winds up having an effect on animations with medium-to-long durations since these circumstances often produce value increments that are less than 0.05%. */
-                                if (!/translate/i.test(property) && (percentComplete > 0.20 && percentComplete < 0.80) && (tween.unitType === "px" || tween.unitType === "")) {
-                                    /* If the absolute difference between the property's newly-calculated currentValue and its previous currentValue is less than 0.05%, break out of this loop to avoid updating this property. */
-                                    if (Math.abs((currentValue - lastCurrentValue) / lastCurrentValue) < 0.005) {
-                                        break;
-                                    }
-                                }
                             }
 
                             /* If style updating wasn't skipped, store the new currentValue onto the call cache. */
