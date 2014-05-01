@@ -228,6 +228,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         },
         /* Velocity's full re-implementation of jQuery's CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
+        /* An enumeration of custom animation sequences that users can add to velocity */
+        Sequence: {},
         /* Utility function's alias of $.fn.velocity(). Used for raw DOM element animation. */
         animate: function () { /* Defined below. */ },
         /* Set to 1 or 2 (most verbose) to log debug info to console. */
@@ -1109,6 +1111,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* Treat a plain, non-empty object as a literal properties map. */
                 if ($.isPlainObject(propertiesMap) && !$.isEmptyObject(propertiesMap)) {
                     action = "start";
+                /* Check if the specified action maps to a user-defined sequence  */
+                } else if (typeof propertiesMap === "string" && $.velocity.Sequence[propertiesMap]) {
+                    return $.velocity.Sequence[propertiesMap].call(elements, options);
                 /* Treat a string as a CSS class reference. (See CSS Class Extraction above.) */
                 } else if (typeof propertiesMap === "string" && $.velocity.Classes.extracted[propertiesMap]) {
                     /* Assign the map to that of the extracted CSS class being referenced. */
