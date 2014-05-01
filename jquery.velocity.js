@@ -186,6 +186,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         $Utils.expando = "jQuery" + ('1.11.0' + Math.random()).replace(/\D/g, "");
         $Utils.cache = {};
+        $Utils.guid = 1;
 
         (function() {
             var i;
@@ -357,7 +358,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 // Only DOM nodes need a new unique ID for each element since their data
                 // ends up in the global cache
                 if (isNode) {
-                    id = elem[internalKey] = deletedIds.pop();
+                    id = elem[internalKey] = deletedIds.pop() || $Utils.guid++;
                 } else {
                     id = internalKey;
                 }
@@ -544,10 +545,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         empty: $Utils.Callbacks("once memory").add(function() {
                             $Utils.removeData(elem, type + "queue", true);
                             $Utils.removeData(elem, key, true);
-                        }, true)
-                    };
-                }
-            hooks = _queueHooks(elem, type),
+                        })
+                    }, true);
+                }, hooks = _queueHooks(elem, type),
                 next = function() {
                     $Utils.dequeue(elem, type);
                 };
