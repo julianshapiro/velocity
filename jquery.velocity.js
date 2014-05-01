@@ -137,7 +137,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     /*****************
      $Utils, minjQuery
      ****************/
-
     /* Basic jQuery-like object compilation, complete with the .fn. object and the $.methods(). */
     var $Utils = (function () {
         /* Declaration of the actual jQuery object, window.jQuery */
@@ -152,19 +151,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         $Utils.fn = $Utils.prototype = {
             init: function(selector/*, context*/) {
                 var match, elem;
-
-                // HANDLE: $(""), $(null), $(undefined), $(false)
-                if (!selector) {
-                    return this;
-                }
-
                 // HANDLE: $(DOMElement)
                 if (selector.nodeType) {
                     this[0] = selector;
                     return this;
                 }
-
-                throw new Error('$Utils: This init case has not yet been implemented.');
             },
             offset: function () {
                 /* youmightnotneedjquery.com */
@@ -194,98 +185,27 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             support = {};
 
         $Utils.expando = "jQuery" + ('1.11.0' + Math.random()).replace(/\D/g, "");
-        $Utils.noData = {
-            "applet ": true,
-            "embed ": true,
-            // ...but Flash objects (which have this classid) *can* handle expandos
-            "object ": "clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
-        };
+        $Utils.cache = {};
 
-        /* I just don't know what this does, or if it should be used here.*/
-        if (support.deleteExpando == null) {
-            // Support: IE<9
-            support.deleteExpando = true;
-            try {
-                delete div.test;
-            } catch(e) {
-                support.deleteExpando = false;
+        (function() {
+            var i;
+            for (i in [support]) {
+                break;
             }
-        }
+            support.ownLast = i !== "0";
 
-        /* The functions kept internal and with a $ heading identifier are supposed to be added as $.methods() in the jQuery library, but are of no use outside here. */
-        $Utils.isWindow = function (obj) {
-            /* jQuery original code */
-            /* jshint eqeqeq: false */
-            return obj != null && obj == obj.window;
-        };
-        $Utils.cleanData = function (elems, /* internal */ acceptData) {
-            /* jQuery altered code */
-            var elem, type, id, data,
-                i = 0,
-                internalKey = $Utils.expando,
-                cache = $Utils.cache,
-                deleteExpando = support.deleteExpando;
-            /*
-             special = ; */
-
-            for (; (elem = elems[i]) != null; i++) {
-                if (acceptData || $Utils.acceptData(elem)) {
-
-                    id = elem[internalKey];
-                    data = id && cache[id];
-
-                    if (data) {
-                        /*if (data.events) {
-                         for (type in data.events) {
-                         if (special[type]) {
-                         jQuery.event.remove(elem, type);
-
-                         // This is a shortcut to avoid jQuery.event.remove's overhead
-                         } else {
-                         jQuery.removeEvent(elem, type, data.handle);
-                         }
-                         }
-                         }*/
-
-                        // Remove cache only if it was not already removed by jQuery.event.remove
-                        if (cache[id]) {
-
-                            delete cache[id];
-
-                            // IE does not allow us to delete expando properties from nodes,
-                            // nor does it have a removeAttribute function on Document nodes;
-                            // we must handle all of these cases
-                            if (deleteExpando) {
-                                delete elem[internalKey];
-
-                            } else if (typeof elem.removeAttribute !== typeof undefined) {
-                                elem.removeAttribute(internalKey);
-
-                            } else {
-                                elem[internalKey] = null;
-                            }
-
-                            deletedIds.push(id);
-                        }
-                    }
+            var div = document.createElement("div");
+            if (support.deleteExpando == null) {
+                // Support: IE<9
+                support.deleteExpando = true;
+                try {
+                    delete div.test;
+                } catch(e) {
+                    support.deleteExpando = false;
                 }
             }
-        };
-        $Utils.type = function (obj) {
-            /* jQuery altered code */
-            if (obj == null) {
-                return obj + "";
-            }
-            return typeof obj === "object" || typeof obj === "function" ?
-                {}[toString.call(obj)] || "object" :
-                typeof obj;
-        };
-        $Utils.isArray = function (obj) {
-            /* jQuery altered code */
-            if(Array.isArray)
-                return Array.isArray(obj);
-            return $Utils.type(obj) === "array";
-        };
+        })();
+
         function isArraylike(obj) {
             /* jQuery altered code */
             var length = obj.length,
@@ -302,73 +222,42 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             return type === "array" || length === 0 ||
                 typeof length === "number" && length > 0 && (length - 1) in obj;
         }
-        $Utils.merge = function (first, second) {
-            var len = +second.length,
-                j = 0,
-                i = first.length;
 
-            while (j < len) {
-                first[i++] = second[j++];
-            }
+        function createOptions(options) {
+            /* jQuery original code */
+            var object = optionsCache[options] = {};
+            $Utils.each(options.match(/\S+/g) || [], function(_, flag) {
+                object[flag] = true;
+            });
+            return object;
+        }
 
-            // Support: IE<9
-            // Workaround casting of .length to NaN on otherwise arraylike objects (e.g., NodeLists)
-            if (len !== len) {
-                while (second[j] !== undefined) {
-                    first[i++] = second[j++];
-                }
-            }
-
-            first.length = i;
-
-            return first;
+        /* Functions used in more than just one helper, so they weren't absorbed */
+        $Utils.isWindow = function (obj) {
+            /* jQuery original code */
+            /* jshint eqeqeq: false */
+            return obj != null && obj == obj.window;
         };
-        $Utils.makeArray = function (arr, results) {
-            var ret = results || [];
-
-            if (arr != null) {
-                if (isArraylike(Object(arr))) {
-                    $Utils.merge(ret, typeof arr === "string" ? [arr] : arr);
-                } else {
-                    [].push.call(ret, arr);
-                }
+        $Utils.type = function (obj) {
+            /* jQuery altered code */
+            if (obj == null) {
+                return obj + "";
             }
-
-            return ret;
+            return typeof obj === "object" || typeof obj === "function" ?
+                "object" :
+                typeof obj;
         };
-        $Utils.map = function (elems, callback, arg) {
-            var value,
-                i = 0,
-                length = elems.length,
-                isArray = isArraylike(elems),
-                ret = [];
-
-            // Go through the array, translating each of the items to their new values
-            if (isArray) {
-                for (; i < length; i++) {
-                    value = callback(elems[i], i, arg);
-
-                    if (value != null) {
-                        ret.push(value);
-                    }
-                }
-
-                // Go through every key on the object,
-            } else {
-                for (i in elems) {
-                    value = callback(elems[i], i, arg);
-
-                    if (value != null) {
-                        ret.push(value);
-                    }
-                }
-            }
-
-            // Flatten any nested arrays
-            return Array.concat.apply([], ret);
+        $Utils.isArray = Array.isArray || function (obj) {
+            /* jQuery altered code */
+            return $Utils.type(obj) === "array";
         };
         $Utils.acceptData = function (elem) {
-            var noData = $Utils.noData[(elem.nodeName + " ").toLowerCase()],
+            var noData = {
+                    "applet ": true,
+                    "embed ": true,
+                    // ...but Flash objects (which have this classid) *can* handle expandos
+                    "object ": "clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
+                }[(elem.nodeName + " ").toLowerCase()],
                 nodeType = +elem.nodeType || 1;
 
             // Do not set data on non-element DOM nodes because it will not be cleared (#8335).
@@ -384,7 +273,61 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     return letter.toUpperCase();
                 });
         };
-        function internalData(elem, name, data, pvt /* Internal Use Only */) {
+
+        /*****************
+         $Utils.methods()
+         ****************/
+        /* Creation of the jQuery.methods()  */
+        $Utils.each = function(obj, callback, args) {
+            /* jQuery altered code */
+            var value,
+                i = 0,
+                length = obj.length,
+                isArray = isArraylike(obj);
+
+            if (args) {
+                if (isArray) {
+                    for (; i < length; i++) {
+                        value = callback.apply(obj[i], args);
+
+                        if (value === false) {
+                            break;
+                        }
+                    }
+                } else {
+                    for (i in obj) {
+                        value = callback.apply(obj[i], args);
+
+                        if (value === false) {
+                            break;
+                        }
+                    }
+                }
+
+                // A special, fast, case for the most common use of each
+            } else {
+                if (isArray) {
+                    for (; i < length; i++) {
+                        value = callback.call(obj[i], i, obj[i]);
+
+                        if (value === false) {
+                            break;
+                        }
+                    }
+                } else {
+                    for (i in obj) {
+                        value = callback.call(obj[i], i, obj[i]);
+
+                        if (value === false) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return obj;
+        };
+        $Utils.data = function(elem, name, data, pvt) {
             if (!$Utils.acceptData(elem)) {
                 return;
             }
@@ -414,7 +357,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 // Only DOM nodes need a new unique ID for each element since their data
                 // ends up in the global cache
                 if (isNode) {
-                    id = elem[internalKey] = deletedIds.pop() || $Utils.guid++;
+                    id = elem[internalKey] = deletedIds.pop();
                 } else {
                     id = internalKey;
                 }
@@ -471,212 +414,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             }
 
             return ret;
-        }
-        function isEmptyDataObject(obj) {
-            var name;
-            for (name in obj) {
-
-                // if the public data object is empty, the private is still empty
-                if (name === "data" && $Utils.isEmptyObject(obj[name])) {
-                    continue;
-                }
-                if (name !== "toJSON") {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-        function createOptions(options) {
-            var object = optionsCache[options] = {};
-            $Utils.each(options.match(/\S+/g) || [], function(_, flag) {
-                object[flag] = true;
-            });
-            return object;
-        }
-        $Utils.inArray = function (elem, arr, i) {
-            var len,
-                indexOf = arr.indexOf || function(elem) {
-                    var i = 0,
-                        len = this.length;
-                    for (; i < len; i++) {
-                        if (this[i] === elem) {
-                            return i;
-                        }
-                    }
-                    return -1;
-                };
-
-            if (arr) {
-                if (indexOf) {
-                    return indexOf.call(arr, elem, i);
-                }
-
-                len = arr.length;
-                i = i ? i < 0 ? Math.max(0, len + i) : i : 0;
-
-                for (; i < len; i++) {
-                    // Skip accessing in sparse arrays
-                    if (i in arr && arr[i] === elem) {
-                        return i;
-                    }
-                }
-            }
-
-            return -1;
-        };
-        function internalRemoveData(elem, name, pvt) {
-            if (!$Utils.acceptData(elem)) {
-                return;
-            }
-
-            var thisCache, i,
-                isNode = elem.nodeType,
-
-            // See jQuery.data for more information
-                cache = isNode ? $Utils.cache : elem,
-                id = isNode ? elem[$Utils.expando] : $Utils.expando;
-
-            // If there is already no cache entry for this object, there is no
-            // purpose in continuing
-            if (!cache[id]) {
-                return;
-            }
-
-            if (name) {
-
-                thisCache = pvt ? cache[id] : cache[id].data;
-
-                if (thisCache) {
-
-                    // Support array or space separated string names for data keys
-                    if (!$Utils.isArray(name)) {
-
-                        // try the string as a key before any manipulation
-                        if (name in thisCache) {
-                            name = [name];
-                        } else {
-
-                            // split the camel cased version by spaces unless a key with the spaces exists
-                            name = $Utils.camelCase(name);
-                            if (name in thisCache) {
-                                name = [name];
-                            } else {
-                                name = name.split(" ");
-                            }
-                        }
-                    } else {
-                        // If "name" is an array of keys...
-                        // When data is initially created, via ("key", "val") signature,
-                        // keys will be converted to camelCase.
-                        // Since there is no way to tell _how_ a key was added, remove
-                        // both plain key and camelCase key. #12786
-                        // This will only penalize the array argument path.
-                        name = name.concat($map(name, $Utils.camelCase));
-                    }
-
-                    i = name.length;
-                    while (i--) {
-                        delete thisCache[name[i]];
-                    }
-
-                    // If there is no data left in the cache, we want to continue
-                    // and let the cache object itself get destroyed
-                    if (pvt ? !isEmptyDataObject(thisCache) : !$Utils.isEmptyObject(thisCache)) {
-                        return;
-                    }
-                }
-            }
-
-            // See jQuery.data for more information
-            if (!pvt) {
-                delete cache[id].data;
-
-                // Don't destroy the parent cache unless the internal data object
-                // had been the only thing left in it
-                if (!isEmptyDataObject(cache[id])) {
-                    return;
-                }
-            }
-
-            // Destroy the cache
-            if (isNode) {
-                $cleanData([elem], true);
-
-                // Use delete when supported for expandos or `cache` is not a window per isWindow (#10080)
-                /* jshint eqeqeq: false */
-            } else if ( support.deleteExpando || cache != cache.window) {
-                /* jshint eqeqeq: true */
-                delete cache[id];
-
-                // When all else fails, null
-            } else {
-                cache[id] = null;
-            }
-        }
-
-
-        /*****************
-         $Utils.methods()
-         ****************/
-
-        $Utils.cache = {};
-        $Utils.guid = 1;
-        /* Creation of the jQuery.methods()  */
-        $Utils.each = function(obj, callback, args) {
-            /* jQuery altered code */
-            var value,
-                i = 0,
-                length = obj.length,
-                isArray = isArraylike(obj);
-
-            if (args) {
-                if (isArray) {
-                    for (; i < length; i++) {
-                        value = callback.apply(obj[i], args);
-
-                        if (value === false) {
-                            break;
-                        }
-                    }
-                } else {
-                    for (i in obj) {
-                        value = callback.apply(obj[i], args);
-
-                        if (value === false) {
-                            break;
-                        }
-                    }
-                }
-
-                // A special, fast, case for the most common use of each
-            } else {
-                if (isArray) {
-                    for (; i < length; i++) {
-                        value = callback.call(obj[i], i, obj[i]);
-
-                        if (value === false) {
-                            break;
-                        }
-                    }
-                } else {
-                    for (i in obj) {
-                        value = callback.call(obj[i], i, obj[i]);
-
-                        if (value === false) {
-                            break;
-                        }
-                    }
-                }
-            }
-
-            return obj;
-        };
-        $Utils.data = function(elem, name, data, _internal) {
-            return internalData(elem, name, data, _internal);
-        };
-        $Utils.removeData = function(elem, name, _internal) {
-            return internalRemoveData(elem, name, _internal);
         };
         $Utils.extend = function () {
             /* jQuery altered code */
@@ -753,7 +490,41 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 // Speed up dequeue by getting out quickly if this is just a lookup
                 if (data) {
                     if (!queue || $Utils.isArray(data)) {
-                        queue = $Utils.data(elem, type, $Utils.makeArray(data), true);
+                        var $makeArray  = function (arr, results) {
+                            var ret = results || [];
+
+                            if (arr != null) {
+                                if (isArraylike(Object(arr))) {
+                                    var $merge = function (first, second) {
+                                        var len = +second.length,
+                                            j = 0,
+                                            i = first.length;
+
+                                        while (j < len) {
+                                            first[i++] = second[j++];
+                                        }
+
+                                        // Support: IE<9
+                                        // Workaround casting of .length to NaN on otherwise arraylike objects (e.g., NodeLists)
+                                        if (len !== len) {
+                                            while (second[j] !== undefined) {
+                                                first[i++] = second[j++];
+                                            }
+                                        }
+
+                                        first.length = i;
+
+                                        return first;
+                                    };
+                                    $merge(ret, typeof arr === "string" ? [arr] : arr);
+                                } else {
+                                    [].push.call(ret, arr);
+                                }
+                            }
+
+                            return ret;
+                        };
+                        queue = $Utils.data(elem, type, $makeArray(data), true);
                     } else {
                         queue.push(data);
                     }
@@ -762,21 +533,21 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             }
         };
         $Utils.dequeue = function (elem, type) {
-            function _queueHooks(elem, type) {
-                var key = type + "queueHooks";
-                return $Utils.data(elem, key, undefined, true) || $Utils.data(elem, key, {
-                    empty: $Utils.Callbacks("once memory").add(function() {
-                        $Utils.removeData(elem, type + "queue", true);
-                        $Utils.removeData(elem, key, true);
-                    }, true)
-                });
-            }
             type = type || "fx";
 
             var queue = $Utils.queue(elem, type),
                 startLength = queue.length,
                 fn = queue.shift(),
-                hooks = _queueHooks(elem, type),
+                _queueHooks = function(elem, type) {
+                    var key = type + "queueHooks";
+                    return $Utils.data(elem, key, undefined, true) || $Utils.data(elem, key, {
+                        empty: $Utils.Callbacks("once memory").add(function() {
+                            $Utils.removeData(elem, type + "queue", true);
+                            $Utils.removeData(elem, key, true);
+                        }, true)
+                    };
+                }
+            hooks = _queueHooks(elem, type),
                 next = function() {
                     $Utils.dequeue(elem, type);
                 };
@@ -827,23 +598,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 return false;
             }
 
-
-            // Support: IE<9
-            // Iteration over object's inherited properties before its own
-            var _ownLast;
-            {
-                var i;
-                /* TODO check if this works, originally:
-                 for (i in jQuery(support)) { // support = {} */
-                for (i in {}) {
-                    break;
-                }
-                _ownLast = i !== "0";
-            }
-
             // Support: IE<9
             // Handle iteration over inherited properties before own properties.
-            if (_ownLast) {
+            if (support.ownLast) {
                 for (key in obj) {
                     return hasOwn.call(obj, key);
                 }
@@ -864,6 +621,183 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             return true;
         };
 
+
+        $Utils.removeData = function(elem, name, pvt) {
+            if (!$Utils.acceptData(elem)) {
+                return;
+            }
+
+            var thisCache, i,
+                isNode = elem.nodeType,
+
+            // See jQuery.data for more information
+                cache = isNode ? $Utils.cache : elem,
+                id = isNode ? elem[$Utils.expando] : $Utils.expando;
+
+            // If there is already no cache entry for this object, there is no
+            // purpose in continuing
+            if (!cache[id]) {
+                return;
+            }
+            var isEmptyDataObject = function (obj) {
+                /* jQuery original code */
+                var name;
+                for (name in obj) {
+
+                    // if the public data object is empty, the private is still empty
+                    if (name === "data" && $Utils.isEmptyObject(obj[name])) {
+                        continue;
+                    }
+                    if (name !== "toJSON") {
+                        return false;
+                    }
+                }
+
+                return true;
+            };
+
+            if (name) {
+
+                thisCache = pvt ? cache[id] : cache[id].data;
+
+                if (thisCache) {
+
+                    // Support array or space separated string names for data keys
+                    if (!$Utils.isArray(name)) {
+
+                        // try the string as a key before any manipulation
+                        if (name in thisCache) {
+                            name = [name];
+                        } else {
+
+                            // split the camel cased version by spaces unless a key with the spaces exists
+                            name = $Utils.camelCase(name);
+                            if (name in thisCache) {
+                                name = [name];
+                            } else {
+                                name = name.split(" ");
+                            }
+                        }
+                    } else {
+                        var $map = function (elems, callback) {
+                            var value,
+                                i = 0,
+                                length = elems.length,
+                                isArray = isArraylike(elems),
+                                ret = [];
+
+                            // Go through the array, translating each of the items to their new values
+                            if (isArray) {
+                                for (; i < length; i++) {
+                                    value = callback(elems[i], i);
+
+                                    if (value != null) {
+                                        ret.push(value);
+                                    }
+                                }
+
+                                // Go through every key on the object,
+                            } else {
+                                for (i in elems) {
+                                    value = callback(elems[i], i);
+
+                                    if (value != null) {
+                                        ret.push(value);
+                                    }
+                                }
+                            }
+
+                            // Flatten any nested arrays
+                            return Array.concat.apply([], ret);
+                        };
+                        // If "name" is an array of keys...
+                        // When data is initially created, via ("key", "val") signature,
+                        // keys will be converted to camelCase.
+                        // Since there is no way to tell _how_ a key was added, remove
+                        // both plain key and camelCase key. #12786
+                        // This will only pen$malize the array argument path.
+                        name = name.concat($map(name, $Utils.camelCase));
+                    }
+
+                    i = name.length;
+                    while (i--) {
+                        delete thisCache[name[i]];
+                    }
+
+                    // If there is no data left in the cache, we want to continue
+                    // and let the cache object itself get destroyed
+                    if (pvt ? !isEmptyDataObject(thisCache) : !$Utils.isEmptyObject(thisCache)) {
+                        return;
+                    }
+                }
+            }
+
+            // See jQuery.data for more information
+            if (!pvt) {
+                delete cache[id].data;
+
+                // Don't destroy the parent cache unless the internal data object
+                // had been the only thing left in it
+                if (!isEmptyDataObject(cache[id])) {
+                    return;
+                }
+            }
+
+            // Destroy the cache
+            if (isNode) {
+                var $cleanData = function (elems, /* internal */ acceptData) {
+                    /* jQuery altered code */
+                    var elem, type, id, data,
+                        i = 0,
+                        internalKey = $Utils.expando,
+                        cache = $Utils.cache,
+                        deleteExpando = support.deleteExpando;
+
+                    for (; (elem = elems[i]) != null; i++) {
+                        if (acceptData || $Utils.acceptData(elem)) {
+
+                            id = elem[internalKey];
+                            data = id && cache[id];
+
+                            if (data) {
+                                // Remove cache only if it was not already removed by jQuery.event.remove
+                                if (cache[id]) {
+
+                                    delete cache[id];
+
+                                    // IE does not allow us to delete expando properties from nodes,
+                                    // nor does it have a removeAttribute function on Document nodes;
+                                    // we must handle all of these cases
+                                    if (deleteExpando) {
+                                        delete elem[internalKey];
+
+                                    } else if (typeof elem.removeAttribute !== typeof undefined) {
+                                        elem.removeAttribute(internalKey);
+
+                                    } else {
+                                        elem[internalKey] = null;
+                                    }
+
+                                    deletedIds.push(id);
+                                }
+                            }
+                        }
+                    }
+                };
+
+                $cleanData([elem], true);
+
+                // Use delete when supported for expandos or `cache` is not a window per isWindow (#10080)
+                /* jshint eqeqeq: false */
+            } else if (support.deleteExpando || cache != cache.window) {
+                /* jshint eqeqeq: true */
+                delete cache[id];
+
+                // When all else fails, null
+            } else {
+                cache[id] = null;
+            }
+        };
         $Utils.Callbacks = function(options) {
             // Convert options from String-formatted to Object-formatted if needed
             // (we check in cache first)
@@ -950,9 +884,40 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     // Remove a callback from the list
                     remove: function() {
                         if (list) {
+                            var $inArray = function (elem, arr, i) {
+                                var len,
+                                    indexOf = arr.indexOf || function(elem) {
+                                        var i = 0,
+                                            len = this.length;
+                                        for (; i < len; i++) {
+                                            if (this[i] === elem) {
+                                                return i;
+                                            }
+                                        }
+                                        return -1;
+                                    };
+
+                                if (arr) {
+                                    if (indexOf) {
+                                        return indexOf.call(arr, elem, i);
+                                    }
+
+                                    len = arr.length;
+                                    i = i ? i < 0 ? Math.max(0, len + i) : i : 0;
+
+                                    for (; i < len; i++) {
+                                        // Skip accessing in sparse arrays
+                                        if (i in arr && arr[i] === elem) {
+                                            return i;
+                                        }
+                                    }
+                                }
+
+                                return -1;
+                            };
                             $Utils.each(arguments, function(_, arg) {
                                 var index;
-                                while ((index = $Utils.inArray(arg, list, index)) > -1) {
+                                while ((index = $inArray(arg, list, index)) > -1) {
                                     list.splice(index, 1);
                                     // Handle firing indexes
                                     if (firing) {
@@ -968,37 +933,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         }
                         return this;
                     },
-                    // Check if a given callback is in the list.
-                    // If no argument is given, return whether or not list has callbacks attached.
-                    has: function(fn) {
-                        return fn ? $Utils.inArray(fn, list) > -1 : !!(list && list.length);
-                    },
                     // Remove all callbacks from the list
                     empty: function() {
                         list = [];
                         firingLength = 0;
                         return this;
-                    },
-                    // Have the list do nothing anymore
-                    disable: function() {
-                        list = stack = memory = undefined;
-                        return this;
-                    },
-                    // Is it disabled?
-                    disabled: function() {
-                        return !list;
-                    },
-                    // Lock the list in its current state
-                    lock: function() {
-                        stack = undefined;
-                        if (!memory) {
-                            self.disable();
-                        }
-                        return this;
-                    },
-                    // Is it locked?
-                    locked: function() {
-                        return !stack;
                     },
                     // Call all callbacks with the given context and arguments
                     fireWith: function(context, args) {
@@ -1017,10 +956,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     fire: function() {
                         self.fireWith(this, arguments);
                         return this;
-                    },
-                    // To know if the callbacks have already been called at least once
-                    fired: function() {
-                        return !!fired;
                     }
                 };
 
