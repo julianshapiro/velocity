@@ -1214,8 +1214,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             ***************************/
 
             var element = this,
-                /* The runtime opts object is the extension of the current call's options, the element's HTML-defined option defaults (via the "data" attribute), and Velocity's page-wide option defaults. */ 
-                opts = $.extend({}, $.fn.velocity.defaults, $.data(element, "uiVelocityOptions"), options),
+                /* The runtime opts object is the extension of the current call's options and Velocity's page-wide option defaults. */ 
+                opts = $.extend({}, $.fn.velocity.defaults, options),
                 /* A container for the processed data associated with each property in the propertyMap. (Each property in the map produces its own "tween".) */
                 tweensContainer = {};
 
