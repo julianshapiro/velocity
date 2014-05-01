@@ -17,7 +17,7 @@ Velocity's workflow: http://css-tricks.com/improving-ui-animation-workflow-veloc
 
 Velocity's speed: http://davidwalsh.name/css-js-animation
 
-Velocity codecast: https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
+Velocity's codecast: https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
 
 ========
 
