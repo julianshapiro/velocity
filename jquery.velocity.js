@@ -250,8 +250,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     /* Crawl all same-domain stylesheets for classes formatted as .animate_{name}. Store matches onto $.velocity.Classes.extracted for reference during runtime, e.g. $element.velocity("name", optionsObject). */
     /* Extraction involves processing flattened cssText strings for each CSS rule, such as ".animate_{name} { width: 100 }" then appending an object onto $.velocity.Classes with a name equal to the Name and
        property:value pairs equal to the rule's property map. */
-    /* Note: To reduce overhead, extraction occurs once -- when Velocity's script is loaded. Thus, either ensure that the relevant stylesheets are parsed before Velocity, or manually force a re-extraction at
-       any point by calling $.velocity.Classes.extract(). */
+    /* Note: To avoid triggering unwanted extraction overhead, extraction must be triggered manually -- by calling $.velocity.Classes.extract(). (Note: Ensure that the relevant stylesheets have first been parsed by the browser.)
     /* Note: Whereas jQuery UI's class animation works by momentarily apply the class to an element then diffing the results to attain properly cascaded values, Velocity treats the class a literal property map
        container in order to avoid the layout thrashing associated with CSS value diffing. Thus, Velocity does not respect the hierarchical selector position of the .animate_{name} classes that it extracts. */
     /* Note: Browsers do not parse classes defined in the <head> element the same way they do stylesheet classes. Avoid setting styles inside HTML. */
@@ -329,8 +328,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         return extracted;
     };
-
-    $.velocity.Classes.extract();
 
     /*****************
         CSS Stack
@@ -1332,7 +1329,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             /* When a set of elements is targeted by a Velocity call, the set is broken up and each element has the current Velocity call individually queued onto it.
                In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
             /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
-               the call array is pushed to $.velocity.State.calls for live processing by the RAF tick. */
+               the call array is pushed to $.velocity.State.calls for live processing by the requestAnimationFrame tick. */
             $.queue(element, opts.queue, function(next) {
                 /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
                 $.velocity.queueEntryFlag = true;
