@@ -1,7 +1,9 @@
 Velocity.js
 ========
 
-**Documentation**: http://VelocityJS.org
+**Documentation:**
+
+http://VelocityJS.org
 
 **Try it out:**
 
