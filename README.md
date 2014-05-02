@@ -3,7 +3,7 @@ Velocity.js
 
 **Documentation**: http://VelocityJS.org
 
-**MIT License.**
+MIT License.
 
 Velocity is undergoing testing. Full release (including test suite) is scheduled for May 5th.
 
