@@ -2,12 +2,11 @@ Velocity.js
 ========
 
 **Documentation**: http://VelocityJS.org
+**Try it out:** `<script src="//oss.maxcdn.com/jquery.velocity/0.0.0/jquery.velocity.min.js"></script>`
 
 Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 5th.
 
 Star the repo and check back shortly for updates.
-
-**Try it out:** `<script src="//oss.maxcdn.com/jquery.velocity/0.0.0/jquery.velocity.min.js"></script>`
 
 **Want to learn more?**
 
