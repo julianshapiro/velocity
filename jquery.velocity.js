@@ -53,7 +53,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 - Library integration
 */
 
-;(function (window, document, undefined) {
+;(function (global, document, undefined) {
 
     /*********************
        Helper Functions
@@ -127,10 +127,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     /* The following jQuery fallback drops most of the library checks for IE < 9, notably by using some of Zepto's functions. */
     if (IE <= 7 || (IE <= 8 && !window.jQuery)) {
         /* Revert to $.animate() and abort this Velocity declaration. */
-        window.velocity = window.jQuery.fn.animate;
+        global.velocity = window.jQuery.fn.animate;
 
         return;
-    } else if (window.velocity !== undefined) {
+    } else if (global.velocity !== undefined) {
         console.log("Velocity is already loaded or its namespace is occupied.");
 
         return;
@@ -1743,7 +1743,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
             var element = this,
                 /* The runtime opts object is the extension of the current call's options and Velocity's page-wide option defaults. */ 
-                opts = $.extend({}, window.velocity.defaults, options),
+                opts = $.extend({}, global.velocity.defaults, options),
                 /* A container for the processed data associated with each property in the propertyMap. (Each property in the map produces its own "tween".) */
                 tweensContainer = {};
 
@@ -1805,7 +1805,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
                 default:
                     /* Remove the value's potential "ms" suffix and default to a non-zero value (which is never intended -- if it actually is intended, the user needs to rethink their animation approach). */
-                    opts.duration = parseFloat(opts.duration) || parseFloat(window.velocity.defaults.duration) || 400;
+                    opts.duration = parseFloat(opts.duration) || parseFloat(global.velocity.defaults.duration) || 400;
             }
 
             /********************
@@ -1815,8 +1815,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             /* Ensure that the passed in easing has been assigned to jQuery's velocity.Easings object (which Velocity also uses as its easings container). */
             if (!velocity.Easings[opts.easing]) {
                 /* If the passed in easing is not supported, default to the easing in Velocity's page-wide defaults object so long as its supported (it may have been reassigned by the user). */
-                if (velocity.Easings[window.velocity.defaults.easing]) {
-                    opts.easing = window.velocity.defaults.easing;
+                if (velocity.Easings[global.velocity.defaults.easing]) {
+                    opts.easing = global.velocity.defaults.easing;
                 /* Otherwise, revert to default spring (swift might not be decalred) */
                 } else {
                     opts.easing = "spring";
@@ -2488,7 +2488,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         /* The loop option accepts an integer indicating how many times the element should loop between the values in the current call's properties map and the element's property values prior to this call. */
         /* The loop option's logic is performed here -- after element processing -- because the current call needs to undergo its queue insertion prior to the loop option generating its series of constituent "reverse" calls,
            which chain after the current call. Two reverse calls (two "alternations") constitute one loop. */
-        var opts = $.extend({}, window.velocity.defaults, options);
+        var opts = $.extend({}, global.velocity.defaults, options);
         opts.loop = parseInt(opts.loop);
 
         if (opts.loop) {
@@ -2780,27 +2780,25 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         }
     }
 
-    window.velocity = velocity;
+    global.velocity = velocity;
 
     /****************
     Library integration
      ****************/
     if(window.jQuery) {
-        window.jQuery.velocity = velocity;
         window.jQuery.fn.velocity = velocity.animate;
         window.jQuery.easing = velocity.Easings;
     } else if(window.Zepto) {
-        window.Zepto.velocity = velocity;
         window.Zepto.fn.velocity = velocity.animate;
     }
-})(window, document);
+})(window.jQuery || window.Zepto || window, document);
 
 /***************
     Defaults
 ***************/
 
 /* Page-wide option defaults, which can be overridden by the user. */
-window.velocity.defaults = {
+(window.jQuery || window.Zepto || window).velocity.defaults = {
     queue: "",
     duration: 400,
     easing: "spring",
