@@ -9,8 +9,6 @@ Velocity.js
 
 Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 5th.
 
-Star the repo and check back shortly for updates.
-
 Velocity's workflow: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
 Velocity's speed: http://davidwalsh.name/css-js-animation
