@@ -3,8 +3,6 @@ Velocity.js
 
 **Documentation**: http://VelocityJS.org
 
-MIT License.
-
 Velocity is undergoing testing. Full release (including test suite) is scheduled for May 5th.
 
 Star the repo and check back shortly for updates.
@@ -32,3 +30,6 @@ As for Velocity, its focus is on being a very lightweight, very fast tool for dr
 
 With each of these solutions, we're comparing options that are the product of nothing but pure love -- for performance and for the Web. Enjoy them for what they are. Choose whichever is best suited to your task at-hand.
 
+========
+
+MIT License.
