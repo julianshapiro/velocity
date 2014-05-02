@@ -32,4 +32,4 @@ With each of these solutions, we're comparing options that are the product of no
 
 ========
 
-MIT License.
+**MIT License.**
