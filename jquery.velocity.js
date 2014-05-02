@@ -19,7 +19,7 @@ Velocity recreates the entirety of jQuery's CSS stack and builds a concise anima
 Whenever Velocity triggers a DOM query (a GET) or a DOM update (a SET), a comment indicating as much is placed next to the offending line of code.
 Watch these talks to learn about the nuances of DOM performance: https://www.youtube.com/watch?v=cmZqLzPy0XE and https://www.youtube.com/watch?v=n8ep4leoN9A
 
-Velocity is structured into five sections: Setup, CSS Stack, $.fn.velocity (divided into Pre-Queueing, Queueing, and Pushing), Tick, and completeCall.
+Velocity is structured into four sections:
 - CSS Stack: Works independently from the rest of Velocity.
 - $.fn.velocity is the jQuery object extension that, when triggered, iterates over the targeted element set and queues the incoming Velocity animation onto each element individually. This process consists of:
   - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options argument.
@@ -29,7 +29,7 @@ Velocity is structured into five sections: Setup, CSS Stack, $.fn.velocity (divi
 - completeCall: Handles the cleanup process for each Velocity call.
 
 To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for all queuing logic. This has the byproduct of slightly bloating our codebase since $.queue()'s behavior is not straightforward.
-The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for CSS properties that consist of multiple subvalues (e.g. "textShadow: 0px 0px 0px black" and "transform: skew(45) scale(1.5)").
+The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for animating compound-value CSS properties (e.g. "textShadow: 0px 0px 0px black" and "transform: skew(45) scale(1.5)").
 */
 
 /*****************
@@ -228,6 +228,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         },
         /* Velocity's full re-implementation of jQuery's CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
+        /* Container for custom animation sequences that are referenced by name via Velocity's first argument (instead of passing in a properties map). */
+        Sequences: {
+            /* Manually extended by the user. */
+        },
         /* Utility function's alias of $.fn.velocity(). Used for raw DOM element animation. */
         animate: function () { /* Defined below. */ },
         /* Set to 1 or 2 (most verbose) to log debug info to console. */
@@ -250,8 +254,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     /* Crawl all same-domain stylesheets for classes formatted as .animate_{name}. Store matches onto $.velocity.Classes.extracted for reference during runtime, e.g. $element.velocity("name", optionsObject). */
     /* Extraction involves processing flattened cssText strings for each CSS rule, such as ".animate_{name} { width: 100 }" then appending an object onto $.velocity.Classes with a name equal to the Name and
        property:value pairs equal to the rule's property map. */
-    /* Note: To reduce overhead, extraction occurs once -- when Velocity's script is loaded. Thus, either ensure that the relevant stylesheets are parsed before Velocity, or manually force a re-extraction at
-       any point by calling $.velocity.Classes.extract(). */
+    /* Note: To avoid triggering unwanted extraction overhead, extraction must be triggered manually -- by calling $.velocity.Classes.extract(). (Note: Ensure that the relevant stylesheets have first been parsed by the browser.)
     /* Note: Whereas jQuery UI's class animation works by momentarily apply the class to an element then diffing the results to attain properly cascaded values, Velocity treats the class a literal property map
        container in order to avoid the layout thrashing associated with CSS value diffing. Thus, Velocity does not respect the hierarchical selector position of the .animate_{name} classes that it extracts. */
     /* Note: Browsers do not parse classes defined in the <head> element the same way they do stylesheet classes. Avoid setting styles inside HTML. */
@@ -329,8 +332,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         return extracted;
     };
-
-    $.velocity.Classes.extract();
 
     /*****************
         CSS Stack
@@ -1112,7 +1113,12 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* Treat a plain, non-empty object as a literal properties map. */
                 if ($.isPlainObject(propertiesMap) && !$.isEmptyObject(propertiesMap)) {
                     action = "start";
-                /* Treat a string as a CSS class reference. (See CSS Class Extraction above.) */
+                /* If this first argument is a string, check if it matches a user-defined sequence. (See Sequences above.) */
+                } else if (typeof propertiesMap === "string" && $.velocity.Sequences[propertiesMap]) {
+                    $.velocity.Sequences[propertiesMap].call(elements, options);
+
+                    return true;
+                /* Otherwise, check if the string matches an extracted CSS class. (See CSS Class Extraction above.) */
                 } else if (typeof propertiesMap === "string" && $.velocity.Classes.extracted[propertiesMap]) {
                     /* Assign the map to that of the extracted CSS class being referenced. */
                     propertiesMap = $.velocity.Classes.extracted[propertiesMap];
@@ -1212,8 +1218,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             ***************************/
 
             var element = this,
-                /* The runtime opts object is the extension of the current call's options, the element's HTML-defined option defaults (via the "data" attribute), and Velocity's page-wide option defaults. */ 
-                opts = $.extend({}, $.fn.velocity.defaults, $.data(element, "uiVelocityOptions"), options),
+                /* The runtime opts object is the extension of the current call's options and Velocity's page-wide option defaults. */ 
+                opts = $.extend({}, $.fn.velocity.defaults, options),
                 /* A container for the processed data associated with each property in the propertyMap. (Each property in the map produces its own "tween".) */
                 tweensContainer = {};
 
@@ -1332,7 +1338,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             /* When a set of elements is targeted by a Velocity call, the set is broken up and each element has the current Velocity call individually queued onto it.
                In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
             /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
-               the call array is pushed to $.velocity.State.calls for live processing by the RAF tick. */
+               the call array is pushed to $.velocity.State.calls for live processing by the requestAnimationFrame tick. */
             $.queue(element, opts.queue, function(next) {
                 /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
                 $.velocity.queueEntryFlag = true;
@@ -1499,8 +1505,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     /* Create a tween out of each property, and append its associated data to tweensContainer. */
                     for (var property in propertiesMap) {
                         /* Normalize property names via camel casing so that properties can be consistently manipulated. */
-                        property = CSS.Names.camelCase(property);
-
                         /**************************
                            Start Value Sourcing
                         **************************/
@@ -1510,6 +1514,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             endValue = valueData[0],
                             easing = valueData[1],
                             startValue = valueData[2];
+
+                        /* Now that the original property name's format has been used for the parsePropertyValue() lookup above, we force the property to its camelCase styling to normalize it for manipulation. */
+                        property = CSS.Names.camelCase(property);
 
                         /* In case this property is a hook, there are circumstances where we will intend to work on the hook's root property and not the hooked subproperty. */
                         var rootProperty = CSS.Hooks.getRoot(property),
@@ -2079,17 +2086,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             /* Otherwise, calculate currentValue based on the current delta from startValue. */
                             } else {
                                 currentValue = tween.startValue + ((tween.endValue - tween.startValue) * $.easing[tween.easing](percentComplete));
-
-                                /* So long as we're away from the edges of the tween (where frame dropping is hyper-perceptible by users), skip updating styles that have changed less than 0.05% from their previous value if:
-                                   1) We're not tweening transform translations, which produce visually perceptible changes even at extremely small changes due to their subpixel rendering or
-                                   2) We're working with a relative unit whose appearingly "minor" changes can compound relative to their base values. */ 
-                                /* Note: This optimization only winds up having an effect on animations with medium-to-long durations since these circumstances often produce value increments that are less than 0.05%. */
-                                if (!/translate/i.test(property) && (percentComplete > 0.20 && percentComplete < 0.80) && (tween.unitType === "px" || tween.unitType === "")) {
-                                    /* If the absolute difference between the property's newly-calculated currentValue and its previous currentValue is less than 0.05%, break out of this loop to avoid updating this property. */
-                                    if (Math.abs((currentValue - lastCurrentValue) / lastCurrentValue) < 0.005) {
-                                        break;
-                                    }
-                                }
                             }
 
                             /* If style updating wasn't skipped, store the new currentValue onto the call cache. */
@@ -2147,7 +2143,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         mobileHA
                     ****************/
 
-                    /* If mobileHA is enabled, set the translate3d transform to null to force hardware acceleration. It's safe to override this property since Velocity doesn't naturally support its animation (hooks are used in its place). */
+                    /* If mobileHA is enabled, set the translate3d transform to null to force hardware acceleration. It's safe to override this property since Velocity doesn't actually support its animation (hooks are used in its place). */
                     if (opts.mobileHA) {
                         /* Don't set the null transform hack if we've already done so. */
                         if ($.data(element, NAME).transformCache.translate3d === undefined) {
@@ -2266,7 +2262,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 ***************/
 
 /* Page-wide option defaults, which can be overriden by the user. */
-$.fn.velocity.defaults = {
+jQuery.fn.velocity.defaults = {
     queue: "",
     duration: 400,
     easing: "swing",
