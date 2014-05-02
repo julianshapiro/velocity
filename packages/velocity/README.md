@@ -3,6 +3,8 @@ Velocity.js
 
 **Documentation**: http://VelocityJS.org
 
+**MIT License.**
+
 Velocity is undergoing testing. Full release (including test suite) is scheduled for May 5th.
 
 Star the repo and check back shortly for updates.
@@ -18,8 +20,6 @@ Velocity's workflow: http://css-tricks.com/improving-ui-animation-workflow-veloc
 Velocity's speed: http://davidwalsh.name/css-js-animation
 
 Velocity's codecast: https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
-
-**MIT License.**
 
 ========
 **Comparisons**
