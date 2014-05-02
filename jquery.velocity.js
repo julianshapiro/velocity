@@ -719,9 +719,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     /* Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
     (function () {
         var baseEasings = {};
-        velocity.easing = {};
+        velocity.Easings = {};
         if(window.jQuery) {
-            velocity.easing = window.jQuery.easing;
+            velocity.Easings = window.jQuery.easing;
         }
 
         $.each(["Quad", "Cubic", "Quart", "Quint", "Expo"], function(i, name) {
@@ -754,11 +754,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         });
 
         $.each(baseEasings, function(name, easeIn) {
-            velocity.easing["easeIn" + name] = easeIn;
-            velocity.easing["easeOut" + name] = function(p) {
+            velocity.Easings["easeIn" + name] = easeIn;
+            velocity.Easings["easeOut" + name] = function(p) {
                 return 1 - easeIn(1 - p);
             };
-            velocity.easing["easeInOut" + name] = function(p) {
+            velocity.Easings["easeInOut" + name] = function(p) {
                 return p < 0.5 ?
                     easeIn(p * 2) / 2 :
                     1 - easeIn(p * -2 + 2) / 2;
@@ -766,7 +766,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         });
 
         /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
-        velocity.easing["spring"] = function(p) {
+        velocity.Easings["spring"] = function(p) {
             return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
         };
     })();
@@ -1812,14 +1812,14 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                Option: Easing
             ********************/
 
-            /* Ensure that the passed in easing has been assigned to jQuery's velocity.easing object (which Velocity also uses as its easings container). */
-            if (!velocity.easing[opts.easing]) {
+            /* Ensure that the passed in easing has been assigned to jQuery's velocity.Easings object (which Velocity also uses as its easings container). */
+            if (!velocity.Easings[opts.easing]) {
                 /* If the passed in easing is not supported, default to the easing in Velocity's page-wide defaults object so long as its supported (it may have been reassigned by the user). */
-                if (velocity.easing[window.velocity.defaults.easing]) {
+                if (velocity.Easings[window.velocity.defaults.easing]) {
                     opts.easing = window.velocity.defaults.easing;
-                /* Otherwise, revert to jQuery's default easing type of "swing". */
+                /* Otherwise, revert to default spring (swift might not be decalred) */
                 } else {
-                    opts.easing = "swing";
+                    opts.easing = "spring";
                 }
             }
 
@@ -1995,8 +1995,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                 startValue = valueData[1];
                             /* Two or three-item array: If the second item is a string, treat it as an easing. */
                             } else if (typeof valueData[1] === "string") {
-                                /* Only use this easing if it's been registered on velocity.easing. */
-                                if (velocity.easing[valueData[1]] !== undefined) {
+                                /* Only use this easing if it's been registered on velocity.Easings. */
+                                if (velocity.Easings[valueData[1]] !== undefined) {
                                     easing = valueData[1];
                                 }
 
@@ -2609,7 +2609,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                 currentValue = tween.endValue;
                             /* Otherwise, calculate currentValue based on the current delta from startValue. */
                             } else {
-                                currentValue = tween.startValue + ((tween.endValue - tween.startValue) * velocity.easing[tween.easing](percentComplete));
+                                currentValue = tween.startValue + ((tween.endValue - tween.startValue) * velocity.Easings[tween.easing](percentComplete));
                             }
 
                             /* If style updating wasn't skipped, store the new currentValue onto the call cache. */
@@ -2788,7 +2788,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     if(window.jQuery) {
         window.jQuery.velocity = velocity;
         window.jQuery.fn.velocity = velocity.animate;
-        window.jQuery.easing = velocity.easing;
+        window.jQuery.easing = velocity.Easings;
     } else if(window.Zepto) {
         window.Zepto.velocity = velocity;
         window.Zepto.fn.velocity = velocity.animate;
@@ -2803,7 +2803,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 window.velocity.defaults = {
     queue: "",
     duration: 400,
-    easing: "swing",
+    easing: "spring",
     complete: null,
     display: null,
     loop: false,
