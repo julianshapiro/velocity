@@ -19,6 +19,8 @@ Velocity's speed: http://davidwalsh.name/css-js-animation
 
 Velocity's codecast: https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
 
+**MIT License.**
+
 ========
 
 **Comparisons**
@@ -31,6 +33,3 @@ As for Velocity, its focus is on being a very lightweight, very fast tool for dr
 
 With each of these solutions, we're comparing options that are the product of nothing but pure love -- for performance and for the Web. Enjoy them for what they are. Choose whichever is best suited to your task at-hand.
 
-========
-
-**MIT License.**
