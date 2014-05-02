@@ -23,7 +23,6 @@ Velocity's codecast: https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
 **MIT License.**
 
 ========
-
 **Comparisons**
 
 Famo.us is a full-fledged app framework built around a physics engine. It has the potential to beat all DOM-based animation libraries in terms of performance. The amount of work Steve Newcomb and Mark Lu have put into vertically integrating the Famous development stack is astounding.
