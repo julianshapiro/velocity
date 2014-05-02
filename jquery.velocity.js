@@ -719,7 +719,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     /* Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
     (function () {
         var baseEasings = {};
-        velocity.easing = window.jQuery.easing || {};
+        velocity.easing = {};
+        if(window.jQuery) {
+            velocity.easing = window.jQuery.easing;
+        }
 
         $.each(["Quad", "Cubic", "Quart", "Quint", "Expo"], function(i, name) {
             baseEasings[name] = function(p) {
