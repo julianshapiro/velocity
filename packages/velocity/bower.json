@@ -1,0 +1,23 @@
+{
+  "name": "Velocity.js",
+  "version": "0.0.0",
+  "homepage": "https://github.com/julianshapiro/velocity",
+  "authors": [
+    "Julian Shapiro"
+  ],
+  "description": "Accelerated JavaScript animation.",
+  "main": "./jquery.velocity.js",
+  "keywords": [
+    "jQuery",
+    "animation"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "jquery": "*"
+  }
+}
