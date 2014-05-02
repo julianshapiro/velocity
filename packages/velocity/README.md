@@ -9,8 +9,6 @@ Velocity is undergoing its final stage of testing. Full release (including test 
 
 Star the repo and check back shortly for updates.
 
-**Want to learn more?**
-
 Velocity's workflow: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
 Velocity's speed: http://davidwalsh.name/css-js-animation
