@@ -9,13 +9,13 @@ http://VelocityJS.org
 
 `<script src="//oss.maxcdn.com/jquery.velocity/0.0.0/jquery.velocity.min.js"></script>`
 
-Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 5th.
-
 Velocity's workflow: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
 Velocity's speed: http://davidwalsh.name/css-js-animation
 
 Velocity's codecast: https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
+
+*Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 5th.*
 
 ========
 **Comparisons**
