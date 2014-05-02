@@ -7,9 +7,7 @@ Velocity is undergoing its final stage of testing. Full release (including test 
 
 Star the repo and check back shortly for updates.
 
-**Try it out:**
-
-`<script src="//oss.maxcdn.com/jquery.velocity/0.0.0/jquery.velocity.min.js"></script>`
+**Try it out:** `<script src="//oss.maxcdn.com/jquery.velocity/0.0.0/jquery.velocity.min.js"></script>`
 
 **Want to learn more?**
 
