@@ -1589,7 +1589,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         **************************/
 
         /* When Velocity is called via the utility function, elements are explicitly passed in as the first parameter. Thus, argument positioning can vary. We normalize them here. */
-        var isJquery,
+        var isWrapped,
             elements,
             propertiesMap,
             options,
@@ -1597,20 +1597,24 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             opt3;
 
         /* Detect jQuery elements by checking for the "jquery" property on the element or element set. */
-        if (this.jquery) {
-            isJquery = true;
+        if (this.jquery || arguments[0].jquery ||
+            window.Zepto && (window.Zepto.zepto.isZ(this) || window.Zepto.zepto.isZ(arguments[0]))) {
+            isWrapped = true;
+            /* Otherwise, raw elements are being animated via the utility function. */
+        } else {
+            isWrapped = false;
+        }
 
+        /* We assume that all the arguments were given, and if one is missing, it means the elements are actually the context. */
+        if(arguments.length < 3) {
             elements = this;
             propertiesMap = arguments[0];
             options = arguments[1];
-        /* Otherwise, raw elements are being animated via the utility function. */
         } else {
-            isJquery = false;
-
             elements = arguments[0];
             propertiesMap = arguments[1];
             options = arguments[2];
-        }        
+        }
 
         /**********************
            Action Detection
@@ -1665,7 +1669,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         /* Note: Although argument overloading is an incredibly sloppy practice in JavaScript, support is included so that $.velocity() can act as a drop-in replacement for $.animate(). */
         if (action !== "stop" && typeof options !== "object") {
             /* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
-            var startingArgumentPosition = isJquery ? 1 : 2;
+            var startingArgumentPosition = isWrapped ? 1 : 2;
 
             options = {};
 
@@ -2469,8 +2473,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         **************************/ 
 
         /* Determine elements' type, then individually process each element in the set via processElement(). */
-        if (isJquery) {
-            elements.each(processElement);
+        if (isWrapped) {
+            $.each(elements, processElement);
         /* Check if this is a single raw DOM element by sniffing for a nodeType property. */
         } else if (elements.nodeType) {
             processElement.call(elements);
@@ -2496,7 +2500,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             for (var x = 0; x < (opts.loop * 2) - 1; x++) {
                 /* Since the logic for the reverse action occurs inside Queueing and thus this call's options object isn't parsed until then as well, the current call's delay option must be explicitly passed
                    into the reverse call so that the delay logic that occurs inside *Pre-Queueing* can process this delay. */
-                if (isJquery) {
+                if (isWrapped) {
                     elements.velocity("reverse", { delay: opts.delay });
                 } else {
                     velocity.animate(elements, "reverse", { delay: opts.delay });
