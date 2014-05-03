@@ -968,15 +968,20 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         },
 
         /* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
-        setPropertyValue: function(element, property, propertyValue, rootPropertyValue) {
+        setPropertyValue: function(element, property, propertyValue, rootPropertyValue, scrollContainer) {
             var propertyName = property;    
 
-            /* In order to be subjected to call options and element queueing, the scroll action's tweening is routed through Velocity as if it were a standard CSS property. We handle its special case here. */
-            /* Note: The browser's horizontal scroll position will be reset to 0. */
+            /* In order to be subjected to call options and element queueing, scroll animation is routed through Velocity as if it were a standard CSS property. */
             if (property === "scroll") {
-                window.scrollTo(null, propertyValue);
+                /* If a scrollContainer option is present, scroll the container instead of the browser window. */
+                if (scrollContainer) {
+                    scrollContainer.scrollTop = propertyValue;
+                /* Otherwise, Velocity defaults to scrolling the browser window. */
+                } else {
+                    /* Note: When scrolling the browser window, the horizontal scroll position is reset to 0; Velocity does not support horizontal scroll animation. */
+                    window.scrollTo(null, propertyValue);
+                }
             } else {
-
                 /* Transforms (translateX, rotateZ, etc.) are applied to a per-element transformCache object, which is manually flushed via flushTransformCache(). Thus, for now, we merely cache transforms being SET. */
                 if (CSS.Normalizations.registered[property] && CSS.Normalizations.registered[property]("name", element) === "transform") {
                     /* Perform a normalization injection. */
@@ -1347,12 +1352,38 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                    Tween Data Construction (for Scroll)
                 *****************************************/
 
-                /* Note: In order to be subjected to call options and element queueing, the scroll action's tweening is routed through Velocity as if it were a standard CSS property animation. */
+                /* Note: In order to be subjected to chaining and animation options, scroll's tweening is routed through Velocity as if it were a standard CSS property animation. */
                 if (action === "scroll") {   
-                    /* Note: Unlike other properties animated with Velocity, the browser's scroll position is never cached since it continuously changes due to the user's interaction with the page. */
-                    var scrollPositionCurrent = $.velocity.State.scrollAnchor[$.velocity.State.scrollProperty],
-                        /* The scroll action optionally takes a unique "offset" option, specified in pixels, which offsets the target scroll position. */
-                        scrollOffset = parseFloat(opts.offset) || 0;
+                    /* The scroll action uniquely takes an optional "offset" option -- specified in pixels -- that offsets the targeted scroll position. */
+                    var scrollOffset = parseFloat(opts.offset) || 0,
+                        scrollPositionCurrent,
+                        scrollPositionEnd;
+
+                    /* Scroll also uniquely takes an optional "container" option, which indicates the parent element that should be scrolled -- as opposed to the browser window itself.
+                       This is useful for scrolling toward an element that's inside an overflowing parent element. */
+                    if (opts.container) {
+                        /* Ensure that either a jQuery object or a raw DOM element was passed in. */
+                        if (opts.container.jquery || opts.container.nodeType) {
+                            /* Extract the raw DOM element from the jQuery wrapper. */
+                            opts.container = opts.container[0] || opts.container;
+                            /* Note: Unlike all other properties in Velocity, the browser's scroll position is never cached since it so frequently changes (due to the user's natural interaction with the page). */
+                            scrollPositionCurrent = opts.container.scrollTop; /* GET */
+
+                            /* $.position() values are relative to the container's currently viewable area (without taking into account the container's true dimensions -- say, for example, if the container was not overflowing).
+                               Thus, the scroll end value is the sum of the child element's position *and* the scroll container's current scroll position. */
+                            /* Note: jQuery does not offer a utility alias for $.position(), so we have to incur jQuery object conversion here. This syncs up with an ensuing batch of GETs, so it fortunately does not produce layout thrashing. */
+                            scrollPositionEnd = (scrollPositionCurrent + $(element).position().top) + scrollOffset; /* GET */
+                        /* If a value other than a jQuery object or a raw DOM element was passed in, default to null so that this option is ignored. */
+                        } else {
+                            opts.container = null;
+                        }
+                    } else {
+                        /* If the window itself is being scrolled -- not a containing element -- perform a live scroll position lookup using the appropriate cached property names (which differ based on browser type). */
+                        scrollPositionCurrent = $.velocity.State.scrollAnchor[$.velocity.State.scrollProperty]; /* GET */
+
+                        /* Unlike $.position(), $.offset() values are relative to the browser window's true dimensions -- not merely its currently viewable area -- and therefore end values do not need to be compounded onto current values. */
+                        scrollPositionEnd = $(element).offset().top + scrollOffset; /* GET */
+                    }
 
                     /* Since there's only one format that scroll's associated tweensContainer can take, we create it manually. */
                     tweensContainer = {
@@ -1360,10 +1391,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             rootPropertyValue: false,
                             startValue: scrollPositionCurrent,
                             currentValue: scrollPositionCurrent,
-                            /* jQuery does not offer a utility alias for offset(), so we have to force jQuery object conversion here. This syncs up with an ensuing batch of GETs, so it thankfully does not trigger layout thrashing. */
-                            endValue: $(element).offset().top + scrollOffset, /* GET */
+                            endValue: scrollPositionEnd,
                             unitType: "",
-                            easing: opts.easing
+                            easing: opts.easing,
+                            scrollContainer: opts.container
                         },
                         element: element
                     };
@@ -2112,7 +2143,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             *****************/
 
                             /* setPropertyValue() returns an array of the property name and property value post any normalization that may have been performed. */
-                            var adjustedSetData = CSS.setPropertyValue(element, property, tween.currentValue + (currentValue === "auto" ? "" : tween.unitType), tween.rootPropertyValue); /* SET */
+                            var adjustedSetData = CSS.setPropertyValue(element, property, tween.currentValue + (currentValue === "auto" ? "" : tween.unitType), tween.rootPropertyValue, tween.scrollContainer); /* SET */
 
                             /*******************
                                Hooks: Part II
@@ -2280,3 +2311,4 @@ jQuery.fn.velocity.defaults = {
 ******************/
 
 /* When animating height or width to a % value on an element *without* box-sizing:border-box and *with* visible scrollbars on *both* axes, the opposite axis (e.g. height vs width) will be shortened by the height/width of its scrollbar. */
+/* The translateX/Y/Z subproperties of the transform CSS property are %-relative to the element itself -- not its parent. Velocity, however, doesn't make the distinction. Thus, converting to or from the % unit with these subproperties will produce an inaccurate conversion value. */
