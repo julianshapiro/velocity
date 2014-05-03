@@ -1379,8 +1379,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* IE<=8 doesn't support window.getComputedStyle, thus we defer to jQuery, which has an extensive array of hacks to accurately retrieve IE8 property values.
                    Re-implementing that logic here is not worth bloating the codebase for a dying browser. The performance repercussions of using jQuery here are minimal since
                    Velocity is optimized to rarely (and sometimes never) query the DOM. Further, the $.css() codepath isn't that slow. */
-                if (IE <= 8) {
-                    computedValue = $.css(element, property); /* GET */
+                if (IE <= 8 && (window.jQuery || window.Zepto)) {
+                    computedValue = (window.jQuery || window.Zepto).fn.css.call(element, property); /* GET */
                 /* All other browsers support getComputedStyle. The returned live object reference is cached onto its associated element so that it does not need to be refetched upon every GET. */
                 } else {
                     var computedStyle;
