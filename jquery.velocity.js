@@ -1078,20 +1078,23 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             opt3;
 
         /* Detect jQuery elements by checking for the "jquery" property on the element or element set. */
-        if (this.jquery) {
+        if (this.jquery || arguments[0].jquery) {
             isJquery = true;
-
-            elements = this;
-            propertiesMap = arguments[0];
-            options = arguments[1];
         /* Otherwise, raw elements are being animated via the utility function. */
         } else {
             isJquery = false;
+        }
 
+        /* We assume that all the arguments were given, and if one is missing, it means the elements are actually the context. */
+        if(arguments.length < 3) {
+            elements = this;
+            propertiesMap = arguments[0];
+            options = arguments[1];
+        } else {
             elements = arguments[0];
             propertiesMap = arguments[1];
             options = arguments[2];
-        }        
+        }
 
         /**********************
            Action Detection
