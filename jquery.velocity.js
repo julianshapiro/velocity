@@ -1073,9 +1073,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         var isJquery,
             elements,
             propertiesMap,
-            options,
-            opt2,
-            opt3;
+            options;
 
         /* Detect jQuery elements by checking for the "jquery" property on the element or element set. */
         if (this.jquery) {
@@ -1089,7 +1087,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             isJquery = false;
 
             /* To guard from user errors, extract the raw DOM element from the jQuery object if one was passed in to the utility function. */
-            elements = arguments[0][0] || arguments[0];
+            elements = arguments[0].jquery ? arguments[0].get() : arguments[0];
             propertiesMap = arguments[1];
             options = arguments[2];
         }    
