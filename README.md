@@ -9,7 +9,7 @@ http://VelocityJS.org
 
 `<script src="//oss.maxcdn.com/jquery.velocity/0.0.0/jquery.velocity.min.js"></script>`
 
-Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 5th.
+Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 10th.
 
 **Resources:**
 

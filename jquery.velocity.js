@@ -6,7 +6,7 @@
 * Velocity.js: Accelerated JavaScript animation.
 * @version 0.0.0
 * @requires jQuery.js
-* @docs julian.com/research/velocity
+* @docs VelocityJS.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */    
 
@@ -228,9 +228,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         },
         /* Velocity's full re-implementation of jQuery's CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
-        /* Container for custom animation sequences that are referenced by name via Velocity's first argument (instead of passing in a properties map). */
+        /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). */
         Sequences: {
-            /* Manually extended by the user. */
+            /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
         },
         /* Utility function's alias of $.fn.velocity(). Used for raw DOM element animation. */
         animate: function () { /* Defined below. */ },
@@ -238,7 +238,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         debug: false
     };
 
-    /* Retrieve the appropriate scroll anchor and property name for this browser. Learn more here: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
+    /* Retrieve the appropriate scroll anchor and property name for this browser. Learn more: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
     if (window.pageYOffset !== undefined) {
         $.velocity.State.scrollAnchor = window;
         $.velocity.State.scrollProperty = "pageYOffset";
@@ -1073,9 +1073,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         var isJquery,
             elements,
             propertiesMap,
-            options,
-            opt2,
-            opt3;
+            options;
 
         /* Detect jQuery elements by checking for the "jquery" property on the element or element set. */
         if (this.jquery) {
@@ -1088,10 +1086,15 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         } else {
             isJquery = false;
 
-            elements = arguments[0];
+            /* To guard from user errors, extract the raw DOM element from the jQuery object if one was passed in to the utility function. */
+            elements = arguments[0].jquery ? arguments[0].get() : arguments[0];
             propertiesMap = arguments[1];
             options = arguments[2];
-        }        
+        }    
+
+        /* The length of the targeted element set is defaulted to 1 in case a single raw DOM element is passed in (which doesn't contain a length property). */
+        var elementsLength = elements.length || 1,
+            elementsIndex = 0;    
 
         /**********************
            Action Detection
@@ -1115,24 +1118,29 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 break;
 
             default:
-                /* Treat a plain, non-empty object as a literal properties map. */
+                /* Treat a non-empty plain object as a literal properties map. */
                 if ($.isPlainObject(propertiesMap) && !$.isEmptyObject(propertiesMap)) {
                     action = "start";
-                /* If this first argument is a string, check if it matches a user-defined sequence. (See Sequences above.) */
+                /* Check if a string matches a registered sequence (see Sequences above). If so, trigger the sequence for each element in the set to prevent users from having to handle iteration logic in their sequence code. */
                 } else if (typeof propertiesMap === "string" && $.velocity.Sequences[propertiesMap]) {
-                    $.velocity.Sequences[propertiesMap].call(elements, options);
+                    $.each(elements, function(elementIndex, element) {
+                        /* Pass in the call's options object so that the sequence can optionally extend it. It defaults to an empty object instead of null to reduce the options checking logic required inside the sequence. */
+                        /* Note: The element is passed in as both the call's context and its first argument -- allowing for more expressive sequence declarations. */
+                        $.velocity.Sequences[propertiesMap].call(element, element, options || {}, elementIndex, elementsLength);
+                    });
 
-                    return true;
-                /* Otherwise, check if the string matches an extracted CSS class. (See CSS Class Extraction above.) */
+                    /* Since the animation logic resides within the sequence's own code, abort the remainder of this call. (The performance overhead up to this point is virtually non-existant.) */
+                    /* Note: The jQuery call chain is kept intact by returning the complete element set. */
+                    return elements;
                 } else if (typeof propertiesMap === "string" && $.velocity.Classes.extracted[propertiesMap]) {
-                    /* Assign the map to that of the extracted CSS class being referenced. */
+                    /* Assign the properties map to the map extracted from the referenced CSS class. */
                     propertiesMap = $.velocity.Classes.extracted[propertiesMap];
+
+                    /* Now that a properties map has been loaded, proceed with a standard Velocity animation. */
                     action = "start";
                 } else {
-                    /* Abort if the propertiesMap is of an unknown type or an unmatched CSS class. */
-                    if ($.velocity.debug) console.log("First argument was not a property map, a CSS class reference, or a known action. Aborting.")
+                    if ($.velocity.debug) console.log("First argument was not a property map, a known action, a CSS class, or a sequence. Aborting.")
                     
-                    /* Keep the jQuery call chain intact by returning the targeted elements. */
                     return elements;
                 }
         }
@@ -1168,10 +1176,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         /**************************
             Call-Wide Variables
         **************************/
-
-        /* The length of the targeted element set is defaulted to 1 in case a single raw DOM element is passed in (which doesn't contain a length property). */
-        var elementsLength = elements.length || 1,
-            elementsIndex = 0;
 
         /* A container for CSS unit conversion ratios (e.g. %, rem, and em ==> px) that is used to cache ratios across all properties being animated in a single Velocity call. 
            Calculating unit ratios necessitates DOM querying and updating, and is therefore avoided (via caching) wherever possible; further, ratios are only calculated when they're needed. */
@@ -1323,7 +1327,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                Option: Display
             ********************/
 
-            /* Refer to Velocity's documentation (julian.com/reserach/velocity/) for a description of the display option's behavior. */
+            /* Refer to Velocity's documentation (VelocityJS.org/#display) for a description of the display option's behavior. */
             if (opts.display) {
                 opts.display = opts.display.toLowerCase();
             }
@@ -1333,7 +1337,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             **********************/
 
             /* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack) on animating elements. HA is removed from the element at the completion of its animation. */
-            /* You can read more about the use of mobileHA in Velocity's documentation: julian.com/reserach/velocity/. */
+            /* You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
             opts.mobileHA = (opts.mobileHA && $.velocity.State.isMobile);
 
             /***********************
@@ -1486,7 +1490,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
                     /* This function parses property data and defaults endValue, easing, and startValue as appropriate. */
                     /* Property map values can either take the form of 1) a single value representing the end value, or 2) an array in the form of [ endValue, [, easing] [, startValue] ].
-                       The optional third parameter is a forcefed startValue to be used instead of querying the DOM for the element's current value. Read Velocity's docmentation to learn more about forcefeeding: julian.com/research/velocity/ */
+                       The optional third parameter is a forcefed startValue to be used instead of querying the DOM for the element's current value. Read Velocity's docmentation to learn more about forcefeeding: VelocityJS.org/#forcefeeding */
                     function parsePropertyValue (valueData) {
                         var endValue = undefined,
                             easing = undefined,
