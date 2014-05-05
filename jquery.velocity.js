@@ -42,7 +42,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 - Easings
 - Constants
 - Utility Function & State
-- CSS Class Extraction
 - CSS Stack
 - $.fn.velocity
   - Pre-Queueing
@@ -220,12 +219,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             /* Container for every in-progress call to Velocity. */
             calls: []
         },
-        Classes: {
-            /* Container for CSS classes extracted from the page's stylesheets. */
-            extracted: {},
-            /* Function to allow users to force stylesheet re-extraction. */
-            extract: function() { /* Defined below. */ }
-        },
         /* Velocity's full re-implementation of jQuery's CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
         /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). */
@@ -246,92 +239,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         $.velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
         $.velocity.State.scrollProperty = "scrollTop";
     }
-
-    /*************************
-       CSS Class Extraction
-    *************************/
-
-    /* Crawl all same-domain stylesheets for classes formatted as .animate_{name}. Store matches onto $.velocity.Classes.extracted for reference during runtime, e.g. $element.velocity("name", optionsObject). */
-    /* Extraction involves processing flattened cssText strings for each CSS rule, such as ".animate_{name} { width: 100 }" then appending an object onto $.velocity.Classes with a name equal to the Name and
-       property:value pairs equal to the rule's property map. */
-    /* Note: To avoid triggering unwanted extraction overhead, extraction must be triggered manually -- by calling $.velocity.Classes.extract(). (Note: Ensure that the relevant stylesheets have first been parsed by the browser.)
-    /* Note: Whereas jQuery UI's class animation works by momentarily apply the class to an element then diffing the results to attain properly cascaded values, Velocity treats the class a literal property map
-       container in order to avoid the layout thrashing associated with CSS value diffing. Thus, Velocity does not respect the hierarchical selector position of the .animate_{name} classes that it extracts. */
-    /* Note: Browsers do not parse classes defined in the <head> element the same way they do stylesheet classes. Avoid setting styles inside HTML. */
-    $.velocity.Classes.extract = function() {
-        var styleSheets = document.styleSheets,
-            extracted = {};
-
-        for (var i = 0, styleSheetsLength = styleSheets.length; i < styleSheetsLength; i++) {
-            var sheet = styleSheets[i],
-                rules;
-
-            /* Stylesheet crawling is wrapped in a try/catch since Firefox throws errors when accessing cross-domain stylesheets. Other browsers simply return null. */
-            try { 
-                if (!sheet.cssText && !sheet.cssRules) {
-                    /* <=IE8 stylesheets contain a cssText string. Other browsers contain a cssRules object. If a match contains neither, then the browser is returning null since we're accessing a cross-domain stylesheet. Skip this sheet. */
-                    continue;
-                }
-
-                /* <=IE8 return a giant, cocatenated cssText string that represents all classes defined in the stylesheet. To process this blob, newlines are removed then each rule is extracted via RegEx. */
-                /* Other browsers return the cssText object which can be iterated over but still requires a fair amount of RegEx to extract individual properties and values. */
-                if (sheet.cssText) {
-                    /* Note: A property with a closing curly bracket (}) in its value will break a match, but only URI's would permit this character and URI's aren't numeric values that we can animate, so this is not an issue. */
-                    /* Example RegEx behavior: http://regex101.com/r/wK9yA5 */
-                    rules = sheet.cssText.replace(/[\r\n]/g, "").match(/[^}]+\{[^{]+\}/g);
-                } else {
-                    rules = sheet.cssRules;
-                }
-
-                for (var j = 0, rulesLength = rules.length; j < rulesLength; j++) {
-                    var ruleText;
-
-                    /* For <=IE8, our rules object now consists of all CSS rules flattened into strings. For other browsers, each rules object is now a metadata container for the specific rule. To achieve parity with the IE8 rule, we work with the cssText property of the non-<=IE8 rule's metadata container, which is also a flattened string. */
-                    if (sheet.cssText) {
-                        ruleText = rules[j];
-                    /* Non-<=IE8 parse everything they can out of stylesheets, including declarations like "@charset UTF-8", which inherently have no cssText property to parse out. Thus, we ensure the existence of cssText. */
-                    } else if (rules[j].cssText) {
-                        ruleText = rules[j].cssText;
-                    } else {
-                        continue;
-                    }
-
-                    /* Match classes containing ".animate_" at the last selector position (e.g. ".animate_Name", "div.animate_Name", but not ".animate_Name p". */
-                    /* Example RegEx behavior: http://regex101.com/r/oX7gK3 */
-                    var animateClass = ruleText.match(/\.animate_([A-z0-9_-]+)(?:(\s+)?{)/);
-
-                    if (animateClass) {
-                        /* Extract the name after the underscore. */
-                        var className = animateClass[1],
-                            /* Extract the properties block then extract an array its property maps. */
-                            /* Example RegEx behavior: http://regex101.com/r/fI1tZ3 */
-                            /* Note: <=IE8 capitalize properties, so we normalize case. */
-                            propertiesMap = ruleText.toLowerCase().match(/\{([\S\s]*)\}/)[1].match(/[A-z-][^;]+/g);
-
-                        /* Only register this class on the classes container one time since we allow a class to be processed in aggregate across its numerous stylesheet declarations. Repeated properties overwrite their earlier values. */
-                        if (!extracted[className]) {
-                            extracted[className] = {};
-                        }
-
-                        for (var k = 0, propertiesMapLength = propertiesMap.length; k < propertiesMapLength; k++) {
-                            /* Separate the property's name from its value, and strip out the ": " characters in between. */
-                            var propertyMapParts = propertiesMap[k].match(/([^:]+):\s*(.+)/);
-
-                            /* Register this map (e.g. "width: 100") onto its class name. */
-                            extracted[className][propertyMapParts[1]] = propertyMapParts[2];
-                        }
-                    }
-                }
-                
-            } catch(e) { /* Do nothing. There's no workaround for cross-domain access prevention. */ }
-        }
-        
-        $.velocity.Classes.extracted = extracted;
-
-        if ($.velocity.debug) console.log("Classes: " + JSON.stringify($.velocity.Classes.extracted));
-
-        return extracted;
-    };
 
     /*****************
         CSS Stack
@@ -1132,14 +1039,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     /* Since the animation logic resides within the sequence's own code, abort the remainder of this call. (The performance overhead up to this point is virtually non-existant.) */
                     /* Note: The jQuery call chain is kept intact by returning the complete element set. */
                     return elements;
-                } else if (typeof propertiesMap === "string" && $.velocity.Classes.extracted[propertiesMap]) {
-                    /* Assign the properties map to the map extracted from the referenced CSS class. */
-                    propertiesMap = $.velocity.Classes.extracted[propertiesMap];
-
-                    /* Now that a properties map has been loaded, proceed with a standard Velocity animation. */
-                    action = "start";
                 } else {
-                    if ($.velocity.debug) console.log("First argument was not a property map, a known action, a CSS class, or a sequence. Aborting.")
+                    if ($.velocity.debug) console.log("First argument was not a property map, a known action, or a registered sequence. Aborting.")
                     
                     return elements;
                 }
