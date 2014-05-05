@@ -1253,6 +1253,15 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
                 $.velocity.queueEntryFlag = true;
 
+                /*******************
+                   Option: Begin
+                *******************/
+
+                /* The begin callback is fired once per call -- not once per elemenet -- and is passed the full element set as both its context and its first argument. */
+                if (elementsIndex === 0 && options && isFunction(options.begin)) {
+                    options.begin.call(elements, elements);
+                }
+
                 /*****************************************
                    Tween Data Construction (for Scroll)
                 *****************************************/
@@ -2151,6 +2160,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 }
             }
 
+            /* The complete callback is fired once per call -- not once per elemenet -- and is passed the full element set as both its context and its first argument. */
+            if ((i === callLength -1) && opts.complete) { 
+                opts.complete.call(elements, elements); 
+            }
+
             /* Fire the next call in the queue chain. */
             /* Note: Even if the end of the animation queue has been reached, $.dequeue() must still be called in order to completely clear jQuery's animation queue. */
             $.dequeue(element);
@@ -2179,16 +2193,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             /* Clear the calls array so that its length is reset. */
             delete $.velocity.State.calls;
             $.velocity.State.calls = [];
-        }
-
-        /****************
-            Callback
-        ****************/
-
-        /* Now that all logic associated with this call is complete, fire the optional callback. */
-        /* Note: The callback is fired once per call -- not once per elemenet -- and is passed the full element set as its context. */
-        if (opts.complete) { 
-            opts.complete.call(elements); 
         }
     }
 })(jQuery, window, document);
