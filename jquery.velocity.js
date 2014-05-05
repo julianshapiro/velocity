@@ -221,7 +221,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         },
         /* Velocity's full re-implementation of jQuery's CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
-        /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). */
+        /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). See VelocityJS.org/#sequences to learn more. */
         Sequences: {
             /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
         },
@@ -1676,13 +1676,13 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
                             /* The following pixel-value GETs cannot be batched with the prior GETs since they depend upon the values temporarily set immediately above; layout thrashing cannot be avoided here. */
                             if (!sameBasePercent) {
-                                /* Divide the returned value by the measurement value to get the ratio between 1% and 1px. */
-                                elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(element, "width", null, true)) || 0) / measurement; /* GET */
-                                elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(element, "height", null, true)) || 0) / measurement; /* GET */
+                                /* Divide the returned value by the measurement value to get the ratio between 1% and 1px. Default to 1 since conversion logic using 0 can produce Infinite. */
+                                elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(element, "width", null, true)) || 1) / measurement; /* GET */
+                                elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(element, "height", null, true)) || 1) / measurement; /* GET */
                             }
 
                             if (!sameBaseEm) {
-                                elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx = (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) / measurement; /* GET */
+                                elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx = (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 1) / measurement; /* GET */
                             }
 
                             /* Revert each test property to its original value. */
