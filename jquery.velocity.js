@@ -767,6 +767,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             };
         });
 
+        /* jQuery swing's, in case jQuery wasn't loaded, as it is our default easing. */
+        velocity.Easings["swing"] = velocity.Easings["swing"] || function(p) {
+            return 0.5 - Math.cos(p * Math.PI) / 2;
+        };
+
         /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
         velocity.Easings["spring"] = function(p) {
             return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
@@ -1737,9 +1742,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* If the passed in easing is not supported, default to the easing in Velocity's page-wide defaults object so long as its supported (it may have been reassigned by the user). */
                 if (velocity.Easings[global.velocity.defaults.easing]) {
                     opts.easing = global.velocity.defaults.easing;
-                /* Otherwise, revert to default spring (swift might not be decalred) */
+                /* Otherwise, revert to default swing */
                 } else {
-                    opts.easing = "spring";
+                    opts.easing = "swing";
                 }
             }
 
@@ -2749,7 +2754,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 (window.jQuery || window.Zepto || window).velocity.defaults = {
     queue: "",
     duration: 400,
-    easing: "spring",
+    easing: "swing",
     complete: null,
     display: null,
     loop: false,
