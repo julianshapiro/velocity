@@ -221,7 +221,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         /* Functions used in more than just one helper, so they weren't absorbed */
         $.isWindow = function (obj) {
-            /* jQuery original code. */
+            /* jQuery original code */
             /* jshint eqeqeq: false */
             return obj != null && obj == obj.window;
         };
@@ -1563,7 +1563,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 if ($.isPlainObject(propertiesMap) && !$.isEmptyObject(propertiesMap)) {
                     action = "start";
                 /* Check if a string matches a registered sequence (see Sequences above). If so, trigger the sequence for each element in the set to prevent users from having to handle iteration logic in their sequence code. */
-                } else if (typeof propertiesMap === "string" && $.velocity.Sequences[propertiesMap]) {
+                } else if (typeof propertiesMap === "string" && velocity.Sequences[propertiesMap]) {
                     $.each(elements, function(elementIndex, element) {
                         /* Pass in the call's options object so that the sequence can optionally extend it. It defaults to an empty object instead of null to reduce the options checking logic required inside the sequence. */
                         /* Note: The element is passed in as both the call's context and its first argument -- allowing for more expressive sequence declarations. */
