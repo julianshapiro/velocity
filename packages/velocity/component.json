@@ -17,7 +17,7 @@
   "license" : "MIT",
   "main": "./jquery.velocity.js",
   "scripts": [
-    "./jquery.velocity.js"
+    "jquery.velocity.js"
   ],
   "dependencies": {
     "jquery/jquery": "*"
