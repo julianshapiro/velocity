@@ -970,7 +970,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
     /* Simultaneously assign the jQuery plugin function ($elements.velocity()) and the utility alias ($.velocity.animate(elements)). */
     /* Note: The utility alias allows for the animation of raw (non-jQuery) DOM elements. */
-    $.fn.velocity = $.velocity.animate = function() {
+    $.fn.velocity = $.velocity.animate = function() {        
 
         /**************************
            Arguments Assignment
@@ -1002,6 +1002,34 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         /* The length of the targeted element set is defaulted to 1 in case a single raw DOM element is passed in (which doesn't contain a length property). */
         var elementsLength = elements.length || 1,
             elementsIndex = 0;    
+
+        /***************************
+            Argument Overloading
+        ***************************/
+
+        /* Support is included for jQuery's argument overloading: $.animate(propertyMap [, duration] [, easing] [, complete]). Overloading is detected by checking for the absence of an options object.
+           The stop action does not accept animation options, and is therefore excluded from this check. */
+        /* Note: Although argument overloading is an incredibly sloppy practice in JavaScript, support is included so that $.velocity() can act as a drop-in replacement for $.animate(). */
+        if (propertiesMap !== "stop" && typeof options !== "object") {
+            /* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
+            var startingArgumentPosition = isJquery ? 1 : 2;
+
+            options = {};
+
+            /* Iterate through all options arguments */
+            for (var i = startingArgumentPosition; i < arguments.length; i++) {
+                /* Treat a number as a duration. Parse it out. */
+                if (/^\d/.test(arguments[i])) {
+                    options.duration = parseFloat(arguments[i]);
+                /* Treat a string as an easing. Trim whitespace. */
+                } else if (typeof arguments[i] === "string") {
+                    options.easing = arguments[i].replace(/^\s+|\s+$/g, "");
+                /* Treat a function as a callback. */
+                } else if (isFunction(arguments[i])) {
+                    options.complete = arguments[i];
+                }
+            }
+        }
 
         /**********************
            Action Detection
@@ -1044,34 +1072,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     
                     return elements;
                 }
-        }
-
-        /***************************
-            Argument Overloading
-        ***************************/
-
-        /* Support is included for jQuery's argument overloading: $.animate(propertyMap [, duration] [, easing] [, complete]). Overloading is detected by checking for the absence of an options object.
-           The stop action does not accept animation options, and is therefore excluded from this check. */
-        /* Note: Although argument overloading is an incredibly sloppy practice in JavaScript, support is included so that $.velocity() can act as a drop-in replacement for $.animate(). */
-        if (action !== "stop" && typeof options !== "object") {
-            /* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
-            var startingArgumentPosition = isJquery ? 1 : 2;
-
-            options = {};
-
-            /* Iterate through all options arguments */
-            for (var i = startingArgumentPosition; i < arguments.length; i++) {
-                /* Treat a number as a duration. Parse it out. */
-                if (/^\d/.test(arguments[i])) {
-                    options.duration = parseFloat(arguments[i]);
-                /* Treat a string as an easing. Trim whitespace. */
-                } else if (typeof arguments[i] === "string") {
-                    options.easing = arguments[i].replace(/^\s+|\s+$/g, "");
-                /* Treat a function as a callback. */
-                } else if (isFunction(arguments[i])) {
-                    options.complete = arguments[i];
-                }
-            }
         }
 
         /**************************
@@ -1484,7 +1484,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         /* If values have been transferred from the previous Velocity call, extract the endValue and rootPropertyValue for all of the current call's properties that were *also* animated in the previous call. */
                         /* Note: Value transferring can optionally be disabled by the user via the _cacheValues option. */
                         if (opts._cacheValues && lastTweensContainer && lastTweensContainer[property]) {
-                            startValue = lastTweensContainer[property].endValue + lastTweensContainer[property].unitType;
+                            if (startValue === undefined) {
+                                startValue = lastTweensContainer[property].endValue + lastTweensContainer[property].unitType;
+                            }
                                     
                             /* The previous call's rootPropertyValue is extracted from the element's data cache since that's the instance of rootPropertyValue that gets freshly updated by the tweening process,
                                whereas the rootPropertyValue attached to the incoming lastTweensContainer is equal to the root property's value prior to any tweening. */
@@ -2211,8 +2213,96 @@ jQuery.fn.velocity.defaults = {
     loop: false,
     delay: false,
     mobileHA: true,
-    /* Advanced: Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
+    /* Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
     _cacheValues: true
+};
+
+/***********************
+   Packaged Sequences
+***********************/
+
+/* Slide Down: Draft #1 */
+jQuery.velocity.Sequences.slideDown = function(element, options) {
+    var originalValues = {
+            height: null,
+            marginTop: null,
+            marginBottom: null,
+            paddingTop: null,
+            paddingBottom: null
+        },
+        originalOverflows = {
+            overflow: null,
+            overflowY: null
+        };
+
+    var complete = options.complete;
+
+    options.delay = options.delay || 1;
+
+    options.begin = function() {
+        originalOverflows.overflow = jQuery.velocity.CSS.getPropertyValue(element, "overflow");
+        originalOverflows.overflowY = jQuery.velocity.CSS.getPropertyValue(element, "overflowY");
+
+        this.style.overflow = "hidden";
+        this.style.overflowY = "hidden";
+
+        element.style.height = "auto";
+        element.style.display = "block";
+
+        for (var property in originalValues) {
+            originalValues[property] = [ jQuery.velocity.CSS.getPropertyValue(element, property), 0 ];
+        }
+    };
+
+    options.complete = function() {
+        if (complete) {
+            complete.call(this, this);
+        }
+
+        this.style.overflow = originalOverflows.overflow;
+        this.style.overflowY = originalOverflows.overflowY;
+    };
+
+    jQuery.velocity.animate(element, originalValues, options);
+};
+
+/* Slide Up: Draft #1 */
+jQuery.velocity.Sequences.slideUp = function(element, options) {
+    var originalValues = {
+            height: null,
+            marginTop: null,
+            marginBottom: null,
+            paddingTop: null,
+            paddingBottom: null,
+            overflow: null,
+            overflowY: null
+        };
+
+    options.display = options.display || "none";
+    options._cacheValues = false;
+
+    options.begin = function() {
+        for (var property in originalValues) {
+            originalValues[property] = jQuery.velocity.CSS.getPropertyValue(element, property);
+        }
+
+        this.style.overflow = "hidden";
+        this.style.overflowY = "hidden";
+    };
+
+    options.complete = function() {
+        for (var property in originalValues) {
+            this.style[property] = originalValues[property];
+        }
+    };
+
+    jQuery.velocity.animate(element, { 
+        height: [ 0, originalValues.height ],
+        marginTop: [ 0, originalValues.marginTop ],
+        marginBottom: [ 0, originalValues.marginBottom ],
+        paddingTop: [ 0, originalValues.paddingTop ],
+        paddingBottom: [ 0, originalValues.paddingBottom ]
+    }, options);
 };
 
 /******************
