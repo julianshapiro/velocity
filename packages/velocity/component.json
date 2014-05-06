@@ -15,7 +15,7 @@
     "javascript"
   ],
   "license" : "MIT",
-  "main": "./jquery.velocity.js",
+  "main": "jquery.velocity.js",
   "scripts": [
     "jquery.velocity.js"
   ],
