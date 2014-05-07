@@ -32,25 +32,6 @@ To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for all 
 The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for animating compound-value CSS properties (e.g. "textShadow: 0px 0px 0px black" and "transform: skew(45) scale(1.5)").
 */
 
-/*****************
-    Structure
-*****************/
-
-/*
-- Helper Functions
-- Aborting
-- Easings
-- Constants
-- Utility Function & State
-- CSS Stack
-- $.fn.velocity
-  - Pre-Queueing
-  - Queueing
-  - Pushing
-- Tick
-- Complete Call
-*/
-
 ;(function ($, window, document, undefined) {  
 
     /*********************
@@ -2278,6 +2259,8 @@ jQuery.velocity.Sequences.slideUp = function(element, options) {
             overflowY: null
         };
 
+    var complete = options.complete;
+
     options.display = options.display || "none";
     options._cacheValues = false;
 
@@ -2291,6 +2274,10 @@ jQuery.velocity.Sequences.slideUp = function(element, options) {
     };
 
     options.complete = function() {
+        if (complete) {
+            complete.call(this, this);
+        }
+        
         for (var property in originalValues) {
             this.style[property] = originalValues[property];
         }
