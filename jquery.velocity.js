@@ -31,27 +31,6 @@ To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for all 
 The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for animating compound-value CSS properties (e.g. "textShadow: 0px 0px 0px black" and "transform: skew(45) scale(1.5)").
 */
 
-/*****************
-    Structure
-*****************/
-
-/*
-- Helper Functions
-- Aborting
-- jQuery utilities
-- Constants
-- Utility Function & State
-- Easings
-- CSS Stack
-- velocity.animate
-  - Pre-Queueing
-  - Queueing
-  - Pushing
-- Tick
-- Complete Call
-- Library integration
-*/
-
 ;(function (global, document, undefined) {
 
     /*********************
@@ -119,23 +98,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     }
 
     /****************
-        Aborting
-    ****************/
-
-    /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them. Simply revert to jQuery (and lose Velocity's extra features). */
-    /* The following jQuery fallback drops most of the library checks for IE < 9, notably by using some of Zepto's functions. */
-    if (IE <= 7 || (IE <= 8 && window.jQuery)) {
-        /* Revert to $.animate() and abort this Velocity declaration. */
-        global.velocity = window.jQuery.fn.animate;
-
-        return;
-    } else if (global.velocity !== undefined) {
-        console.log("Velocity is already loaded or its namespace is occupied.");
-
-        return;
-    }
-
-    /****************
      jQuery utilities
      ****************/
 
@@ -162,19 +124,48 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 throw new Error('The parameter given was not a DOM node.');
             },
             offset: function () {
-                /* youmightnotneedjquery.com */
-                var rect = this[0].getBoundingClientRect();
+            /* jQuery altered code */
+                var box = this[0].getBoundingClientRect();
+
                 return {
-                    top: rect.top + document.body.scrollTop,
-                    left: rect.left + document.body.scrollLeft
+                    top: box.top  + (window.pageYOffset || document.scrollTop  || 0)  - (document.clientTop  || 0),
+                    left: box.left + (window.pageXOffset || document.scrollLeft  || 0) - (document.clientLeft || 0)
                 };
             },
             position: function () {
-                /* youmightnotneedjquery.com */
+            /* jQuery/Zepto altered code */
+                function offsetParent() {
+                    var offsetParent = this.offsetParent || document;
+
+                    while (offsetParent && (!offsetParent.nodeType.toLowerCase === "html" && offsetParent.style.position === "static")) {
+                        offsetParent = offsetParent.offsetParent;
+                    }
+                    return offsetParent || document;
+                }
+
+                var elem = this[0],
+                  // Get *real* offsetParent
+                  offsetParent = offsetParent.apply(elem),
+                  // Get correct offsets
+                  offset       = this.offset(),
+                  parentOffset = /^(?:body|html)$/i.test(offsetParent.nodeName) ? { top: 0, left: 0 } : $(offsetParent).offset()
+
+                // Subtract element margins
+                // note: when an element has margin: auto the offsetLeft and marginLeft
+                // are the same in Safari causing offset.left to incorrectly be 0
+                offset.top  -= parseFloat(elem.style.marginTop) || 0;
+                offset.left -= parseFloat(elem.style.marginLeft) || 0;
+
+                // Add offsetParent borders
+                if(offsetParent.style) {
+                    parentOffset.top  += parseFloat(offsetParent.style.borderTopWidth) || 0
+                    parentOffset.left += parseFloat(offsetParent.style.borderLeftWidth) || 0
+                }
+                // Subtract the two offsets
                 return {
-                    top: this[0].offsetTop,
-                    left: this[0].offsetLeft
-                };
+                  top:  offset.top  - parentOffset.top,
+                  left: offset.left - parentOffset.left
+                }
             }
         };
         /* Makes $(nodeElement) possible, without having to call init. */
@@ -185,11 +176,17 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
          ****************/
 
         var optionsCache = {},
-            hasOwn = optionsCache.hasOwnProperty,
-            data = {};
+            data = {},
+            class2type = {}
+            hasOwn = class2type.hasOwnProperty,
+            toString = class2type.toString;
 
-        $.velocity = "0.0.0";
-        $.expando = "velocity" + ('1.3.7' + Math.random()).replace(/\D/g, "");
+            
+        "Boolean Number String Function Array Date RegExp Object Error".split(" ").forEach(function(name) {
+            class2type["[object " + name + "]"] = name.toLowerCase()
+        });
+
+        $.expando = "velocity" + (Math.random() + '').replace(/\D/g, "");
         $.cache = {};
         $.uuid = 1;
 
@@ -226,12 +223,13 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             return obj != null && obj == obj.window;
         };
         $.type = function (obj) {
-            /* jQuery altered code */
+            /* Zepto altered code */
             if (obj == null) {
                 return obj + "";
             }
+
             return typeof obj === "object" || typeof obj === "function" ?
-                "object" :
+                class2type[toString.call(obj)] || "object" :
                 typeof obj;
         };
         $.isArray = Array.isArray || function (obj) {
@@ -269,7 +267,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         }
                     }
                 }
-
                 // A special, fast, case for the most common use of each
             } else {
                 if (isArray) {
@@ -409,7 +406,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     var key = type + "queueHooks";
                     return $.data(elem, key) || $.data(elem, key, {
                         empty: $.Callbacks("once memory").add(function() {
-                            $.dataRemove(elem, [type + "queue", key]);
+                            $.removeData(elem, [type + "queue", key]);
                         })
                     });
                 },
@@ -479,13 +476,17 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             return true;
         };
 
-        $.removeData = function (node, name) {
-            /* Zepto original code */
+        $.removeData = function (node, names) {
+            /* Zepto altered code */
             var id = node[$.expando],
                 store = id && data[id];
-            if (store)
-                delete store[name ? $.CamelCase(node) : name];
+            if (store) {
+                $.each(names, function(_, name) {
+                    delete store[name ? $.camelCase(this) : name];
+                });
+            }
         };
+
         $.Callbacks = function (options) {
             /* jQuery altered code */
             // Convert options from String-formatted to Object-formatted if needed
@@ -697,7 +698,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             /* Manually extended by the user. */
         },
         /* Even if referred as $ internally, we export the set of utilities generated above, mostly for testing purposes, as it is the only way to access the data store. */
-        Utilities: (window.jQuery ? null : $),
+        Utilities: $,
         /* Utility function's alias of $.fn.velocity(). Used for raw DOM element animation. */
         animate: function () { /* Defined below. */ },
         /* Set to 1 or 2 (most verbose) to log debug info to console. */
@@ -722,9 +723,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     (function () {
         var baseEasings = {};
         velocity.Easings = {};
-        if(window.jQuery) {
-            velocity.Easings = window.jQuery.easing;
-        }
 
         $.each(["Quad", "Cubic", "Quart", "Quint", "Expo"], function(i, name) {
             baseEasings[name] = function(p) {
@@ -767,7 +765,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             };
         });
 
-        /* jQuery swing's, in case jQuery wasn't loaded, as it is our default easing. */
+        /* jQuery swing's, because jQuery wasn't loaded, as it is our default easing. */
         velocity.Easings["swing"] = velocity.Easings["swing"] || function(p) {
             return 0.5 - Math.cos(p * Math.PI) / 2;
         };
@@ -1301,8 +1299,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* IE<=8 doesn't support window.getComputedStyle, thus we defer to jQuery, which has an extensive array of hacks to accurately retrieve IE8 property values.
                    Re-implementing that logic here is not worth bloating the codebase for a dying browser. The performance repercussions of using jQuery here are minimal since
                    Velocity is optimized to rarely (and sometimes never) query the DOM. Further, the $.css() codepath isn't that slow. */
-                if (IE <= 8 && (window.jQuery || window.Zepto)) {
-                    computedValue = (window.jQuery || window.Zepto).fn.css.call(element, property); /* GET */
+                if (IE <= 8 && window.Zepto) {
+                    computedValue = window.Zepto.fn.css.call(element, property); /* GET */
                 /* All other browsers support getComputedStyle. The returned live object reference is cached onto its associated element so that it does not need to be refetched upon every GET. */
                 } else {
                     var computedStyle;
@@ -1592,7 +1590,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         /* Support is included for jQuery's argument overloading: $.animate(propertyMap [, duration] [, easing] [, complete]). Overloading is detected by checking for the absence of an options object.
            The stop action does not accept animation options, and is therefore excluded from this check. */
         /* Note: Although argument overloading is an incredibly sloppy practice in JavaScript, support is included so that velocity() can act as a drop-in replacement for $.animate(). */
-        if (action !== "stop" && typeof options !== "object") {
+        if (propertiesMap !== "stop" && typeof options !== "object") {
             /* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
             var startingArgumentPosition = isElWrapped ? 1 : 2;
 
@@ -1792,6 +1790,14 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
                 velocity.queueEntryFlag = true;
 
+                /*******************
+                   Option: Begin
+                *******************/
+
+                /* The begin callback is fired once per call -- not once per elemenet -- and is passed the full element set as both its context and its first argument. */
+                if (elementsIndex === 0 && options && isFunction(options.begin)) {
+                    options.begin.call(elements, elements);
+                }
 
                 /*****************************************
                    Tween Data Construction (for Scroll)
@@ -1818,7 +1824,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                Thus, the scroll end value is the sum of the child element's position *and* the scroll container's current scroll position. */
                             /* Note: jQuery does not offer a utility alias for $.position(), so we have to incur jQuery object conversion here. This syncs up with an ensuing batch of GETs, so it fortunately does not produce layout thrashing. */
                             scrollPositionEnd = (scrollPositionCurrent + $(element).position().top) + scrollOffset; /* GET */
-                            console.log(scrollPositionEnd);
                         /* If a value other than a jQuery object or a raw DOM element was passed in, default to null so that this option is ignored. */
                         } else {
                             opts.container = null;
@@ -2016,7 +2021,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         /* If values have been transferred from the previous Velocity call, extract the endValue and rootPropertyValue for all of the current call's properties that were *also* animated in the previous call. */
                         /* Note: Value transferring can optionally be disabled by the user via the _cacheValues option. */
                         if (opts._cacheValues && lastTweensContainer && lastTweensContainer[property]) {
-                            startValue = lastTweensContainer[property].endValue + lastTweensContainer[property].unitType;
+                            if (startValue === undefined) {
+                                startValue = lastTweensContainer[property].endValue + lastTweensContainer[property].unitType;
+                            }
                                     
                             /* The previous call's rootPropertyValue is extracted from the element's data cache since that's the instance of rootPropertyValue that gets freshly updated by the tweening process,
                                whereas the rootPropertyValue attached to the incoming lastTweensContainer is equal to the root property's value prior to any tweening. */
@@ -2692,6 +2699,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 }
             }
 
+            /* The complete callback is fired once per call -- not once per elemenet -- and is passed the full element set as both its context and its first argument. */
+            if ((i === callLength -1) && opts.complete) { 
+                opts.complete.call(elements, elements); 
+            }
+
             /* Fire the next call in the queue chain. */
             /* Note: Even if the end of the animation queue has been reached, $.dequeue() must still be called in order to completely clear jQuery's animation queue. */
             $.dequeue(element);
@@ -2721,16 +2733,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             delete velocity.State.calls;
             velocity.State.calls = [];
         }
-
-        /****************
-            Callback
-        ****************/
-
-        /* Now that all logic associated with this call is complete, fire the optional callback. */
-        /* Note: The callback is fired once per call -- not once per element -- and is passed the full element set as its context. */
-        if (opts.complete) { 
-            opts.complete.call(elements); 
-        }
     }
 
     global.velocity = velocity;
@@ -2738,20 +2740,17 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     /****************
     Library integration
      ****************/
-    if(window.jQuery) {
-        window.jQuery.fn.velocity = velocity.animate;
-        window.jQuery.easing = velocity.Easings;
-    } else if(window.Zepto) {
+    if(window.Zepto) {
         window.Zepto.fn.velocity = velocity.animate;
     }
-})(window.jQuery || window.Zepto || window, document);
+})(window.Zepto || window, document);
 
 /***************
     Defaults
 ***************/
 
 /* Page-wide option defaults, which can be overridden by the user. */
-(window.jQuery || window.Zepto || window).velocity.defaults = {
+(window.Zepto || window).velocity.defaults = {
     queue: "",
     duration: 400,
     easing: "swing",
@@ -2760,9 +2759,105 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     loop: false,
     delay: false,
     mobileHA: true,
-    /* Advanced: Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
+    /* Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
     _cacheValues: true
 };
+
+/***********************
+   Packaged Sequences
+***********************/
+
+(function (global) {
+    /* Slide Down: Draft #1 */
+    global.velocity.Sequences.slideDown = function(element, options) {
+        var originalValues = {
+                height: null,
+                marginTop: null,
+                marginBottom: null,
+                paddingTop: null,
+                paddingBottom: null
+            },
+            originalOverflows = {
+                overflow: null,
+                overflowY: null
+            };
+
+        var complete = options.complete;
+
+        options.delay = options.delay || 1;
+
+        options.begin = function() {
+            originalOverflows.overflow = global.velocity.CSS.getPropertyValue(element, "overflow");
+            originalOverflows.overflowY = global.velocity.CSS.getPropertyValue(element, "overflowY");
+
+            this.style.overflow = "hidden";
+            this.style.overflowY = "hidden";
+
+            element.style.height = "auto";
+            element.style.display = "block";
+
+            for (var property in originalValues) {
+                originalValues[property] = [ global.velocity.CSS.getPropertyValue(element, property), 0 ];
+            }
+        };
+
+        options.complete = function() {
+            if (complete) {
+                complete.call(this, this);
+            }
+
+            this.style.overflow = originalOverflows.overflow;
+            this.style.overflowY = originalOverflows.overflowY;
+        };
+
+        global.velocity.animate(element, originalValues, options);
+    };
+
+    /* Slide Up: Draft #1 */
+    global.velocity.Sequences.slideUp = function(element, options) {
+        var originalValues = {
+                height: null,
+                marginTop: null,
+                marginBottom: null,
+                paddingTop: null,
+                paddingBottom: null,
+                overflow: null,
+                overflowY: null
+            };
+
+        var complete = options.complete;
+
+        options.display = options.display || "none";
+        options._cacheValues = false;
+
+        options.begin = function() {
+            for (var property in originalValues) {
+                originalValues[property] = global.velocity.CSS.getPropertyValue(element, property);
+            }
+
+            this.style.overflow = "hidden";
+            this.style.overflowY = "hidden";
+        };
+
+        options.complete = function() {
+            if (complete) {
+                complete.call(this, this);
+            }
+            
+            for (var property in originalValues) {
+                this.style[property] = originalValues[property];
+            }
+        };
+
+        global.velocity.animate(element, { 
+            height: [ 0, originalValues.height ],
+            marginTop: [ 0, originalValues.marginTop ],
+            marginBottom: [ 0, originalValues.marginBottom ],
+            paddingTop: [ 0, originalValues.paddingTop ],
+            paddingBottom: [ 0, originalValues.paddingBottom ]
+        }, options);
+    };
+})(window.Zepto || window);
 
 /******************
    Known Issues
