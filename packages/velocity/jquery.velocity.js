@@ -483,7 +483,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                    browsers so that Tween Calculation logic skips animating these properties altogether (since it will detect that they're unsupported and unnormalized.) */
                 if (!(IE <= 9)) {
                     /* Append 3D transform properties onto transformProperties. */
-                    transformProperties = transformProperties.concat([ "translateZ", "scaleZ", "rotateX", "rotateY" ]);
+                    /* Note: Since the standalone CSS "perspective" property and the CSS transform "perspective" subproperty share the same name, the latter is given a unique token within Velocity. */
+                    transformProperties = transformProperties.concat([ "transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY" ]);
                 } 
 
                 for (var i = 0, transformPropertiesLength = transformProperties.length; i < transformPropertiesLength; i++) {
@@ -923,18 +924,31 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         flushTransformCache: function(element) {
             var transformString = "",
                 transformName,
-                transformValue;
+                transformValue,
+                perspective;
 
             /* Transform properties are stored as members of the transformCache object. Concatenate all the members into a string. */
             for (transformName in $.data(element, NAME).transformCache) {
+
                 transformValue = $.data(element, NAME).transformCache[transformName];
 
-                /* IE9 only supports one rotation type: rotateZ. It refers to rotateZ directly as "rotate". */
+                /* Transform's perspective subproperty must be set first in order to take effect. We store it for now. */
+                if (transformName === "transformPerspective") {
+                    perspective = transformValue;
+                    continue;
+                }
+
+                /* IE9 only supports one rotation type, rotateZ, which it refers to as "rotate". */
                 if (IE === 9 && transformName === "rotateZ") {
                     transformName = "rotate";
                 }
 
                 transformString += transformName + transformValue + " ";
+            }
+
+            /* If present, set the perspective subproperty first. */
+            if (perspective) {
+                transformString = "perspective" + perspective + " " + transformString;
             }
 
             CSS.setPropertyValue(element, "transform", transformString);
@@ -2144,7 +2158,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             }
 
             /* The complete callback is fired once per call -- not once per elemenet -- and is passed the full element set as both its context and its first argument. */
-            if ((i === callLength -1) && opts.complete) { 
+            if ((i === callLength - 1) && opts.complete) { 
                 opts.complete.call(elements, elements); 
             }
 
