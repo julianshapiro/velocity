@@ -1352,7 +1352,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
             /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
                the call array is pushed to $.velocity.State.calls for live processing by the requestAnimationFrame tick. */
-            $.queue(element, opts.queue, function(next) {
+            function buildQueue(next) {
                 /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
                 $.velocity.queueEntryFlag = true;
 
@@ -1963,26 +1963,28 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         elementsIndex++;
                     }
                 }
+            }
 
-                /* jQuery's $.queue() behavior requires calls on a *custom* queue to be explicitly dequeued; non-custom queues have their entries dequeued automatically. */
-                /* Note: An empty queue name is an alias for the "fx" queue, which is jQuery's default queue. */
-                if (opts.queue !== "" && opts.queue !== "fx") { 
-                    /* Fire the next queue entry once this queue has completed. This queue's running time is the sum of the current call's duration and delay options. */
-                    setTimeout(next, opts.duration + opts.delay);
-                }
-            });
+            /* When the queue option is set to false, the associated Velocity call is triggered immediately. */
+            if (opts.queue === false) {
+                buildQueue();
+            /* Otherwise, the call undergoes element queueing as normal. */
+            } else {
+                $.queue(element, opts.queue, function(next) {
+                    buildQueue(next);
+                });
+            }
 
             /*********************
                 Auto-Dequeuing
             *********************/
 
             /* As per jQuery's $.queue() behavior, to fire the first non-custom-queue entry on an element, the element must be dequeued if its queue stack consists *solely* of the current call.
-               (This can be determined by checking for the "inprogress" item that jQuery prepends to active queue stack arrays.) Otherwise, whenever the element's queue is further appended with 
+               (This can be determined by checking for the "inprogress" item that jQuery prepends to active queue stack arrays.) Regardless, whenever the element's queue is further appended with 
                additional items -- including $.delay()'s or even $.animate() calls, the queue's first entry is automatically fired. This behavior contrasts that of custom queues, which never auto-fire. */
-            /* The queue option may alternatively be set to false, which results in an immediate triggering; chain waiting is skipped entirely, and the targeted call runs in parallel with any currently-running queue entries. */
             /* Note: When an element set is being subjected to a non-parallel Velocity call, the animation will not begin until each one of the elements in the set has reached the end of its individually pre-existing queue chain. */
             /* Note: Unfortunately, most people don't fully grasp jQuery's powerful, yet quirky, $.queue() function. Lean more here: http://stackoverflow.com/questions/1058158/can-somebody-explain-jquery-queue-to-me */
-            if (opts.queue === false || ((opts.queue === "" || opts.queue === "fx") && $.queue(element)[0] !== "inprogress")) {                
+            if ((opts.queue === "" || opts.queue === "fx") && $.queue(element)[0] !== "inprogress") {                
                 $.dequeue(element);
             }            
         }
@@ -2267,9 +2269,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 opts.complete.call(elements, elements); 
             }
 
-            /* Fire the next call in the queue chain. */
+            /* Fire the next call in the queue so long as this call's queue wasn't set to false (to trigger a parallel animation), which would have already caused the next call to fire. */
             /* Note: Even if the end of the animation queue has been reached, $.dequeue() must still be called in order to completely clear jQuery's animation queue. */
-            $.dequeue(element);
+            if (opts.queue !== false) {
+                $.dequeue(element, opts.queue);
+            }
         }
 
         /************************
@@ -2323,6 +2327,7 @@ jQuery.fn.velocity.defaults = {
 
 /* slideUp, slideDown */
 jQuery.each([ "Down", "Up" ], function(i, direction) {
+    /* Generate the respective slide sequences dynamically to minimize redundancy. */
     jQuery.velocity.Sequences["slide" + direction] = function(element, options) {
         var originalValues = {
                 height: null,
@@ -2353,6 +2358,7 @@ jQuery.each([ "Down", "Up" ], function(i, direction) {
                 /* Remove scrollbars and momentarily set the element's height to "auto" so that its natural height can be calculated. */
                 this.style.overflow = "hidden";
                 this.style.overflowY = "hidden";
+
                 element.style.height = "auto";
                 element.style.display = "block";
 
@@ -2363,6 +2369,7 @@ jQuery.each([ "Down", "Up" ], function(i, direction) {
                         continue;
                     }
 
+                    /* Use forcefeeding to animate slideDown properties from 0. */
                     originalValues[property] = [ jQuery.velocity.CSS.getPropertyValue(element, property), 0 ];
                 }
 
@@ -2370,6 +2377,7 @@ jQuery.each([ "Down", "Up" ], function(i, direction) {
                 element.style.display = "none";
             } else {
                 for (var property in originalValues) {
+                    /* Use forcefeeding to animate slideUp properties toward 0. */
                     originalValues[property] = [ 0, jQuery.velocity.CSS.getPropertyValue(element, property) ];
                 }
 
