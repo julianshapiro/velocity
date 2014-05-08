@@ -1361,9 +1361,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                    Option: Begin
                 *******************/
 
-                /* The begin callback is fired once per call -- not once per elemenet -- and is passed the full element set as both its context and its first argument. */
+                /* The begin callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
                 if (elementsIndex === 0 && options && isFunction(options.begin)) {
-                    options.begin.call(elements, elements);
+                    var rawElements = elements.jquery ? elements.get() : elements;
+
+                    options.begin.call(rawElements, rawElements);
                 }
 
                 /*****************************************
@@ -2268,10 +2270,20 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 }
             }
 
-            /* The complete callback is fired once per call -- not once per elemenet -- and is passed the full element set as both its context and its first argument. */
-            if ((i === callLength - 1) && opts.complete) {           
-                opts.complete.call(elements, elements); 
+            /**********************
+               Option: Complete
+            **********************/
+
+            /* The complete callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
+            if ((i === callLength - 1) && opts.complete) {    
+                var rawElements = elements.jquery ? elements.get() : elements;
+
+                opts.complete.call(rawElements, rawElements); 
             }
+
+            /****************
+               Dequeueing
+            ****************/
 
             /* Fire the next call in the queue so long as this call's queue wasn't set to false (to trigger a parallel animation), which would have already caused the next call to fire. */
             /* Note: Even if the end of the animation queue has been reached, $.dequeue() must still be called in order to completely clear jQuery's animation queue. */
@@ -2360,8 +2372,8 @@ jQuery.each([ "Down", "Up" ], function(i, direction) {
                 originalValues.overflowY = [ jQuery.velocity.CSS.getPropertyValue(element, "overflowY"), 0 ];
 
                 /* Remove scrollbars and momentarily set the element's height to "auto" so that its natural height can be calculated. */
-                this.style.overflow = "hidden";
-                this.style.overflowY = "hidden";
+                element.style.overflow = "hidden";
+                element.style.overflowY = "hidden";
 
                 element.style.height = "auto";
                 element.style.display = "block";
@@ -2386,26 +2398,26 @@ jQuery.each([ "Down", "Up" ], function(i, direction) {
                 }
 
                 /* As with slideDown, slideUp hides the element's scrollbars while animating since scrollbar height tweening looks unappealing. */
-                this.style.overflow = "hidden";
-                this.style.overflowY = "hidden";
+                element.style.overflow = "hidden";
+                element.style.overflowY = "hidden";
             }
 
             /* If the user passed in a begin callback, fire it now. */
             if (begin) {
-                begin.call(this, this);
+                begin.call(element, element);
             }
         }
 
         /* Complete callback. */
-        options.complete = function() {
+        options.complete = function(element) {
             /* Reset the element to its original values once its slide animation is complete. (For slideDown, overflow values are reset. For slideUp, all values are reset (since they were animated to 0).) */
             for (var property in originalValues) {
-                this.style[property] = originalValues[property][direction === "Down" ? 0 : 1];
+                element.style[property] = originalValues[property][direction === "Down" ? 0 : 1];
             }
 
             /* If the user passed in a complete callback, fire it now. */
             if (complete) {
-                complete.call(this, this);
+                complete.call(element, element);
             }
         };
 
