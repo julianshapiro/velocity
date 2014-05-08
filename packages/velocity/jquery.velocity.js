@@ -94,8 +94,13 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     }
 
     /* Determine if a variable is a function. */
-    function isFunction(variable) {
+    function isFunction (variable) {
         return Object.prototype.toString.call(variable) === "[object Function]";
+    }
+
+    /* Determine if a variable is an array. */
+    function isArray (variable) {
+        return Object.prototype.toString.call(variable) === "[object Array]";
     }
 
     /****************
@@ -118,7 +123,76 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         Easings
     **************/
 
-    /* Velocity embeds jQuery UI's easings to save users from having to include an additional library to their page. */
+    /* Bezier curve function generator. */
+    /* Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License */
+    function generateBezier (mX1, mY1, mX2, mY2) {
+        /* Must contain four arguments. */
+        if (arguments.length !== 4) {
+            return false;
+        }
+
+        /* Arguments must be numbers. */
+        for (var i = 0; i < 4; ++i) {
+            if (typeof arguments[i] !== "number" || isNaN(arguments[i]) || !isFinite(arguments[i])) {
+                return false;
+            }
+        }
+
+        /* X values must be in the [0, 1] range. */
+        mX1 = Math.min(mX1, 1);
+        mX2 = Math.min(mX2, 1);
+        mX1 = Math.max(mX1, 0);
+        mX2 = Math.max(mX2, 0);
+
+        function A (aA1, aA2) { 
+            return 1.0 - 3.0 * aA2 + 3.0 * aA1;
+        }
+
+        function B (aA1, aA2) {
+            return 3.0 * aA2 - 6.0 * aA1;
+        }
+        function C (aA1) {
+            return 3.0 * aA1;
+        }
+
+        function calcBezier (aT, aA1, aA2) {
+            return ((A(aA1, aA2)*aT + B(aA1, aA2))*aT + C(aA1))*aT;
+        }
+
+        function getSlope (aT, aA1, aA2) {
+            return 3.0 * A(aA1, aA2)*aT*aT + 2.0 * B(aA1, aA2) * aT + C(aA1);
+        }
+
+        function getTForX (aX) {
+            var aGuessT = aX;
+
+            for (var i = 0; i < 8; ++i) {
+                var currentSlope = getSlope(aGuessT, mX1, mX2);
+
+                if (currentSlope === 0.0) {
+                    return aGuessT;
+                }
+
+                var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
+
+                aGuessT -= currentX / currentSlope;
+            }
+
+            return aGuessT;
+        }
+
+        var f = function (aX) {
+            if (mX1 === mY1 && mX2 === mY2) {
+                return aX;
+            } else {
+                return calcBezier(getTForX(aX), mY1, mY2);
+            }
+        };
+
+        return f;
+    }
+
+    /* Velocity embeds jQuery UI's easings to save users from including an additional library on their page. */
     /* Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
     (function () {
         var baseEasings = {};
@@ -164,10 +238,16 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             };
         });
 
-        /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
+        /* Bonus "spring" easing, which is a less exaggerated easeInOutElastic. */
         $.easing["spring"] = function(p) {
             return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
         };
+
+        /* CSS3's named easing types. (They are included to ease the transition from CSS3 animations to Velocity.) */
+        $.easing["ease"] = generateBezier(0.25, 0.1, 0.25, 1.0);
+        $.easing["ease-in"] = generateBezier(0.42, 0.0, 1.00, 1.0);
+        $.easing["ease-out"] = generateBezier(0.00, 0.0, 0.58, 1.0);
+        $.easing["ease-in-out"] = generateBezier(0.42, 0.0, 0.58, 1.0);
     })(); 
 
     /*****************
@@ -929,7 +1009,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
             /* Transform properties are stored as members of the transformCache object. Concatenate all the members into a string. */
             for (transformName in $.data(element, NAME).transformCache) {
-
                 transformValue = $.data(element, NAME).transformCache[transformName];
 
                 /* Transform's perspective subproperty must be set first in order to take effect. We store it for now. */
@@ -1005,7 +1084,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         /* Support is included for jQuery's argument overloading: $.animate(propertyMap [, duration] [, easing] [, complete]). Overloading is detected by checking for the absence of an options object.
            The stop action does not accept animation options, and is therefore excluded from this check. */
         /* Note: Although argument overloading is an incredibly sloppy practice in JavaScript, support is included so that $.velocity() can act as a drop-in replacement for $.animate(). */
-        if (propertiesMap !== "stop" && typeof options !== "object") {
+        if (propertiesMap !== "stop" && !$.isPlainObject(options)) {
             /* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
             var startingArgumentPosition = isJquery ? 1 : 2;
 
@@ -1014,11 +1093,15 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             /* Iterate through all options arguments */
             for (var i = startingArgumentPosition; i < arguments.length; i++) {
                 /* Treat a number as a duration. Parse it out. */
-                if (/^\d/.test(arguments[i])) {
+                /* Note: The following RegEx will return true if passed an array with a number as its first item. Thus, arrays are skipped from this check. */
+                if (!isArray(arguments[i]) && /^\d/.test(arguments[i])) {
                     options.duration = parseFloat(arguments[i]);
-                /* Treat a string as an easing. Trim whitespace. */
+                /* Treat a string as an easing. */
                 } else if (typeof arguments[i] === "string") {
-                    options.easing = arguments[i].replace(/^\s+|\s+$/g, "");
+                    options.easing = arguments[i];
+                /* Also treat a four-item array (of cubic bezier points) as an easing. */
+                } else if (isArray(arguments[i]) && arguments[i].length === 4) {
+                    options.easing = arguments[i];
                 /* Treat a function as a callback. */
                 } else if (isFunction(arguments[i])) {
                     options.complete = arguments[i];
@@ -1026,9 +1109,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             }
         }
 
-        /**********************
+        /*********************
            Action Detection
-        **********************/
+        *********************/
 
         /* Velocity's behavior is categorized into "actions": Elements can either be specially scrolled into view, or they can be started, stopped, or reversed. If a literal or referenced properties map is passed
            in as Velocity's first argument, the associated action is "start". Alternatively, "scroll", "reverse", or "stop" can be passed in instead of a properties map. */
@@ -1100,6 +1183,39 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         /* Note: The complete option is the only option that is processed on a call-wide basis since it is fired once per call -- not once per element. */
         if (options && !isFunction(options.complete)) {
             options.complete = null;
+        }
+
+        /********************
+           Option: Easing
+        ********************/
+
+        /* Determining the appropriate easing type consists of a waterfall of logic. Since we have to trigger this at multiple points, we wrap it in a function. */
+        function getEasing(value) {
+            var easing = value;
+
+            /* The easing option can either be a string that references a pre-registered easing, or it can be an four-item array of integers to be converted into a bezier curve function. */
+            if (typeof value === "string") {
+                /* Ensure that the easing has been assigned to jQuery's $.easing object (which Velocity also uses as its easings container). */
+                if (!$.easing[value]) {
+                    easing = false;
+                }
+            } else if (isArray(value)) {
+                /* Note, if the bezier array is of an invalid format (has an incorrect argument length or contains non-numbers), generateBezier() returns false. */
+                easing = generateBezier.apply(null, value);
+            } else {
+                easing = false;
+            }
+
+            /* Revert to the Velocity-wide default easing type, and fallback to "swing" (which is also jQuery's defualt) if the Velocity-wide default has been incorrectly modified. */
+            if (easing === false) {
+                if ($.easing[$.fn.velocity.defaults.easing]) {
+                    easing = $.fn.velocity.defaults.easing;
+                } else {
+                    easing = "swing";
+                }
+            }
+
+            return easing;
         }
 
         /************************
@@ -1189,20 +1305,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     opts.duration = parseFloat(opts.duration) || parseFloat($.fn.velocity.defaults.duration) || 400;
             }
 
-            /********************
+            /*******************
                Option: Easing
-            ********************/
+            *******************/
 
-            /* Ensure that the passed in easing has been assigned to jQuery's $.easing object (which Velocity also uses as its easings container). */
-            if (!$.easing[opts.easing]) {
-                /* If the passed in easing is not supported, default to the easing in Velocity's page-wide defaults object so long as its supported (it may have been reassigned by the user). */
-                if ($.easing[$.fn.velocity.defaults.easing]) {
-                    opts.easing = $.fn.velocity.defaults.easing;
-                /* Otherwise, revert to jQuery's default easing type of "swing". */
-                } else {
-                    opts.easing = "swing";
-                }
-            }
+            opts.easing = getEasing(opts.easing);
 
             /******************
                Option: Delay
@@ -1402,19 +1509,16 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             startValue = undefined;
 
                         /* Handle the array format, which can be structured as one of three potential overloads: A) [ endValue, easing, startValue ], B) [ endValue, easing ], or C) [ endValue, startValue ] */
-                        if (Object.prototype.toString.call(valueData) === "[object Array]") {
+                        if (isArray(valueData)) {
                             /* endValue is always the first item in the array. Don't bother validating endValue's value now since the ensuing property cycling logic inherently does that. */
                             endValue = valueData[0];
 
-                            /* Two-item array format: If the second item is a number or a function, treat it as a start value since easings can only be strings. */
-                            if (/^[\d-]/.test(valueData[1]) || isFunction(valueData[1])) {
+                            /* Two-item array format: If the second item is a number or a function, treat it as a start value since easings can only be strings or arrays. */
+                            if ((!isArray(valueData[1]) && /^[\d-]/.test(valueData[1])) || isFunction(valueData[1])) {
                                 startValue = valueData[1];
                             /* Two or three-item array: If the second item is a string, treat it as an easing. */
-                            } else if (typeof valueData[1] === "string") {
-                                /* Only use this easing if it's been registered on $.easing. */
-                                if ($.easing[valueData[1]] !== undefined) {
-                                    easing = valueData[1];
-                                }
+                            } else if (typeof valueData[1] === "string" || isArray(valueData[1])) {
+                                easing = getEasing(valueData[1]);
 
                                 /* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
                                 if (valueData[2]) {
@@ -2015,8 +2119,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         /* Note: In addition to property tween data, tweensContainer contains a reference to its associated element. */
                         if (property !== "element") {
                             var tween = tweensContainer[property],
-                                lastCurrentValue = tween.currentValue,
-                                currentValue;
+                                currentValue,
+                                /* Easing can either be a bezier function or a string that references a pre-registered easing on the $.easing object. In either case, return the appropriate easing function. */
+                                easing = (typeof tween.easing === "string") ? $.easing[tween.easing] : tween.easing;
 
                             /******************************
                                Current Value Calculation
@@ -2027,10 +2132,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                 currentValue = tween.endValue;
                             /* Otherwise, calculate currentValue based on the current delta from startValue. */
                             } else {
-                                currentValue = tween.startValue + ((tween.endValue - tween.startValue) * $.easing[tween.easing](percentComplete));
+                                currentValue = tween.startValue + ((tween.endValue - tween.startValue) * easing(percentComplete));
                             }
 
-                            /* If style updating wasn't skipped, store the new currentValue onto the call cache. */
                             tween.currentValue = currentValue;
 
                             /******************
