@@ -812,14 +812,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             function computePropertyValue (element, property) {
                 /* When box-sizing isn't set to border-box, height and width style values are incorrectly computed when an element's scrollbars are visible (which expands the element's dimensions). Thus, we defer
                    to the more accurate offsetHeight/Width property, which includes the total dimensions for interior, border, padding, and scrollbar. We subtract border and padding to get the sum of interior + scrollbar. */
-                if (!forceStyleLookup) {
-                    if (property === "height" && CSS.getPropertyValue(element, "boxSizing").toLowerCase() !== "border-box") {
-                        return element.offsetHeight - (parseFloat(CSS.getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingBottom")) || 0);
-                    } else if (property === "width" && CSS.getPropertyValue(element, "boxSizing").toLowerCase() !== "border-box") {
-                        return element.offsetWidth - (parseFloat(CSS.getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingRight")) || 0);
-                    }
-                }
-
+                
                 var computedValue = 0;
 
                 /* IE<=8 doesn't support window.getComputedStyle, thus we defer to jQuery, which has an extensive array of hacks to accurately retrieve IE8 property values.
@@ -829,6 +822,14 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     computedValue = $.css(element, property); /* GET */
                 /* All other browsers support getComputedStyle. The returned live object reference is cached onto its associated element so that it does not need to be refetched upon every GET. */
                 } else {
+                    if (!forceStyleLookup) {
+                        if (property === "height" && CSS.getPropertyValue(element, "boxSizing").toLowerCase() !== "border-box") {
+                            return element.offsetHeight - (parseFloat(CSS.getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingBottom")) || 0);
+                        } else if (property === "width" && CSS.getPropertyValue(element, "boxSizing").toLowerCase() !== "border-box") {
+                            return element.offsetWidth - (parseFloat(CSS.getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingRight")) || 0);
+                        }
+                    }
+                    
                     var computedStyle;
 
                     /* For elements that Velocity hasn't been called on directly (e.g. when Velocity queries the DOM on behalf of a parent of an element its animating), perform a direct getComputedStyle lookup since the object isn't cached. */
@@ -2222,7 +2223,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         /* Note: completeCall() contains the logic for setting the isTicking flag to false (which occurs when the last active call on $.velocity.State.calls has completed). */
         if ($.velocity.State.isTicking) {
-            requestAnimationFrame(tick);
+            /* The call finalization logic is wrapped inside a setInterval so that it's triggered asynchronously -- out of sync with its final RAF tick. Otherwise, the ensuing callback logic could cause this tick to lag and drop frames. */
+            setTimeout(function() {
+                requestAnimationFrame(tick);
+            }, 0);
         }
     }
 
@@ -2265,7 +2269,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             }
 
             /* The complete callback is fired once per call -- not once per elemenet -- and is passed the full element set as both its context and its first argument. */
-            if ((i === callLength - 1) && opts.complete) { 
+            if ((i === callLength - 1) && opts.complete) {           
                 opts.complete.call(elements, elements); 
             }
 
