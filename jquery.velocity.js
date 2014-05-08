@@ -192,7 +192,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         return f;
     }
 
-    /* Velocity embeds jQuery UI's easings to save users from including an additional library on their page. */
+    /* jQuery UI's Robert Penner easing equations. */
+    /* Note: Velocity embeds these easings to save users from having to include an additional library on their page. */
     /* Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
     (function () {
         var baseEasings = {};
@@ -2320,95 +2321,86 @@ jQuery.fn.velocity.defaults = {
    Packaged Sequences
 ***********************/
 
-/* Slide Down: Draft #1 */
-jQuery.velocity.Sequences.slideDown = function(element, options) {
-    var originalValues = {
-            height: null,
-            marginTop: null,
-            marginBottom: null,
-            paddingTop: null,
-            paddingBottom: null
-        },
-        originalOverflows = {
-            overflow: null,
-            overflowY: null
+/* slideUp, slideDown */
+jQuery.each([ "Down", "Up" ], function(i, direction) {
+    jQuery.velocity.Sequences["slide" + direction] = function(element, options) {
+        var originalValues = {
+                height: null,
+                marginTop: null,
+                marginBottom: null,
+                paddingTop: null,
+                paddingBottom: null,
+                overflow: null,
+                overflowY: null
+            },
+            /* The slide functions make use of the begin and complete callbacks, so the user's custom callbacks are stored for triggering when slideDown/Up's logic has completed. */
+            begin = options.begin,
+            complete = options.complete;
+
+        /* Unless the user is trying to override the display option, show the element before slideDown begins and hide the element after slideUp completes. */
+        if (direction === "Down") {
+            options.display = options.display || "block";
+        } else {
+            options.display = options.display || "none";
+        }
+
+        /* Begin callback. */
+        options.begin = function() {
+            if (direction === "Down") {
+                originalValues.overflow = [ jQuery.velocity.CSS.getPropertyValue(element, "overflow"), 0 ];
+                originalValues.overflowY = [ jQuery.velocity.CSS.getPropertyValue(element, "overflowY"), 0 ];
+
+                /* Remove scrollbars and momentarily set the element's height to "auto" so that its natural height can be calculated. */
+                this.style.overflow = "hidden";
+                this.style.overflowY = "hidden";
+                element.style.height = "auto";
+                element.style.display = "block";
+
+                /* Cache the elements' original vertical dimensional values so that we can animate back to them from starting values of 0. */
+                for (var property in originalValues) {
+                    /* Overflow values have already been cached, do not overrwrite them with "hidden", which they were just set to. */
+                    if (/^overflow/.test(property)) {
+                        continue;
+                    }
+
+                    originalValues[property] = [ jQuery.velocity.CSS.getPropertyValue(element, property), 0 ];
+                }
+
+                /* Hide the element inside this begin callback, otherwise it'll momentarily flash itself before the actual animation tick begins. */
+                element.style.display = "none";
+            } else {
+                for (var property in originalValues) {
+                    originalValues[property] = [ 0, jQuery.velocity.CSS.getPropertyValue(element, property) ];
+                }
+
+                /* As with slideDown, slideUp hides the element's scrollbars while animating since scrollbar height tweening looks unappealing. */
+                this.style.overflow = "hidden";
+                this.style.overflowY = "hidden";
+            }
+
+            /* If the user passed in a begin callback, fire it now. */
+            if (begin) {
+                begin.call(this, this);
+            }
+        }
+
+        /* Complete callback. */
+        options.complete = function() {
+            /* Reset the element to its original values once its slide animation is complete. (For slideDown, overflow values are reset. For slideUp, all values are reset (since they were animated to 0).) */
+            for (var property in originalValues) {
+                this.style[property] = originalValues[property][direction === "Down" ? 0 : 1];
+            }
+
+            /* If the user passed in a complete callback, fire it now. */
+            if (complete) {
+                complete.call(this, this);
+            }
         };
 
-    var complete = options.complete;
-
-    options.delay = options.delay || 1;
-
-    options.begin = function() {
-        originalOverflows.overflow = jQuery.velocity.CSS.getPropertyValue(element, "overflow");
-        originalOverflows.overflowY = jQuery.velocity.CSS.getPropertyValue(element, "overflowY");
-
-        this.style.overflow = "hidden";
-        this.style.overflowY = "hidden";
-
-        element.style.height = "auto";
-        element.style.display = "block";
-
-        for (var property in originalValues) {
-            originalValues[property] = [ jQuery.velocity.CSS.getPropertyValue(element, property), 0 ];
-        }
-    };
-
-    options.complete = function() {
-        if (complete) {
-            complete.call(this, this);
-        }
-
-        this.style.overflow = originalOverflows.overflow;
-        this.style.overflowY = originalOverflows.overflowY;
-    };
-
-    jQuery.velocity.animate(element, originalValues, options);
-};
-
-/* Slide Up: Draft #1 */
-jQuery.velocity.Sequences.slideUp = function(element, options) {
-    var originalValues = {
-            height: null,
-            marginTop: null,
-            marginBottom: null,
-            paddingTop: null,
-            paddingBottom: null,
-            overflow: null,
-            overflowY: null
-        };
-
-    var complete = options.complete;
-
-    options.display = options.display || "none";
-    options._cacheValues = false;
-
-    options.begin = function() {
-        for (var property in originalValues) {
-            originalValues[property] = jQuery.velocity.CSS.getPropertyValue(element, property);
-        }
-
-        this.style.overflow = "hidden";
-        this.style.overflowY = "hidden";
-    };
-
-    options.complete = function() {
-        if (complete) {
-            complete.call(this, this);
-        }
-        
-        for (var property in originalValues) {
-            this.style[property] = originalValues[property];
-        }
-    };
-
-    jQuery.velocity.animate(element, { 
-        height: [ 0, originalValues.height ],
-        marginTop: [ 0, originalValues.marginTop ],
-        marginBottom: [ 0, originalValues.marginBottom ],
-        paddingTop: [ 0, originalValues.paddingTop ],
-        paddingBottom: [ 0, originalValues.paddingBottom ]
-    }, options);
-};
+        /* Animation triggering. */
+        jQuery.velocity.animate(element, originalValues, options);
+    }
+});
 
 /******************
    Known Issues
