@@ -25,4 +25,4 @@ With each of these solutions, we're comparing options that are the product of no
 
 ###License
 
-MIT License. See `LICENSE`. © 2014 Julian Shapiro. http://twitter.com/shapiro.
+MIT License. See `LICENSE`. © 2014 Julian Shapiro (http://twitter.com/shapiro).
