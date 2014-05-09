@@ -28,8 +28,8 @@ Velocity is structured into four sections:
 - Tick: The single requestAnimationFrame loop responsible for tweening all in-progress calls.
 - completeCall: Handles the cleanup process for each Velocity call.
 
-To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for all queuing logic. This has the byproduct of slightly bloating our codebase since $.queue()'s behavior is not straightforward.
-The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for animating compound-value CSS properties (e.g. "textShadow: 0px 0px 0px black" and "transform: skew(45) scale(1.5)").
+To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for all queuing logic.
+The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for animating individual properties in compound-value properties (e.g. "textShadowBlur" in "textShadow: 0px 0px 0px black").
 */
 
 ;(function ($, window, document, undefined) {  
@@ -798,6 +798,20 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 } else {
                     /* Default to px for all other properties. */
                     return "px";
+                }
+            },
+            /* HTML elements default to an associated display type when they're not set to display:none. */
+            /* Note: This function used for correctly setting the non-"none" display value in certain Velocity sequences, such as fadeIn/Out. */
+            getDisplayType: function (element) {
+                var tagName = element.tagName.toString().toLowerCase();
+
+                if (/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(tagName)) {
+                    return "inline";
+                } else if (/^(li)$/i.test(tagName)) {
+                    return "list-item";
+                /* Default to "block" when no match is found. */
+                } else {
+                    return "block";
                 }
             }
         },
@@ -2365,9 +2379,10 @@ jQuery.fn.velocity.defaults = {
 
 /* slideUp, slideDown */
 jQuery.each([ "Down", "Up" ], function(i, direction) {
-    /* Generate the respective slide sequences dynamically in order to minimize code redundancy. */
-    jQuery.velocity.Sequences["slide" + direction] = function(element, options) {
-        var originalValues = {
+    /* Generate the slide sequences dynamically in order to minimize code redundancy. */
+    jQuery.velocity.Sequences["slide" + direction] = function (element, options) {
+        var opts = jQuery.extend({}, options),
+            originalValues = {
                 height: null,
                 marginTop: null,
                 marginBottom: null,
@@ -2377,18 +2392,19 @@ jQuery.each([ "Down", "Up" ], function(i, direction) {
                 overflowY: null
             },
             /* The slide functions make use of the begin and complete callbacks, so the user's custom callbacks are stored for triggering when slideDown/Up's logic has completed. */
-            begin = options.begin,
-            complete = options.complete;
+            begin = opts.begin,
+            complete = opts.complete;
 
         /* Unless the user is trying to override the display option, show the element before slideDown begins and hide the element after slideUp completes. */
         if (direction === "Down") {
-            options.display = options.display || "block";
+            /* All elements subjected to sliding are switched to the "block" display value -- as opposed to an element-appropriate block/inline distinction -- because inline elements cannot have their dimensions modified. */
+            opts.display = opts.display || "block";
         } else {
-            options.display = options.display || "none";
+            opts.display = opts.display || "none";
         }
 
         /* Begin callback. */
-        options.begin = function() {
+        opts.begin = function () {
             if (direction === "Down") {
                 originalValues.overflow = [ jQuery.velocity.CSS.getPropertyValue(element, "overflow"), 0 ];
                 originalValues.overflowY = [ jQuery.velocity.CSS.getPropertyValue(element, "overflowY"), 0 ];
@@ -2431,7 +2447,7 @@ jQuery.each([ "Down", "Up" ], function(i, direction) {
         }
 
         /* Complete callback. */
-        options.complete = function(element) {
+        opts.complete = function (element) {
             /* Reset the element to its original values once its slide animation is complete. (For slideDown, overflow values are reset. For slideUp, all values are reset (since they were animated to 0).) */
             for (var property in originalValues) {
                 element.style[property] = originalValues[property][direction === "Down" ? 0 : 1];
@@ -2444,8 +2460,31 @@ jQuery.each([ "Down", "Up" ], function(i, direction) {
         };
 
         /* Animation triggering. */
-        jQuery.velocity.animate(element, originalValues, options);
-    }
+        jQuery.velocity.animate(element, originalValues, opts);
+    };
+});
+
+/* fadeIn, fadeOut */
+jQuery.each([ "In", "Out" ], function(i, direction) {
+    /* Generate the slide sequences dynamically in order to minimize code redundancy. */
+    jQuery.velocity.Sequences["fade" + direction] = function (element, options, elementsIndex, elementsSize) {
+        var opts = jQuery.extend({}, options),
+            propertiesMap = {
+                opacity: (direction === "In") ? 1 : 0
+            };
+
+        /* Since sequences are triggered individually for each element in the animated set, we avoid repeatedly triggering callbacks by firing them only when the final element is reached. */
+        if (elementsIndex !== elementsSize - 1) {
+            opts.complete = opts.begin = null;
+        }
+
+        /* If a display value was passed into the sequence, use it. Otherwise, default to "none" for fadeOut and default to the element-specific default value for fadeIn. */
+        if (!opts.display) {
+            opts.display = (direction === "In") ? jQuery.velocity.CSS.Values.getDisplayType(element) : "none";
+        }
+
+        jQuery(this).velocity(propertiesMap, opts);
+    };     
 });
 
 /******************
