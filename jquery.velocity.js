@@ -268,6 +268,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         State: {
             /* Detect mobile devices to determine if mobileHA should be turned on. */
             isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+            /* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
+            isGingerbread: /Android 2.3.[3-7]/i.test(navigator.userAgent),
             /* Create a cached element for re-use when checking for CSS property prefixes. */
             prefixElement: document.createElement("div"),
             /* Cache every prefix match to avoid repeating lookups. */
@@ -2278,7 +2280,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     /* Clear the element's rootPropertyValueCache, which will become stale. */
                     $.data(element, NAME).rootPropertyValueCache = {};
 
-                    if (opts.mobileHA) {
+                    /* All mobile devices except for those running Android Gingerbread (which is the oldest widespread Android distribution) have hardware acceleration removed at the end of the animation to avoid straining
+                       the GPU's available memory. Gingerbread is the exception since the layer demotion associated with hardware acceleration removal causes very apparent flickering. We accept this trade-off. */
+                    if (opts.mobileHA && !$.velocity.State.isGingerbread) {
                         /* Now that the animation chain is complete, remove the translate3d transform value and flush the changes to the DOM. */
                         delete $.data(element, NAME).transformCache.translate3d;
 
