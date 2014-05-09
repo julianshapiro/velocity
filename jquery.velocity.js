@@ -1354,9 +1354,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
                the call array is pushed to $.velocity.State.calls for live processing by the requestAnimationFrame tick. */
             function buildQueue(next) {
-                /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
-                $.velocity.queueEntryFlag = true;
-
                 /*******************
                    Option: Begin
                 *******************/
@@ -1977,6 +1974,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             /* Otherwise, the call undergoes element queueing as normal. */
             } else {
                 $.queue(element, opts.queue, function(next) {
+                    /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
+                    $.velocity.queueEntryFlag = true;
+
                     buildQueue(next);
                 });
             }
@@ -2218,11 +2218,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             $.data(element, NAME).transformCache.translate3d = "(0, 0, 0)";
 
                             transformPropertyExists = true;
-                        } else if (percentComplete === 1) {
-                            /* If we've reached the end of the animation, remove the translate3d value while setting transformPropertyExists to true in order to flush this removal change to the DOM. */
-                            delete $.data(element, NAME).transformCache.translate3d;
-
-                            transformPropertyExists = true;
                         }
                     }
 
@@ -2282,6 +2277,13 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     $.data(element, NAME).isAnimating = false;
                     /* Clear the element's rootPropertyValueCache, which will become stale. */
                     $.data(element, NAME).rootPropertyValueCache = {};
+
+                    if (opts.mobileHA) {
+                        /* Now that the animation chain is complete, remove the translate3d transform value and flush the changes to the DOM. */
+                        delete $.data(element, NAME).transformCache.translate3d;
+
+                        CSS.flushTransformCache(element);
+                    }
                 }
             }
 
