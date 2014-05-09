@@ -11,7 +11,7 @@
 **NPM:**
 https://www.npmjs.org/package/velocity-animate
 
-*Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 10th.*
+*Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 15th.*
 
 ###**Comparisons**
 
