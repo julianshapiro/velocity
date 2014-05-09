@@ -33,7 +33,5 @@ With each of these solutions, we're comparing options that are the product of no
 License
 ========
 
-MIT License. See `LICENSE`. 
-
-Copyright 2014 Julian Shapiro.
+MIT License. See `LICENSE`. © 2014 Julian Shapiro.
 
