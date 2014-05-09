@@ -16,8 +16,11 @@ Velocity's speed: http://davidwalsh.name/css-js-animation
 Velocity's codecast: https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
 
 **NPM:**
-
 https://www.npmjs.org/package/velocity-animate
+
+**Author:**
+http://twitter.com/shapiro
+
 
 ========
 **Comparisons**
