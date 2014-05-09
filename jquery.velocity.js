@@ -119,62 +119,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         return;
     } 
 
-    /*****************
-        Constants
-    *****************/
-
-    var NAME = "velocity";
-
-    /******************************
-       Utility Function & State
-    ******************************/
-
-    /* In addition to extending jQuery's $.fn object, Velocity also registers itself as a jQuery utility ($.) function so that certain features are accessible beyond just a per-element scope. */
-    /* Note: The utility function doubles as a publicly-accessible data store for the purposes of unit testing. */
-    $.velocity = {
-        /* Container for page-wide Velocity state data. */
-        State: {
-            /* Detect mobile devices to determine if mobileHA should be turned on. */
-            isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-            /* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
-            isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
-            /* Create a cached element for re-use when checking for CSS property prefixes. */
-            prefixElement: document.createElement("div"),
-            /* Cache every prefix match to avoid repeating lookups. */
-            prefixMatches: {},
-            /* Cache the anchor used for animating window scrolling. */
-            scrollAnchor: null,
-            /* Cache the property name associated with the scroll anchor. */
-            scrollProperty: null,
-            /* Keep track of whether our RAF tick is running. */
-            isTicking: false,
-            /* Container for every in-progress call to Velocity. */
-            calls: []
-        },
-        /* Velocity's full re-implementation of jQuery's CSS stack. Made global for unit testing. */
-        CSS: { /* Defined below. */ },
-        /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). See VelocityJS.org/#sequences to learn more. */
-        Sequences: {
-            /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
-        },
-        Easings: {
-            /* Defined below. */
-        },
-        /* Utility function's alias of $.fn.velocity(). Used for raw DOM element animation. */
-        animate: function () { /* Defined below. */ },
-        /* Set to 1 or 2 (most verbose) to log debug info to console. */
-        debug: false
-    };
-
-    /* Retrieve the appropriate scroll anchor and property name for this browser. Learn more: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
-    if (window.pageYOffset !== undefined) {
-        $.velocity.State.scrollAnchor = window;
-        $.velocity.State.scrollProperty = "pageYOffset";
-    } else {
-        $.velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
-        $.velocity.State.scrollProperty = "scrollTop";
-    }
-
     /**************
         Easings
     **************/
@@ -248,9 +192,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         return f;
     }
 
-    /* Velocity embeds the named easings from jQuery, jQuery UI, and CSS3 in order to save users from having to include additional libraries on their page. */
+    /* jQuery UI's Robert Penner easing equations. */
+    /* Note: Velocity embeds these easings to save users from having to include an additional library on their page. */
+    /* Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
     (function () {
-        /* jQuery UI's Robert Penner easing equations. Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
         var baseEasings = {};
 
         $.each(["Quad", "Cubic", "Quart", "Quint", "Expo"], function(i, name) {
@@ -261,14 +206,14 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         $.extend(baseEasings, {
             Sine: function (p) {
-                return 1 - Math.cos(p * Math.PI / 2);
+                return 1 - Math.cos(p * Math.PI >> 1); // /2
             },
             Circ: function (p) {
                 return 1 - Math.sqrt(1 - p * p);
             },
             Elastic: function(p) {
                 return p === 0 || p === 1 ? p :
-                    -Math.pow(2, 8 * (p - 1)) * Math.sin(((p - 1) * 80 - 7.5) * Math.PI / 15);
+                    -Math.pow(2, 8 * (p - 1)) * Math.sin(((p - 1) * 80 - 7.5) * Math.PI * 0.06666666666); // *0.06666666666 = /15
             },
             Back: function(p) {
                 return p * p * (3 * p - 2);
@@ -277,42 +222,87 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 var pow2,
                     bounce = 4;
 
-                while (p < ((pow2 = Math.pow(2, --bounce)) - 1) / 11) {}
-                return 1 / Math.pow(4, 3 - bounce) - 7.5625 * Math.pow((pow2 * 3 - 2) / 22 - p, 2);
+                while (p < ((pow2 = Math.pow(2, --bounce)) - 1) * 0.0909090909) {} // *0.0909090909 = /11
+                return 1 / Math.pow(4, 3 - bounce) - 7.5625 * Math.pow((pow2 * 3 - 2) * 0.04545454545 - p, 2); // *0.04545454545 = /22
             }
         });
 
         $.each(baseEasings, function(name, easeIn) {
-            $.velocity.Easings["easeIn" + name] = easeIn;
-            $.velocity.Easings["easeOut" + name] = function(p) {
+            $.easing["easeIn" + name] = easeIn;
+            $.easing["easeOut" + name] = function(p) {
                 return 1 - easeIn(1 - p);
             };
-            $.velocity.Easings["easeInOut" + name] = function(p) {
+            $.easing["easeInOut" + name] = function(p) {
                 return p < 0.5 ?
-                    easeIn(p * 2) / 2 :
-                    1 - easeIn(p * -2 + 2) / 2;
+                    easeIn(p * 2) >> 1: // /2
+                    1 - easeIn(p * -2 + 2) >> 1: // /2
             };
         });
 
-        /* jQuery's default named easing types. */
-        $.velocity.Easings["linear"] = function(p) { 
-            return p;
-        };
-        $.velocity.Easings["swing"] = function(p) {
-            return 0.5 - Math.cos(p * Math.PI) / 2;
-        };
-
-        /* CSS3's named easing types. */
-        $.velocity.Easings["ease"] = generateBezier(0.25, 0.1, 0.25, 1.0);
-        $.velocity.Easings["ease-in"] = generateBezier(0.42, 0.0, 1.00, 1.0);
-        $.velocity.Easings["ease-out"] = generateBezier(0.00, 0.0, 0.58, 1.0);
-        $.velocity.Easings["ease-in-out"] = generateBezier(0.42, 0.0, 0.58, 1.0);
-
-        /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
-        $.velocity.Easings["spring"] = function(p) {
+        /* Bonus "spring" easing, which is a less exaggerated easeInOutElastic. */
+        $.easing["spring"] = function(p) {
             return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
         };
-    })();
+
+        /* CSS3's named easing types. (They are included to ease the transition from CSS3 animations to Velocity.) */
+        $.easing["ease"] = generateBezier(0.25, 0.1, 0.25, 1.0);
+        $.easing["ease-in"] = generateBezier(0.42, 0.0, 1.00, 1.0);
+        $.easing["ease-out"] = generateBezier(0.00, 0.0, 0.58, 1.0);
+        $.easing["ease-in-out"] = generateBezier(0.42, 0.0, 0.58, 1.0);
+    })(); 
+
+    /*****************
+        Constants
+    *****************/
+
+    var NAME = "velocity";
+
+    /******************************
+       Utility Function & State
+    ******************************/
+
+    /* In addition to extending jQuery's $.fn object, Velocity also registers itself as a jQuery utility ($.) function so that certain features are accessible beyond just a per-element scope. */
+    /* Note: The utility function doubles as a publicly-accessible data store for the purposes of unit testing. */
+    $.velocity = {
+        /* Container for page-wide Velocity state data. */
+        State: {
+            /* Detect mobile devices to determine if mobileHA should be turned on. */
+            isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+            /* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
+            isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
+            /* Create a cached element for re-use when checking for CSS property prefixes. */
+            prefixElement: document.createElement("div"),
+            /* Cache every prefix match to avoid repeating lookups. */
+            prefixMatches: {},
+            /* Cache the anchor used for animating window scrolling. */
+            scrollAnchor: null,
+            /* Cache the property name associated with the scroll anchor. */
+            scrollProperty: null,
+            /* Keep track of whether our RAF tick is running. */
+            isTicking: false,
+            /* Container for every in-progress call to Velocity. */
+            calls: []
+        },
+        /* Velocity's full re-implementation of jQuery's CSS stack. Made global for unit testing. */
+        CSS: { /* Defined below. */ },
+        /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). See VelocityJS.org/#sequences to learn more. */
+        Sequences: {
+            /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
+        },
+        /* Utility function's alias of $.fn.velocity(). Used for raw DOM element animation. */
+        animate: function () { /* Defined below. */ },
+        /* Set to 1 or 2 (most verbose) to log debug info to console. */
+        debug: false
+    };
+
+    /* Retrieve the appropriate scroll anchor and property name for this browser. Learn more: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
+    if (window.pageYOffset !== undefined) {
+        $.velocity.State.scrollAnchor = window;
+        $.velocity.State.scrollProperty = "pageYOffset";
+    } else {
+        $.velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
+        $.velocity.State.scrollProperty = "scrollTop";
+    }
 
     /*****************
         CSS Stack
@@ -529,7 +519,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
                                 if (extracted) {
                                     /* Convert to decimal value. */
-                                    propertyValue = extracted[1] / 100;
+                                    propertyValue = extracted[1] * 0.01;
                                 } else {
                                     /* When extracting opacity, default to 1 (fully visible) since a null value means opacity hasn't been set and the element is therefore fully visible. */
                                     propertyValue = 1;
@@ -1223,8 +1213,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
             /* The easing option can either be a string that references a pre-registered easing, or it can be an four-item array of integers to be converted into a bezier curve function. */
             if (typeof value === "string") {
-                /* Ensure that the easing has been assigned to jQuery's $.velocity.Easings object (which Velocity also uses as its easings container). */
-                if (!$.velocity.Easings[value]) {
+                /* Ensure that the easing has been assigned to jQuery's $.easing object (which Velocity also uses as its easings container). */
+                if (!$.easing[value]) {
                     easing = false;
                 }
             } else if (isArray(value)) {
@@ -1236,7 +1226,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
             /* Revert to the Velocity-wide default easing type, and fallback to "swing" (which is also jQuery's defualt) if the Velocity-wide default has been incorrectly modified. */
             if (easing === false) {
-                if ($.velocity.Easings[$.fn.velocity.defaults.easing]) {
+                if ($.easing[$.fn.velocity.defaults.easing]) {
                     easing = $.fn.velocity.defaults.easing;
                 } else {
                     easing = "swing";
@@ -1704,15 +1694,15 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             /* A %-value fontSize/lineHeight is relative to the parent's fontSize (as opposed to the parent's dimensions), which is identical to the em unit's behavior, so we piggyback off of that. */
                             if (/^(fontSize|lineHeight)$/.test(property)) {
                                 /* Convert % into an em decimal value. */ 
-                                endValue = endValue / 100;
+                                endValue = endValue * 0.01;
                                 endValueUnitType = "em";
                             /* For scaleX and scaleY, convert the value into its decimal format and strip off the unit type. */ 
                             } else if (/^scale/.test(property)) {
-                                endValue = endValue / 100;
+                                endValue = endValue * 0.01;
                                 endValueUnitType = "";
                             /* For RGB components, take the defined percentage of 255 and strip off the unit type. */ 
                             } else if (/(Red|Green|Blue)$/i.test(property)) {
-                                endValue = (endValue / 100) * 255;
+                                endValue = endValue * 2.55;  // endValue / 100) * 255
                                 endValueUnitType = "";
                             }
                         } 
@@ -2167,8 +2157,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         if (property !== "element") {
                             var tween = tweensContainer[property],
                                 currentValue,
-                                /* Easing can either be a bezier function or a string that references a pre-registered easing on the $.velocity.Easings object. In either case, return the appropriate easing function. */
-                                easing = (typeof tween.easing === "string") ? $.velocity.Easings[tween.easing] : tween.easing;
+                                /* Easing can either be a bezier function or a string that references a pre-registered easing on the $.easing object. In either case, return the appropriate easing function. */
+                                easing = (typeof tween.easing === "string") ? $.easing[tween.easing] : tween.easing;
 
                             /******************************
                                Current Value Calculation
