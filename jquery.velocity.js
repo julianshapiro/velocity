@@ -1183,7 +1183,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         /* The complete option must be a function. Otherwise, default to null. */
         /* Note: The complete option is the only option that is processed on a call-wide basis since it is fired once per call -- not once per element. */
-        if (options && !isFunction(options.complete)) {
+        if (options && options.complete && !isFunction(options.complete)) {
             options.complete = null;
         }
 
@@ -1445,8 +1445,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             $.data(element, NAME).opts.display = "block";
                         }
 
-                        /* If the loop option was set in the previous call, disable it so that reverse calls aren't recursively generated. */
+                        /* If the loop option was set in the previous call, disable it so that "reverse" calls aren't recursively generated. Further, remove the previous call's callback options;
+                           typically, users do not want these to be refired. */
                         $.data(element, NAME).opts.loop = false;
+                        $.data(element, NAME).opts.begin = null;
+                        $.data(element, NAME).opts.complete = null;
 
                         /* The opts object used for reversal is an extension of the options object optionally passed into this reverse call plus the options used in the previous Velocity call. */
                         opts = $.extend({}, $.data(element, NAME).opts, options);
@@ -2009,25 +2012,37 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             }
         }
 
-        /******************
-           Option: Loop 
-        ******************/
+        /********************
+            Option: Loop 
+        ********************/
 
         /* The loop option accepts an integer indicating how many times the element should loop between the values in the current call's properties map and the element's property values prior to this call. */
-        /* The loop option's logic is performed here -- after element processing -- because the current call needs to undergo its queue insertion prior to the loop option generating its series of constituent "reverse" calls,
+        /* Note: The loop option's logic is performed here -- after element processing -- because the current call needs to undergo its queue insertion prior to the loop option generating its series of constituent "reverse" calls,
            which chain after the current call. Two reverse calls (two "alternations") constitute one loop. */
-        var opts = $.extend({}, $.fn.velocity.defaults, options);
+        var opts = $.extend({}, $.fn.velocity.defaults, options),
+            reverseCallsCount;
+
         opts.loop = parseInt(opts.loop);
+        reverseCallsCount = (opts.loop * 2) - 1;
 
         if (opts.loop) {
             /* Double the loop count to convert it into its appropriate number of "reverse" calls. Subtract 1 from the resulting value since the current call is included in the total alternation count. */
-            for (var x = 0; x < (opts.loop * 2) - 1; x++) {
+            for (var x = 0; x < reverseCallsCount; x++) {
                 /* Since the logic for the reverse action occurs inside Queueing and thus this call's options object isn't parsed until then as well, the current call's delay option must be explicitly passed
                    into the reverse call so that the delay logic that occurs inside *Pre-Queueing* can process this delay. */
+                var reverseOptions = {
+                    delay: opts.delay
+                };
+
+                /* If a complete callback was passed into this call, transfer it to the loop sequence's final "reverse" call so that it's triggered when the entire sequence is complete (and not when the very first animation is complete). */
+                if (opts.complete && (x === reverseCallsCount - 1)) {
+                    reverseOptions.complete = opts.complete;
+                }
+
                 if (isJquery) {
-                    elements.velocity("reverse", { delay: opts.delay });
+                    elements.velocity("reverse", reverseOptions);
                 } else {
-                    $.velocity.animate(elements, "reverse", { delay: opts.delay });
+                    $.velocity.animate(elements, "reverse", reverseOptions);
                 }
             }
         }
@@ -2254,7 +2269,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
             /* If the display option is set to "none" (meaning the user intends to hide the element), set this value now that the animation is complete. */
             /* Note: The display option is ignored with "reverse" calls, which is what loops are composed of. See reverse's logic for further details. */
-            if (opts.display === "none" && opts.loop === false) {
+            if (opts.display === "none" && !opts.loop) {
                 CSS.setPropertyValue(element, "display", opts.display);
             }
 
@@ -2275,7 +2290,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             **********************/
 
             /* The complete callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
-            if ((i === callLength - 1) && opts.complete) {    
+            /* Note: If this is a loop, complete callback firing is handled by the loop's final reverse call -- we skip handling it here. */
+            if ((i === callLength - 1) && !opts.loop && opts.complete) {    
                 var rawElements = elements.jquery ? elements.get() : elements;
 
                 opts.complete.call(rawElements, rawElements); 
@@ -2343,7 +2359,7 @@ jQuery.fn.velocity.defaults = {
 
 /* slideUp, slideDown */
 jQuery.each([ "Down", "Up" ], function(i, direction) {
-    /* Generate the respective slide sequences dynamically to minimize redundancy. */
+    /* Generate the respective slide sequences dynamically in order to minimize code redundancy. */
     jQuery.velocity.Sequences["slide" + direction] = function(element, options) {
         var originalValues = {
                 height: null,
