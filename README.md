@@ -2,8 +2,6 @@
 
 **Documentation:** http://VelocityJS.org
 
-=========
-
 **Velocity's workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
 **Velocity's speed:** http://davidwalsh.name/css-js-animation
@@ -12,9 +10,6 @@
 
 **NPM:**
 https://www.npmjs.org/package/velocity-animate
-
-**Author:**
-http://twitter.com/shapiro
 
 *Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 10th.*
 
@@ -30,4 +25,4 @@ With each of these solutions, we're comparing options that are the product of no
 
 ###License
 
-MIT License. See `LICENSE`. © 2014 Julian Shapiro.
+MIT License. See `LICENSE`. © 2014 Julian Shapiro. http://twitter.com/shapiro.
