@@ -2,6 +2,8 @@
 
 **Documentation:** http://VelocityJS.org
 
+=========
+
 **Velocity's workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
 **Velocity's speed:** http://davidwalsh.name/css-js-animation
