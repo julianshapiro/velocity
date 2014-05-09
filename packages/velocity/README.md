@@ -1,10 +1,6 @@
 ###Velocity.js
 
-**Documentation:**
-
-http://VelocityJS.org
-
-Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 10th.
+**Documentation:** http://VelocityJS.org
 
 **Velocity's workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
@@ -17,6 +13,8 @@ https://www.npmjs.org/package/velocity-animate
 
 **Author:**
 http://twitter.com/shapiro
+
+*Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 10th.*
 
 ###**Comparisons**
 
