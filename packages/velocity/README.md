@@ -33,7 +33,7 @@ With each of these solutions, we're comparing options that are the product of no
 License
 ========
 
-The MIT License (MIT). See `LICENSE`. 
+MIT License. See `LICENSE`. 
 
 Copyright 2014 Julian Shapiro.
 
