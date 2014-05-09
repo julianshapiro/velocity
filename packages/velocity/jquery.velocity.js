@@ -825,9 +825,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* All other browsers support getComputedStyle. The returned live object reference is cached onto its associated element so that it does not need to be refetched upon every GET. */
                 } else {
                     if (!forceStyleLookup) {
-                        if (property === "height" && CSS.getPropertyValue(element, "boxSizing").toLowerCase() !== "border-box") {
+                        if (property === "height" && CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
                             return element.offsetHeight - (parseFloat(CSS.getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingBottom")) || 0);
-                        } else if (property === "width" && CSS.getPropertyValue(element, "boxSizing").toLowerCase() !== "border-box") {
+                        } else if (property === "width" && CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
                             return element.offsetWidth - (parseFloat(CSS.getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingRight")) || 0);
                         }
                     }
@@ -1336,7 +1336,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
             /* Refer to Velocity's documentation (VelocityJS.org/#display) for a description of the display option's behavior. */
             if (opts.display) {
-                opts.display = opts.display.toLowerCase();
+                opts.display = opts.display.toString().toLowerCase();
             }
 
             /**********************
