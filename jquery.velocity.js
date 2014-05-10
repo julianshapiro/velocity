@@ -2212,7 +2212,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             *****************/
 
                             /* setPropertyValue() returns an array of the property name and property value post any normalization that may have been performed. */
-                            var adjustedSetData = CSS.setPropertyValue(element, property, tween.currentValue + (currentValue === "auto" ? "" : tween.unitType), tween.rootPropertyValue, tween.scrollContainer); /* SET */
+                            /* Note: To solve an IE<=8 positioning bug, the unit type is dropped when setting a property value of 0. */
+                            var adjustedSetData = CSS.setPropertyValue(element, property, tween.currentValue + (parseFloat(currentValue) === 0 ? "" : tween.unitType), tween.rootPropertyValue, tween.scrollContainer); /* SET */
 
                             /*******************
                                Hooks: Part II
