@@ -517,7 +517,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     }
                 },
 
-                /* <=IE8 do not support the opacity property. Further, they require opacified elements to have their zoom property set to a non-zero value. */
+                /* <=IE8 do not support the standard opacity property. They use filter:alpha(opacity=INT) instead. */
                 opacity: function (type, element, propertyValue) {
                     if (IE <= 8) {
                         switch (type) {
@@ -537,10 +537,17 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
                                 return propertyValue;
                             case "inject":
+                                /* Opacified elements are required to have their zoom property set to a non-zero value. */
                                 element.style.zoom = 1;
 
-                                /* As per the filter property's spec, convert the decimal value to a whole number and wrap the value. */
-                                return "alpha(opacity=" + parseInt(propertyValue * 100) + ")";
+                                /* Setting the filter property on elements with certain font property combinations can result in a highly unappealing ultra-bolding effect. There's no way to remedy this throughout a tween,
+                                   but dropping the value altogether (when opacity hits 1) at leasts ensures that the glitch is gone post-tweening. */ 
+                                if (parseInt(propertyValue) === 1) {
+                                    return "";
+                                } else {
+                                  /* As per the filter property's spec, convert the decimal value to a whole number and wrap the value. */
+                                  return "alpha(opacity=" + parseInt(propertyValue * 100) + ")";  
+                                }
                         }
                     /* With all other browsers, normalization is not required; return the same values that were passed in. */
                     } else {
