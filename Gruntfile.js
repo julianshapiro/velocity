@@ -46,10 +46,15 @@ module.exports = function(grunt) {
         src: 'jquery.velocity.js',
         dest: 'jquery.velocity.min.js'
       }
+    },
+    watch: {
+      files: ['jquery.velocity.js'],
+      tasks: ['concat', 'uglify']
     }
   });
 
   // Load the plugin that provides the "uglify" task.
+  grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-concat');
 

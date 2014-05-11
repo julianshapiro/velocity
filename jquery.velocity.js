@@ -1371,7 +1371,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             if (/^\d/.test(opts.delay)) {
                 $.queue(element, opts.queue, function(next) {
                     /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
-                    velocity.queueEntryFlag = true;
+                    velocity.velocityQueueEntryFlag = true;
 
                     /* The ensuing queue item (which is assigned to the "next" argument that $.queue() automatically passes in) will be triggered after a setTimeout delay. */
                     setTimeout(next, parseFloat(opts.delay));
@@ -2072,7 +2072,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             } else {
                 $.queue(element, opts.queue, function(next) {
                     /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
-                    velocity.queueEntryFlag = true;
+                    velocity.velocityQueueEntryFlag = true;
 
                     buildQueue(next);
                 });
@@ -2369,7 +2369,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             /* If the element's queue is empty (if only the "inprogress" item is left at position 0) or if its queue is about to run a non-Velocity-initiated entry, turn off the isAnimating flag. 
                A non-Velocity-initiatied queue entry's logic might alter an element's CSS values and thereby cause Velocity's cached value data to go stale. To detect if a queue entry was initiated by Velocity,
                we check for the existence of our special velocity.queueEntryFlag declaration, which minifiers won't rename since the flag is assigned to jQuery's global $ object and thus exists out of Velocity's own scope. */
-            if ($.queue(element)[1] === undefined || !/\.velocity\.queueEntryFlag/i.test($.queue(element)[1])) {     
+            if ($.queue(element)[1] === undefined || !/\.velocityQueueEntryFlag/i.test($.queue(element)[1])) {     
                 /* The element may have been deleted. Ensure that its data cache still exists before acting on it. */
                 if ($.data(element, NAME)) {
                     $.data(element, NAME).isAnimating = false;
