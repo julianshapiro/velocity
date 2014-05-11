@@ -2,7 +2,7 @@ module.exports = function(grunt) {
   // Project configuration.
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    licence: 'Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License',
+    license: 'Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License',
     concat: {
       options: {
         separator: '\n\n'
@@ -22,7 +22,7 @@ module.exports = function(grunt) {
               '*/\n\n'
         },
         src: [
-          'shim.jquery.js',
+          'jquery-shim.js',
           'jquery.velocity.js',
         ],
         dest: 'velocity.js'

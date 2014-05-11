@@ -1,2 +1,3 @@
+.gitignore
 node_modules
-shim.jquery.js
+jquery-shim.js
