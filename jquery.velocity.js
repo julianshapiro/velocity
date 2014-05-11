@@ -144,8 +144,9 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             prefixMatches: {},
             /* Cache the anchor used for animating window scrolling. */
             scrollAnchor: null,
-            /* Cache the property name associated with the scroll anchor. */
-            scrollProperty: null,
+            /* Cache the property names associated with the scroll anchor. */
+            scrollPropertyLeft: null,
+            scrollPropertyTop: null,
             /* Keep track of whether our RAF tick is running. */
             isTicking: false,
             /* Container for every in-progress call to Velocity. */
@@ -169,10 +170,12 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
     /* Retrieve the appropriate scroll anchor and property name for this browser. Learn more: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
     if (window.pageYOffset !== undefined) {
         $.velocity.State.scrollAnchor = window;
-        $.velocity.State.scrollProperty = "pageYOffset";
+        $.velocity.State.scrollPropertyLeft = "pageXOffset";
+        $.velocity.State.scrollPropertyTop = "pageYOffset";
     } else {
         $.velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
-        $.velocity.State.scrollProperty = "scrollTop";
+        $.velocity.State.scrollPropertyLeft = "scrollLeft";
+        $.velocity.State.scrollPropertyTop = "scrollTop";
     }
 
     /**************
@@ -973,17 +976,20 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
         /* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
         setPropertyValue: function(element, property, propertyValue, rootPropertyValue, scrollContainer) {
-            var propertyName = property;    
+            var propertyName = property;   
 
             /* In order to be subjected to call options and element queueing, scroll animation is routed through Velocity as if it were a standard CSS property. */
             if (property === "scroll") {
-                /* If a scrollContainer option is present, scroll the container instead of the browser window. */
-                if (scrollContainer) {
-                    scrollContainer.scrollTop = propertyValue;
+                /* If a container option is present, scroll the container instead of the browser window. */
+                if (scrollContainer.container) {
+                    scrollContainer.container["scroll" + scrollContainer.direction] = propertyValue;
                 /* Otherwise, Velocity defaults to scrolling the browser window. */
                 } else {
-                    /* Note: When scrolling the browser window, the horizontal scroll position is reset to 0; Velocity does not support horizontal scroll animation. */
-                    window.scrollTo(null, propertyValue);
+                    if (scrollContainer.direction === "Left") {
+                        window.scrollTo(propertyValue, scrollContainer.alternateValue);
+                    } else {
+                        window.scrollTo(scrollContainer.alternateValue, propertyValue);
+                    }
                 }
             } else {
                 /* Transforms (translateX, rotateZ, etc.) are applied to a per-element transformCache object, which is manually flushed via flushTransformCache(). Thus, for now, we merely cache transforms being SET. */
@@ -1405,8 +1411,10 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                 /* Note: In order to be subjected to chaining and animation options, scroll's tweening is routed through Velocity as if it were a standard CSS property animation. */
                 if (action === "scroll") {   
                     /* The scroll action uniquely takes an optional "offset" option -- specified in pixels -- that offsets the targeted scroll position. */
-                    var scrollOffset = parseFloat(opts.offset) || 0,
+                    var scrollDirection = (/^x$/i.test(opts.axis) ? "Left" : "Top"), 
+                        scrollOffset = parseFloat(opts.offset) || 0,
                         scrollPositionCurrent,
+                        scrollPositionCurrentAlternate,
                         scrollPositionEnd;
 
                     /* Scroll also uniquely takes an optional "container" option, which indicates the parent element that should be scrolled -- as opposed to the browser window itself.
@@ -1416,23 +1424,25 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                         if (opts.container.jquery || opts.container.nodeType) {
                             /* Extract the raw DOM element from the jQuery wrapper. */
                             opts.container = opts.container[0] || opts.container;
-                            /* Note: Unlike all other properties in Velocity, the browser's scroll position is never cached since it so frequently changes (due to the user's natural interaction with the page). */
-                            scrollPositionCurrent = opts.container.scrollTop; /* GET */
+                            /* Note: Unlike other properties in Velocity, the browser's scroll position is never cached since it so frequently changes (due to the user's natural interaction with the page). */
+                            scrollPositionCurrent = opts.container["scroll" + scrollDirection]; /* GET */
 
                             /* $.position() values are relative to the container's currently viewable area (without taking into account the container's true dimensions -- say, for example, if the container was not overflowing).
                                Thus, the scroll end value is the sum of the child element's position *and* the scroll container's current scroll position. */
-                            /* Note: jQuery does not offer a utility alias for $.position(), so we have to incur jQuery object conversion here. This syncs up with an ensuing batch of GETs, so it fortunately does not produce layout thrashing. */
-                            scrollPositionEnd = (scrollPositionCurrent + $(element).position().top) + scrollOffset; /* GET */
+                            /* Note: jQuery does not offer a utility alias for $.position(), so we have to incur jQuery object conversion here. This syncs up with an ensuing batch of GETs, so it fortunately does not trigger layout thrashing. */
+                            scrollPositionEnd = (scrollPositionCurrent + $(element).position()[scrollDirection.toLowerCase()]) + scrollOffset; /* GET */
                         /* If a value other than a jQuery object or a raw DOM element was passed in, default to null so that this option is ignored. */
                         } else {
                             opts.container = null;
                         }
                     } else {
                         /* If the window itself is being scrolled -- not a containing element -- perform a live scroll position lookup using the appropriate cached property names (which differ based on browser type). */
-                        scrollPositionCurrent = $.velocity.State.scrollAnchor[$.velocity.State.scrollProperty]; /* GET */
+                        scrollPositionCurrent = $.velocity.State.scrollAnchor[$.velocity.State["scrollProperty" + scrollDirection]]; /* GET */
+                        /* When scrolling the browser window, cache the alternate axis's current value since window.scrollTo() doesn't let us change only one value at a time. */
+                        scrollPositionCurrentAlternate = $.velocity.State.scrollAnchor[$.velocity.State["scrollProperty" + (scrollDirection === "Left" ? "Top" : "Left")]]; /* GET */
 
                         /* Unlike $.position(), $.offset() values are relative to the browser window's true dimensions -- not merely its currently viewable area -- and therefore end values do not need to be compounded onto current values. */
-                        scrollPositionEnd = $(element).offset().top + scrollOffset; /* GET */
+                        scrollPositionEnd = $(element).offset()[scrollDirection.toLowerCase()] + scrollOffset; /* GET */
                     }
 
                     /* Since there's only one format that scroll's associated tweensContainer can take, we create it manually. */
@@ -1444,7 +1454,11 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                             endValue: scrollPositionEnd,
                             unitType: "",
                             easing: opts.easing,
-                            scrollContainer: opts.container
+                            scrollContainer: {
+                                container: opts.container,
+                                direction: scrollDirection,
+                                alternateValue: scrollPositionCurrentAlternate
+                            }
                         },
                         element: element
                     };
