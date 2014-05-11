@@ -15,9 +15,9 @@
 ****************/
 
 /*
-Velocity recreates the entirety of jQuery's CSS stack and builds a concise animation layer on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
-Whenever Velocity triggers a DOM query (a GET) or a DOM update (a SET), a comment indicating as much is placed next to the offending line of code.
-Watch these talks to learn about the nuances of DOM performance: https://www.youtube.com/watch?v=cmZqLzPy0XE and https://www.youtube.com/watch?v=n8ep4leoN9A
+Velocity is a concise CSS manipulation library with a performant animation stack built on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
+Whenever Velocity triggers a DOM query (a GET) or a DOM update (a SET), a comment indicating such is placed next to the offending line of code.
+To learn more about the nuances of DOM performance, check out these talks: https://www.youtube.com/watch?v=cmZqLzPy0XE and https://www.youtube.com/watch?v=n8ep4leoN9A
 
 Velocity is structured into four sections:
 - CSS Stack: Works independently from the rest of Velocity.
@@ -28,8 +28,8 @@ Velocity is structured into four sections:
 - Tick: The single requestAnimationFrame loop responsible for tweening all in-progress calls.
 - completeCall: Handles the cleanup process for each Velocity call.
 
-To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for all queuing logic.
-The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for animating individual properties in compound-value properties (e.g. "textShadowBlur" in "textShadow: 0px 0px 0px black").
+Note: To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for queuing logic.
+Note: The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for animating individual properties in compound-value properties (e.g. "textShadowBlur" in "textShadow: 0px 0px 0px black").
 */
 
 ;(function ($, window, document, undefined) {  
@@ -542,11 +542,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
                                 /* Setting the filter property on elements with certain font property combinations can result in a highly unappealing ultra-bolding effect. There's no way to remedy this throughout a tween,
                                    but dropping the value altogether (when opacity hits 1) at leasts ensures that the glitch is gone post-tweening. */ 
-                                if (parseInt(propertyValue) === 1) {
+                                if (parseFloat(propertyValue) >= 1) {
                                     return "";
                                 } else {
                                   /* As per the filter property's spec, convert the decimal value to a whole number and wrap the value. */
-                                  return "alpha(opacity=" + parseInt(propertyValue * 100) + ")";  
+                                  return "alpha(opacity=" + parseInt(parseFloat(propertyValue) * 100, 10) + ")";  
                                 }
                         }
                     /* With all other browsers, normalization is not required; return the same values that were passed in. */
@@ -890,7 +890,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     } 
 
                     /* Fall back to the property's style value (if defined) when computedValue returns nothing, which can happen when the element hasn't been painted. */
-                    if (computedValue === "") {
+                    if (computedValue === "" || computedValue === null) {
                         computedValue = element.style[property];
                     }
                 }
@@ -1724,26 +1724,28 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             }
                         } 
 
-                        /* When queried, the browser returns (most) CSS property values in pixels. Therefore, if an endValue of %, em, or rem is animated toward, startValue must be converted from pixels into the same unit type 
-                           as endValue in order for value manipulation logic to proceed. Further, if the startValue was forcefed or transferred from a previous call, its value may not actually be in pixels. Unit conversion logic
-                           consists of two steps: 1) Calculating the ratio of %, em, and rem relative to pixels, and 2) Matching up startValue's unit type with endValue's based on these ratios. */
+                        /* When queried, the browser returns (most) CSS property values in pixels. Therefore, if an endValue with a unit type of %, em, or rem is animated toward, startValue must be converted from pixels into the same unit type 
+                           as endValue in order for value manipulation logic (increment/decrement) to proceed. Further, if the startValue was forcefed or transferred from a previous call, startValue may also not be in pixels. Unit conversion logic
+                           therefore consists of two steps: 1) Calculating the ratio of %,/em/rem relative to pixels then 2) Converting startValue into the same unit of measurement as endValue based on these ratios. */
                         /* Unit conversion ratios are calculated by momentarily setting a value with the target unit type on the element, comparing the returned pixel value, then reverting to the original value. */
                         /* Note: Even if only one of these unit types is being animated, all unit ratios are calculated at once since the overhead of batching the SETs and GETs together upfront outweights the potential overhead
                                  of layout thrashing caused by re-querying for uncalculated ratios for subsequently-processed properties. */
+                        /* Note: Instead of adjusting the CSS properties on the target element, an alternative way of performing value conversion is to inject a cloned element into the element's parent and manipulate *its* values instead.
+                                 This is a cleaner method that avoids the ensuing rounds of layout thrashing, but it's ultimately less performant due to the overhead involved with DOM tree modification (element insertion/deletion). */
                         /* Todo: Shift this logic into the calls' first tick instance so that it's synced with RAF. */
                         /* Todo: Store the original values and skip re-setting if we're animating height or width in the properties map. */
                         function calculateUnitRatios () {
-                            /* The properties below are used to determine whether the element differs sufficiently from this call's prior element to also differ in its unit conversion ratio.
+                            /* The properties below are used to determine whether the element differs sufficiently from this same call's prior element (in the overall element set) to also differ in its unit conversion ratios.
                                If the properties match up with those of the prior element, the prior element's conversion ratios are used. Like most optimizations in Velocity, this is done to minimize DOM querying. */
                             var sameRatioIndicators = {
                                     parent: element.parentNode, /* GET */
                                     position: CSS.getPropertyValue(element, "position"), /* GET */
                                     fontSize: CSS.getPropertyValue(element, "fontSize") /* GET */
                                 },
-                                /* Determine if the same % ratio can be used. % is relative to the element's position and the parent's dimensions. */
+                                /* Determine if the same % ratio can be used. % is relative to the element's position value and the parent's width and height dimensions. */
                                 sameBasePercent = ((sameRatioIndicators.position === unitConversionRatios.lastPosition) && (sameRatioIndicators.parent === unitConversionRatios.lastParent)),
-                                /* Determine if the same em ratio can be used. em is relative to the element's fontSize. */
-                                sameBaseEm = (sameRatioIndicators.fontSize === unitConversionRatios.lastFontSize);
+                                /* Determine if the same em ratio can be used. em is relative to the element's fontSize, which itself is relative to the parent's fontSize. */
+                                sameBaseEm = ((sameRatioIndicators.fontSize === unitConversionRatios.lastFontSize) && (sameRatioIndicators.parent === unitConversionRatios.lastParent));
 
                             /* Store these ratio indicators call-wide for the next element to compare against. */
                             unitConversionRatios.lastParent = sameRatioIndicators.parent;
@@ -1751,52 +1753,62 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             unitConversionRatios.lastFontSize = sameRatioIndicators.fontSize;
 
                             /* Whereas % and em ratios are determined on a per-element basis, the rem unit type only needs to be checked once per call since it is exclusively dependant upon the body element's fontSize.
-                               If this is the first time that calculateUnitRatios() is being run during this call, the remToPxRatio value will be null, so we calculate it now. */
+                               If this is the first time that calculateUnitRatios() is being run during this call, remToPxRatio will still be set to its default value of null, so we calculate it now. */
                             if (unitConversionRatios.remToPxRatio === null) {
                                 /* Default to most browsers' default fontSize of 16px in the case of 0. */
                                 unitConversionRatios.remToPxRatio = parseFloat(CSS.getPropertyValue(document.body, "fontSize")) || 16; /* GET */
                             }
 
                             var originalValues = {
-                                    /* To accurately and consistently calculate conversion ratios, the element's overflow and box-sizing are temporarily disabled. Overflow must be manipulated on a per-axis basis
-                                       since the plain overflow property overwrites its subproperties' values. */
+                                    /* To accurately and consistently calculate conversion ratios, the element's overflow and box-sizing are temporarily removed. Both properties modify an element's visible dimensions. */
+                                    /* Note: Overflow must be manipulated on a per-axis basis since the plain overflow property overwrites its subproperties' values. */
                                     overflowX: null,
                                     overflowY: null,
                                     boxSizing: null,
-                                    /* width and height act as our proxy properties for measuring the horizontal and vertical % ratios. Since they can be artificially constrained by their min-/max- equivalents, those properties are changed as well. */
+                                    /* width and height act as our proxy properties for measuring the horizontal and vertical % ratios. Since they can be artificially constrained by their min-/max- equivalents, those properties are converted as well. */
                                     width: null,
                                     minWidth: null,
                                     maxWidth: null,
                                     height: null,
                                     minHeight: null,
                                     maxHeight: null,
-                                    /* paddingLeft acts as our proxy for the em ratio. */
+                                    /* paddingLeft arbitrarily acts as our proxy for the em ratio. */
                                     paddingLeft: null
                                 },
                                 elementUnitRatios = {},
                                 /* Note: IE<=8 round to the nearest pixel when returning CSS values, thus we perform conversions using a measurement of 10 (instead of 1) to give our ratios a precision of at least 1 decimal value. */
                                 measurement = 10;                                
 
-                            /* For organizational purposes, active ratios calculations are consolidated onto the elementUnitRatios object. */
+                            /* For organizational purposes, current ratios calculations are consolidated onto the elementUnitRatios object. */
                             elementUnitRatios.remToPxRatio = unitConversionRatios.remToPxRatio;
 
+                            /* After temporary unit conversion logic runs, width and height properties that were originally set to "auto" must be set back to "auto" instead of to the actual corresponding pixel value. Leaving the values
+                               at their hard-coded pixel value equivalents would inherently prevent the elements from vertically adjusting as the height of its inner content changes. */
+                            /* IE tells us whether or not the property is set to "auto". Other browsers provide no way of determing "auto" values on height/width, and thus we have to trigger additional layout thrashing (see below) to solve this. */             
+                            if (IE) {
+                                var isIEWidthAuto = /^auto$/i.test(element.currentStyle.width),
+                                    isIEHeightAuto = /^auto$/i.test(element.currentStyle.height);
+                            }
+
                             /* Note: To minimize layout thrashing, the ensuing unit conversion logic is split into batches to synchronize GETs and SETs. */
-                            originalValues.overflowX = CSS.getPropertyValue(element, "overflowX"); /* GET */
-                            originalValues.overflowY = CSS.getPropertyValue(element, "overflowY"); /* GET */
-                            originalValues.boxSizing = CSS.getPropertyValue(element, "boxSizing"); /* GET */
+                            if (!sameBasePercent || !sameBaseEm) {
+                                originalValues.overflowX = CSS.getPropertyValue(element, "overflowX"); /* GET */
+                                originalValues.overflowY = CSS.getPropertyValue(element, "overflowY"); /* GET */
+                                originalValues.boxSizing = CSS.getPropertyValue(element, "boxSizing"); /* GET */
 
-                            /* Since % values are relative to their respective axes, ratios are calculated for both width and height. In contrast, only a single ratio is required for rem and em. */
-                            /* When calculating % values, we set a flag to indiciate that we want the computed value instead of offsetWidth/Height, which incorporate additional dimensions (such as padding and border-width) into their values. */
-                            originalValues.width = CSS.getPropertyValue(element, "width", null, true); /* GET */
-                            originalValues.minWidth = CSS.getPropertyValue(element, "minWidth"); /* GET */
-                            /* Note: max-width/height must default to "none" when 0 is returned, otherwise the element cannot have its width/height set. */
-                            originalValues.maxWidth = CSS.getPropertyValue(element, "maxWidth") || "none"; /* GET */
+                                /* Since % values are relative to their respective axes, ratios are calculated for both width and height. In contrast, only a single ratio is required for rem and em. */
+                                /* When calculating % values, we set a flag to indiciate that we want the computed value instead of offsetWidth/Height, which incorporate additional dimensions (such as padding and border-width) into their values. */
+                                originalValues.width = CSS.getPropertyValue(element, "width", null, true); /* GET */
+                                originalValues.minWidth = CSS.getPropertyValue(element, "minWidth"); /* GET */
+                                /* Note: max-width/height must default to "none" when 0 is returned, otherwise the element cannot have its width/height set. */
+                                originalValues.maxWidth = CSS.getPropertyValue(element, "maxWidth") || "none"; /* GET */
 
-                            originalValues.height = CSS.getPropertyValue(element, "height", null, true); /* GET */
-                            originalValues.minHeight = CSS.getPropertyValue(element, "minHeight"); /* GET */
-                            originalValues.maxHeight = CSS.getPropertyValue(element, "maxHeight") || "none"; /* GET */
+                                originalValues.height = CSS.getPropertyValue(element, "height", null, true); /* GET */
+                                originalValues.minHeight = CSS.getPropertyValue(element, "minHeight"); /* GET */
+                                originalValues.maxHeight = CSS.getPropertyValue(element, "maxHeight") || "none"; /* GET */
 
-                            originalValues.paddingLeft = CSS.getPropertyValue(element, "paddingLeft"); /* GET */
+                                originalValues.paddingLeft = CSS.getPropertyValue(element, "paddingLeft"); /* GET */
+                            }
 
                             if (sameBasePercent) {
                                 elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth;
@@ -1834,7 +1846,34 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
                             /* Revert each test property to its original value. */
                             for (var originalValueProperty in originalValues) {
-                                CSS.setPropertyValue(element, originalValueProperty, originalValues[originalValueProperty]); /* SETs */
+                                if (originalValues[originalValueProperty] !== null) {
+                                    CSS.setPropertyValue(element, originalValueProperty, originalValues[originalValueProperty]); /* SETs */
+                                }
+                            }
+
+                            /* In IE, revert to "auto" for width and height if it was originally set. */
+                            if (IE) {
+                                if (isIEWidthAuto) {
+                                    CSS.setPropertyValue(element, "width", "auto"); /* SET */
+                                }
+
+                                if (isIEHeightAuto) {
+                                    CSS.setPropertyValue(element, "height", "auto"); /* SET */
+                                }
+                            /* For other browsers, additional layout thrashing must be triggered to determine whether a property was originally set to "auto". */
+                            } else {
+                                /* Set height to "auto" then compare the returned value against the element's current height value. If they're identical, leave height set to "auto".
+                                   If they're different, then "auto" wasn't originally set on the element prior to our conversions, and we revert it to its actual value. */
+                                /* Note: The following GETs and SETs cannot be batched together due to the cross-effect setting one axis to "auto" has on the other. */
+                                CSS.setPropertyValue(element, "height", "auto"); /* SET */
+                                if (originalValues.height !== CSS.getPropertyValue(element, "height", null, true)) { /* GET */
+                                    CSS.setPropertyValue(element, "height", originalValues.height); /* SET */
+                                }
+
+                                CSS.setPropertyValue(element, "width", "auto"); /* SET */
+                                if (originalValues.width !== CSS.getPropertyValue(element, "width", null, true)) { /* GET */
+                                    CSS.setPropertyValue(element, "width", originalValues.width); /* SET */
+                                }
                             }
 
                             if ($.velocity.debug >= 1) console.log("Unit ratios: " + JSON.stringify(elementUnitRatios), element);
