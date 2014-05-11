@@ -1,0 +1,25 @@
+{
+  "name": "velocity",
+  "repository": "julianshapiro/velocity",
+  "version": "0.0.1",
+  "description": "Accelerated JavaScript animation.",
+  "keywords": [
+    "animation",
+    "jquery",
+    "animate",
+    "lightweight",
+    "smooth",
+    "ui",
+    "velocity.js",
+    "velocityjs",
+    "javascript"
+  ],
+  "license" : "MIT",
+  "main": "jquery.velocity.js",
+  "scripts": [
+    "jquery.velocity.js"
+  ],
+  "dependencies": {
+    "jquery/jquery": "*"
+  }
+}

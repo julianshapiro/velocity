@@ -15,9 +15,9 @@
 ****************/
 
 /*
-Velocity recreates the entirety of jQuery's CSS stack and builds a concise animation layer on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
-Whenever Velocity triggers a DOM query (a GET) or a DOM update (a SET), a comment indicating as much is placed next to the offending line of code.
-Watch these talks to learn about the nuances of DOM performance: https://www.youtube.com/watch?v=cmZqLzPy0XE and https://www.youtube.com/watch?v=n8ep4leoN9A
+Velocity is a concise CSS manipulation library with a performant animation stack built on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
+Whenever Velocity triggers a DOM query (a GET) or a DOM update (a SET), a comment indicating such is placed next to the offending line of code.
+To learn more about the nuances of DOM performance, check out these talks: https://www.youtube.com/watch?v=cmZqLzPy0XE and https://www.youtube.com/watch?v=n8ep4leoN9A
 
 Velocity is structured into four sections:
 - CSS Stack: Works independently from the rest of Velocity.
@@ -28,28 +28,8 @@ Velocity is structured into four sections:
 - Tick: The single requestAnimationFrame loop responsible for tweening all in-progress calls.
 - completeCall: Handles the cleanup process for each Velocity call.
 
-To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for all queuing logic. This has the byproduct of slightly bloating our codebase since $.queue()'s behavior is not straightforward.
-The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for animating compound-value CSS properties (e.g. "textShadow: 0px 0px 0px black" and "transform: skew(45) scale(1.5)").
-*/
-
-/*****************
-    Structure
-*****************/
-
-/*
-- Helper Functions
-- Aborting
-- Easings
-- Constants
-- Utility Function & State
-- CSS Class Extraction
-- CSS Stack
-- $.fn.velocity
-  - Pre-Queueing
-  - Queueing
-  - Pushing
-- Tick
-- Complete Call
+Note: To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for queuing logic.
+Note: The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for animating individual properties in compound-value properties (e.g. "textShadowBlur" in "textShadow: 0px 0px 0px black").
 */
 
 ;(function ($, window, document, undefined) {  
@@ -114,8 +94,13 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
     }
 
     /* Determine if a variable is a function. */
-    function isFunction(variable) {
+    function isFunction (variable) {
         return Object.prototype.toString.call(variable) === "[object Function]";
+    }
+
+    /* Determine if a variable is an array. */
+    function isArray (variable) {
+        return Object.prototype.toString.call(variable) === "[object Array]";
     }
 
     /****************
@@ -134,13 +119,141 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         return;
     } 
 
+    /*****************
+        Constants
+    *****************/
+
+    var NAME = "velocity";
+
+    /******************************
+       Utility Function & State
+    ******************************/
+
+    /* In addition to extending jQuery's $.fn object, Velocity also registers itself as a jQuery utility ($.) function so that certain features are accessible beyond just a per-element scope. */
+    /* Note: The utility function doubles as a publicly-accessible data store for the purposes of unit testing. */
+    $.velocity = {
+        /* Container for page-wide Velocity state data. */
+        State: {
+            /* Detect mobile devices to determine if mobileHA should be turned on. */
+            isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+            /* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
+            isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
+            /* Create a cached element for re-use when checking for CSS property prefixes. */
+            prefixElement: document.createElement("div"),
+            /* Cache every prefix match to avoid repeating lookups. */
+            prefixMatches: {},
+            /* Cache the anchor used for animating window scrolling. */
+            scrollAnchor: null,
+            /* Cache the property names associated with the scroll anchor. */
+            scrollPropertyLeft: null,
+            scrollPropertyTop: null,
+            /* Keep track of whether our RAF tick is running. */
+            isTicking: false,
+            /* Container for every in-progress call to Velocity. */
+            calls: []
+        },
+        /* Velocity's full re-implementation of jQuery's CSS stack. Made global for unit testing. */
+        CSS: { /* Defined below. */ },
+        /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). See VelocityJS.org/#sequences to learn more. */
+        Sequences: {
+            /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
+        },
+        Easings: {
+            /* Defined below. */
+        },
+        /* Utility function's alias of $.fn.velocity(). Used for raw DOM element animation. */
+        animate: function () { /* Defined below. */ },
+        /* Set to 1 or 2 (most verbose) to log debug info to console. */
+        debug: false
+    };
+
+    /* Retrieve the appropriate scroll anchor and property name for this browser. Learn more: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
+    if (window.pageYOffset !== undefined) {
+        $.velocity.State.scrollAnchor = window;
+        $.velocity.State.scrollPropertyLeft = "pageXOffset";
+        $.velocity.State.scrollPropertyTop = "pageYOffset";
+    } else {
+        $.velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
+        $.velocity.State.scrollPropertyLeft = "scrollLeft";
+        $.velocity.State.scrollPropertyTop = "scrollTop";
+    }
+
     /**************
         Easings
     **************/
 
-    /* Velocity embeds jQuery UI's easings to save users from having to include an additional library to their page. */
-    /* Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
+    /* Bezier curve function generator. */
+    /* Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License */
+    function generateBezier (mX1, mY1, mX2, mY2) {
+        /* Must contain four arguments. */
+        if (arguments.length !== 4) {
+            return false;
+        }
+
+        /* Arguments must be numbers. */
+        for (var i = 0; i < 4; ++i) {
+            if (typeof arguments[i] !== "number" || isNaN(arguments[i]) || !isFinite(arguments[i])) {
+                return false;
+            }
+        }
+
+        /* X values must be in the [0, 1] range. */
+        mX1 = Math.min(mX1, 1);
+        mX2 = Math.min(mX2, 1);
+        mX1 = Math.max(mX1, 0);
+        mX2 = Math.max(mX2, 0);
+
+        function A (aA1, aA2) { 
+            return 1.0 - 3.0 * aA2 + 3.0 * aA1;
+        }
+
+        function B (aA1, aA2) {
+            return 3.0 * aA2 - 6.0 * aA1;
+        }
+        function C (aA1) {
+            return 3.0 * aA1;
+        }
+
+        function calcBezier (aT, aA1, aA2) {
+            return ((A(aA1, aA2)*aT + B(aA1, aA2))*aT + C(aA1))*aT;
+        }
+
+        function getSlope (aT, aA1, aA2) {
+            return 3.0 * A(aA1, aA2)*aT*aT + 2.0 * B(aA1, aA2) * aT + C(aA1);
+        }
+
+        function getTForX (aX) {
+            var aGuessT = aX;
+
+            for (var i = 0; i < 8; ++i) {
+                var currentSlope = getSlope(aGuessT, mX1, mX2);
+
+                if (currentSlope === 0.0) {
+                    return aGuessT;
+                }
+
+                var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
+
+                aGuessT -= currentX / currentSlope;
+            }
+
+            return aGuessT;
+        }
+
+        var f = function (aX) {
+            if (mX1 === mY1 && mX2 === mY2) {
+                return aX;
+            } else {
+                return calcBezier(getTForX(aX), mY1, mY2);
+            }
+        };
+
+        return f;
+    }
+
+    /* Velocity embeds the named easings from jQuery, jQuery UI, and CSS3 in order to save users from having to include additional libraries on their page. */
     (function () {
+        /* jQuery UI's Robert Penner easing equations. Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
         var baseEasings = {};
 
         $.each(["Quad", "Cubic", "Quart", "Quint", "Expo"], function(i, name) {
@@ -173,165 +286,36 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         });
 
         $.each(baseEasings, function(name, easeIn) {
-            $.easing["easeIn" + name] = easeIn;
-            $.easing["easeOut" + name] = function(p) {
+            $.velocity.Easings["easeIn" + name] = easeIn;
+            $.velocity.Easings["easeOut" + name] = function(p) {
                 return 1 - easeIn(1 - p);
             };
-            $.easing["easeInOut" + name] = function(p) {
+            $.velocity.Easings["easeInOut" + name] = function(p) {
                 return p < 0.5 ?
                     easeIn(p * 2) / 2 :
                     1 - easeIn(p * -2 + 2) / 2;
             };
         });
 
+        /* jQuery's default named easing types. */
+        $.velocity.Easings["linear"] = function(p) { 
+            return p;
+        };
+        $.velocity.Easings["swing"] = function(p) {
+            return 0.5 - Math.cos(p * Math.PI) / 2;
+        };
+
+        /* CSS3's named easing types. */
+        $.velocity.Easings["ease"] = generateBezier(0.25, 0.1, 0.25, 1.0);
+        $.velocity.Easings["ease-in"] = generateBezier(0.42, 0.0, 1.00, 1.0);
+        $.velocity.Easings["ease-out"] = generateBezier(0.00, 0.0, 0.58, 1.0);
+        $.velocity.Easings["ease-in-out"] = generateBezier(0.42, 0.0, 0.58, 1.0);
+
         /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
-        $.easing["spring"] = function(p) {
+        $.velocity.Easings["spring"] = function(p) {
             return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
         };
-    })(); 
-
-    /*****************
-        Constants
-    *****************/
-
-    var NAME = "velocity";
-
-    /******************************
-       Utility Function & State
-    ******************************/
-
-    /* In addition to extending jQuery's $.fn object, Velocity also registers itself as a jQuery utility ($.) function so that certain features are accessible beyond just a per-element scope. */
-    /* Note: The utility function doubles as a publicly-accessible data store for the purposes of unit testing. */
-    $.velocity = {
-        /* Container for page-wide Velocity state data. */
-        State: {
-            /* Detect mobile devices to determine if mobileHA should be turned on. */
-            isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-            /* Create a cached element for re-use when checking for CSS property prefixes. */
-            prefixElement: document.createElement("div"),
-            /* Cache every prefix match to avoid repeating lookups. */
-            prefixMatches: {},
-            /* Cache the anchor used for animating window scrolling. */
-            scrollAnchor: null,
-            /* Cache the property name associated with the scroll anchor. */
-            scrollProperty: null,
-            /* Keep track of whether our RAF tick is running. */
-            isTicking: false,
-            /* Container for every in-progress call to Velocity. */
-            calls: []
-        },
-        Classes: {
-            /* Container for CSS classes extracted from the page's stylesheets. */
-            extracted: {},
-            /* Function to allow users to force stylesheet re-extraction. */
-            extract: function() { /* Defined below. */ }
-        },
-        /* Velocity's full re-implementation of jQuery's CSS stack. Made global for unit testing. */
-        CSS: { /* Defined below. */ },
-        /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). */
-        Sequences: {
-            /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
-        },
-        /* Utility function's alias of $.fn.velocity(). Used for raw DOM element animation. */
-        animate: function () { /* Defined below. */ },
-        /* Set to 1 or 2 (most verbose) to log debug info to console. */
-        debug: false
-    };
-
-    /* Retrieve the appropriate scroll anchor and property name for this browser. Learn more: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
-    if (window.pageYOffset !== undefined) {
-        $.velocity.State.scrollAnchor = window;
-        $.velocity.State.scrollProperty = "pageYOffset";
-    } else {
-        $.velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
-        $.velocity.State.scrollProperty = "scrollTop";
-    }
-
-    /*************************
-       CSS Class Extraction
-    *************************/
-
-    /* Crawl all same-domain stylesheets for classes formatted as .animate_{name}. Store matches onto $.velocity.Classes.extracted for reference during runtime, e.g. $element.velocity("name", optionsObject). */
-    /* Extraction involves processing flattened cssText strings for each CSS rule, such as ".animate_{name} { width: 100 }" then appending an object onto $.velocity.Classes with a name equal to the Name and
-       property:value pairs equal to the rule's property map. */
-    /* Note: To avoid triggering unwanted extraction overhead, extraction must be triggered manually -- by calling $.velocity.Classes.extract(). (Note: Ensure that the relevant stylesheets have first been parsed by the browser.)
-    /* Note: Whereas jQuery UI's class animation works by momentarily apply the class to an element then diffing the results to attain properly cascaded values, Velocity treats the class a literal property map
-       container in order to avoid the layout thrashing associated with CSS value diffing. Thus, Velocity does not respect the hierarchical selector position of the .animate_{name} classes that it extracts. */
-    /* Note: Browsers do not parse classes defined in the <head> element the same way they do stylesheet classes. Avoid setting styles inside HTML. */
-    $.velocity.Classes.extract = function() {
-        var styleSheets = document.styleSheets,
-            extracted = {};
-
-        for (var i = 0, styleSheetsLength = styleSheets.length; i < styleSheetsLength; i++) {
-            var sheet = styleSheets[i],
-                rules;
-
-            /* Stylesheet crawling is wrapped in a try/catch since Firefox throws errors when accessing cross-domain stylesheets. Other browsers simply return null. */
-            try { 
-                if (!sheet.cssText && !sheet.cssRules) {
-                    /* <=IE8 stylesheets contain a cssText string. Other browsers contain a cssRules object. If a match contains neither, then the browser is returning null since we're accessing a cross-domain stylesheet. Skip this sheet. */
-                    continue;
-                }
-
-                /* <=IE8 return a giant, cocatenated cssText string that represents all classes defined in the stylesheet. To process this blob, newlines are removed then each rule is extracted via RegEx. */
-                /* Other browsers return the cssText object which can be iterated over but still requires a fair amount of RegEx to extract individual properties and values. */
-                if (sheet.cssText) {
-                    /* Note: A property with a closing curly bracket (}) in its value will break a match, but only URI's would permit this character and URI's aren't numeric values that we can animate, so this is not an issue. */
-                    /* Example RegEx behavior: http://regex101.com/r/wK9yA5 */
-                    rules = sheet.cssText.replace(/[\r\n]/g, "").match(/[^}]+\{[^{]+\}/g);
-                } else {
-                    rules = sheet.cssRules;
-                }
-
-                for (var j = 0, rulesLength = rules.length; j < rulesLength; j++) {
-                    var ruleText;
-
-                    /* For <=IE8, our rules object now consists of all CSS rules flattened into strings. For other browsers, each rules object is now a metadata container for the specific rule. To achieve parity with the IE8 rule, we work with the cssText property of the non-<=IE8 rule's metadata container, which is also a flattened string. */
-                    if (sheet.cssText) {
-                        ruleText = rules[j];
-                    /* Non-<=IE8 parse everything they can out of stylesheets, including declarations like "@charset UTF-8", which inherently have no cssText property to parse out. Thus, we ensure the existence of cssText. */
-                    } else if (rules[j].cssText) {
-                        ruleText = rules[j].cssText;
-                    } else {
-                        continue;
-                    }
-
-                    /* Match classes containing ".animate_" at the last selector position (e.g. ".animate_Name", "div.animate_Name", but not ".animate_Name p". */
-                    /* Example RegEx behavior: http://regex101.com/r/oX7gK3 */
-                    var animateClass = ruleText.match(/\.animate_([A-z0-9_-]+)(?:(\s+)?{)/);
-
-                    if (animateClass) {
-                        /* Extract the name after the underscore. */
-                        var className = animateClass[1],
-                            /* Extract the properties block then extract an array its property maps. */
-                            /* Example RegEx behavior: http://regex101.com/r/fI1tZ3 */
-                            /* Note: <=IE8 capitalize properties, so we normalize case. */
-                            propertiesMap = ruleText.toLowerCase().match(/\{([\S\s]*)\}/)[1].match(/[A-z-][^;]+/g);
-
-                        /* Only register this class on the classes container one time since we allow a class to be processed in aggregate across its numerous stylesheet declarations. Repeated properties overwrite their earlier values. */
-                        if (!extracted[className]) {
-                            extracted[className] = {};
-                        }
-
-                        for (var k = 0, propertiesMapLength = propertiesMap.length; k < propertiesMapLength; k++) {
-                            /* Separate the property's name from its value, and strip out the ": " characters in between. */
-                            var propertyMapParts = propertiesMap[k].match(/([^:]+):\s*(.+)/);
-
-                            /* Register this map (e.g. "width: 100") onto its class name. */
-                            extracted[className][propertyMapParts[1]] = propertyMapParts[2];
-                        }
-                    }
-                }
-                
-            } catch(e) { /* Do nothing. There's no workaround for cross-domain access prevention. */ }
-        }
-        
-        $.velocity.Classes.extracted = extracted;
-
-        if ($.velocity.debug) console.log("Classes: " + JSON.stringify($.velocity.Classes.extracted));
-
-        return extracted;
-    };
+    })();
 
     /*****************
         CSS Stack
@@ -536,7 +520,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     }
                 },
 
-                /* <=IE8 do not support the opacity property. Further, they require opacified elements to have their zoom property set to a non-zero value. */
+                /* <=IE8 do not support the standard opacity property. They use filter:alpha(opacity=INT) instead. */
                 opacity: function (type, element, propertyValue) {
                     if (IE <= 8) {
                         switch (type) {
@@ -556,10 +540,17 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
                                 return propertyValue;
                             case "inject":
+                                /* Opacified elements are required to have their zoom property set to a non-zero value. */
                                 element.style.zoom = 1;
 
-                                /* As per the filter property's spec, convert the decimal value to a whole number and wrap the value. */
-                                return "alpha(opacity=" + parseInt(propertyValue * 100) + ")";
+                                /* Setting the filter property on elements with certain font property combinations can result in a highly unappealing ultra-bolding effect. There's no way to remedy this throughout a tween,
+                                   but dropping the value altogether (when opacity hits 1) at leasts ensures that the glitch is gone post-tweening. */ 
+                                if (parseFloat(propertyValue) >= 1) {
+                                    return "";
+                                } else {
+                                  /* As per the filter property's spec, convert the decimal value to a whole number and wrap the value. */
+                                  return "alpha(opacity=" + parseInt(parseFloat(propertyValue) * 100, 10) + ")";  
+                                }
                         }
                     /* With all other browsers, normalization is not required; return the same values that were passed in. */
                     } else {
@@ -595,7 +586,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                    browsers so that Tween Calculation logic skips animating these properties altogether (since it will detect that they're unsupported and unnormalized.) */
                 if (!(IE <= 9)) {
                     /* Append 3D transform properties onto transformProperties. */
-                    transformProperties = transformProperties.concat([ "translateZ", "scaleZ", "rotateX", "rotateY" ]);
+                    /* Note: Since the standalone CSS "perspective" property and the CSS transform "perspective" subproperty share the same name, the latter is given a unique token within Velocity. */
+                    transformProperties = transformProperties.concat([ "transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY" ]);
                 } 
 
                 for (var i = 0, transformPropertiesLength = transformProperties.length; i < transformPropertiesLength; i++) {
@@ -827,6 +819,20 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     /* Default to px for all other properties. */
                     return "px";
                 }
+            },
+            /* HTML elements default to an associated display type when they're not set to display:none. */
+            /* Note: This function used for correctly setting the non-"none" display value in certain Velocity sequences, such as fadeIn/Out. */
+            getDisplayType: function (element) {
+                var tagName = element.tagName.toString().toLowerCase();
+
+                if (/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(tagName)) {
+                    return "inline";
+                } else if (/^(li)$/i.test(tagName)) {
+                    return "list-item";
+                /* Default to "block" when no match is found. */
+                } else {
+                    return "block";
+                }
             }
         },
 
@@ -842,14 +848,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             function computePropertyValue (element, property) {
                 /* When box-sizing isn't set to border-box, height and width style values are incorrectly computed when an element's scrollbars are visible (which expands the element's dimensions). Thus, we defer
                    to the more accurate offsetHeight/Width property, which includes the total dimensions for interior, border, padding, and scrollbar. We subtract border and padding to get the sum of interior + scrollbar. */
-                if (!forceStyleLookup) {
-                    if (property === "height" && CSS.getPropertyValue(element, "boxSizing").toLowerCase() !== "border-box") {
-                        return element.offsetHeight - (parseFloat(CSS.getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingBottom")) || 0);
-                    } else if (property === "width" && CSS.getPropertyValue(element, "boxSizing").toLowerCase() !== "border-box") {
-                        return element.offsetWidth - (parseFloat(CSS.getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingRight")) || 0);
-                    }
-                }
-
+                
                 var computedValue = 0;
 
                 /* IE<=8 doesn't support window.getComputedStyle, thus we defer to jQuery, which has an extensive array of hacks to accurately retrieve IE8 property values.
@@ -859,6 +858,14 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     computedValue = $.css(element, property); /* GET */
                 /* All other browsers support getComputedStyle. The returned live object reference is cached onto its associated element so that it does not need to be refetched upon every GET. */
                 } else {
+                    if (!forceStyleLookup) {
+                        if (property === "height" && CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
+                            return element.offsetHeight - (parseFloat(CSS.getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingBottom")) || 0);
+                        } else if (property === "width" && CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
+                            return element.offsetWidth - (parseFloat(CSS.getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingRight")) || 0);
+                        }
+                    }
+                    
                     var computedStyle;
 
                     /* For elements that Velocity hasn't been called on directly (e.g. when Velocity queries the DOM on behalf of a parent of an element its animating), perform a direct getComputedStyle lookup since the object isn't cached. */
@@ -886,7 +893,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     } 
 
                     /* Fall back to the property's style value (if defined) when computedValue returns nothing, which can happen when the element hasn't been painted. */
-                    if (computedValue === "") {
+                    if (computedValue === "" || computedValue === null) {
                         computedValue = element.style[property];
                     }
                 }
@@ -969,17 +976,20 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         /* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
         setPropertyValue: function(element, property, propertyValue, rootPropertyValue, scrollContainer) {
-            var propertyName = property;    
+            var propertyName = property;   
 
             /* In order to be subjected to call options and element queueing, scroll animation is routed through Velocity as if it were a standard CSS property. */
             if (property === "scroll") {
-                /* If a scrollContainer option is present, scroll the container instead of the browser window. */
-                if (scrollContainer) {
-                    scrollContainer.scrollTop = propertyValue;
+                /* If a container option is present, scroll the container instead of the browser window. */
+                if (scrollContainer.container) {
+                    scrollContainer.container["scroll" + scrollContainer.direction] = propertyValue;
                 /* Otherwise, Velocity defaults to scrolling the browser window. */
                 } else {
-                    /* Note: When scrolling the browser window, the horizontal scroll position is reset to 0; Velocity does not support horizontal scroll animation. */
-                    window.scrollTo(null, propertyValue);
+                    if (scrollContainer.direction === "Left") {
+                        window.scrollTo(propertyValue, scrollContainer.alternateValue);
+                    } else {
+                        window.scrollTo(scrollContainer.alternateValue, propertyValue);
+                    }
                 }
             } else {
                 /* Transforms (translateX, rotateZ, etc.) are applied to a per-element transformCache object, which is manually flushed via flushTransformCache(). Thus, for now, we merely cache transforms being SET. */
@@ -1035,18 +1045,30 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         flushTransformCache: function(element) {
             var transformString = "",
                 transformName,
-                transformValue;
+                transformValue,
+                perspective;
 
             /* Transform properties are stored as members of the transformCache object. Concatenate all the members into a string. */
             for (transformName in $.data(element, NAME).transformCache) {
                 transformValue = $.data(element, NAME).transformCache[transformName];
 
-                /* IE9 only supports one rotation type: rotateZ. It refers to rotateZ directly as "rotate". */
+                /* Transform's perspective subproperty must be set first in order to take effect. We store it for now. */
+                if (transformName === "transformPerspective") {
+                    perspective = transformValue;
+                    continue;
+                }
+
+                /* IE9 only supports one rotation type, rotateZ, which it refers to as "rotate". */
                 if (IE === 9 && transformName === "rotateZ") {
                     transformName = "rotate";
                 }
 
                 transformString += transformName + transformValue + " ";
+            }
+
+            /* If present, set the perspective subproperty first. */
+            if (perspective) {
+                transformString = "perspective" + perspective + " " + transformString;
             }
 
             CSS.setPropertyValue(element, "transform", transformString);
@@ -1063,7 +1085,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
     /* Simultaneously assign the jQuery plugin function ($elements.velocity()) and the utility alias ($.velocity.animate(elements)). */
     /* Note: The utility alias allows for the animation of raw (non-jQuery) DOM elements. */
-    $.fn.velocity = $.velocity.animate = function() {
+    $.fn.velocity = $.velocity.animate = function() {        
 
         /**************************
            Arguments Assignment
@@ -1096,9 +1118,41 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
         var elementsLength = elements.length || 1,
             elementsIndex = 0;    
 
-        /**********************
+        /***************************
+            Argument Overloading
+        ***************************/
+
+        /* Support is included for jQuery's argument overloading: $.animate(propertyMap [, duration] [, easing] [, complete]). Overloading is detected by checking for the absence of an options object.
+           The stop action does not accept animation options, and is therefore excluded from this check. */
+        /* Note: Although argument overloading is an incredibly sloppy practice in JavaScript, support is included so that $.velocity() can act as a drop-in replacement for $.animate(). */
+        if (propertiesMap !== "stop" && !$.isPlainObject(options)) {
+            /* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
+            var startingArgumentPosition = isJquery ? 1 : 2;
+
+            options = {};
+
+            /* Iterate through all options arguments */
+            for (var i = startingArgumentPosition; i < arguments.length; i++) {
+                /* Treat a number as a duration. Parse it out. */
+                /* Note: The following RegEx will return true if passed an array with a number as its first item. Thus, arrays are skipped from this check. */
+                if (!isArray(arguments[i]) && /^\d/.test(arguments[i])) {
+                    options.duration = parseFloat(arguments[i]);
+                /* Treat a string as an easing. */
+                } else if (typeof arguments[i] === "string") {
+                    options.easing = arguments[i];
+                /* Also treat a four-item array (of cubic bezier points) as an easing. */
+                } else if (isArray(arguments[i]) && arguments[i].length === 4) {
+                    options.easing = arguments[i];
+                /* Treat a function as a callback. */
+                } else if (isFunction(arguments[i])) {
+                    options.complete = arguments[i];
+                }
+            }
+        }
+
+        /*********************
            Action Detection
-        **********************/
+        *********************/
 
         /* Velocity's behavior is categorized into "actions": Elements can either be specially scrolled into view, or they can be started, stopped, or reversed. If a literal or referenced properties map is passed
            in as Velocity's first argument, the associated action is "start". Alternatively, "scroll", "reverse", or "stop" can be passed in instead of a properties map. */
@@ -1132,45 +1186,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     /* Since the animation logic resides within the sequence's own code, abort the remainder of this call. (The performance overhead up to this point is virtually non-existant.) */
                     /* Note: The jQuery call chain is kept intact by returning the complete element set. */
                     return elements;
-                } else if (typeof propertiesMap === "string" && $.velocity.Classes.extracted[propertiesMap]) {
-                    /* Assign the properties map to the map extracted from the referenced CSS class. */
-                    propertiesMap = $.velocity.Classes.extracted[propertiesMap];
-
-                    /* Now that a properties map has been loaded, proceed with a standard Velocity animation. */
-                    action = "start";
                 } else {
-                    if ($.velocity.debug) console.log("First argument was not a property map, a known action, a CSS class, or a sequence. Aborting.")
+                    if ($.velocity.debug) console.log("First argument was not a property map, a known action, or a registered sequence. Aborting.")
                     
                     return elements;
                 }
-        }
-
-        /***************************
-            Argument Overloading
-        ***************************/
-
-        /* Support is included for jQuery's argument overloading: $.animate(propertyMap [, duration] [, easing] [, complete]). Overloading is detected by checking for the absence of an options object.
-           The stop action does not accept animation options, and is therefore excluded from this check. */
-        /* Note: Although argument overloading is an incredibly sloppy practice in JavaScript, support is included so that $.velocity() can act as a drop-in replacement for $.animate(). */
-        if (action !== "stop" && typeof options !== "object") {
-            /* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
-            var startingArgumentPosition = isJquery ? 1 : 2;
-
-            options = {};
-
-            /* Iterate through all options arguments */
-            for (var i = startingArgumentPosition; i < arguments.length; i++) {
-                /* Treat a number as a duration. Parse it out. */
-                if (/^\d/.test(arguments[i])) {
-                    options.duration = parseFloat(arguments[i]);
-                /* Treat a string as an easing. Trim whitespace. */
-                } else if (typeof arguments[i] === "string") {
-                    options.easing = arguments[i].replace(/^\s+|\s+$/g, "");
-                /* Treat a function as a callback. */
-                } else if (isFunction(arguments[i])) {
-                    options.complete = arguments[i];
-                }
-            }
         }
 
         /**************************
@@ -1202,8 +1222,41 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         /* The complete option must be a function. Otherwise, default to null. */
         /* Note: The complete option is the only option that is processed on a call-wide basis since it is fired once per call -- not once per element. */
-        if (options && !isFunction(options.complete)) {
+        if (options && options.complete && !isFunction(options.complete)) {
             options.complete = null;
+        }
+
+        /********************
+           Option: Easing
+        ********************/
+
+        /* Determining the appropriate easing type consists of a waterfall of logic. Since we have to trigger this at multiple points, we wrap it in a function. */
+        function getEasing(value) {
+            var easing = value;
+
+            /* The easing option can either be a string that references a pre-registered easing, or it can be an four-item array of integers to be converted into a bezier curve function. */
+            if (typeof value === "string") {
+                /* Ensure that the easing has been assigned to jQuery's $.velocity.Easings object (which Velocity also uses as its easings container). */
+                if (!$.velocity.Easings[value]) {
+                    easing = false;
+                }
+            } else if (isArray(value)) {
+                /* Note, if the bezier array is of an invalid format (has an incorrect argument length or contains non-numbers), generateBezier() returns false. */
+                easing = generateBezier.apply(null, value);
+            } else {
+                easing = false;
+            }
+
+            /* Revert to the Velocity-wide default easing type, and fallback to "swing" (which is also jQuery's defualt) if the Velocity-wide default has been incorrectly modified. */
+            if (easing === false) {
+                if ($.velocity.Easings[$.fn.velocity.defaults.easing]) {
+                    easing = $.fn.velocity.defaults.easing;
+                } else {
+                    easing = "swing";
+                }
+            }
+
+            return easing;
         }
 
         /************************
@@ -1293,20 +1346,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     opts.duration = parseFloat(opts.duration) || parseFloat($.fn.velocity.defaults.duration) || 400;
             }
 
-            /********************
+            /*******************
                Option: Easing
-            ********************/
+            *******************/
 
-            /* Ensure that the passed in easing has been assigned to jQuery's $.easing object (which Velocity also uses as its easings container). */
-            if (!$.easing[opts.easing]) {
-                /* If the passed in easing is not supported, default to the easing in Velocity's page-wide defaults object so long as its supported (it may have been reassigned by the user). */
-                if ($.easing[$.fn.velocity.defaults.easing]) {
-                    opts.easing = $.fn.velocity.defaults.easing;
-                /* Otherwise, revert to jQuery's default easing type of "swing". */
-                } else {
-                    opts.easing = "swing";
-                }
-            }
+            opts.easing = getEasing(opts.easing);
 
             /******************
                Option: Delay
@@ -1329,7 +1373,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
             /* Refer to Velocity's documentation (VelocityJS.org/#display) for a description of the display option's behavior. */
             if (opts.display) {
-                opts.display = opts.display.toLowerCase();
+                opts.display = opts.display.toString().toLowerCase();
             }
 
             /**********************
@@ -1348,9 +1392,17 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
             /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
                the call array is pushed to $.velocity.State.calls for live processing by the requestAnimationFrame tick. */
-            $.queue(element, opts.queue, function(next) {
-                /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
-                $.velocity.queueEntryFlag = true;
+            function buildQueue(next) {
+                /*******************
+                   Option: Begin
+                *******************/
+
+                /* The begin callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
+                if (elementsIndex === 0 && options && isFunction(options.begin)) {
+                    var rawElements = elements.jquery ? elements.get() : elements;
+
+                    options.begin.call(rawElements, rawElements);
+                }
 
                 /*****************************************
                    Tween Data Construction (for Scroll)
@@ -1359,8 +1411,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                 /* Note: In order to be subjected to chaining and animation options, scroll's tweening is routed through Velocity as if it were a standard CSS property animation. */
                 if (action === "scroll") {   
                     /* The scroll action uniquely takes an optional "offset" option -- specified in pixels -- that offsets the targeted scroll position. */
-                    var scrollOffset = parseFloat(opts.offset) || 0,
+                    var scrollDirection = (/^x$/i.test(opts.axis) ? "Left" : "Top"), 
+                        scrollOffset = parseFloat(opts.offset) || 0,
                         scrollPositionCurrent,
+                        scrollPositionCurrentAlternate,
                         scrollPositionEnd;
 
                     /* Scroll also uniquely takes an optional "container" option, which indicates the parent element that should be scrolled -- as opposed to the browser window itself.
@@ -1370,23 +1424,25 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         if (opts.container.jquery || opts.container.nodeType) {
                             /* Extract the raw DOM element from the jQuery wrapper. */
                             opts.container = opts.container[0] || opts.container;
-                            /* Note: Unlike all other properties in Velocity, the browser's scroll position is never cached since it so frequently changes (due to the user's natural interaction with the page). */
-                            scrollPositionCurrent = opts.container.scrollTop; /* GET */
+                            /* Note: Unlike other properties in Velocity, the browser's scroll position is never cached since it so frequently changes (due to the user's natural interaction with the page). */
+                            scrollPositionCurrent = opts.container["scroll" + scrollDirection]; /* GET */
 
                             /* $.position() values are relative to the container's currently viewable area (without taking into account the container's true dimensions -- say, for example, if the container was not overflowing).
                                Thus, the scroll end value is the sum of the child element's position *and* the scroll container's current scroll position. */
-                            /* Note: jQuery does not offer a utility alias for $.position(), so we have to incur jQuery object conversion here. This syncs up with an ensuing batch of GETs, so it fortunately does not produce layout thrashing. */
-                            scrollPositionEnd = (scrollPositionCurrent + $(element).position().top) + scrollOffset; /* GET */
+                            /* Note: jQuery does not offer a utility alias for $.position(), so we have to incur jQuery object conversion here. This syncs up with an ensuing batch of GETs, so it fortunately does not trigger layout thrashing. */
+                            scrollPositionEnd = (scrollPositionCurrent + $(element).position()[scrollDirection.toLowerCase()]) + scrollOffset; /* GET */
                         /* If a value other than a jQuery object or a raw DOM element was passed in, default to null so that this option is ignored. */
                         } else {
                             opts.container = null;
                         }
                     } else {
                         /* If the window itself is being scrolled -- not a containing element -- perform a live scroll position lookup using the appropriate cached property names (which differ based on browser type). */
-                        scrollPositionCurrent = $.velocity.State.scrollAnchor[$.velocity.State.scrollProperty]; /* GET */
+                        scrollPositionCurrent = $.velocity.State.scrollAnchor[$.velocity.State["scrollProperty" + scrollDirection]]; /* GET */
+                        /* When scrolling the browser window, cache the alternate axis's current value since window.scrollTo() doesn't let us change only one value at a time. */
+                        scrollPositionCurrentAlternate = $.velocity.State.scrollAnchor[$.velocity.State["scrollProperty" + (scrollDirection === "Left" ? "Top" : "Left")]]; /* GET */
 
                         /* Unlike $.position(), $.offset() values are relative to the browser window's true dimensions -- not merely its currently viewable area -- and therefore end values do not need to be compounded onto current values. */
-                        scrollPositionEnd = $(element).offset().top + scrollOffset; /* GET */
+                        scrollPositionEnd = $(element).offset()[scrollDirection.toLowerCase()] + scrollOffset; /* GET */
                     }
 
                     /* Since there's only one format that scroll's associated tweensContainer can take, we create it manually. */
@@ -1398,7 +1454,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             endValue: scrollPositionEnd,
                             unitType: "",
                             easing: opts.easing,
-                            scrollContainer: opts.container
+                            scrollContainer: {
+                                container: opts.container,
+                                direction: scrollDirection,
+                                alternateValue: scrollPositionCurrentAlternate
+                            }
                         },
                         element: element
                     };
@@ -1429,8 +1489,11 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             $.data(element, NAME).opts.display = "block";
                         }
 
-                        /* If the loop option was set in the previous call, disable it so that reverse calls aren't recursively generated. */
+                        /* If the loop option was set in the previous call, disable it so that "reverse" calls aren't recursively generated. Further, remove the previous call's callback options;
+                           typically, users do not want these to be refired. */
                         $.data(element, NAME).opts.loop = false;
+                        $.data(element, NAME).opts.begin = null;
+                        $.data(element, NAME).opts.complete = null;
 
                         /* The opts object used for reversal is an extension of the options object optionally passed into this reverse call plus the options used in the previous Velocity call. */
                         opts = $.extend({}, $.data(element, NAME).opts, options);
@@ -1497,19 +1560,16 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             startValue = undefined;
 
                         /* Handle the array format, which can be structured as one of three potential overloads: A) [ endValue, easing, startValue ], B) [ endValue, easing ], or C) [ endValue, startValue ] */
-                        if (Object.prototype.toString.call(valueData) === "[object Array]") {
+                        if (isArray(valueData)) {
                             /* endValue is always the first item in the array. Don't bother validating endValue's value now since the ensuing property cycling logic inherently does that. */
                             endValue = valueData[0];
 
-                            /* Two-item array format: If the second item is a number or a function, treat it as a start value since easings can only be strings. */
-                            if (/^[\d-]/.test(valueData[1]) || isFunction(valueData[1])) {
+                            /* Two-item array format: If the second item is a number or a function, treat it as a start value since easings can only be strings or arrays. */
+                            if ((!isArray(valueData[1]) && /^[\d-]/.test(valueData[1])) || isFunction(valueData[1])) {
                                 startValue = valueData[1];
                             /* Two or three-item array: If the second item is a string, treat it as an easing. */
-                            } else if (typeof valueData[1] === "string") {
-                                /* Only use this easing if it's been registered on $.easing. */
-                                if ($.easing[valueData[1]] !== undefined) {
-                                    easing = valueData[1];
-                                }
+                            } else if (typeof valueData[1] === "string" || isArray(valueData[1])) {
+                                easing = getEasing(valueData[1]);
 
                                 /* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
                                 if (valueData[2]) {
@@ -1574,7 +1634,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         /* If values have been transferred from the previous Velocity call, extract the endValue and rootPropertyValue for all of the current call's properties that were *also* animated in the previous call. */
                         /* Note: Value transferring can optionally be disabled by the user via the _cacheValues option. */
                         if (opts._cacheValues && lastTweensContainer && lastTweensContainer[property]) {
-                            startValue = lastTweensContainer[property].endValue + lastTweensContainer[property].unitType;
+                            if (startValue === undefined) {
+                                startValue = lastTweensContainer[property].endValue + lastTweensContainer[property].unitType;
+                            }
                                     
                             /* The previous call's rootPropertyValue is extracted from the element's data cache since that's the instance of rootPropertyValue that gets freshly updated by the tweening process,
                                whereas the rootPropertyValue attached to the incoming lastTweensContainer is equal to the root property's value prior to any tweening. */
@@ -1676,26 +1738,28 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             }
                         } 
 
-                        /* When queried, the browser returns (most) CSS property values in pixels. Therefore, if an endValue of %, em, or rem is animated toward, startValue must be converted from pixels into the same unit type 
-                           as endValue in order for value manipulation logic to proceed. Further, if the startValue was forcefed or transferred from a previous call, its value may not actually be in pixels. Unit conversion logic
-                           consists of two steps: 1) Calculating the ratio of %, em, and rem relative to pixels, and 2) Matching up startValue's unit type with endValue's based on these ratios. */
+                        /* When queried, the browser returns (most) CSS property values in pixels. Therefore, if an endValue with a unit type of %, em, or rem is animated toward, startValue must be converted from pixels into the same unit type 
+                           as endValue in order for value manipulation logic (increment/decrement) to proceed. Further, if the startValue was forcefed or transferred from a previous call, startValue may also not be in pixels. Unit conversion logic
+                           therefore consists of two steps: 1) Calculating the ratio of %,/em/rem relative to pixels then 2) Converting startValue into the same unit of measurement as endValue based on these ratios. */
                         /* Unit conversion ratios are calculated by momentarily setting a value with the target unit type on the element, comparing the returned pixel value, then reverting to the original value. */
                         /* Note: Even if only one of these unit types is being animated, all unit ratios are calculated at once since the overhead of batching the SETs and GETs together upfront outweights the potential overhead
                                  of layout thrashing caused by re-querying for uncalculated ratios for subsequently-processed properties. */
+                        /* Note: Instead of adjusting the CSS properties on the target element, an alternative way of performing value conversion is to inject a cloned element into the element's parent and manipulate *its* values instead.
+                                 This is a cleaner method that avoids the ensuing rounds of layout thrashing, but it's ultimately less performant due to the overhead involved with DOM tree modification (element insertion/deletion). */
                         /* Todo: Shift this logic into the calls' first tick instance so that it's synced with RAF. */
                         /* Todo: Store the original values and skip re-setting if we're animating height or width in the properties map. */
                         function calculateUnitRatios () {
-                            /* The properties below are used to determine whether the element differs sufficiently from this call's prior element to also differ in its unit conversion ratio.
+                            /* The properties below are used to determine whether the element differs sufficiently from this same call's prior element (in the overall element set) to also differ in its unit conversion ratios.
                                If the properties match up with those of the prior element, the prior element's conversion ratios are used. Like most optimizations in Velocity, this is done to minimize DOM querying. */
                             var sameRatioIndicators = {
                                     parent: element.parentNode, /* GET */
                                     position: CSS.getPropertyValue(element, "position"), /* GET */
                                     fontSize: CSS.getPropertyValue(element, "fontSize") /* GET */
                                 },
-                                /* Determine if the same % ratio can be used. % is relative to the element's position and the parent's dimensions. */
+                                /* Determine if the same % ratio can be used. % is relative to the element's position value and the parent's width and height dimensions. */
                                 sameBasePercent = ((sameRatioIndicators.position === unitConversionRatios.lastPosition) && (sameRatioIndicators.parent === unitConversionRatios.lastParent)),
-                                /* Determine if the same em ratio can be used. em is relative to the element's fontSize. */
-                                sameBaseEm = (sameRatioIndicators.fontSize === unitConversionRatios.lastFontSize);
+                                /* Determine if the same em ratio can be used. em is relative to the element's fontSize, which itself is relative to the parent's fontSize. */
+                                sameBaseEm = ((sameRatioIndicators.fontSize === unitConversionRatios.lastFontSize) && (sameRatioIndicators.parent === unitConversionRatios.lastParent));
 
                             /* Store these ratio indicators call-wide for the next element to compare against. */
                             unitConversionRatios.lastParent = sameRatioIndicators.parent;
@@ -1703,52 +1767,62 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             unitConversionRatios.lastFontSize = sameRatioIndicators.fontSize;
 
                             /* Whereas % and em ratios are determined on a per-element basis, the rem unit type only needs to be checked once per call since it is exclusively dependant upon the body element's fontSize.
-                               If this is the first time that calculateUnitRatios() is being run during this call, the remToPxRatio value will be null, so we calculate it now. */
+                               If this is the first time that calculateUnitRatios() is being run during this call, remToPxRatio will still be set to its default value of null, so we calculate it now. */
                             if (unitConversionRatios.remToPxRatio === null) {
                                 /* Default to most browsers' default fontSize of 16px in the case of 0. */
                                 unitConversionRatios.remToPxRatio = parseFloat(CSS.getPropertyValue(document.body, "fontSize")) || 16; /* GET */
                             }
 
                             var originalValues = {
-                                    /* To accurately and consistently calculate conversion ratios, the element's overflow and box-sizing are temporarily disabled. Overflow must be manipulated on a per-axis basis
-                                       since the plain overflow property overwrites its subproperties' values. */
+                                    /* To accurately and consistently calculate conversion ratios, the element's overflow and box-sizing are temporarily removed. Both properties modify an element's visible dimensions. */
+                                    /* Note: Overflow must be manipulated on a per-axis basis since the plain overflow property overwrites its subproperties' values. */
                                     overflowX: null,
                                     overflowY: null,
                                     boxSizing: null,
-                                    /* width and height act as our proxy properties for measuring the horizontal and vertical % ratios. Since they can be artificially constrained by their min-/max- equivalents, those properties are changed as well. */
+                                    /* width and height act as our proxy properties for measuring the horizontal and vertical % ratios. Since they can be artificially constrained by their min-/max- equivalents, those properties are converted as well. */
                                     width: null,
                                     minWidth: null,
                                     maxWidth: null,
                                     height: null,
                                     minHeight: null,
                                     maxHeight: null,
-                                    /* paddingLeft acts as our proxy for the em ratio. */
+                                    /* paddingLeft arbitrarily acts as our proxy for the em ratio. */
                                     paddingLeft: null
                                 },
                                 elementUnitRatios = {},
                                 /* Note: IE<=8 round to the nearest pixel when returning CSS values, thus we perform conversions using a measurement of 10 (instead of 1) to give our ratios a precision of at least 1 decimal value. */
                                 measurement = 10;                                
 
-                            /* For organizational purposes, active ratios calculations are consolidated onto the elementUnitRatios object. */
+                            /* For organizational purposes, current ratios calculations are consolidated onto the elementUnitRatios object. */
                             elementUnitRatios.remToPxRatio = unitConversionRatios.remToPxRatio;
 
+                            /* After temporary unit conversion logic runs, width and height properties that were originally set to "auto" must be set back to "auto" instead of to the actual corresponding pixel value. Leaving the values
+                               at their hard-coded pixel value equivalents would inherently prevent the elements from vertically adjusting as the height of its inner content changes. */
+                            /* IE tells us whether or not the property is set to "auto". Other browsers provide no way of determing "auto" values on height/width, and thus we have to trigger additional layout thrashing (see below) to solve this. */             
+                            if (IE) {
+                                var isIEWidthAuto = /^auto$/i.test(element.currentStyle.width),
+                                    isIEHeightAuto = /^auto$/i.test(element.currentStyle.height);
+                            }
+
                             /* Note: To minimize layout thrashing, the ensuing unit conversion logic is split into batches to synchronize GETs and SETs. */
-                            originalValues.overflowX = CSS.getPropertyValue(element, "overflowX"); /* GET */
-                            originalValues.overflowY = CSS.getPropertyValue(element, "overflowY"); /* GET */
-                            originalValues.boxSizing = CSS.getPropertyValue(element, "boxSizing"); /* GET */
+                            if (!sameBasePercent || !sameBaseEm) {
+                                originalValues.overflowX = CSS.getPropertyValue(element, "overflowX"); /* GET */
+                                originalValues.overflowY = CSS.getPropertyValue(element, "overflowY"); /* GET */
+                                originalValues.boxSizing = CSS.getPropertyValue(element, "boxSizing"); /* GET */
 
-                            /* Since % values are relative to their respective axes, ratios are calculated for both width and height. In contrast, only a single ratio is required for rem and em. */
-                            /* When calculating % values, we set a flag to indiciate that we want the computed value instead of offsetWidth/Height, which incorporate additional dimensions (such as padding and border-width) into their values. */
-                            originalValues.width = CSS.getPropertyValue(element, "width", null, true); /* GET */
-                            originalValues.minWidth = CSS.getPropertyValue(element, "minWidth"); /* GET */
-                            /* Note: max-width/height must default to "none" when 0 is returned, otherwise the element cannot have its width/height set. */
-                            originalValues.maxWidth = CSS.getPropertyValue(element, "maxWidth") || "none"; /* GET */
+                                /* Since % values are relative to their respective axes, ratios are calculated for both width and height. In contrast, only a single ratio is required for rem and em. */
+                                /* When calculating % values, we set a flag to indiciate that we want the computed value instead of offsetWidth/Height, which incorporate additional dimensions (such as padding and border-width) into their values. */
+                                originalValues.width = CSS.getPropertyValue(element, "width", null, true); /* GET */
+                                originalValues.minWidth = CSS.getPropertyValue(element, "minWidth"); /* GET */
+                                /* Note: max-width/height must default to "none" when 0 is returned, otherwise the element cannot have its width/height set. */
+                                originalValues.maxWidth = CSS.getPropertyValue(element, "maxWidth") || "none"; /* GET */
 
-                            originalValues.height = CSS.getPropertyValue(element, "height", null, true); /* GET */
-                            originalValues.minHeight = CSS.getPropertyValue(element, "minHeight"); /* GET */
-                            originalValues.maxHeight = CSS.getPropertyValue(element, "maxHeight") || "none"; /* GET */
+                                originalValues.height = CSS.getPropertyValue(element, "height", null, true); /* GET */
+                                originalValues.minHeight = CSS.getPropertyValue(element, "minHeight"); /* GET */
+                                originalValues.maxHeight = CSS.getPropertyValue(element, "maxHeight") || "none"; /* GET */
 
-                            originalValues.paddingLeft = CSS.getPropertyValue(element, "paddingLeft"); /* GET */
+                                originalValues.paddingLeft = CSS.getPropertyValue(element, "paddingLeft"); /* GET */
+                            }
 
                             if (sameBasePercent) {
                                 elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth;
@@ -1775,18 +1849,45 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
                             /* The following pixel-value GETs cannot be batched with the prior GETs since they depend upon the values temporarily set immediately above; layout thrashing cannot be avoided here. */
                             if (!sameBasePercent) {
-                                /* Divide the returned value by the measurement value to get the ratio between 1% and 1px. */
-                                elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(element, "width", null, true)) || 0) / measurement; /* GET */
-                                elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(element, "height", null, true)) || 0) / measurement; /* GET */
+                                /* Divide the returned value by the measurement value to get the ratio between 1% and 1px. Default to 1 since conversion logic using 0 can produce Infinite. */
+                                elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(element, "width", null, true)) || 1) / measurement; /* GET */
+                                elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(element, "height", null, true)) || 1) / measurement; /* GET */
                             }
 
                             if (!sameBaseEm) {
-                                elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx = (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) / measurement; /* GET */
+                                elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx = (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 1) / measurement; /* GET */
                             }
 
                             /* Revert each test property to its original value. */
                             for (var originalValueProperty in originalValues) {
-                                CSS.setPropertyValue(element, originalValueProperty, originalValues[originalValueProperty]); /* SETs */
+                                if (originalValues[originalValueProperty] !== null) {
+                                    CSS.setPropertyValue(element, originalValueProperty, originalValues[originalValueProperty]); /* SETs */
+                                }
+                            }
+
+                            /* In IE, revert to "auto" for width and height if it was originally set. */
+                            if (IE) {
+                                if (isIEWidthAuto) {
+                                    CSS.setPropertyValue(element, "width", "auto"); /* SET */
+                                }
+
+                                if (isIEHeightAuto) {
+                                    CSS.setPropertyValue(element, "height", "auto"); /* SET */
+                                }
+                            /* For other browsers, additional layout thrashing must be triggered to determine whether a property was originally set to "auto". */
+                            } else {
+                                /* Set height to "auto" then compare the returned value against the element's current height value. If they're identical, leave height set to "auto".
+                                   If they're different, then "auto" wasn't originally set on the element prior to our conversions, and we revert it to its actual value. */
+                                /* Note: The following GETs and SETs cannot be batched together due to the cross-effect setting one axis to "auto" has on the other. */
+                                CSS.setPropertyValue(element, "height", "auto"); /* SET */
+                                if (originalValues.height !== CSS.getPropertyValue(element, "height", null, true)) { /* GET */
+                                    CSS.setPropertyValue(element, "height", originalValues.height); /* SET */
+                                }
+
+                                CSS.setPropertyValue(element, "width", "auto"); /* SET */
+                                if (originalValues.width !== CSS.getPropertyValue(element, "width", null, true)) { /* GET */
+                                    CSS.setPropertyValue(element, "width", originalValues.width); /* SET */
+                                }
                             }
 
                             if ($.velocity.debug >= 1) console.log("Unit ratios: " + JSON.stringify(elementUnitRatios), element);
@@ -1951,26 +2052,31 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         elementsIndex++;
                     }
                 }
+            }
 
-                /* jQuery's $.queue() behavior requires calls on a *custom* queue to be explicitly dequeued; non-custom queues have their entries dequeued automatically. */
-                /* Note: An empty queue name is an alias for the "fx" queue, which is jQuery's default queue. */
-                if (opts.queue !== "" && opts.queue !== "fx") { 
-                    /* Fire the next queue entry once this queue has completed. This queue's running time is the sum of the current call's duration and delay options. */
-                    setTimeout(next, opts.duration + opts.delay);
-                }
-            });
+            /* When the queue option is set to false, the associated Velocity call is triggered immediately. */
+            if (opts.queue === false) {
+                buildQueue();
+            /* Otherwise, the call undergoes element queueing as normal. */
+            } else {
+                $.queue(element, opts.queue, function(next) {
+                    /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
+                    $.velocity.queueEntryFlag = true;
+
+                    buildQueue(next);
+                });
+            }
 
             /*********************
                 Auto-Dequeuing
             *********************/
 
             /* As per jQuery's $.queue() behavior, to fire the first non-custom-queue entry on an element, the element must be dequeued if its queue stack consists *solely* of the current call.
-               (This can be determined by checking for the "inprogress" item that jQuery prepends to active queue stack arrays.) Otherwise, whenever the element's queue is further appended with 
+               (This can be determined by checking for the "inprogress" item that jQuery prepends to active queue stack arrays.) Regardless, whenever the element's queue is further appended with 
                additional items -- including $.delay()'s or even $.animate() calls, the queue's first entry is automatically fired. This behavior contrasts that of custom queues, which never auto-fire. */
-            /* The queue option may alternatively be set to false, which results in an immediate triggering; chain waiting is skipped entirely, and the targeted call runs in parallel with any currently-running queue entries. */
             /* Note: When an element set is being subjected to a non-parallel Velocity call, the animation will not begin until each one of the elements in the set has reached the end of its individually pre-existing queue chain. */
             /* Note: Unfortunately, most people don't fully grasp jQuery's powerful, yet quirky, $.queue() function. Lean more here: http://stackoverflow.com/questions/1058158/can-somebody-explain-jquery-queue-to-me */
-            if (opts.queue === false || ((opts.queue === "" || opts.queue === "fx") && $.queue(element)[0] !== "inprogress")) {                
+            if ((opts.queue === "" || opts.queue === "fx") && $.queue(element)[0] !== "inprogress") {                
                 $.dequeue(element);
             }            
         }
@@ -1992,25 +2098,37 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             }
         }
 
-        /******************
-           Option: Loop 
-        ******************/
+        /********************
+            Option: Loop 
+        ********************/
 
         /* The loop option accepts an integer indicating how many times the element should loop between the values in the current call's properties map and the element's property values prior to this call. */
-        /* The loop option's logic is performed here -- after element processing -- because the current call needs to undergo its queue insertion prior to the loop option generating its series of constituent "reverse" calls,
+        /* Note: The loop option's logic is performed here -- after element processing -- because the current call needs to undergo its queue insertion prior to the loop option generating its series of constituent "reverse" calls,
            which chain after the current call. Two reverse calls (two "alternations") constitute one loop. */
-        var opts = $.extend({}, $.fn.velocity.defaults, options);
+        var opts = $.extend({}, $.fn.velocity.defaults, options),
+            reverseCallsCount;
+
         opts.loop = parseInt(opts.loop);
+        reverseCallsCount = (opts.loop * 2) - 1;
 
         if (opts.loop) {
             /* Double the loop count to convert it into its appropriate number of "reverse" calls. Subtract 1 from the resulting value since the current call is included in the total alternation count. */
-            for (var x = 0; x < (opts.loop * 2) - 1; x++) {
+            for (var x = 0; x < reverseCallsCount; x++) {
                 /* Since the logic for the reverse action occurs inside Queueing and thus this call's options object isn't parsed until then as well, the current call's delay option must be explicitly passed
                    into the reverse call so that the delay logic that occurs inside *Pre-Queueing* can process this delay. */
+                var reverseOptions = {
+                    delay: opts.delay
+                };
+
+                /* If a complete callback was passed into this call, transfer it to the loop sequence's final "reverse" call so that it's triggered when the entire sequence is complete (and not when the very first animation is complete). */
+                if (opts.complete && (x === reverseCallsCount - 1)) {
+                    reverseOptions.complete = opts.complete;
+                }
+
                 if (isJquery) {
-                    elements.velocity("reverse", { delay: opts.delay });
+                    elements.velocity("reverse", reverseOptions);
                 } else {
-                    $.velocity.animate(elements, "reverse", { delay: opts.delay });
+                    $.velocity.animate(elements, "reverse", reverseOptions);
                 }
             }
         }
@@ -2108,8 +2226,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                         /* Note: In addition to property tween data, tweensContainer contains a reference to its associated element. */
                         if (property !== "element") {
                             var tween = tweensContainer[property],
-                                lastCurrentValue = tween.currentValue,
-                                currentValue;
+                                currentValue,
+                                /* Easing can either be a bezier function or a string that references a pre-registered easing on the $.velocity.Easings object. In either case, return the appropriate easing function. */
+                                easing = (typeof tween.easing === "string") ? $.velocity.Easings[tween.easing] : tween.easing;
 
                             /******************************
                                Current Value Calculation
@@ -2120,10 +2239,9 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                                 currentValue = tween.endValue;
                             /* Otherwise, calculate currentValue based on the current delta from startValue. */
                             } else {
-                                currentValue = tween.startValue + ((tween.endValue - tween.startValue) * $.easing[tween.easing](percentComplete));
+                                currentValue = tween.startValue + ((tween.endValue - tween.startValue) * easing(percentComplete));
                             }
 
-                            /* If style updating wasn't skipped, store the new currentValue onto the call cache. */
                             tween.currentValue = currentValue;
 
                             /******************
@@ -2147,7 +2265,8 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             *****************/
 
                             /* setPropertyValue() returns an array of the property name and property value post any normalization that may have been performed. */
-                            var adjustedSetData = CSS.setPropertyValue(element, property, tween.currentValue + (currentValue === "auto" ? "" : tween.unitType), tween.rootPropertyValue, tween.scrollContainer); /* SET */
+                            /* Note: To solve an IE<=8 positioning bug, the unit type is dropped when setting a property value of 0. */
+                            var adjustedSetData = CSS.setPropertyValue(element, property, tween.currentValue + (parseFloat(currentValue) === 0 ? "" : tween.unitType), tween.rootPropertyValue, tween.scrollContainer); /* SET */
 
                             /*******************
                                Hooks: Part II
@@ -2186,11 +2305,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                             $.data(element, NAME).transformCache.translate3d = "(0, 0, 0)";
 
                             transformPropertyExists = true;
-                        } else if (percentComplete === 1) {
-                            /* If we've reached the end of the animation, remove the translate3d value while setting transformPropertyExists to true in order to flush this removal change to the DOM. */
-                            delete $.data(element, NAME).transformCache.translate3d;
-
-                            transformPropertyExists = true;
                         }
                     }
 
@@ -2208,7 +2322,10 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
         /* Note: completeCall() contains the logic for setting the isTicking flag to false (which occurs when the last active call on $.velocity.State.calls has completed). */
         if ($.velocity.State.isTicking) {
-            requestAnimationFrame(tick);
+            /* The call finalization logic is wrapped inside a setInterval so that it's triggered asynchronously -- out of sync with its final RAF tick. Otherwise, the ensuing callback logic could cause this tick to lag and drop frames. */
+            setTimeout(function() {
+                requestAnimationFrame(tick);
+            }, 0);
         }
     }
 
@@ -2234,7 +2351,7 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
 
             /* If the display option is set to "none" (meaning the user intends to hide the element), set this value now that the animation is complete. */
             /* Note: The display option is ignored with "reverse" calls, which is what loops are composed of. See reverse's logic for further details. */
-            if (opts.display === "none" && opts.loop === false) {
+            if (opts.display === "none" && !opts.loop) {
                 CSS.setPropertyValue(element, "display", opts.display);
             }
 
@@ -2247,12 +2364,39 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
                     $.data(element, NAME).isAnimating = false;
                     /* Clear the element's rootPropertyValueCache, which will become stale. */
                     $.data(element, NAME).rootPropertyValueCache = {};
+
+                    /* All mobile devices except for those running Android Gingerbread (which is the oldest widespread Android distribution) have hardware acceleration removed at the end of the animation to avoid straining
+                       the GPU's available memory. Gingerbread is the exception since the layer demotion associated with hardware acceleration removal causes very apparent flickering. We accept this trade-off. */
+                    if (opts.mobileHA && !$.velocity.State.isGingerbread) {
+                        /* Now that the animation chain is complete, remove the translate3d transform value and flush the changes to the DOM. */
+                        delete $.data(element, NAME).transformCache.translate3d;
+
+                        CSS.flushTransformCache(element);
+                    }
                 }
             }
 
-            /* Fire the next call in the queue chain. */
+            /**********************
+               Option: Complete
+            **********************/
+
+            /* The complete callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
+            /* Note: If this is a loop, complete callback firing is handled by the loop's final reverse call -- we skip handling it here. */
+            if ((i === callLength - 1) && !opts.loop && opts.complete) {    
+                var rawElements = elements.jquery ? elements.get() : elements;
+
+                opts.complete.call(rawElements, rawElements); 
+            }
+
+            /****************
+               Dequeueing
+            ****************/
+
+            /* Fire the next call in the queue so long as this call's queue wasn't set to false (to trigger a parallel animation), which would have already caused the next call to fire. */
             /* Note: Even if the end of the animation queue has been reached, $.dequeue() must still be called in order to completely clear jQuery's animation queue. */
-            $.dequeue(element);
+            if (opts.queue !== false) {
+                $.dequeue(element, opts.queue);
+            }
         }
 
         /************************
@@ -2279,16 +2423,6 @@ The biggest cause of both codebase bloat and codepath obfuscation in Velocity is
             delete $.velocity.State.calls;
             $.velocity.State.calls = [];
         }
-
-        /****************
-            Callback
-        ****************/
-
-        /* Now that all logic associated with this call is complete, fire the optional callback. */
-        /* Note: The callback is fired once per call -- not once per elemenet -- and is passed the full element set as its context. */
-        if (opts.complete) { 
-            opts.complete.call(elements); 
-        }
     }
 })(jQuery, window, document);
 
@@ -2306,9 +2440,123 @@ jQuery.fn.velocity.defaults = {
     loop: false,
     delay: false,
     mobileHA: true,
-    /* Advanced: Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
+    /* Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
     _cacheValues: true
 };
+
+/***********************
+   Packaged Sequences
+***********************/
+
+/* slideUp, slideDown */
+jQuery.each([ "Down", "Up" ], function(i, direction) {
+    /* Generate the slide sequences dynamically in order to minimize code redundancy. */
+    jQuery.velocity.Sequences["slide" + direction] = function (element, options) {
+        var opts = jQuery.extend({}, options),
+            originalValues = {
+                height: null,
+                marginTop: null,
+                marginBottom: null,
+                paddingTop: null,
+                paddingBottom: null,
+                overflow: null,
+                overflowY: null
+            },
+            /* The slide functions make use of the begin and complete callbacks, so the user's custom callbacks are stored for triggering when slideDown/Up's logic has completed. */
+            begin = opts.begin,
+            complete = opts.complete;
+
+        /* Unless the user is trying to override the display option, show the element before slideDown begins and hide the element after slideUp completes. */
+        if (direction === "Down") {
+            /* All elements subjected to sliding are switched to the "block" display value -- as opposed to an element-appropriate block/inline distinction -- because inline elements cannot have their dimensions modified. */
+            opts.display = opts.display || "block";
+        } else {
+            opts.display = opts.display || "none";
+        }
+
+        /* Begin callback. */
+        opts.begin = function () {
+            if (direction === "Down") {
+                originalValues.overflow = [ jQuery.velocity.CSS.getPropertyValue(element, "overflow"), 0 ];
+                originalValues.overflowY = [ jQuery.velocity.CSS.getPropertyValue(element, "overflowY"), 0 ];
+
+                /* Remove scrollbars and momentarily set the element's height to "auto" so that its natural height can be calculated. */
+                element.style.overflow = "hidden";
+                element.style.overflowY = "hidden";
+
+                element.style.height = "auto";
+                element.style.display = "block";
+
+                /* Cache the elements' original vertical dimensional values so that we can animate back to them from starting values of 0. */
+                for (var property in originalValues) {
+                    /* Overflow values have already been cached, do not overrwrite them with "hidden", which they were just set to. */
+                    if (/^overflow/.test(property)) {
+                        continue;
+                    }
+
+                    /* Use forcefeeding to animate slideDown properties from 0. */
+                    originalValues[property] = [ jQuery.velocity.CSS.getPropertyValue(element, property), 0 ];
+                }
+
+                /* Hide the element inside this begin callback, otherwise it'll momentarily flash itself before the actual animation tick begins. */
+                element.style.display = "none";
+            } else {
+                for (var property in originalValues) {
+                    /* Use forcefeeding to animate slideUp properties toward 0. */
+                    originalValues[property] = [ 0, jQuery.velocity.CSS.getPropertyValue(element, property) ];
+                }
+
+                /* As with slideDown, slideUp hides the element's scrollbars while animating since scrollbar height tweening looks unappealing. */
+                element.style.overflow = "hidden";
+                element.style.overflowY = "hidden";
+            }
+
+            /* If the user passed in a begin callback, fire it now. */
+            if (begin) {
+                begin.call(element, element);
+            }
+        }
+
+        /* Complete callback. */
+        opts.complete = function (element) {
+            /* Reset the element to its original values once its slide animation is complete. (For slideDown, overflow values are reset. For slideUp, all values are reset (since they were animated to 0).) */
+            for (var property in originalValues) {
+                element.style[property] = originalValues[property][direction === "Down" ? 0 : 1];
+            }
+
+            /* If the user passed in a complete callback, fire it now. */
+            if (complete) {
+                complete.call(element, element);
+            }
+        };
+
+        /* Animation triggering. */
+        jQuery.velocity.animate(element, originalValues, opts);
+    };
+});
+
+/* fadeIn, fadeOut */
+jQuery.each([ "In", "Out" ], function(i, direction) {
+    /* Generate the slide sequences dynamically in order to minimize code redundancy. */
+    jQuery.velocity.Sequences["fade" + direction] = function (element, options, elementsIndex, elementsSize) {
+        var opts = jQuery.extend({}, options),
+            propertiesMap = {
+                opacity: (direction === "In") ? 1 : 0
+            };
+
+        /* Since sequences are triggered individually for each element in the animated set, we avoid repeatedly triggering callbacks by firing them only when the final element is reached. */
+        if (elementsIndex !== elementsSize - 1) {
+            opts.complete = opts.begin = null;
+        }
+
+        /* If a display value was passed into the sequence, use it. Otherwise, default to "none" for fadeOut and default to the element-specific default value for fadeIn. */
+        if (!opts.display) {
+            opts.display = (direction === "In") ? jQuery.velocity.CSS.Values.getDisplayType(element) : "none";
+        }
+
+        jQuery(this).velocity(propertiesMap, opts);
+    };     
+});
 
 /******************
    Known Issues
