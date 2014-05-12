@@ -1,0 +1,44 @@
+{
+  "name": "velocity-animate",
+  "version": "0.0.4",
+  "description": "Accelerated JavaScript animation.",
+  "keywords": [
+    "animation",
+    "jquery",
+    "animate",
+    "ui",
+    "velocity.js",
+    "velocityjs",
+    "javascript"
+  ],
+  "homepage": "http://velocityjs.org",
+  "bugs": {
+    "url": "http://github.com/julianshapiro/velocity/issues"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Julian Shapiro",
+      "url": "http://julian.com/"
+    }
+  ],
+  "main": "jquery.velocity.js",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/julianshapiro/velocity.git"
+  },
+  "files": [
+    "jquery.velocity.js"
+  ],
+  "dependencies": {
+    "jquery": "latest"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.4",
+    "grunt-contrib-concat": "~0.4.0",
+    "grunt-contrib-jshint": "~0.6.3",
+    "grunt-contrib-nodeunit": "~0.2.0",
+    "grunt-contrib-requirejs": "~0.4.4",
+    "grunt-contrib-uglify": "~0.2.2"
+  }
+}
