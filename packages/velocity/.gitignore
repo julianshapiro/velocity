@@ -4,3 +4,5 @@ jquery-shim.js
 velocity.js
 velocity.min.js
 test
+shim.jquery.js
+.gitignore
