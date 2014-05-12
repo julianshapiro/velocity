@@ -1,0 +1,3 @@
+.gitignore
+node_modules
+jquery-shim.js
