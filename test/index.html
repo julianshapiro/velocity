@@ -5,7 +5,7 @@
 		<link rel="stylesheet" href="qunit-1.14.0.css" type="text/css" media="screen" />
 		<script type="text/javascript" src="qunit-1.14.0.js"></script>
 		<script type="text/javascript" src="jquery-1.11.1.min.js"></script>
-		<script type="text/javascript" src="../jquery.velocity.js"></script>
+		<script type="text/javascript" src="../jquery.velocity.min.js"></script>
 		<style>
 			#details {
 				margin: 0 auto;
@@ -70,7 +70,7 @@
 		   IE<=7 Reversion
 		*********************/
 
-  		if (IE <= 7 && $.fn.velocity) {
+  		if (IE <= 7 && $ && $.velocity) {
   			alert("Velocity wasn't reverted to jQuery's $.animate() for IE<=7.");
   		}
 

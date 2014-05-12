@@ -2,6 +2,8 @@
      Summary
 ****************/
 
+// FURTHER COMMENTARY NEEDED HERE
+
 /*
 Velocity is a concise CSS manipulation library with a performant animation stack built on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
 Whenever Velocity triggers a DOM query (a GET) or a DOM update (a SET), a comment indicating such is placed next to the offending line of code.
@@ -97,30 +99,28 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         return Object.prototype.toString.call(variable) === "[object Array]";
     }
 
-    /*********************
-       Aborting & Shims
-    *********************/
+    /******************
+       Installation
+    ******************/
 
     /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them. Simply revert to jQuery (and lose Velocity's extra features). */
     if (IE <= 7) {
         /* If jQuery is loaded, revert to jQuery's $.animate() function and abort this Velocity declaration. */
         if (window.jQuery) {
-           $.fn.velocity = $.fn.animate; 
+            window.jQuery.fn.velocity = window.jQuery.fn.animate; 
+            return;
+        } else {
+            throw new Error("For IE<=7, Velocity falls back to jQuery, which must first be loaded.");
         }
-
-        return;
     /* IE8 is the only supported version of IE that requires jQuery to be loaded. Newer versions of IE work perfectly with Velocity's jQuery shim. */
     } else if (IE === 8 && !window.jQuery) {
-        console.log("jQuery is required for Velocity to work on IE8.");
-
-        return;
+        throw new Error("For IE8, Velocity requires jQuery to be loaded.");
     /* We allow the global Velocity variable to pre-exist so long as we were responsible for its creation via the Utilities code. */
     } else if (global.velocity !== undefined && !global.velocity.Utilities) {
-        console.log("Velocity is already loaded or its namespace is occupied.");
-
-        return;
+        throw new Error("Velocity's namespace is occupied. Aborting.");
     } else {
         /* Local to our Velocity scope, default $ to our shim if jQuery isn't loaded. */
+        /* Note: We can't default to Zepto since the shimless version of Velocity does not work with Zepto, which is missing several utility functions that Velocity requires. */
         var $ = window.jQuery || global.velocity.Utilities;
     }
 
