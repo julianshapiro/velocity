@@ -1,8 +1,19 @@
+/***************
+    Details
+***************/
+
+/*
+* Velocity.js: Accelerated JavaScript animation.
+* @version 0.0.9
+* @docs http://velocityjs.org
+* @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
+*/    
+
 /****************
      Summary
 ****************/
 
-// FURTHER COMMENTARY NEEDED HERE
+/* IMPORTANT: Despite some of the ensuing code indicating that Velocity works *without* jQuery and *with* Zepto, this support HAS NOT YET LANDED. Stay tuned. */
 
 /*
 Velocity is a concise CSS manipulation library with a performant animation stack built on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
@@ -11,18 +22,16 @@ To learn more about the nuances of DOM performance, check out these talks: https
 
 Velocity is structured into four sections:
 - CSS Stack: Works independently from the rest of Velocity.
-- $.fn.velocity is the jQuery object extension that, when triggered, iterates over the targeted element set and queues the incoming Velocity animation onto each element individually. This process consists of:
+- velocity.animate is the core animation method that iterates over the targeted element set and queues the incoming Velocity animation onto each element individually. This process consists of:
   - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options argument.
   - Queueing: The logic that runs once the call has reached its point of execution in the element's $.queue() stack. Most logic is placed here to avoid risking it becoming stale.
   - Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
-- Tick: The single requestAnimationFrame loop responsible for tweening all in-progress calls.
+- tick: The single requestAnimationFrame loop responsible for tweening all in-progress calls.
 - completeCall: Handles the cleanup process for each Velocity call.
-
-Note: To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for queuing logic.
 Note: The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for animating individual properties in compound-value properties (e.g. "textShadowBlur" in "textShadow: 0px 0px 0px black").
 */
 
-;(function (global, document, undefined) {  
+;(function (global, window, document, undefined) {  
 
     /*****************
         Constants
@@ -116,22 +125,23 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
     } else if (IE === 8 && !window.jQuery) {
         throw new Error("For IE8, Velocity requires jQuery to be loaded.");
     /* We allow the global Velocity variable to pre-exist so long as we were responsible for its creation via the Utilities code. */
-    } else if (global.velocity !== undefined && !global.velocity.Utilities) {
+    } else if (global.Velocity !== undefined && !global.Velocity.Utilities) {
         throw new Error("Velocity's namespace is occupied. Aborting.");
     } else {
         /* Local to our Velocity scope, default $ to our shim if jQuery isn't loaded. */
         /* Note: We can't default to Zepto since the shimless version of Velocity does not work with Zepto, which is missing several utility functions that Velocity requires. */
-        var $ = window.jQuery || global.velocity.Utilities;
+        var $ = window.jQuery || global.Velocity.Utilities;
     }
 
     /*************
         State
     *************/
 
-    // FURTHER COMMENTARY NEEDED HERE
-    /* In addition to extending jQuery's $.fn object, Velocity also registers itself as a jQuery utility ($.) function so that certain features are accessible beyond just a per-element scope. */
-    /* Note: The utility function doubles as a publicly-accessible data store for the purposes of unit testing. Capitalized objects are meant for internal use, lowercase objects are meant for external use. */
-    var velocity = global.velocity = $.extend(global.velocity || {}, {
+    /* Velocity registers itself onto a global container (window.jQuery || window.Zepto || window) so that that certain features are accessible beyond just a per-element scope. This master object contains an .animate() method,
+       which is later additionally assigned to $.fn (if jQuery or Zepto are present). Accordingly, Velocity can both act on wrapped DOM elements and stand alone for targeting raw DOM elements. */
+    /* Note: The global object also doubles as a publicly-accessible data store for the purposes of unit testing. (Capitalized objects are meant for private use, lowercase objects are meant for public use.) */
+    /* Note: We alias both the lowercase and uppercase variants of "velocity" to minimize user issues due to the lowercase nature of the $.fn extension. */ 
+    var velocity = global.Velocity = global.velocity = $.extend(global.Velocity || {}, {
         /* Container for page-wide Velocity state data. */
         State: {
             /* Detect mobile devices to determine if mobileHA should be turned on. */
@@ -152,9 +162,9 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             /* Container for every in-progress call to Velocity. */
             calls: []
         },
-        /* Velocity's full re-implementation of jQuery's CSS stack. Made global for unit testing. */
+        /* Velocity's custom CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
-        /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). See VelocityJS.org/#sequences to learn more. */
+        /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). */
         Sequences: {
             /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
         },
@@ -171,12 +181,12 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             loop: false,
             delay: false,
             mobileHA: true,
-            /* Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
+            /* Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring below for further details. */
             _cacheValues: true
         },
-        /* Utility function's alias of $.fn.velocity(). Used for raw DOM element animation. */
+        /* Velocity's core animation method, later aliased to $.fn. */
         animate: function () { /* Defined below. */ },
-        /* Set to 1 or 2 (most verbose) to log debug info to console. */
+        /* Set to 1 or 2 (most verbose) to log debug output to console. */
         debug: false
     });
 
@@ -1096,9 +1106,6 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
        velocity.animate
     **********************/
 
-    // FURTHER COMMENTARY NEEDED
-    /* Simultaneously assign the jQuery plugin function ($elements.velocity()) and the utility alias (velocity.animate(elements)). */
-    /* Note: The utility alias allows for the animation of raw (non-jQuery) DOM elements. */
     velocity.animate = function() {        
 
         /**************************
@@ -2072,6 +2079,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             if (opts.queue === false) {
                 buildQueue();
             /* Otherwise, the call undergoes element queueing as normal. */
+            /* Note: To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for queuing logic. */
             } else {
                 $.queue(element, opts.queue, function(next) {
                     /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
@@ -2336,10 +2344,10 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
         /* Note: completeCall() contains the logic for setting the isTicking flag to false (which occurs when the last active call on velocity.State.calls has completed). */
         if (velocity.State.isTicking) {
-            /* The call finalization logic is wrapped inside a setInterval so that it's triggered asynchronously -- out of sync with its final RAF tick. Otherwise, the ensuing callback logic could cause this tick to lag and drop frames. */
-            setTimeout(function() {
+            /* TODO: (Only if there's a complete function) The call finalization logic is wrapped inside a setInterval so that it's triggered asynchronously -- out of sync with its final RAF tick. Otherwise, the ensuing callback logic could cause this tick to lag and drop frames. */
+            //setTimeout(function() {
                 requestAnimationFrame(tick);
-            }, 0);
+            //}, 0);
         }
     }
 
@@ -2437,6 +2445,21 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             delete velocity.State.calls;
             velocity.State.calls = [];
         }
+    }
+
+    /**********************
+       Framework Support
+    **********************/
+
+    /* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls. If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method. */
+    var framework = window.jQuery || window.Zepto;
+
+    if (framework) {
+        /* Assign the object function to Velocity's animate() method. */
+        framework.fn.velocity = velocity.animate;
+
+        /* Assign the object function's defaults to Velocity's global defaults object. */
+        framework.fn.velocity.defaults = velocity.defaults;
     }
 
     /***********************
@@ -2552,18 +2575,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             velocity.animate(this, propertiesMap, opts);
         };     
     });
-
-    /*******************************
-       jQuery & Zepto Integration
-    *******************************/
-
-    /* Both jQuery and Zepto allow their .fn object to be extended in order to allow wrapped elements to be subjected to plugin calls. If either library is loaded, assign a "velocity" extension to Velocity's core animation method. */
-    if (window.jQuery || window.Zepto) {
-        /* Note: The "global" variable is passed into Velocity's wrapper function, and it is assigned to (window.jQuery || window.Zepto || window); */
-        global.fn.velocity = velocity.animate;
-    }
-
-})(window.jQuery || window.Zepto || window, document);
+})((window.jQuery || window.Zepto || window), window, document);
 
 /******************
    Known Issues
