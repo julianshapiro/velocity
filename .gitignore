@@ -1,4 +1,3 @@
-.gitignore
 node_modules
 Gruntfile.js
 jquery-shim.js
