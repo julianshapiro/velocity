@@ -4,8 +4,8 @@
 		<title>Velocity.js Tests</title>
 		<link rel="stylesheet" href="qunit-1.14.0.css" type="text/css" media="screen" />
 		<script type="text/javascript" src="qunit-1.14.0.js"></script>
-		<script type="text/javascript" src="../velocity.js"></script>
 		<script type="text/javascript" src="jquery-1.11.1.min.js"></script>
+		<script type="text/javascript" src="../jquery.velocity.js"></script>
 		<style>
 			#details {
 				margin: 0 auto;
@@ -70,7 +70,7 @@
 		   IE<=7 Reversion
 		*********************/
 
-  		if (typeof $ !== 'undefined' && IE <= 7 && $.fn.velocity) {
+  		if (IE <= 7 && $.fn.velocity) {
   			alert("Velocity wasn't reverted to jQuery's $.animate() for IE<=7.");
   		}
 
@@ -78,12 +78,12 @@
 		   Setup: Targets
 		*******************/
 
-		var domQunitStage = document.getElementById("qunit-stage");
+		var $qunitStage = $("#qunit-stage");
 
 		var targetsFragment = document.createDocumentFragment(),
 			targetsIndex = 0,
-			domTargets,
-			domTargetSet,
+			$targets,
+			$targetSet,
 			defaultStyles = {
 				opacity: 1,
 				width: 1,
@@ -107,11 +107,11 @@
 			div = null;
 		}
 
-		domQunitStage.appendChild(targetsFragment);
-		domTargets = domQunitStage.querySelectorAll(".target");
+		$qunitStage.append(targetsFragment);
+		$targets = $qunitStage.find(".target");
 
 		function getTarget () {
-			return domTargets[targetsIndex++];
+			return $targets.eq(targetsIndex++);
 		}
 
 		/********************
@@ -124,21 +124,21 @@
 				width: defaultStyles.width * 2,
 				colorGreen: defaultStyles.colorGreen / 2
 			},
-				defaultOptions = { 
-					queue: "",
-				    duration: 300,
-				    easing: "swing",
-				    complete: null,
-				    display: null,
-				    loop: false,
-				    delay: false,
-				    mobileHA: true,
-				    _cacheValues: true
-				},
+			defaultOptions = { 
+				queue: "",
+			    duration: 300,
+			    easing: "swing",
+			    complete: null,
+			    display: null,
+			    loop: false,
+			    delay: false,
+			    mobileHA: true,
+			    _cacheValues: true
+			},
 			asyncCheckDuration = defaultOptions.duration / 2,
-			completeCheckDuration = defaultOptions.duration * 1.5
+			completeCheckDuration = defaultOptions.duration * 1.75
 
-		velocity.defaults = defaultOptions;
+		$.fn.velocity.defaults = defaultOptions;
 
 		/****************
 		    Arguments
@@ -164,72 +164,71 @@
 			   Invalid Arguments
 			**********************/
 
-			var domTarget1 = getTarget();
-				/* No arguments: Ensure an error isn't thrown and that the domTargeted elements are returned to the chain. */
-			velocity.animate(domTarget1);
-			velocity.animate(domTarget1, {});
-			velocity.animate(domTarget1, {}, testDuration);
+			var $target1 = getTarget();
+			$target1
+				/* No arguments: Ensure an error isn't thrown and that the $targeted elements are returned to the chain. */
+				.velocity()
+				.velocity({})
+				.velocity({}, testDuration)
 				/* Invalid arguments: Ensure an error isn't thrown. */
-			velocity.animate(domTarget1, "fakeArg1", "fakeArg2");
+				.velocity("fakeArg1", "fakeArg2");
 
 			/* Ensure that none of the above arguments triggered animation. */
-			equal(velocity.Utilities.data(domTarget1, pluginName), undefined, "Invalid arguments.");
+			equal($target1.data(pluginName), undefined, "Invalid arguments.");
 
 			/****************
 			   Overloading
 			****************/
 
-			var domTarget2 = getTarget();
-			velocity.animate(domTarget2, defaultProperties, defaultOptions.duration);
-			equal(velocity.Utilities.data(domTarget2, pluginName).opts.duration, defaultOptions.duration, "Overload variation #1.");
+			var $target2 = getTarget();
+			$target2.velocity(defaultProperties, defaultOptions.duration);
+			equal($target2.data(pluginName).opts.duration, defaultOptions.duration, "Overload variation #1.");
 
-			var domTarget3 = getTarget();
-			velocity.animate(domTarget3, defaultProperties, testDuration);
-			equal(velocity.Utilities.data(domTarget3, pluginName).opts.duration, testDuration, "Overload variation #2.");
+			var $target3 = getTarget();
+			$target3.velocity(defaultProperties, testDuration);
+			equal($target3.data(pluginName).opts.duration, testDuration, "Overload variation #2.");
 
-			var domTarget4 = getTarget();
-			velocity.animate(domTarget4, defaultProperties, testEasing);
-			equal(velocity.Utilities.data(domTarget4, pluginName).opts.easing, testEasing, "Overload variation #3.");
+			var $target4 = getTarget();
+			$target4.velocity(defaultProperties, testEasing);
+			equal($target4.data(pluginName).opts.easing, testEasing, "Overload variation #3.");
 
-			var domTarget5 = getTarget();
-			velocity.animate(domTarget5, defaultProperties, testComplete);
-			equal(velocity.Utilities.data(domTarget5, pluginName).opts.complete, testComplete, "Overload variation #4.");
+			var $target5 = getTarget();
+			$target5.velocity(defaultProperties, testComplete);
+			equal($target5.data(pluginName).opts.complete, testComplete, "Overload variation #4.");
 
-			var domTarget6 = getTarget();
-			velocity.animate(domTarget6, defaultProperties, testDuration, testEasing);
-			equal(velocity.Utilities.data(domTarget6, pluginName).opts.duration, testDuration, "Overload variation #5a.");
-			equal(velocity.Utilities.data(domTarget6, pluginName).opts.easing, testEasing, "Overload variation #5b.");
+			var $target6 = getTarget();
+			$target6.velocity(defaultProperties, testDuration, testEasing);
+			equal($target6.data(pluginName).opts.duration, testDuration, "Overload variation #5a.");
+			equal($target6.data(pluginName).opts.easing, testEasing, "Overload variation #5b.");
 
-			var domTarget7 = getTarget();
-			velocity.animate(domTarget7, defaultProperties, testDuration, testComplete);
-			equal(velocity.Utilities.data(domTarget7, pluginName).opts.duration, testDuration, "Overload variation #6a.");
-			equal(velocity.Utilities.data(domTarget7, pluginName).opts.complete, testComplete, "Overload variation #6b.");
+			var $target7 = getTarget();
+			$target7.velocity(defaultProperties, testDuration, testComplete);
+			equal($target7.data(pluginName).opts.duration, testDuration, "Overload variation #6a.");
+			equal($target7.data(pluginName).opts.complete, testComplete, "Overload variation #6b.");
 
-			var domTarget8 = getTarget();
-			velocity.animate(domTarget8, defaultProperties, testDuration, testEasing, testComplete);
-			equal(velocity.Utilities.data(domTarget8, pluginName).opts.duration, testDuration, "Overload variation #7a.");
-			equal(velocity.Utilities.data(domTarget8, pluginName).opts.easing, testEasing, "Overload variation #7b.");
-			equal(velocity.Utilities.data(domTarget8, pluginName).opts.complete, testComplete, "Overload variation #7c.");
+			var $target8 = getTarget();
+			$target8.velocity(defaultProperties, testDuration, testEasing, testComplete);
+			equal($target8.data(pluginName).opts.duration, testDuration, "Overload variation #7a.");
+			equal($target8.data(pluginName).opts.easing, testEasing, "Overload variation #7b.");
+			equal($target8.data(pluginName).opts.complete, testComplete, "Overload variation #7c.");
 
-			var domTarget9 = getTarget();
-			velocity.animate(domTarget9, defaultProperties, testOptions);
-			deepEqual(velocity.Utilities.data(domTarget9, pluginName).opts, testOptions, "Overload variation #8.");
+			var $target9 = getTarget();
+			$target9.velocity(defaultProperties, testOptions);
+			deepEqual($target9.data(pluginName).opts, testOptions, "Overload variation #8.");
 
 			/*********************
 			   Utility Function
 			*********************/
 
+			var $target10 = getTarget();
+			$.velocity.animate($target10[0], defaultProperties, testOptions);
+			deepEqual($target10.data(pluginName).opts, testOptions, "Utility function variation #1.");
 
-			/* No longer relevent...
-			var domTarget10 = getTarget();
-			velocity.animate(domTarget10[0], defaultProperties, testOptions);
-			deepEqual(velocity.Utilities.data(domTarget10, pluginName).opts, testOptions, "Utility function variation #1.");
-
-			var domTarget11 = getTarget();
-			velocity.animate(domTarget11[0], defaultProperties, testDuration, testEasing, testComplete);
-			equal(velocity.Utilities.data(domTarget11, pluginName).opts.duration, testDuration, "Utility function variation #2a.");
-			equal(velocity.Utilities.data(domTarget11, pluginName).opts.easing, testEasing, "Utility function variation #2b.");
-			equal(velocity.Utilities.data(domTarget11, pluginName).opts.complete, testComplete, "Utility function variation #2c.");*/
+			var $target11 = getTarget();
+			$.velocity.animate($target11[0], defaultProperties, testDuration, testEasing, testComplete);
+			equal($target11.data(pluginName).opts.duration, testDuration, "Utility function variation #2a.");
+			equal($target11.data(pluginName).opts.easing, testEasing, "Utility function variation #2b.");
+			equal($target11.data(pluginName).opts.complete, testComplete, "Utility function variation #2c.");
 		});
 
 		/******************
@@ -238,7 +237,7 @@
 
 		/* Note: We don't bother checking all of the GET/SET-related CSS object's functions, as most are repeatedly tested indirectly via the other tests. */
 		QUnit.test("CSS Object", function () {
-			var CSS = velocity.CSS;
+			var CSS = $.velocity.CSS;
 
 			var testHookRoot = "boxShadow",
 				testHookRootValue = IE >=9 ? "1px 2px 3px 4px black" : "black 1px 2px 3px 4px",
@@ -302,69 +301,59 @@
 		****************************/
 
 		QUnit.test("Start Value Calculation", function () {
-			var testStartValues = { paddingLeft: "10px", height: "20px", lineHeight: "30px", wordSpacing: "40px", backgroundColorRed: 123 };
-			var applyTestStartValues = function(element) {
-				element.style.paddingLeft = "10px";
-				element.style.height = "20px";
-				element.style.lineHeight = "30px";
-				element.style.wordSpacing = "40px";
-				element.style.backgroundColorRed = 123;
-				return element;
-			};
+			var testStartValues = { paddingLeft: "10px", height: "20px", lineHeight: "30px", wordSpacing: "40px", backgroundColorRed: "123" };
 
 			/* Properties not previously defined on the element. */
-			var domTarget1 = getTarget();
-			velocity.animate(domTarget1, testStartValues)
-			equal(velocity.Utilities.data(domTarget1, pluginName).tweensContainer.paddingLeft.startValue, 0, "Undefined standard start value was calculated.");
-			equal(velocity.Utilities.data(domTarget1, pluginName).tweensContainer.backgroundColorRed.startValue, 255, "Undefined start value hook was calculated.");
+			var $target1 = getTarget();
+			$target1.velocity(testStartValues)
+			equal($target1.data(pluginName).tweensContainer.paddingLeft.startValue, 0, "Undefined standard start value was calculated.");
+			equal($target1.data(pluginName).tweensContainer.backgroundColorRed.startValue, 255, "Undefined start value hook was calculated.");
 
 			/* Properties previously defined on the element. */
-			var domTarget2 = getTarget();
-			velocity.animate(domTarget2, defaultProperties)
-			equal(velocity.Utilities.data(domTarget2, pluginName).tweensContainer.width.startValue, parseFloat(defaultStyles.width), "Defined start value #1 was calculated.");
-			equal(velocity.Utilities.data(domTarget2, pluginName).tweensContainer.opacity.startValue, parseFloat(defaultStyles.opacity), "Defined start value #2 was calculated.");
-			equal(velocity.Utilities.data(domTarget2, pluginName).tweensContainer.colorGreen.startValue, parseFloat(defaultStyles.colorGreen), "Defined hooked start value was calculated.");
+			var $target2 = getTarget();
+			$target2.velocity(defaultProperties)
+			equal($target2.data(pluginName).tweensContainer.width.startValue, parseFloat(defaultStyles.width), "Defined start value #1 was calculated.");
+			equal($target2.data(pluginName).tweensContainer.opacity.startValue, parseFloat(defaultStyles.opacity), "Defined start value #2 was calculated.");
+			equal($target2.data(pluginName).tweensContainer.colorGreen.startValue, parseFloat(defaultStyles.colorGreen), "Defined hooked start value was calculated.");
 
 			/* Properties that shouldn't cause start values to be unit-converted. */
 			var testPropertiesEndNoConvert = { paddingLeft: "20px", height: "40px" };
-			var domTarget3 = getTarget();
-			velocity.animate(applyTestStartValues(domTarget3), testPropertiesEndNoConvert);
-			equal(velocity.Utilities.data(domTarget3, pluginName).tweensContainer.paddingLeft.startValue, parseFloat(testStartValues.paddingLeft), "Start value #1 wasn't unit converted.");
-			equal(velocity.Utilities.data(domTarget3, pluginName).tweensContainer.height.startValue, parseFloat(testStartValues.height), "Start value #2 wasn't unit converted.");
+			var $target3 = getTarget();
+			$target3
+				.css(testStartValues)
+				.velocity(testPropertiesEndNoConvert)
+			equal($target3.data(pluginName).tweensContainer.paddingLeft.startValue, parseFloat(testStartValues.paddingLeft), "Start value #1 wasn't unit converted.");
+			equal($target3.data(pluginName).tweensContainer.height.startValue, parseFloat(testStartValues.height), "Start value #2 wasn't unit converted.");
 
 			/* Properties that should cause start values to be unit-converted. */
 			var testPropertiesEndConvert = { paddingLeft: "20%", height: "40%", lineHeight: "0.5em", wordSpacing: "2rem" };
-				parentWidth = domQunitStage.offsetWidth,
-				parentHeight = domQunitStage.offsetHeight,
-				parentFontSize = $(domQunitStage).css("fontSize"), // domQunitStage.style.fontSize returns ""
-				remSize = parseFloat($.css(document.body, "fontSize")); // document.body.style.fontSize returns ""
+				parentWidth = $qunitStage.width(),
+				parentHeight = $qunitStage.height(),
+				parentFontSize = $qunitStage.css("fontSize"),
+				remSize = parseFloat($.css(document.body, "fontSize"));
 
+			var $target4 = getTarget();
+			$target4
+				.css(testStartValues)
+				.velocity(testPropertiesEndConvert);
 
-			var domTarget4 = getTarget();
-			velocity.animate(applyTestStartValues(domTarget4), testPropertiesEndConvert);
-			
 			/* Long decimal results can be returned after unit conversion, and Velocity's code and the code here can differ in precision. So, we round floor values before comparison. */
-			equal(Math.floor(velocity.Utilities.data(domTarget4, pluginName).tweensContainer.paddingLeft.startValue), Math.floor((parseFloat(testStartValues.paddingLeft) / parentWidth) * 100), "Horizontal property converted to %.");
-			equal(Math.floor(velocity.Utilities.data(domTarget4, pluginName).tweensContainer.height.startValue), Math.floor((parseFloat(testStartValues.height) / parentHeight) * 100), "Vertical property converted to %.");
-			equal(Math.floor(velocity.Utilities.data(domTarget4, pluginName).tweensContainer.lineHeight.startValue), Math.floor(parseFloat(testStartValues.lineHeight) / parseFloat(parentFontSize)), "Property converted to em.");
-			equal(Math.floor(velocity.Utilities.data(domTarget4, pluginName).tweensContainer.wordSpacing.startValue), Math.floor(parseFloat(testStartValues.wordSpacing) / parseFloat(remSize)), "Property converted to rem.");
+			equal(Math.floor($target4.data(pluginName).tweensContainer.paddingLeft.startValue), Math.floor((parseFloat(testStartValues.paddingLeft) / parentWidth) * 100), "Horizontal property converted to %.");
+			equal(Math.floor($target4.data(pluginName).tweensContainer.height.startValue), Math.floor((parseFloat(testStartValues.height) / parentHeight) * 100), "Vertical property converted to %.");
+			equal(Math.floor($target4.data(pluginName).tweensContainer.lineHeight.startValue), Math.floor(parseFloat(testStartValues.lineHeight) / parseFloat(parentFontSize)), "Property converted to em.");
+			equal(Math.floor($target4.data(pluginName).tweensContainer.wordSpacing.startValue), Math.floor(parseFloat(testStartValues.wordSpacing) / parseFloat(remSize)), "Property converted to rem.");
 
   			/* jQuery TRBL deferring. */
 			var testPropertiesTRBL = { left: "1000px" };
-			var domTRBL_Container = document.createElement("div");
-			domTRBL_Container.setAttribute("id", "TRBL_Container");
-			domTRBL_Container.style.marginLeft =  testPropertiesTRBL.left;
-			domTRBL_Container.style.width = "100px";
-			domTRBL_Container.style.height = "100px";
-  			document.body.appendChild(domTRBL_Container);
+  			$("<div id='TRBL_Container' style='margin-left: " + testPropertiesTRBL.left + "; width: 100; height: 100'></div>").appendTo($("body"));
 
-			var domTarget5 = getTarget();
-			domTarget5.style.position = "absolute";
-  			domTRBL_Container.appendChild(domTarget5);
-			velocity.animate(domTarget5, testPropertiesTRBL);
+			var $target5 = getTarget();
+			$target5
+				.css({ position: "absolute" })
+				.appendTo($("#TRBL_Container"))
+				.velocity(testPropertiesTRBL);
 
-																																		/* document.body.style.marginLeft returns "" */
-			equal(velocity.Utilities.data(domTarget5, pluginName).tweensContainer.left.startValue, parseFloat(testPropertiesTRBL.left) + parseFloat($("body").css("marginLeft")), "TRBL value was deferred to jQuery.");
+			equal($target5.data(pluginName).tweensContainer.left.startValue, parseFloat(testPropertiesTRBL.left) + parseFloat($("body").css("marginLeft")), "TRBL value was deferred to jQuery.");
 		});
 
 		/**************************
@@ -373,11 +362,11 @@
 
 		QUnit.asyncTest("End Value Calculation", function () {
 			/* Standard properties without operators. */
-			var domTarget1 = getTarget();
-			velocity.animate(domTarget1, defaultProperties);
+			var $target1 = getTarget();
+			$target1.velocity(defaultProperties);
 			setTimeout(function() {
-				equal(velocity.Utilities.data(domTarget1, pluginName).tweensContainer.width.endValue, defaultProperties.width, "Standard end value #1 was calculated.");
-				equal(velocity.Utilities.data(domTarget1, pluginName).tweensContainer.opacity.endValue, defaultProperties.opacity, "Standard end value #2 was calculated.");
+				equal($target1.data(pluginName).tweensContainer.width.endValue, defaultProperties.width, "Standard end value #1 was calculated.");
+				equal($target1.data(pluginName).tweensContainer.opacity.endValue, defaultProperties.opacity, "Standard end value #2 was calculated.");
 			}, asyncCheckDuration);
 
 			/* Standard properties with operators. */
@@ -386,14 +375,14 @@
 				testMultiplyMarginBottom = 4,
 				testDivideHeight = 2;
 
-			var domTarget2 = getTarget();
-			velocity.animate(domTarget2, { width: "+=" + testIncrementWidth, opacity: "-=" + testDecrementOpacity, marginBottom: "*=" + testMultiplyMarginBottom, height: "/=" + testDivideHeight });
+			var $target2 = getTarget();
+			$target2.velocity({ width: "+=" + testIncrementWidth, opacity: "-=" + testDecrementOpacity, marginBottom: "*=" + testMultiplyMarginBottom, height: "/=" + testDivideHeight });
 			setTimeout(function() {
 
-				equal(velocity.Utilities.data(domTarget2, pluginName).tweensContainer.width.endValue, defaultStyles.width + parseFloat(testIncrementWidth), "Incremented end value was calculated.");
-				equal(velocity.Utilities.data(domTarget2, pluginName).tweensContainer.opacity.endValue, defaultStyles.opacity - testDecrementOpacity, "Decremented end value was calculated.");
-				equal(velocity.Utilities.data(domTarget2, pluginName).tweensContainer.marginBottom.endValue, defaultStyles.marginBottom * testMultiplyMarginBottom, "Multiplied end value was calculated.");
-				equal(velocity.Utilities.data(domTarget2, pluginName).tweensContainer.height.endValue, defaultStyles.height / testDivideHeight, "Divided end value was calculated.");
+				equal($target2.data(pluginName).tweensContainer.width.endValue, defaultStyles.width + parseFloat(testIncrementWidth), "Incremented end value was calculated.");
+				equal($target2.data(pluginName).tweensContainer.opacity.endValue, defaultStyles.opacity - testDecrementOpacity, "Decremented end value was calculated.");
+				equal($target2.data(pluginName).tweensContainer.marginBottom.endValue, defaultStyles.marginBottom * testMultiplyMarginBottom, "Multiplied end value was calculated.");
+				equal($target2.data(pluginName).tweensContainer.height.endValue, defaultStyles.height / testDivideHeight, "Divided end value was calculated.");
 
 				start();
 			}, asyncCheckDuration);
@@ -413,14 +402,14 @@
 				};
 
 				/* Hooks. */
-				var domTarget3 = getTarget();
-				velocity.animate(domTarget3, testHooks);
+				var $target3 = getTarget();
+				$target3.velocity(testHooks);
 				setTimeout(function() {
 					/* Check for a match anywhere in the string since browser differ in where they inject the color value. */
-					equal(/0px 0px 10px 20px/.test(domTarget3.style.boxShadow), true, "Hook end value #1 was set.");
+					equal(/0px 0px 10px 20px/.test($target3.css("boxShadow")), true, "Hook end value #1 was set.");
 					/* textShadow isn't supported below IE10. */
 					if (IE >= 10) {
-						equal(/0px 0px 30px/.test(domTarget3.style.textShadow), true, "Hook end value #2 was set.");
+						equal(/0px 0px 30px/.test($target3.css("textShadow")), true, "Hook end value #2 was set.");
 					}
 				}, completeCheckDuration);
 
@@ -435,25 +424,25 @@
 						testTransformsOutput = "matrix3d(1.5, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 20, 160, 30, 1)";
 
 					/* Transforms. */
-					var domTarget4 = getTarget();
-					velocity.animate(domTarget4, testTransforms);
+					var $target4 = getTarget();
+					$target4.velocity(testTransforms);
 					setTimeout(function() {
 						/* Check for a match anywhere in the string since browser differ in where they inject the color value. */
-						equal($.css(domTarget4, "transform"), testTransformsOutput, "Transform end value was set.");
+						equal($target4.css("transform"), testTransformsOutput, "Transform end value was set.");
 
 						/* Ensure previous transform values are reused. */
-						velocity.animate(domTarget4, { translateX: parseFloat(testTransforms.translateX) / 2 });
-						equal(velocity.Utilities.data(domTarget4, pluginName).tweensContainer.translateX.startValue, parseFloat(testTransforms.translateX), "Previous transform value was reused.");
+						$target4.velocity({ translateX: parseFloat(testTransforms.translateX) / 2 });
+						equal($target4.data(pluginName).tweensContainer.translateX.startValue, parseFloat(testTransforms.translateX), "Previous transform value was reused.");
 					}, completeCheckDuration);
 				}
 			}
 
 			/* Standard properties. */
-			var domTarget1 = getTarget();
-			velocity.animate(domTarget1, defaultProperties, { });
+			var $target1 = getTarget();
+			$target1.velocity(defaultProperties, { });
 			setTimeout(function() {
-				equal(parseFloat(domTarget1.style.width), defaultProperties.width, "Standard end value #1 was set.");
-				equal(parseFloat(domTarget1.style.opacity), defaultProperties.opacity, "Standard end value #2 was set.");
+				equal(parseFloat($target1.css("width")), defaultProperties.width, "Standard end value #1 was set.");
+				equal(parseFloat($target1.css("opacity")), defaultProperties.opacity, "Standard end value #2 was set.");
 
 				start();
 			}, completeCheckDuration);
@@ -466,32 +455,28 @@
 		QUnit.asyncTest("End Value Caching", function () {
 			expect(4);
 
-			var newProperties = { opacity: 1, width: "250px" };
-			var applyNewProperties = function(element) {
-				element.style.opacity = 1;
-				element.style.width = "250px";
-				return element;
-			};
+			var newProperties = { opacity: 1, width: 250 };
 
-
-			var domTarget1 = getTarget();
-			velocity.animate(domTarget1, defaultProperties, function() {
+			var $target1 = getTarget();
+			$target1.velocity(defaultProperties, function() {
+				$target1
+					.css(newProperties)
 					/* Called after the last call is complete (stale). Ensure that the newly-set (via $.css()) properties are used. */
-				velocity.animate(applyNewProperties(domTarget1), defaultProperties);
+					.velocity(defaultProperties);
 
 					setTimeout(function() {
-						equal(velocity.Utilities.data(domTarget1, pluginName).tweensContainer.width.startValue + 
-								velocity.Utilities.data(domTarget1, pluginName).tweensContainer.width.unitType, newProperties.width, "Stale end value #1 wasn't pulled.");
-						equal(velocity.Utilities.data(domTarget1, pluginName).tweensContainer.opacity.startValue, newProperties.opacity, "Stale end value #2 wasn't pulled.");
+						equal($target1.data(pluginName).tweensContainer.width.startValue, newProperties.width, "Stale end value #1 wasn't pulled.");
+						equal($target1.data(pluginName).tweensContainer.opacity.startValue, newProperties.opacity, "Stale end value #2 wasn't pulled.");
 					}, asyncCheckDuration);
 			});
 
-			var domTarget2 = getTarget();
-			velocity.animate(domTarget2, defaultProperties)
-			velocity.animate(domTarget2, newProperties, function() {
+			var $target2 = getTarget();
+			$target2
+				.velocity(defaultProperties)
+				.velocity(newProperties, function() {
 					/* Chained onto a previous call (fresh). */
-					equal(velocity.Utilities.data(domTarget2, pluginName).tweensContainer.width.startValue, defaultProperties.width, "Chained end value #1 was pulled.");
-					equal(velocity.Utilities.data(domTarget2, pluginName).tweensContainer.opacity.startValue, defaultProperties.opacity, "Chained end value #2 was pulled.");
+					equal($target2.data(pluginName).tweensContainer.width.startValue, defaultProperties.width, "Chained end value #1 was pulled.");
+					equal($target2.data(pluginName).tweensContainer.opacity.startValue, defaultProperties.opacity, "Chained end value #2 was pulled.");
 
 					start();
 				});
@@ -504,13 +489,14 @@
 		QUnit.asyncTest("Queueing", function () {
 			expect(1);
 
-			var domTarget1 = getTarget();
-			velocity.animate(domTarget1, { opacity: 0 })
-			velocity.animate(domTarget1, { width: 2 })
+			var $target1 = getTarget();
+			$target1
+				.velocity({ opacity: 0 })
+				.velocity({ width: 2 })
 
 			setTimeout(function() {
 				/* Ensure that the second call hasn't started yet. */
-				equal(domTarget1.offsetWidth, defaultStyles.width, "Queued calls chain.");
+				equal($target1.width(), defaultStyles.width, "Queued calls chain.");
 
 				start();
 			}, asyncCheckDuration);
@@ -520,38 +506,53 @@
 		   Option: Queue
 		******************/
 
-		
 		/* Todo: Create tests for custom queues across all features (reverse, loop, etc.) */
 		QUnit.asyncTest("Option: Queue", function () {
 			expect(5);
 
 			var testQueue = "custom";
 
-			var domTarget1 = getTarget();
-			velocity.animate(domTarget1, defaultProperties, { queue: testQueue })
-			velocity.animate(domTarget1, defaultProperties, { queue: testQueue })
-			velocity.animate(domTarget1, defaultProperties, { queue: testQueue });
+			var $target1 = getTarget();
+			$target1
+				.velocity(defaultProperties, { queue: testQueue })
+				.velocity(defaultProperties, { queue: testQueue })
+				.velocity(defaultProperties, { queue: testQueue });
 
-			equal(velocity.Utilities.queue(domTarget1, testQueue).length, 3, "Custom queue was appended to.");
-			equal(velocity.Utilities.data(domTarget1, pluginName).isAnimating, false, "Custom queue didn't auto-dequeue.");
+			equal($target1.queue(testQueue).length, 3, "Custom queue was appended to.");
+			equal($target1.data(pluginName).isAnimating, false, "Custom queue didn't auto-dequeue.");
 
-			velocity.Utilities.dequeue(domTarget1, testQueue);
-			equal(velocity.Utilities.data(domTarget1, pluginName).isAnimating, true, "Dequeue custom queue.");
+			$target1.dequeue(testQueue);
+			equal($target1.data(pluginName).isAnimating, true, "Dequeue custom queue.");
 
-			velocity.animate(domTarget1, "stop", testQueue);
-			equal(velocity.Utilities.queue(domTarget1, testQueue).length, 0, "Stopped custom queue.");
+			$target1.velocity("stop", testQueue);
+			equal($target1.queue(testQueue).length, 0, "Stopped custom queue.");
 
-			var domTarget2 = getTarget();
-			velocity.animate(domTarget2, defaultProperties, { opacity: 0 });
-			velocity.animate(domTarget2, defaultProperties, { width: 10 }, { queue: false });
+			var $target2 = getTarget();
+			$target2
+				.velocity({ opacity: 0 })
+				.velocity({ width: 10 }, { queue: false });
 
 			setTimeout(function() {
 				/* Ensure that the second call starts immediately. */
-				notEqual(domTarget2.offsetWidth, defaultStyles.width, "Parallel calls don't queue.");
+				notEqual($target2.width(), defaultStyles.width, "Parallel calls don't queue.");
 
 				start();
 			}, asyncCheckDuration);
 		});
+
+		/* Helpful sequence for testing custom and parallel queues. */
+		// var $div2 = $("#dataBody-PropertiesDummy");
+		// $.fn.velocity.defaults.duration = 1000;
+		// $div2.velocity("scroll", { queue: "test" })
+		// $div2.velocity({width: 100}, { queue: "test" })
+		// $div2.velocity({ borderWidth: 50 }, { queue: "test" })
+		// $div2.velocity({height: 20}, { queue: "test" })
+		// $div2.velocity({marginLeft: 200}, { queue: "test" })
+		// $div2.velocity({paddingTop: 60});
+		// $div2.velocity({marginTop: 100});
+		// $div2.velocity({paddingRight: 40});
+		// $div2.velocity({marginTop: 0})
+		// $div2.dequeue("test")
 
 		/******************
 		   Option: Delay   
@@ -562,15 +563,15 @@
 
 			var testDelay = defaultOptions.duration * 2;
 
-			var domTarget = getTarget();
-			velocity.animate(domTarget, defaultProperties, { delay: testDelay });
+			var $target = getTarget();
+			$target.velocity(defaultProperties, { delay: testDelay });
 
 			setTimeout(function() {
-				equal(domTarget.offsetWidth, defaultStyles.width, "Delayed calls don't start immediately");
+				equal($target.width(), defaultStyles.width, "Delayed calls don't start immediately");
 			}, asyncCheckDuration);
 
 			setTimeout(function() {
-				equal(domTarget.offsetWidth, defaultProperties.width, "Delayed calls eventually start.");
+				equal($target.width(), defaultProperties.width, "Delayed calls eventually start.");
 
 				start();
 			}, completeCheckDuration + testDelay);
@@ -583,27 +584,28 @@
 		QUnit.asyncTest("Option: Easing", function () {
 			expect(3);
 
-			var domTarget1 = getTarget();
+			var $target1 = getTarget();
 			/* Ensure that a fake easing doesn't throw an error. */
-			velocity.animate(domTarget1, defaultProperties, { easing: "fake" });
+			$target1.velocity(defaultProperties, { easing: "fake" });
 			equal(true, true, "Fake easing didn't throw error.");
 
 			/* Ensure that an improperly-formmated bezier curve array doesn't throw an error. */
-			var domTarget2 = getTarget();
-			velocity.animate(domTarget2, defaultProperties, { easing: [ "a", 0.5, 0.5, 0.5 ] })
-			velocity.animate(domTarget2, defaultProperties, { easing: [ 0.5, 0.5, 0.5 ] });
+			var $target2 = getTarget();
+			$target2
+				.velocity(defaultProperties, { easing: [ "a", 0.5, 0.5, 0.5 ] })
+				.velocity(defaultProperties, { easing: [ 0.5, 0.5, 0.5 ] });
 
 			equal(true, true, "Invalid bezier curve didn't throw error.");
 
 			/* Ensure that a properly-formatted bezier curve array returns a bezier function. */
-			var domTarget3 = getTarget();
+			var $target3 = getTarget();
 			var easingBezierArray = [ 0.27, -0.65, 0.78, 0.19 ],
 				easingBezierTestPercent = 0.25,
 				easingBezierTestValue = /^-0\.23/;
 
-			velocity.animate(domTarget3, defaultProperties, { easing: easingBezierArray });
+			$target3.velocity(defaultProperties, { easing: easingBezierArray });
 			setTimeout(function() {
-				equal(easingBezierTestValue.test(velocity.Utilities.data(domTarget3, pluginName).tweensContainer.width.easing(easingBezierTestPercent)), true, "Array converted into bezier function.");
+				equal(easingBezierTestValue.test($target3.data(pluginName).tweensContainer.width.easing(easingBezierTestPercent)), true, "Array converted into bezier function.");
 
 				start();
 			}, asyncCheckDuration);
@@ -617,20 +619,20 @@
 			var testDisplayBlock = "block",
 				testDisplayNone = "none";
 
-			var domTarget1 = getTarget();
+			var $target1 = getTarget();
 			/* Async checks are used since the display property is set inside processCallsTick(). */
-			velocity.animate(domTarget1, defaultProperties, { display: testDisplayBlock });
+			$target1.velocity(defaultProperties, { display: testDisplayBlock });
 			setTimeout(function() {
-				equal(domTarget1.style.display, testDisplayBlock, "Display:'block' was set immediately.");
+				equal($target1.css("display"), testDisplayBlock, "Display:'block' was set immediately.");
 			}, asyncCheckDuration);
 
-			var domTarget2 = getTarget();
-			velocity.animate(domTarget2, defaultProperties, { display: testDisplayNone });
+			var $target2 = getTarget();
+			$target2.velocity(defaultProperties, { display: testDisplayNone });
 			setTimeout(function() {
-				notEqual(domTarget2.style.display, testDisplayNone, "Display:'none' was not set immediately.");
+				notEqual($target2.css("display"), testDisplayNone, "Display:'none' was not set immediately.");
 			}, asyncCheckDuration);
 			setTimeout(function() {
-				equal(domTarget2.style.display, testDisplayNone, "Display:'none' was set upon completion.");
+				equal($target2.css("display"), testDisplayNone, "Display:'none' was set upon completion.");
 
 				start();
 			}, completeCheckDuration);
@@ -645,14 +647,14 @@
 
 			var testDelay = 500;
 
-			var domTarget1 = getTarget();
-			velocity.animate(domTarget1, defaultProperties, { loop: 2, delay: testDelay });
+			var $target1 = getTarget();
+			$target1.velocity(defaultProperties, { loop: 2, delay: testDelay });
 
 			/* We expect 1 delay followed by 1 call for a total of 4 cycles, which equates to 8 queue items. */
-			equal(velocity.Utilities.queue(domTarget1).length, 8, "Loop call produced \"reverse\" calls.");
+			equal($target1.queue().length, 8, "Loop call produced \"reverse\" calls.");
 
 			setTimeout(function() {
-				equal(velocity.Utilities.data(domTarget1, pluginName).opts.delay, testDelay, "Delay option was passed into second infinite loop call (jQuery object).");
+				equal($target1.data(pluginName).opts.delay, testDelay, "Delay option was passed into second infinite loop call (jQuery object).");
 
 				start();
 			}, completeCheckDuration + testDelay);
@@ -663,13 +665,22 @@
 		*******************/
 
 		QUnit.asyncTest("Option: Begin", function () {
-			expect(1);
+			expect(2);
 
-			var domTargetSet1 = [getTarget(), getTarget()];
-			velocity.animate(domTargetSet1, defaultProperties, { 
+			var $targetSet1 = getTarget().add(getTarget());
+			$targetSet1.velocity(defaultProperties, { 
 				duration: asyncCheckDuration,
 				complete: function() {
-					deepEqual(this, domTargetSet1, "Element Function: jQuery objects passed into callback.");
+					deepEqual(this, $targetSet1.get(), "Element Function: jQuery objects passed into callback.");
+				}
+			});
+
+			var targetSet2 = getTarget().add(getTarget()).get();
+			$.velocity.animate(targetSet2, defaultProperties, { 
+				duration: asyncCheckDuration,
+				complete: function() {
+					deepEqual(this, targetSet2, "Utility function: Raw DOM elements passed into callback.");
+
 					start();
 				}
 			});
@@ -680,13 +691,21 @@
 		*********************/
 
 		QUnit.asyncTest("Option: Complete", function () {
-			expect(1);
+			expect(2);
 
-			var domTargetSet = [getTarget(), getTarget()];
-			velocity.animate(domTargetSet, defaultProperties, { 
+			var $targetSet1 = getTarget().add(getTarget());
+			$targetSet1.velocity(defaultProperties, { 
 				duration: asyncCheckDuration,
 				complete: function() {
-					deepEqual(this, domTargetSet, "Elements passed into callback.");
+					deepEqual(this, $targetSet1.get(), "Element Function: jQuery objects passed into callback.");
+				}
+			});
+
+			var targetSet2 = getTarget().add(getTarget()).get();
+			$.velocity.animate(targetSet2, defaultProperties, { 
+				duration: asyncCheckDuration,
+				complete: function() {
+					deepEqual(this, targetSet2, "Utility function: Raw DOM elements passed into callback.");
 
 					start();
 				}
@@ -697,53 +716,51 @@
 		   Command: Scroll
 		*********************/
 
-        /* Window scrolling. */
+		/* Window scrolling. */
 		QUnit.asyncTest("Command: Scroll (Window)", function () {
-			var domDetails = document.getElementById("details"),
-				domScrollTarget1 =  $("<div>Scroll target #1. Should stop 50 pixels above this point.</div>")[0],
-				domScrollTarget2 =  $("<div>Scroll target #2. Should stop 50 pixels before this point.</div>")[0],
-			    scrollOffset = -50;
+			var $details = $("#details"),
+				$scrollTarget1 = $("<div>Scroll target #1. Should stop 50 pixels above this point.</div>"),
+				$scrollTarget2 = $("<div>Scroll target #2. Should stop 50 pixels before this point.</div>"),
+				scrollOffset = -50;
 
-			domScrollTarget1.style.position = "relative";
-			domScrollTarget1.style.top = "3000px";
-			domScrollTarget1.style.height = "100px";
-			domScrollTarget1.style.paddingBottom = "10000px";
-			document.body.appendChild(domScrollTarget1);
-			console.log(domScrollTarget1)
+			$scrollTarget1
+				.css({ position: "relative", top: 3000, height: 100, paddingBottom: 10000 })
+				.appendTo($("body"));
 
-			domScrollTarget2.style.position = "absolute";
-			domScrollTarget2.style.top = "100px";
-			domScrollTarget2.style.left = "3000px";
-			domScrollTarget1.style.width = "100px";
-			domScrollTarget2.style.paddingRight = "15000px";
-			document.body.appendChild(domScrollTarget2);
+			$scrollTarget2
+				.css({ position: "absolute", top: 100, left: 3000, width: 100, paddingRight: 15000 })
+				.appendTo($("body"));
 
-			velocity.animate(domScrollTarget1, "scroll", { duration: 500, offset: scrollOffset, complete: function() {
-						equal(Math.abs(velocity.State.scrollAnchor[velocity.State.scrollPropertyTop] - ($(domScrollTarget1).offset().top + scrollOffset)) <= 100, true, "Page scrolled top with a scroll offset.");
+			$scrollTarget1
+				.velocity("scroll", { duration: 500, offset: scrollOffset, complete: function() {
+						equal(Math.abs($.velocity.State.scrollAnchor[$.velocity.State.scrollPropertyTop] - ($scrollTarget1.offset().top + scrollOffset)) <= 100, true, "Page scrolled top with a scroll offset.");
 					}
 				})
-			velocity.animate(domScrollTarget1, { opacity: 0.5 }, function() {
-				    velocity.animate(domDetails, { opacity: 0.5 }, 500);
-				    velocity.animate(domDetails, "scroll", 500);
-				    velocity.animate(domDetails, { opacity: 1 }, 500, function() {
-						equal((velocity.State.scrollAnchor[velocity.State.scrollPropertyTop] - ($(domScrollTarget1).offset().top + scrollOffset)) <= -100, true, "Page scroll top was chained.");
+				.velocity({ opacity: 0.5 }, function() {
+				    $details
+					    .velocity({ opacity: 0.5 }, 500)
+					    .velocity("scroll", 500)
+					    .velocity({ opacity: 1 }, 500, function() {
+							equal(($.velocity.State.scrollAnchor[$.velocity.State.scrollPropertyTop] - ($scrollTarget1.offset().top + scrollOffset)) <= -100, true, "Page scroll top was chained.");
 
-						domScrollTarget1.parentNode.removeChild(domScrollTarget1);
+							$scrollTarget1.remove();
 
-						velocity.animate(domScrollTarget2, "scroll", { duration: 500, axis: "x", offset: scrollOffset, complete: function() {
-								/* Phones can reposition the browser's scroll position by a 10 pixels or so, so we just check for a value that's within that range. */
-								equal(Math.abs(velocity.State.scrollAnchor[velocity.State.scrollPropertyLeft] - ($(domScrollTarget2).offset().left + scrollOffset)) <= 100, true, "Page scrolled left with a scroll offset.");
-							}
-						});
-						velocity.animate(domScrollTarget2, { opacity: 0.5 }, function() {
-								velocity.animate(domDetails, { opacity: 0.5 }, 500)
-								velocity.animate(domDetails, "scroll", { duration: 500, axis: "x" })
-								velocity.animate(domDetails, { opacity: 1 }, 500, function() {
-										equal((velocity.State.scrollAnchor[velocity.State.scrollPropertyLeft] - ($(domScrollTarget2).offset().left + scrollOffset)) <= -100, true, "Page scroll left was chained.");
-										start();
-								    });
-							});
-				    });
+							$scrollTarget2
+								.velocity("scroll", { duration: 500, axis: "x", offset: scrollOffset, complete: function() {
+										/* Phones can reposition the browser's scroll position by a 10 pixels or so, so we just check for a value that's within that range. */
+										equal(Math.abs($.velocity.State.scrollAnchor[$.velocity.State.scrollPropertyLeft] - ($scrollTarget2.offset().left + scrollOffset)) <= 100, true, "Page scrolled left with a scroll offset.");
+									}
+								})
+								.velocity({ opacity: 0.5 }, function() {
+								    $details
+									    .velocity({ opacity: 0.5 }, 500)
+									    .velocity("scroll", { duration: 500, axis: "x" })
+									    .velocity({ opacity: 1 }, 500, function() {
+											equal(($.velocity.State.scrollAnchor[$.velocity.State.scrollPropertyLeft] - ($scrollTarget2.offset().left + scrollOffset)) <= -100, true, "Page scroll left was chained.");
+											start();
+									    });
+								});
+					    });
 				});
 		});
 
@@ -792,9 +809,9 @@
 				.appendTo($("body"));
 
 			/* Test with a jQuery object container. */
-			velocity.animate($("#scrollerChild1"), "scroll", { container: $("#scroller"), duration: 750, complete: function() {
+			$("#scrollerChild1").velocity("scroll", { container: $("#scroller"), duration: 750, complete: function() {
 					/* Test with a raw DOM element container. */
-					velocity.animate($("#scrollerChild2"), "scroll", { container: $("#scroller")[0], duration: 750, complete: function() {
+					$("#scrollerChild2").velocity("scroll", { container: $("#scroller")[0], duration: 750, complete: function() {
 							/* This test is purely visual. */
 							ok(true);
 
@@ -836,9 +853,9 @@
 								.appendTo($("body"));
 
 							/* Test with a jQuery object container. */
-							velocity.animate($("#scrollerChild2"), "scroll", { axis: "x", container: $("#scroller"), duration: 750, complete: function() {
+							$("#scrollerChild2").velocity("scroll", { axis: "x", container: $("#scroller"), duration: 750, complete: function() {
 									/* Test with a raw DOM element container. */
-									velocity.animate($("#scrollerChild1"), "scroll", { axis: "x", container: $("#scroller")[0], duration: 750, complete: function() {
+									$("#scrollerChild1").velocity("scroll", { axis: "x", container: $("#scroller")[0], duration: 750, complete: function() {
 											/* This test is purely visual. */
 											ok(true);
 
@@ -859,28 +876,27 @@
 		   Command: Reverse
 		*********************/
 
-		
 		QUnit.asyncTest("Command: Reverse", function () {
 			expect(5);
 
 			var testEasing = "spring";
 
-			var domTarget = getTarget();
+			var $target = getTarget();
+			$target
 				/* Ensure an error isn't thrown when there's no previous animation to reverse to. */
-			
-			velocity.animate(domTarget, "reverse")
-			velocity.animate(domTarget, { opacity: defaultProperties.opacity, width: defaultProperties.width }, { easing: testEasing })
-			velocity.animate(domTarget, "reverse", function() {
-					equal(parseFloat(domTarget.style.opacity), defaultStyles.opacity, "Reversed to initial property #1.");
-					equal(parseFloat(domTarget.style.width), defaultStyles.width, "Reversed to initial property #2.");
+				.velocity("reverse")
+				.velocity({ opacity: defaultProperties.opacity, width: defaultProperties.width }, { easing: testEasing })
+				.velocity("reverse", function() {
+					equal(parseFloat($target.css("opacity")), defaultStyles.opacity, "Reversed to initial property #1.");
+					equal(parseFloat($target.css("width")), defaultStyles.width, "Reversed to initial property #2.");
 				})
 				/* Check chained reverses. */
-			velocity.animate(domTarget, "reverse", function() {
-					equal(parseFloat(domTarget.style.opacity), defaultProperties.opacity, "Reversed to reversed property #1.");
-					equal(parseFloat(domTarget.style.width), defaultProperties.width, "Reversed to reversed property #2.");
+				.velocity("reverse", function() {
+					equal(parseFloat($target.css("opacity")), defaultProperties.opacity, "Reversed to reversed property #1.");
+					equal(parseFloat($target.css("width")), defaultProperties.width, "Reversed to reversed property #2.");
 
 					/* Ensure the options were passed through until the end. */
-					equal(velocity.Utilities.data(domTarget, pluginName).opts.easing, testEasing, "Options object passed through.");
+					equal($target.data(pluginName).opts.easing, testEasing, "Options object passed through.");
 
 					start();
 				});
@@ -890,27 +906,26 @@
 		   Command: Stop
 		******************/
 
-		
 		QUnit.test("Command: Stop", function () {
-			var domTarget = getTarget();
-				/* Ensure an error isn't thrown when "stop" is called on a domTarget that isn't animating. */
-			velocity.animate(domTarget, "stop")
-			velocity.animate(domTarget, defaultProperties, 1)
-			velocity.animate(domTarget, { top: 0 })
-			velocity.animate(domTarget, "stop");
+			var $target = getTarget();
+			$target
+				/* Ensure an error isn't thrown when "stop" is called on a $target that isn't animating. */
+				.velocity("stop")
+				.velocity(defaultProperties, 1)
+				.velocity({ top: 0 })
+				.velocity("stop");
 
 			/* Ensure "stop" has removed all queued animations (without loop: false). */
 			/* We're using the element's queue length as a proxy. 0 and 1 both mean that the element's queue has been cleared -- a length of 1 just indicates that the animation is in progress. */
-			equal(velocity.Utilities.queue(domTarget).length <= 1, true, "Stopped queue length (loop: false).");
+			equal($target.queue().length <= 1, true, "Stopped queue length (loop: false).");
 
 			/* Ensure "stop" has removed all queued animations (with looping). */
-			velocity.animate(domTarget, defaultProperties, { loop: true })
-			velocity.animate(domTarget, "stop");
+			$target
+				.velocity(defaultProperties, { loop: true })
+			 	.velocity("stop");
 
-			equal(velocity.Utilities.queue(domTarget).length <= 1, true, "Stopped queue check (loop: true).");
+			equal($target.queue().length <= 1, true, "Stopped queue check (loop: true).");
 		});
-
-
 
 		/***********************
 		   Feature: Sequences
@@ -918,20 +933,18 @@
 
 		// pass in a second elem, pass in raw dom 
 		QUnit.asyncTest("Feature: Sequences", function () {
-			expect(8);
-
-			var domTarget1 = getTarget(),
-				domTarget2 = getTarget(),
+			var $target1 = getTarget(),
+				$target2 = getTarget(),
 				sequenceOptions = { duration: 1500 };
 
-			velocity.Sequences.test = function (element, options, elementIndex, elementsLength) {
+			jQuery.velocity.Sequences.test = function (element, options, elementIndex, elementsLength) {
 				if (elementIndex === 0) {
-					deepEqual(element, domTarget1, "Element passed through #1.");
+					deepEqual(element, $target1[0], "Element passed through #1.");
 					deepEqual(options, sequenceOptions, "Options object passed through #1.");
 					equal(elementIndex, 0, "Element index passed through #1.");
 					equal(elementsLength, 2, "Elements length passed through #1.");
 				} else if (elementIndex === 1) {
-					deepEqual(element, domTarget2, "Element passed through #2.");
+					deepEqual(element, $target2[0], "Element passed through #2.");
 					deepEqual(options, sequenceOptions, "Options object passed through #2.");
 					equal(elementIndex, 1, "Element index passed through #2.");
 					equal(elementsLength, 2, "Elements length passed through #2.");
@@ -940,44 +953,36 @@
 				}
 			}
 
-			velocity.animate([domTarget1, domTarget2], "test", sequenceOptions);
+			$target1.add($target2).velocity("test", sequenceOptions);
 		});
 
-
-		/* Removed feature
 		/*********************
 		   Feature: Classes
-		********************* /
+		*********************/
 
-		QUnit.test("Feature: Classes", function () {
-			var style = document.createElement('style');
-			style.innerHTML = "#testParent .animate_testCSSClass { opacity: 0.5; width: 100px; height: 10em; }";
-			document.head.appendChild(style);
+		// QUnit.test("Feature: Classes", function () {
+		// 	$("head")
+		// 		.append("<style>#testParent .animate_testCSSClass { opacity: 0.5; width: 100px; height: 10em; }</style>")
+		// 		.append("<style>div.animate_testCSSClassMessy {opacity: 0.5;width: 100px; height:10em;}</style>")
+		// 		.append("<style>.animate_testCSSIgnore #div { opacity: 0.5; width: 100px; height: 10em; }</style>");
 
-			style = document.createElement('style');
-			style.innerHTML = "div.animate_testCSSClassMessy {opacity: 0.5;width: 100px; height:10em;}";
-			document.head.appendChild(style);
+		// 	var testCSSClass = { width: "100px", height: "10em", opacity: "0.5" },
+		// 		extractedClasses = $.velocity.Classes.extract();
 
-			style = document.createElement('style');
-			style.innerHTML = ".animate_testCSSIgnore #div { opacity: 0.5; width: 100px; height: 10em; }";
-			document.head.appendChild(style);
+		// 	deepEqual(extractedClasses.testCSSClass, testCSSClass, "Class extraction: basic.");
+		// 	deepEqual(extractedClasses.testCSSClassMessy, testCSSClass, "Class extraction: basic messy.");
+		// 	equal(extractedClasses.testCSSClassIgnore, undefined, "Class extraction: Ignored non-final position match.");
 
-			var testCSSClass = { width: "100px", height: "10em", opacity: "0.5" },
-				extractedClasses = velocity.Classes.extract();
-			deepEqual(extractedClasses.testCSSClass, testCSSClass, "Class extraction: basic.");
-			deepEqual(extractedClasses.testCSSClassMessy, testCSSClass, "Class extraction: basic messy.");
-			equal(extractedClasses.testCSSClassIgnore, undefined, "Class extraction: Ignored non-final position match.");
+		// 	var $target = getTarget();
+		// 	$target
+		// 		/* Ensure a class database miss doesn't throw an error. */
+		// 		.velocity("fake")
+		// 		.velocity("testCSSClass");
 
-
-			var domTarget = getTarget();
-				/* Ensure a class database miss doesn't throw an error. * /
-			velocity.animate(domTarget, "fake");
-			velocity.animate(domTarget, "testCSSClass");
-
-			equal(velocity.Utilities.data(domTarget, pluginName).tweensContainer.width.endValue, parseFloat(testCSSClass.width), "Value #1 passed to tween.");
-			equal(velocity.Utilities.data(domTarget, pluginName).tweensContainer.height.endValue, parseFloat(testCSSClass.height), "Value #2 passed to tween.");
-			equal(velocity.Utilities.data(domTarget, pluginName).tweensContainer.opacity.endValue, parseFloat(testCSSClass.opacity), "Value #3 passed to tween.");
-		});*/
+		// 	equal($target.data(pluginName).tweensContainer.width.endValue, parseFloat(testCSSClass.width), "Value #1 passed to tween.");
+		// 	equal($target.data(pluginName).tweensContainer.height.endValue, parseFloat(testCSSClass.height), "Value #2 passed to tween.");
+		// 	equal($target.data(pluginName).tweensContainer.opacity.endValue, parseFloat(testCSSClass.opacity), "Value #3 passed to tween.");
+		// });
 
 		/*****************************
 		   Feature: Value Functions    
@@ -986,12 +991,12 @@
 		QUnit.test("Feature: Value Functions", function () {
 			var testWidth = 10;
 
-			var domTarget1 = getTarget();
-			var domTarget2 = getTarget();
-			velocity.animate([domTarget1, domTarget2], { width: function (i, total) { return (i + 1)/total * testWidth; } });
+			var $target1 = getTarget();
+			var $target2 = getTarget();
+			$target1.add($target2).velocity({ width: function (i, total) { return (i + 1)/total * testWidth; } });
 
-			equal(velocity.Utilities.data(domTarget1, pluginName).tweensContainer.width.endValue, parseFloat(testWidth) / 2, "Function value #1 passed to tween.");
-			equal(velocity.Utilities.data(domTarget2, pluginName).tweensContainer.width.endValue, parseFloat(testWidth), "Function value #2 passed to tween.");
+			equal($target1.data(pluginName).tweensContainer.width.endValue, parseFloat(testWidth) / 2, "Function value #1 passed to tween.");
+			equal($target2.data(pluginName).tweensContainer.width.endValue, parseFloat(testWidth), "Function value #2 passed to tween.");
 		});
 
 		/***************************
@@ -1003,12 +1008,12 @@
 			var testStartWidth = "1rem", testStartWidthToPx = "16px",
 				testStartHeight = "10px";
 
-			var domTarget = getTarget();
-			velocity.animate(domTarget, { width: [ 100, "linear", testStartWidth ], height: [ 100, testStartHeight ], opacity: [ defaultProperties.opacity, "easeInQuad" ]});
+			var $target = getTarget();
+			$target.velocity({ width: [ 100, "linear", testStartWidth ], height: [ 100, testStartHeight ], opacity: [ defaultProperties.opacity, "easeInQuad" ]});
 
-			equal(velocity.Utilities.data(domTarget, pluginName).tweensContainer.width.startValue, parseFloat(testStartWidthToPx), "Forcefed value #1 passed to tween.");
-			equal(velocity.Utilities.data(domTarget, pluginName).tweensContainer.height.startValue, parseFloat(testStartHeight), "Forcefed value #2 passed to tween.");
-			equal(velocity.Utilities.data(domTarget, pluginName).tweensContainer.opacity.startValue, defaultStyles.opacity, "Easing was misinterpreted as forcefed value.");
+			equal($target.data(pluginName).tweensContainer.width.startValue, parseFloat(testStartWidthToPx), "Forcefed value #1 passed to tween.");
+			equal($target.data(pluginName).tweensContainer.height.startValue, parseFloat(testStartHeight), "Forcefed value #2 passed to tween.");
+			equal($target.data(pluginName).tweensContainer.opacity.startValue, defaultStyles.opacity, "Easing was misinterpreted as forcefed value.");
 		});
 		</script>
 	</body>

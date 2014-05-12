@@ -22,6 +22,12 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
 ;(function (global, document, undefined) {  
 
+    /*****************
+        Constants
+    *****************/
+
+    var NAME = "velocity";
+
     /*********************
        Helper Functions
     *********************/
@@ -46,18 +52,6 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
         return undefined;
     })();
-
-
-    /********************
-      Library integration
-     ********************/
-    function exportVelocity() {
-        global.velocity = velocity;
-
-        if(window.jQuery || window.Zepto) {
-            $.fn.velocity = velocity.animate;
-        }
-    }
 
     /* RAF polyfill. Gist: https://gist.github.com/julianshapiro/9497513 */
     var requestAnimationFrame = window.requestAnimationFrame || (function() { 
@@ -103,46 +97,41 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         return Object.prototype.toString.call(variable) === "[object Array]";
     }
 
-    /****************
-        Aborting
-    ****************/
+    /*********************
+       Aborting & Shims
+    *********************/
 
     /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them. Simply revert to jQuery (and lose Velocity's extra features). */
-    if (IE <= 7 && window.jQuery) {
-        /* Revert to $.animate() and abort this Velocity declaration. */
-        $.fn.velocity = $.fn.animate;
-
-        exportVelocity();
+    if (IE <= 7) {
+        /* If jQuery is loaded, revert to jQuery's $.animate() function and abort this Velocity declaration. */
+        if (window.jQuery) {
+           $.fn.velocity = $.fn.animate; 
+        }
 
         return;
+    /* IE8 is the only supported version of IE that requires jQuery to be loaded. Newer versions of IE work perfectly with Velocity's jQuery shim. */
+    } else if (IE === 8 && !window.jQuery) {
+        console.log("jQuery is required for Velocity to work on IE8.");
+
+        return;
+    /* We allow the global Velocity variable to pre-exist so long as we were responsible for its creation via the Utilities code. */
     } else if (global.velocity !== undefined && !global.velocity.Utilities) {
         console.log("Velocity is already loaded or its namespace is occupied.");
 
         return;
-    } 
-
-    /*****************
-        Constants
-    *****************/
-
-    var NAME = "velocity";
-
-    /*****************
-        Shim import
-    *****************/
-
-    var $ = window.jQuery || global.velocity && global.velocity.Utilities;
-    if (!$) {
-        throw new Error('You need to load the shim.jquery.js file beforehand.');
+    } else {
+        /* Local to our Velocity scope, default $ to our shim if jQuery isn't loaded. */
+        var $ = window.jQuery || global.velocity.Utilities;
     }
 
     /******************************
        Utility Function & State
     ******************************/
 
+    // FURTHER COMMENTARY NEEDED HERE
     /* In addition to extending jQuery's $.fn object, Velocity also registers itself as a jQuery utility ($.) function so that certain features are accessible beyond just a per-element scope. */
     /* Note: The utility function doubles as a publicly-accessible data store for the purposes of unit testing. */
-    var velocity = $.extend(global.velocity || {}, {
+    var velocity = global.velocity = $.extend(global.velocity || {}, {
         /* Container for page-wide Velocity state data. */
         State: {
             /* Detect mobile devices to determine if mobileHA should be turned on. */
@@ -865,7 +854,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                 /* IE<=8 doesn't support window.getComputedStyle, thus we defer to jQuery, which has an extensive array of hacks to accurately retrieve IE8 property values.
                    Re-implementing that logic here is not worth bloating the codebase for a dying browser. The performance repercussions of using jQuery here are minimal since
                    Velocity is optimized to rarely (and sometimes never) query the DOM. Further, the $.css() codepath isn't that slow. */
-                if (IE <= 8 && window.jQuery) {
+                if (IE <= 8) {
                     computedValue = $.css(element, property); /* GET */
                 /* All other browsers support getComputedStyle. The returned live object reference is cached onto its associated element so that it does not need to be refetched upon every GET. */
                 } else {
@@ -1090,9 +1079,9 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
     CSS.Hooks.register();
     CSS.Normalizations.register();
 
-    /*******************
-      velocity.animate
-    *******************/
+    /**********************
+       velocity.animate
+    **********************/
 
     /* Simultaneously assign the jQuery plugin function ($elements.velocity()) and the utility alias (velocity.animate(elements)). */
     /* Note: The utility alias allows for the animation of raw (non-jQuery) DOM elements. */
@@ -1108,7 +1097,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             propertiesMap,
             options;
 
-        /* Detect jQuery elements by checking for the "jquery" property on the element or element set. */
+        /* Detect jQuery/Zepto elements. */
         if (this.jquery || (window.Zepto && window.Zepto.zepto.isZ(this))) {
             isWrapped = true;
 
@@ -2458,7 +2447,6 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
        Packaged Sequences
     ***********************/
 
-
     /* slideUp, slideDown */
     $.each([ "Down", "Up" ], function(i, direction) {
         /* Generate the slide sequences dynamically in order to minimize code redundancy. */
@@ -2569,8 +2557,15 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         };     
     });
 
+    /*******************************
+       jQuery & Zepto Integration
+    *******************************/
 
-    exportVelocity();
+    /* Both jQuery and Zepto allow their .fn object to be extended in order to allow wrapped elements to be subjected to plugin calls. If either library is loaded, assign a "velocity" extension to Velocity's core animation method. */
+    if (window.jQuery || window.Zepto) {
+        /* Note: The "global" variable is passed into Velocity's wrapper function, and it is assigned to (window.jQuery || window.Zepto || window); */
+        global.fn.velocity = velocity.animate;
+    }
 
 })(window.jQuery || window.Zepto || window, document);
 
