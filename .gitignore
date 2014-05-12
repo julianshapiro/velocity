@@ -1,3 +1,7 @@
 .gitignore
 node_modules
+temp
+Gruntfile.js
 jquery-shim.js
+velocity.js
+velocity.min.js

@@ -99,9 +99,9 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         return Object.prototype.toString.call(variable) === "[object Array]";
     }
 
-    /******************
-       Installation
-    ******************/
+    /*******************
+        Installation
+    *******************/
 
     /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them. Simply revert to jQuery (and lose Velocity's extra features). */
     if (IE <= 7) {
@@ -124,13 +124,13 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         var $ = window.jQuery || global.velocity.Utilities;
     }
 
-    /******************************
-       Utility Function & State
-    ******************************/
+    /*************
+        State
+    *************/
 
     // FURTHER COMMENTARY NEEDED HERE
     /* In addition to extending jQuery's $.fn object, Velocity also registers itself as a jQuery utility ($.) function so that certain features are accessible beyond just a per-element scope. */
-    /* Note: The utility function doubles as a publicly-accessible data store for the purposes of unit testing. */
+    /* Note: The utility function doubles as a publicly-accessible data store for the purposes of unit testing. Capitalized objects are meant for internal use, lowercase objects are meant for external use. */
     var velocity = global.velocity = $.extend(global.velocity || {}, {
         /* Container for page-wide Velocity state data. */
         State: {
@@ -161,6 +161,19 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         Easings: {
             /* Defined below. */
         },
+        /* Page-wide option defaults, which can be overriden by the user. */
+        defaults: {
+            queue: "",
+            duration: 400,
+            easing: "swing",
+            complete: null,
+            display: null,
+            loop: false,
+            delay: false,
+            mobileHA: true,
+            /* Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
+            _cacheValues: true
+        },
         /* Utility function's alias of $.fn.velocity(). Used for raw DOM element animation. */
         animate: function () { /* Defined below. */ },
         /* Set to 1 or 2 (most verbose) to log debug info to console. */
@@ -179,7 +192,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
     }
 
     /**************
-        Easings
+        Easing
     **************/
 
     /* Bezier curve function generator. */
@@ -1083,6 +1096,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
        velocity.animate
     **********************/
 
+    // FURTHER COMMENTARY NEEDED
     /* Simultaneously assign the jQuery plugin function ($elements.velocity()) and the utility alias (velocity.animate(elements)). */
     /* Note: The utility alias allows for the animation of raw (non-jQuery) DOM elements. */
     velocity.animate = function() {        
@@ -2424,24 +2438,6 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             velocity.State.calls = [];
         }
     }
-    
-    /***************
-        Defaults
-    ***************/
-
-    /* Page-wide option defaults, which can be overriden by the user. */
-    velocity.defaults = {
-        queue: "",
-        duration: 400,
-        easing: "swing",
-        complete: null,
-        display: null,
-        loop: false,
-        delay: false,
-        mobileHA: true,
-        /* Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
-        _cacheValues: true
-    };
 
     /***********************
        Packaged Sequences
