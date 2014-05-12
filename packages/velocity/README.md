@@ -8,6 +8,9 @@
 
 **Velocity's codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
 
+**Bower:**
+Package name is "velocity".
+
 **NPM:**
 https://www.npmjs.org/package/velocity-animate
 
