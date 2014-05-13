@@ -14,7 +14,7 @@ https://www.npmjs.org/package/velocity-animate
 
 **Velocity's codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
 
-*Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 15th.*
+*Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 20th.*
 
 ###**Comparisons**
 
