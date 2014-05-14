@@ -4,7 +4,7 @@
 
 /*
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.9
+* @version 0.0.10
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */    
@@ -147,6 +147,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             /* Detect mobile devices to determine if mobileHA should be turned on. */
             isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
             /* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
+            isAndroid: /Android/i.test(navigator.userAgent),
             isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
             /* Create a cached element for re-use when checking for CSS property prefixes. */
             prefixElement: document.createElement("div"),
@@ -644,7 +645,15 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                                         case "translate":
                                             invalid = !/(%|px|em|rem|\d)$/i.test(propertyValue);
                                             break;
+                                        /* Since an axis-free "scale" property is supported as well, a little hack is used here to detect it by chopping off its last letter. */
+                                        case "scal":
                                         case "scale":
+                                            /* Chrome on Android has a bug in which scaled elements blur if their initial scale value is below 1 (which can happen with forcefeeding). Thus, we detect a yet-unset scale property
+                                               and ensure that its first value is always 1. More info here: http://stackoverflow.com/questions/10417890/css3-animations-with-transform-causes-blurred-elements-on-webkit/10417962#10417962 */
+                                            if (velocity.State.isAndroid && $.data(element, NAME).transformCache[transformName] === undefined) {
+                                                propertyValue = 1;
+                                            }
+
                                             invalid = !/(\d)$/i.test(propertyValue);
                                             break;
                                         case "skew":
@@ -998,20 +1007,20 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         },
 
         /* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
-        setPropertyValue: function(element, property, propertyValue, rootPropertyValue, scrollContainer) {
+        setPropertyValue: function(element, property, propertyValue, rootPropertyValue, scrollData) {
             var propertyName = property;   
 
             /* In order to be subjected to call options and element queueing, scroll animation is routed through Velocity as if it were a standard CSS property. */
             if (property === "scroll") {
                 /* If a container option is present, scroll the container instead of the browser window. */
-                if (scrollContainer.container) {
-                    scrollContainer.container["scroll" + scrollContainer.direction] = propertyValue;
+                if (scrollData.container) {
+                    scrollData.container["scroll" + scrollData.direction] = propertyValue;
                 /* Otherwise, Velocity defaults to scrolling the browser window. */
                 } else {
-                    if (scrollContainer.direction === "Left") {
-                        window.scrollTo(propertyValue, scrollContainer.alternateValue);
+                    if (scrollData.direction === "Left") {
+                        window.scrollTo(propertyValue, scrollData.alternateValue);
                     } else {
-                        window.scrollTo(scrollContainer.alternateValue, propertyValue);
+                        window.scrollTo(scrollData.alternateValue, propertyValue);
                     }
                 }
             } else {
@@ -1363,8 +1372,8 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                     break;
 
                 default:
-                    /* Remove the value's potential "ms" suffix and default to a non-zero value (which is never intended -- if it actually is intended, the user needs to rethink their animation approach). */
-                    opts.duration = parseFloat(opts.duration) || parseFloat(velocity.defaults.duration) || 400;
+                    /* Remove the potential "ms" suffix and default to 1 if the user is attempting to set a duration of 0 (in order to produce an immediate style change). */
+                    opts.duration = parseFloat(opts.duration) || 1;
             }
 
             /*******************
@@ -1475,7 +1484,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                             endValue: scrollPositionEnd,
                             unitType: "",
                             easing: opts.easing,
-                            scrollContainer: {
+                            scrollData: {
                                 container: opts.container,
                                 direction: scrollDirection,
                                 alternateValue: scrollPositionCurrentAlternate
@@ -2288,7 +2297,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
                             /* setPropertyValue() returns an array of the property name and property value post any normalization that may have been performed. */
                             /* Note: To solve an IE<=8 positioning bug, the unit type is dropped when setting a property value of 0. */
-                            var adjustedSetData = CSS.setPropertyValue(element, property, tween.currentValue + (parseFloat(currentValue) === 0 ? "" : tween.unitType), tween.rootPropertyValue, tween.scrollContainer); /* SET */
+                            var adjustedSetData = CSS.setPropertyValue(element, property, tween.currentValue + (parseFloat(currentValue) === 0 ? "" : tween.unitType), tween.rootPropertyValue, tween.scrollData); /* SET */
 
                             /*******************
                                Hooks: Part II
@@ -2478,15 +2487,17 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                     paddingTop: null,
                     paddingBottom: null,
                     overflow: null,
+                    overflowX: null,
                     overflowY: null
                 },
-                /* The slide functions make use of the begin and complete callbacks, so the user's custom callbacks are stored for triggering when slideDown/Up's logic has completed. */
+                /* The slide functions make use of the begin and complete callbacks, so the user's custom callbacks are stored upfront for triggering once slideDown/Up's own callback logic is complete. */
                 begin = opts.begin,
-                complete = opts.complete;
+                complete = opts.complete,
+                isHeightAuto = false;
 
             /* Unless the user is trying to override the display option, show the element before slideDown begins and hide the element after slideUp completes. */
             if (direction === "Down") {
-                /* All elements subjected to sliding are switched to the "block" display value -- as opposed to an element-appropriate block/inline distinction -- because inline elements cannot have their dimensions modified. */
+                /* All elements subjected to sliding down are set to the "block" display value (-- )as opposed to an element-appropriate block/inline distinction) because inline elements cannot actually have their dimensions modified. */
                 opts.display = opts.display || "block";
             } else {
                 opts.display = opts.display || "none";
@@ -2494,16 +2505,34 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
             /* Begin callback. */
             opts.begin = function () {
+                /* Check for height: "auto" so we can revert back to it when the sliding animation is complete. */
+                function checkHeightAuto() {
+                    element.style.display = "block";
+                    originalValues.height = velocity.CSS.getPropertyValue(element, "height");
+
+                    /* We determine if height was originally set to "auto" by checking if the computed "auto" value is identical to the original value. */
+                    element.style.height = "auto";
+                    if (velocity.CSS.getPropertyValue(element, "height") === originalValues.height) {
+                        isHeightAuto = true;
+                    }
+
+                    /* Revert to the computed value before sliding begins to prevent vertical popping due to scrollbars. */
+                    /* Note: Webkit has a glitch where height must be explicitly assigned the "px" unit to take effect when height is currently set to "auto". */
+                    velocity.CSS.setPropertyValue(element, "height", originalValues.height + "px");
+                }
+
                 if (direction === "Down") {
                     originalValues.overflow = [ velocity.CSS.getPropertyValue(element, "overflow"), 0 ];
+                    originalValues.overflowX = [ velocity.CSS.getPropertyValue(element, "overflowX"), 0 ];
                     originalValues.overflowY = [ velocity.CSS.getPropertyValue(element, "overflowY"), 0 ];
 
-                    /* Remove scrollbars and momentarily set the element's height to "auto" so that its natural height can be calculated. */
+                    /* Ensure the element is visible, and temporarily remove vertical scrollbars since animating them is visually unappealing. */
                     element.style.overflow = "hidden";
+                    element.style.overflowX = "visible";
                     element.style.overflowY = "hidden";
 
-                    element.style.height = "auto";
-                    element.style.display = "block";
+                    /* With the scrollars no longer affecting sizing, determine whether the element is currently set to height: "auto". */
+                    checkHeightAuto();
 
                     /* Cache the elements' original vertical dimensional values so that we can animate back to them from starting values of 0. */
                     for (var property in originalValues) {
@@ -2519,6 +2548,8 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                     /* Hide the element inside this begin callback, otherwise it'll momentarily flash itself before the actual animation tick begins. */
                     element.style.display = "none";
                 } else {
+                    checkHeightAuto();
+
                     for (var property in originalValues) {
                         /* Use forcefeeding to animate slideUp properties toward 0. */
                         originalValues[property] = [ 0, velocity.CSS.getPropertyValue(element, property) ];
@@ -2526,6 +2557,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
                     /* As with slideDown, slideUp hides the element's scrollbars while animating since scrollbar height tweening looks unappealing. */
                     element.style.overflow = "hidden";
+                    element.style.overflowX = "visible";
                     element.style.overflowY = "hidden";
                 }
 
@@ -2537,11 +2569,21 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
             /* Complete callback. */
             opts.complete = function (element) {
-                /* Reset the element to its original values once its slide animation is complete. (For slideDown, overflow values are reset. For slideUp, all values are reset (since they were animated to 0).) */
-                for (var property in originalValues) {
-                    element.style[property] = originalValues[property][direction === "Down" ? 0 : 1];
+                var propertyValuePosition = (direction === "Down") ? 0 : 1;
+
+                if (isHeightAuto === true) {
+                    /* If the element's height was originally set to auto, overwrite the computed value with "auto". */
+                    originalValues.height[propertyValuePosition] = "auto";
+                } else {
+                    /* Note: Webkit has a glitch where height must be explicitly assigned the "px" unit to take effect after an element's height has been set to "auto". */
+                    originalValues.height[propertyValuePosition] += "px";
                 }
 
+                /* Reset the element to its original values once its slide animation is complete. (For slideDown, overflow values are reset. For slideUp, all values are reset (since they were animated to 0).) */
+                for (var property in originalValues) {
+                    element.style[property] = originalValues[property][propertyValuePosition];
+                }
+                
                 /* If the user passed in a complete callback, fire it now. */
                 if (complete) {
                     complete.call(element, element);
