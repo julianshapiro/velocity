@@ -1,8 +1,9 @@
 .gitignore
 node_modules
+test
+min
 Gruntfile.js
-jquery-shim.js
 velocity.js
 velocity.min.js
-test
-shim.jquery.js
+velocity.jquery-shim.js
+velocity.spring.js
