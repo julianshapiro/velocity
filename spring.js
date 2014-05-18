@@ -1,36 +1,53 @@
-var _continueAnimation = true,
-    tolerance = 1/10000;
+var tolerance = 1/10000;
 
-function spring (percentComplete, duration, distance, tension, friction) {
-    var path = [],
-        initState = {
+function spring (percentComplete, duration, tension, friction) {
+    var initState = {
             x       : -1,
             v       : 0,
             tension : tension || 500,
             friction: friction || 10
         },
+        path = [initState.x + 1],
         // the framer implementation uses seconds for animation loop
         // see: https://github.com/koenbok/Framer/blob/master/framer/Utils.coffee#L61
         dt = 16/1000, // 60 FPS
-        last_state;
+        time_lapsed = 0,
+        _continueAnimation = true,
+        actual_duration, last_state;
+
+    // since we're not saving any state for now
+    // we'll calculate the actual time it takes for this animation with given conditions
+    if ( duration != null ) {
+        // running simulation without duration
+        actual_duration = spring(1, null, tension, friction);
+        // adjusting time delta accordingly
+        dt = (actual_duration / duration) * dt;
+        // allow the actual simulation to run
+        _continueAnimation = true;
+    }
 
     while ( _continueAnimation ) {
+        // get a new state
         last_state = step(dt, last_state || initState);
+        // store position
         path.push(1 + last_state.x);
+        // elapse time
+        time_lapsed += 16;
+        // check if we reached threshold of change
+        _continueAnimation = again(last_state.x, last_state.v);
     }
-    _continueAnimation = true;
 
-    return path[(percentComplete * (path.length - 1)) | 0];
+    // if duration is not defined then we return the actual time that elapsed in milliseconds
+    // otherwise we return the snapshot of the position, according to percentComplete
+    return duration == null ? time_lapsed : path[(percentComplete * (path.length - 1)) | 0];
 }
 
 
 function step (delta, stateBefore) {
-    var stateAfter = springIntegrateState(stateBefore, delta);
-    _continueAnimation = stop(stateAfter.x, stateAfter.v);
-    return stateAfter;
+    return springIntegrateState(stateBefore, delta);
 }
 
-function stop (x, v) {
+function again (x, v) {
     return Math.abs(x) > tolerance && Math.abs(v) > tolerance;
 }
 
