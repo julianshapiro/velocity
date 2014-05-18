@@ -2,9 +2,9 @@
     Details
 ***************/
 
-/*
+/*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.10
+* @version 0.0.11
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */    
@@ -13,7 +13,7 @@
      Summary
 ****************/
 
-/* IMPORTANT: Despite some of the ensuing code indicating that Velocity works *without* jQuery and *with* Zepto, this support HAS NOT YET LANDED. Stay tuned. */
+/* NOTICE: Despite some of the ensuing code indicating that Velocity works *without* jQuery and *with* Zepto, this support has not yet landed. Stay tuned. */
 
 /*
 Velocity is a concise CSS manipulation library with a performant animation stack built on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
@@ -380,6 +380,10 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                 "color": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "backgroundColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "borderColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
+                "borderTopColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
+                "borderRightColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
+                "borderBottomColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
+                "borderLeftColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "outlineColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "textShadow": [ "Color X Y Blur", "black 0px 0px 0px" ],
                 /* Todo: Add support for inset boxShadows. (webkit places it last whereas IE places it first.) */
@@ -682,7 +686,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
                 /* Since Velocity only animates a single numeric value per property, color animation is achieved by hooking the individual RGBA components of CSS color properties. 
                    Accordingly, color values must be normalized (e.g. "#ff0000", "red", and "rgb(255, 0, 0)" ==> "255 0 0 1") so that their components can be injected/extracted by CSS.Hooks logic. */
-                var colorProperties = [ "color", "backgroundColor", "borderColor", "outlineColor" ];
+                var colorProperties = [ "color", "backgroundColor", "borderColor", "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor" ];
 
                 for (var i = 0, colorPropertiesLength = colorProperties.length; i < colorPropertiesLength; i++) {
                     /* Copyright Tim Down: http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb */
@@ -2192,7 +2196,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
             /* Iterate through each active call. */
             for (var i = 0, callsLength = velocity.State.calls.length; i < callsLength; i++) {
-                /* When a velocity call is completed, its calls array entry is set to false. Continue on to the next call. */
+                /* When a velocity call is completed, its velocity.State.calls array entry is set to false. Continue on to the next call. */
                 if (!velocity.State.calls[i]) {
                     continue;
                 }
@@ -2240,12 +2244,9 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                        Display Toggling
                     *********************/
 
-                    /* If the display option is set to non-"none", set it upfront so that the element has a chance to become visible before tweening begins. (Otherwise, display's value is set in completeCall() once the animation has completed.) */
+                    /* If the display option is set to non-"none", set it upfront so that the element has a chance to become visible before tweening begins. (Otherwise, display's "none" value is set in completeCall() once the animation has completed.) */
                     if (opts.display && opts.display !== "none") {
                         CSS.setPropertyValue(element, "display", opts.display);
-
-                        /* The display option is only set once -- when its associated call is first ticked through. Accordingly, we set its value to false so that it isn't processed again by tick(). */
-                        velocity.State.calls[i][2].display = false;
                     }
 
                     /************************
@@ -2344,6 +2345,11 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                     }
                 }
 
+                /* The non-"none" display value is only applied to an element once -- when its associated call is first ticked through. Accordingly, it's set to false so that it isn't re-processed by this call in the next tick. */
+                if (opts.display && opts.display !== "none") {
+                    velocity.State.calls[i][2].display = false;
+                }
+
                 /* If this call has finished tweening, pass its index to completeCall() to handle call cleanup. */
                 if (percentComplete === 1) {
                     completeCall(i);
@@ -2353,12 +2359,9 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
         /* Note: completeCall() contains the logic for setting the isTicking flag to false (which occurs when the last active call on velocity.State.calls has completed). */
         if (velocity.State.isTicking) {
-            /* TODO: (Only if there's a complete function) The call finalization logic is wrapped inside a setInterval so that it's triggered asynchronously -- out of sync with its final RAF tick. Otherwise, the ensuing callback logic could cause this tick to lag and drop frames. */
-            //setTimeout(function() {
-                requestAnimationFrame(tick);
-            //}, 0);
+            requestAnimationFrame(tick);
         }
-    }
+    } 
 
     /**********************
         Call Completion
@@ -2490,7 +2493,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                     overflowX: null,
                     overflowY: null
                 },
-                /* The slide functions make use of the begin and complete callbacks, so the user's custom callbacks are stored upfront for triggering once slideDown/Up's own callback logic is complete. */
+                /* The slide functions make use of the begin and complete callbacks, so the the user's custom callbacks are stored upfront for triggering once slideDown/Up's own callback logic is complete. */
                 begin = opts.begin,
                 complete = opts.complete,
                 isHeightAuto = false;
@@ -2536,7 +2539,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
                     /* Cache the elements' original vertical dimensional values so that we can animate back to them from starting values of 0. */
                     for (var property in originalValues) {
-                        /* Overflow values have already been cached, do not overrwrite them with "hidden", which they were just set to. */
+                        /* Overflow values have already been cached, do not overwrite them with "hidden" (which they were just set to). */
                         if (/^overflow/.test(property)) {
                             continue;
                         }
