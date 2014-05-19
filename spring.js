@@ -1,4 +1,5 @@
-var tolerance = 1/10000;
+var tolerance = 1 / 10000,
+    actual_duration_store = {};
 
 function spring (percentComplete, duration, tension, friction) {
     var initState = {
@@ -8,9 +9,9 @@ function spring (percentComplete, duration, tension, friction) {
             friction: friction || 10
         },
         path = [initState.x + 1],
-        // the framer implementation uses seconds for animation loop
-        // see: https://github.com/koenbok/Framer/blob/master/framer/Utils.coffee#L61
-        dt = 16/1000, // 60 FPS
+    // the framer implementation uses seconds for animation loop
+    // see: https://github.com/koenbok/Framer/blob/master/framer/Utils.coffee#L61
+        dt = 16 / 1000, // 60 FPS
         time_lapsed = 0,
         _continueAnimation = true,
         actual_duration, last_state;
@@ -18,8 +19,15 @@ function spring (percentComplete, duration, tension, friction) {
     // since we're not saving any state for now
     // we'll calculate the actual time it takes for this animation with given conditions
     if ( duration != null ) {
-        // running simulation without duration
-        actual_duration = spring(1, null, tension, friction);
+        var cache_key = generateCacheKey(duration, initState.tension, initState.friction);
+        // check cache
+        actual_duration = cache(cache_key);
+        if ( actual_duration == null ) {
+            // running simulation without duration
+            actual_duration = spring(1, null, tension, friction);
+            // cache it
+            cache(cache_key, actual_duration);
+        }
         // adjusting time delta accordingly
         dt = (actual_duration / duration) * dt;
         // allow the actual simulation to run
@@ -88,4 +96,21 @@ function springIntegrateState (state, dt) {
     state.v = state.v + dvdt * dt;
 
     return state;
+}
+
+function cache (key, value) {
+    if ( arguments.length == 1 ) {
+        if ( key in actual_duration_store ) {
+            return actual_duration_store[key];
+        }
+    }
+    else if ( arguments.length == 2 ) {
+        actual_duration_store[key] = value;
+    }
+
+    return null;
+}
+
+function generateCacheKey (duration, tension, friction) {
+    return duration.toString() + '-' + tension.toString() + '-' + friction.toString();
 }
