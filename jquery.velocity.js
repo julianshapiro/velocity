@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.11
+* @version 0.0.12
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */    
@@ -13,7 +13,7 @@
      Summary
 ****************/
 
-/* NOTICE: Despite some of the ensuing code indicating that Velocity works *without* jQuery and *with* Zepto, this support has not yet landed. Stay tuned. */
+/* NOTICE: Despite the ensuing code indicating that Velocity works *without* jQuery and *with* Zepto, this support has not yet landed. Stay tuned. */
 
 /*
 Velocity is a concise CSS manipulation library with a performant animation stack built on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
@@ -106,6 +106,17 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
     /* Determine if a variable is an array. */
     function isArray (variable) {
         return Object.prototype.toString.call(variable) === "[object Array]";
+    }
+
+    /* Determine if a variable is a nodeList. */
+    /* Copyright Martin Bohm. MIT License: https://gist.github.com/Tomalak/818a78a226a0738eaade */
+    function isNodeList (nodes) {
+        var stringRepresentation = Object.prototype.toString.call(nodes);
+     
+        return typeof nodes === "object" &&
+            /^\[object (HTMLCollection|NodeList|Object)\]$/.test(stringRepresentation) &&
+            nodes.length !== undefined &&
+            (nodes.length === 0 || (typeof nodes[0] === "object" && nodes[0].nodeType > 0));
     }
 
     /*******************
@@ -1142,15 +1153,15 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         } else {
             isWrapped = false;
 
-            /* To guard from user errors, extract the raw DOM element from the jQuery object if one was passed in to the utility function. */
-            elements = arguments[0].jquery ? arguments[0].get() : arguments[0];
+            /* To guard from user errors, extract the raw DOM element(s) from the jQuery object if one was mistakenly passed in to the utility function. */
+            elements = arguments[0].jquery ? [].slice.call(arguments[0]) : arguments[0];
             propertiesMap = arguments[1];
             options = arguments[2];
         }
 
-        /* The length of the targeted element set is defaulted to 1 in case a single raw DOM element is passed in (which doesn't contain a length property). */
-        var elementsLength = elements.length || 1,
-            elementsIndex = 0;    
+        /* The length of the element set (in the form of a nodeList or an array of elements) is defaulted to 1 in case a single raw DOM element is passed in (which doesn't contain a length property). */
+        var elementsLength = (isNodeList(elements) || isArray(elements)) ? elements.length : 1,
+            elementsIndex = 0;   
 
         /***************************
             Argument Overloading
@@ -2123,13 +2134,15 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         /* Determine elements' type, then individually process each element in the set via processElement(). */
         if (isWrapped) {
             elements.each(processElement);
-        /* Check if this is a single raw DOM element by sniffing for a nodeType property. */
-        } else if (elements.nodeType) {
+        /* Process a single raw DOM element. Check for a nodeType to avoid throwing errors due to invalid input. */
+        } else if (elementsLength === 1 && elements.nodeType) {
             processElement.call(elements);
-        /* Otherwise, check if this is an array of raw DOM elements, in which case just sniff the first item's nodeType as a proxy for the remainder. */
-        } else if (elements[0] && elements[0].nodeType) {
+        /* Otherwise, process a set of raw DOM elements. */
+        } else {
             for (var rawElementsIndex in elements) {
-                processElement.call(elements[rawElementsIndex]);
+                if (elements[rawElementsIndex].nodeType) {
+                    processElement.call(elements[rawElementsIndex]);
+                }
             }
         }
 
