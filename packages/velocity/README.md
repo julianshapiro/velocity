@@ -18,11 +18,11 @@ https://www.npmjs.org/package/velocity-animate
 
 ###**Comparisons**
 
-Famo.us is a full-fledged mobile app framework built around a physics engine. The amount of work Steve Newcomb and Mark Lu have put into vertically integrating the Famous development stack is astounding.
+Famo.us is a full-fledged mobile app framework built around a physics engine.
 
 GSAP is a richly-featured animation platform with a ton of power. GSAP is what inspired me to pursue the development of Velocity.
 
-As for Velocity, its focus is on being a very lightweight and fast tool for drastically improving UI animation performance and workflow. I put an extensive amount of work and attention to detail into it.
+As for Velocity, its focus is on being a very lightweight and fast tool for drastically improving UI animation performance and workflow.
 
 With each of these solutions, we're comparing options that are the product of nothing but love -- for performance and for the Web. Choose whichever is best suited to your task at-hand. They're all very fast.
 
