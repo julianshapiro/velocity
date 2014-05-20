@@ -26,8 +26,6 @@ GSAP is a fast, richly-featured *animation platform*. GSAP is what inspired me t
 
 Velocity's focus is on being a very fast, lightweight tool for dramatically improving *UI animation performance and workflow*.
 
-With each of these solutions, we're comparing options that are the product of nothing but love -- for performance and for the Web. Choose whichever is best suited to your task at-hand. They're all very fast.
-
 ###License
 
 [MIT License](LICENSE). © Julian Shapiro (http://twitter.com/shapiro).
