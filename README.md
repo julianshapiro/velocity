@@ -8,13 +8,15 @@ Package name is *velocity*.
 **NPM:**
 https://www.npmjs.org/package/velocity-animate
 
+*Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 25th.*
+
+###**Resources**
+
 **Velocity's workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
 **Velocity's speed:** http://davidwalsh.name/css-js-animation
 
 **Velocity's codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
-
-*Velocity is undergoing its final stage of testing. Full release (including test suite) is scheduled for May 25th.*
 
 ###**Comparisons**
 
