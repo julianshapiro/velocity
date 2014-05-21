@@ -352,6 +352,17 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         };
         /* Full blown Runge-Kutta method based spring easing. */
         /* Adapted from @koenbok/Framer's SpringRK4Animator: https://github.com/koenbok/Framer/blob/c16f69fc6cd4d4f3c6c633b0819fe8d7e890685b/framer/Animators/SpringRK4Animator.coffee */
+        /* This easing is calculated from the combination of tension, friction and duration. All of which are configurable.
+           Since the first two determine the latter, it's recommended to do some trial and error, see how they interact
+           and what kind of animation is produced, to get the desired outcome. */
+        /* Tension determines the "strength" of the spring. The higher it is, the "stronger" the force exerted by the spring.
+           Friction determines the damping factor. The higher it is, the "stronger" the force that's slowing down the animation. */
+        /* This easing in fact a spring easing factory.
+           Given a duration, and optionally tension and friction, it will first run a simulation without a defined duration,
+           at 60 FPS to calculate the full path.
+           Then it adjusts the time delta used for the Runge-Kutta integration, using the relation between actual time and duration,
+           and calculate the path for the duration-defined animation.
+           Then it returns an easing function that maps a completed percent of the animation to a point on the path. */
         velocity.Easings["springRK4"] = (function () {
             function springRK4 (options) {
                 var initState = {
