@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.12
+* @version 0.0.13
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */    
@@ -217,8 +217,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         Easing
     **************/
 
-    /* Bezier curve function generator. */
-    /* Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License */
+    /* Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License */
     function generateBezier (mX1, mY1, mX2, mY2) {
         /* Must contain four arguments. */
         if (arguments.length !== 4) {
@@ -286,6 +285,90 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         return f;
     }
 
+    /* Runge-Kutta spring physics function generator. Adapted from Framer.js, copyright Koen Bok. MIT License: http://en.wikipedia.org/wiki/MIT_License */
+    /* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
+       then adjusts the time dela -- using the relation between actual time and duration -- to calculate the path for the duration-constrained animation. */
+    function generateSpringRK4 (tension, friction, duration) {
+        function springAccelerationForState (state) {
+            return (-state.tension * state.x) - (state.friction * state.v);
+        }
+
+        function springEvaluateStateWithDerivative (initialState, dt, derivative) {
+            var state = {
+                x: initialState.x + derivative.dx * dt,
+                v: initialState.v + derivative.dv * dt,
+                tension: initialState.tension,
+                friction: initialState.friction
+            };
+
+            return { dx: state.v, dv: springAccelerationForState(state) };
+        }
+
+        function springIntegrateState (state, dt) {
+            var a = {
+                    dx: state.v,
+                    dv: springAccelerationForState(state)
+                },
+                b = springEvaluateStateWithDerivative(state, dt * 0.5, a),
+                c = springEvaluateStateWithDerivative(state, dt * 0.5, b),
+                d = springEvaluateStateWithDerivative(state, dt, c),
+                dxdt = 1.0 / 6.0 * (a.dx + 2.0 * (b.dx + c.dx) + d.dx),
+                dvdt = 1.0 / 6.0 * (a.dv + 2.0 * (b.dv + c.dv) + d.dv);
+
+            state.x = state.x + dxdt * dt;
+            state.v = state.v + dvdt * dt;
+
+            return state;
+        }
+
+        var initState = {
+                x: -1,
+                v: 0,
+                tension: null,
+                friction: null
+            },
+            path = [0],
+            time_lapsed = 0,
+            tolerance = 1 / 10000,
+            DT = 16 / 1000, 
+            have_duration, dt, last_state;
+
+        tension = parseFloat(tension) || 600;
+        friction = parseFloat(friction) || 20;
+        duration = duration || null;
+
+        initState.tension = tension;
+        initState.friction = friction;
+
+        have_duration = duration !== null;
+
+        /* Calculate the actual time it takes for this animation to complete with the provided conditions. */
+        if (have_duration) {
+            /* Run the simulation without a duration. */
+            time_lapsed = generateSpringRK4(tension, friction);
+            /* Compute the adjusted time delta. */
+            dt = time_lapsed / duration * DT;
+        } else {
+            dt = DT;
+        }
+
+        while (true) {
+            /* Next/step function .*/
+            last_state = springIntegrateState(last_state || initState, dt);
+            /* Store the position. */
+            path.push(1 + last_state.x);
+            time_lapsed += 16;
+            /* If the change threshold is reached, break. */
+            if (!(Math.abs(last_state.x) > tolerance && Math.abs(last_state.v) > tolerance)) {
+                break;
+            }
+        }
+
+        /* If duration is not defined, return the actual time required for completing this animation. Otherwise, return a closure that holds the
+           computed path and returns a snapshot of the position according to a given percentComplete. */
+        return !have_duration ? time_lapsed : function(percentComplete) { return path[ (percentComplete * (path.length - 1)) | 0 ]; };
+    }
+
     /* Velocity embeds the named easings from jQuery, jQuery UI, and CSS3 in order to save users from having to include additional libraries on their page. */
     (function () {
         /* jQuery UI's Robert Penner easing equations. Copyright The jQuery Foundation. MIT License: https://jquery.org/license */
@@ -301,16 +384,20 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             Sine: function (p) {
                 return 1 - Math.cos(p * Math.PI / 2);
             },
+
             Circ: function (p) {
                 return 1 - Math.sqrt(1 - p * p);
             },
+
             Elastic: function(p) {
                 return p === 0 || p === 1 ? p :
                     -Math.pow(2, 8 * (p - 1)) * Math.sin(((p - 1) * 80 - 7.5) * Math.PI / 15);
             },
+
             Back: function(p) {
                 return p * p * (3 * p - 2);
             },
+
             Bounce: function (p) {
                 var pow2,
                     bounce = 4;
@@ -351,6 +438,40 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
         };
     })();
+
+    /* Determine the appropriate easing type given an easing input. */
+    function getEasing(value, duration) {
+        var easing = value;
+
+        /* The easing option can either be a string that references a pre-registered easing, or it can be a two-/four-item array of integers to be converted into a bezier/spring function. */
+        if (typeof value === "string") {
+            /* Ensure that the easing has been assigned to jQuery's velocity.Easings object. */
+            if (!velocity.Easings[value]) {
+                easing = false;
+            }
+        } else if (isArray(value) && value.length === 2) {
+            /* springRK4 must be passed the animation's duration. */
+            value.push(duration);
+            /* Note, if the springRK4 array contains non-numbers, generateSpringRK4() returns an easing function generated with default tension and friction values. */
+            easing = generateSpringRK4.apply(null, value);
+        } else if (isArray(value) && value.length === 4) {
+            /* Note, if the bezier array contains non-numbers, generateBezier() returns false. */
+            easing = generateBezier.apply(null, value);
+        } else {
+            easing = false;
+        }
+
+        /* Revert to the Velocity-wide default easing type, and fallback to "swing" (which is also jQuery's defualt) if the Velocity-wide default has been incorrectly modified. */
+        if (easing === false) {
+            if (velocity.Easings[velocity.defaults.easing]) {
+                easing = velocity.defaults.easing;
+            } else {
+                easing = "swing";
+            }
+        }
+
+        return easing;
+    }
 
     /*****************
         CSS Stack
@@ -1185,8 +1306,8 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                 /* Treat a string as an easing. */
                 } else if (typeof arguments[i] === "string") {
                     options.easing = arguments[i];
-                /* Also treat a four-item array (of cubic bezier points) as an easing. */
-                } else if (isArray(arguments[i]) && arguments[i].length === 4) {
+                /* Also treat two-item (tension, friction) and four-item (cubic bezier points) arrays as an easing. */
+                } else if (isArray(arguments[i]) && (arguments[i].length === 2 || arguments[i].length === 4)) {
                     options.easing = arguments[i];
                 /* Treat a function as a callback. */
                 } else if (isFunction(arguments[i])) {
@@ -1261,55 +1382,12 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         /* A container for all the ensuing tween data and metadata associated with this call. This container gets pushed to the page-wide velocity.State.calls array that is processed during animation ticking. */
         var call = [];
 
-        /**********************
-           Option: Complete
-        **********************/
-
-        /* The complete option must be a function. Otherwise, default to null. */
-        /* Note: The complete option is the only option that is processed on a call-wide basis since it is fired once per call -- not once per element. */
-        if (options && options.complete && !isFunction(options.complete)) {
-            options.complete = null;
-        }
-
-        /********************
-           Option: Easing
-        ********************/
-
-        /* Determining the appropriate easing type consists of a waterfall of logic. Since we have to trigger this at multiple points, we wrap it in a function. */
-        function getEasing(value) {
-            var easing = value;
-
-            /* The easing option can either be a string that references a pre-registered easing, or it can be an four-item array of integers to be converted into a bezier curve function. */
-            if (typeof value === "string") {
-                /* Ensure that the easing has been assigned to jQuery's velocity.Easings object (which Velocity also uses as its easings container). */
-                if (!velocity.Easings[value]) {
-                    easing = false;
-                }
-            } else if (isArray(value)) {
-                /* Note, if the bezier array is of an invalid format (has an incorrect argument length or contains non-numbers), generateBezier() returns false. */
-                easing = generateBezier.apply(null, value);
-            } else {
-                easing = false;
-            }
-
-            /* Revert to the Velocity-wide default easing type, and fallback to "swing" (which is also jQuery's defualt) if the Velocity-wide default has been incorrectly modified. */
-            if (easing === false) {
-                if (velocity.Easings[velocity.defaults.easing]) {
-                    easing = velocity.defaults.easing;
-                } else {
-                    easing = "swing";
-                }
-            }
-
-            return easing;
-        }
-
         /************************
            Element Processing
         ************************/ 
 
         /* Element processing consists of three parts -- data processing that cannot go stale and data processing that *can* go stale (i.e. third-party style modifications):
-           1) Pre-Queueing: Element-wide variables, including the element's data storage, are instantiated. 2) Options are prepared for animation. 3) If triggered, the Stop action is executed.
+           1) Pre-Queueing: Element-wide variables, including the element's data storage, are instantiated. Call options are prepared. If triggered, the Stop action is executed.
            2) Queueing: The logic that runs once this call has reached its point of execution in the element's $.queue() stack. Most logic is placed here to avoid risking it becoming stale.
            3) Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
         */
@@ -1368,6 +1446,21 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                 });
             }
 
+            /******************
+               Option: Delay
+            ******************/
+
+            /* Velocity rolls its own delay function since jQuery doesn't have a utility alias for $.fn.delay() (and thus requires jQuery element creation, which we avoid since its overhead includes DOM querying). */
+            if (/^\d/.test(opts.delay)) {
+                $.queue(element, opts.queue, function(next) {
+                    /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
+                    velocity.velocityQueueEntryFlag = true;
+
+                    /* The ensuing queue item (which is assigned to the "next" argument that $.queue() automatically passes in) will be triggered after a setTimeout delay. */
+                    setTimeout(next, parseFloat(opts.delay));
+                });
+            }
+
             /*********************
                Option: Duration
             *********************/
@@ -1395,21 +1488,16 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                Option: Easing
             *******************/
 
-            opts.easing = getEasing(opts.easing);
+            opts.easing = getEasing(opts.easing, opts.duration);
 
-            /******************
-               Option: Delay
-            ******************/
+            /**********************
+               Option: Complete
+            **********************/
 
-            /* Velocity rolls its own delay function since jQuery doesn't have a utility alias for $.fn.delay() (and thus requires jQuery element creation, which we avoid since its overhead includes DOM querying). */
-            if (/^\d/.test(opts.delay)) {
-                $.queue(element, opts.queue, function(next) {
-                    /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
-                    velocity.velocityQueueEntryFlag = true;
-
-                    /* The ensuing queue item (which is assigned to the "next" argument that $.queue() automatically passes in) will be triggered after a setTimeout delay. */
-                    setTimeout(next, parseFloat(opts.delay));
-                });
+            /* The complete option must be a function. Otherwise, default to null. */
+            /* Note: The complete option is the only option that is processed on a call-wide basis since it is fired once per call -- not once per element. */
+            if (options && options.complete && !isFunction(options.complete)) {
+                options.complete = null;
             }
 
             /********************
@@ -1614,7 +1702,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                                 startValue = valueData[1];
                             /* Two or three-item array: If the second item is a string, treat it as an easing. */
                             } else if (typeof valueData[1] === "string" || isArray(valueData[1])) {
-                                easing = getEasing(valueData[1]);
+                                easing = getEasing(valueData[1], opts.duration);
 
                                 /* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
                                 if (valueData[2]) {
