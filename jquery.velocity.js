@@ -1377,7 +1377,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
         /* Determining the appropriate easing type consists of a waterfall of logic. Since we have to trigger this at multiple points, we wrap it in a function. */
         function getEasing(value) {
-            var easing = value, opts;
+            var easing = value;
 
             /* The easing option can either be a string that references a pre-registered easing, or it can be an four-item array of integers to be converted into a bezier curve function. */
             if (typeof value === "string") {
@@ -1385,16 +1385,9 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                 if (!velocity.Easings[value]) {
                     easing = false;
                 }
-                else if (value == "springRK4") {
-                    easing = velocity.Easings[value]({duration: options.duration});
-                }
             } else if (isArray(value)) {
                 /* Note, if the bezier array is of an invalid format (has an incorrect argument length or contains non-numbers), generateBezier() returns false. */
                 easing = generateBezier.apply(null, value);
-            } else if (value && value.type && velocity.Easings[value.type] ) {
-                opts = value.options || {};
-                opts.duration = opts.duration || options.duration;
-                easing = velocity.Easings[value.type](opts);
             } else {
                 easing = false;
             }
@@ -1720,7 +1713,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                             if ((!isArray(valueData[1]) && /^[\d-]/.test(valueData[1])) || isFunction(valueData[1])) {
                                 startValue = valueData[1];
                             /* Two or three-item array: If the second item is a string, treat it as an easing. */
-                            } else if (typeof valueData[1] === "string" || isArray(valueData[1]) || (valueData[1] && typeof valueData[1] == 'object')) {
+                            } else if (typeof valueData[1] === "string" || isArray(valueData[1])) {
                                 easing = getEasing(valueData[1]);
 
                                 /* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
