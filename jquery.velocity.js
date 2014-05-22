@@ -288,7 +288,8 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
     /* Runge-Kutta spring physics function generator. Adapted from Framer.js, copyright Koen Bok. MIT License: http://en.wikipedia.org/wiki/MIT_License */
     /* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
        then adjusts the time dela -- using the relation between actual time and duration -- to calculate the path for the duration-constrained animation. */
-    function generateSpringRK4 (tension, friction, duration) {
+    var generateSpringRK4 = (function () {
+
         function springAccelerationForState (state) {
             return (-state.tension * state.x) - (state.friction * state.v);
         }
@@ -321,53 +322,56 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             return state;
         }
 
-        var initState = {
-                x: -1,
-                v: 0,
-                tension: null,
-                friction: null
-            },
-            path = [0],
-            time_lapsed = 0,
-            tolerance = 1 / 10000,
-            DT = 16 / 1000, 
-            have_duration, dt, last_state;
+        return function springRK4Factory (tension, friction, duration) {
 
-        tension = parseFloat(tension) || 600;
-        friction = parseFloat(friction) || 20;
-        duration = duration || null;
+            var initState = {
+                    x: -1,
+                    v: 0,
+                    tension: null,
+                    friction: null
+                },
+                path = [0],
+                time_lapsed = 0,
+                tolerance = 1 / 10000,
+                DT = 16 / 1000, 
+                have_duration, dt, last_state;
 
-        initState.tension = tension;
-        initState.friction = friction;
+            tension = parseFloat(tension) || 600;
+            friction = parseFloat(friction) || 20;
+            duration = duration || null;
 
-        have_duration = duration !== null;
+            initState.tension = tension;
+            initState.friction = friction;
 
-        /* Calculate the actual time it takes for this animation to complete with the provided conditions. */
-        if (have_duration) {
-            /* Run the simulation without a duration. */
-            time_lapsed = generateSpringRK4(tension, friction);
-            /* Compute the adjusted time delta. */
-            dt = time_lapsed / duration * DT;
-        } else {
-            dt = DT;
-        }
+            have_duration = duration !== null;
 
-        while (true) {
-            /* Next/step function .*/
-            last_state = springIntegrateState(last_state || initState, dt);
-            /* Store the position. */
-            path.push(1 + last_state.x);
-            time_lapsed += 16;
-            /* If the change threshold is reached, break. */
-            if (!(Math.abs(last_state.x) > tolerance && Math.abs(last_state.v) > tolerance)) {
-                break;
+            /* Calculate the actual time it takes for this animation to complete with the provided conditions. */
+            if (have_duration) {
+                /* Run the simulation without a duration. */
+                time_lapsed = springRK4Factory(tension, friction);
+                /* Compute the adjusted time delta. */
+                dt = time_lapsed / duration * DT;
+            } else {
+                dt = DT;
             }
-        }
 
-        /* If duration is not defined, return the actual time required for completing this animation. Otherwise, return a closure that holds the
-           computed path and returns a snapshot of the position according to a given percentComplete. */
-        return !have_duration ? time_lapsed : function(percentComplete) { return path[ (percentComplete * (path.length - 1)) | 0 ]; };
-    }
+            while (true) {
+                /* Next/step function .*/
+                last_state = springIntegrateState(last_state || initState, dt);
+                /* Store the position. */
+                path.push(1 + last_state.x);
+                time_lapsed += 16;
+                /* If the change threshold is reached, break. */
+                if (!(Math.abs(last_state.x) > tolerance && Math.abs(last_state.v) > tolerance)) {
+                    break;
+                }
+            }
+
+            /* If duration is not defined, return the actual time required for completing this animation. Otherwise, return a closure that holds the
+               computed path and returns a snapshot of the position according to a given percentComplete. */
+            return !have_duration ? time_lapsed : function(percentComplete) { return path[ (percentComplete * (path.length - 1)) | 0 ]; };
+        };
+    }());
 
     /* Velocity embeds the named easings from jQuery, jQuery UI, and CSS3 in order to save users from having to include additional libraries on their page. */
     (function () {
