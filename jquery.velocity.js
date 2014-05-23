@@ -455,11 +455,10 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             }
         } else if (isArray(value) && value.length === 2) {
             /* springRK4 must be passed the animation's duration. */
-            value.push(duration);
-            /* Note, if the springRK4 array contains non-numbers, generateSpringRK4() returns an easing function generated with default tension and friction values. */
-            easing = generateSpringRK4.apply(null, value);
+            /* Note: If the springRK4 array contains non-numbers, generateSpringRK4() returns an easing function generated with default tension and friction values. */
+            easing = generateSpringRK4.apply(null, value.concat([ duration ]));
         } else if (isArray(value) && value.length === 4) {
-            /* Note, if the bezier array contains non-numbers, generateBezier() returns false. */
+            /* Note: If the bezier array contains non-numbers, generateBezier() returns false. */
             easing = generateBezier.apply(null, value);
         } else {
             easing = false;
