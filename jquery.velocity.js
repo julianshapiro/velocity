@@ -104,9 +104,9 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
     }
 
     /* Determine if a variable is an array. */
-    function isArray (variable) {
+    var isArray = Array.isArray || function (variable) {
         return Object.prototype.toString.call(variable) === "[object Array]";
-    }
+    };
 
     /* Determine if a variable is a nodeList. */
     /* Copyright Martin Bohm. MIT License: https://gist.github.com/Tomalak/818a78a226a0738eaade */
