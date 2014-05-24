@@ -8,7 +8,7 @@ Package name is *velocity*.
 **NPM:**
 https://www.npmjs.org/package/velocity-animate
 
-*Full release (including test suite) is scheduled for May 25th.*
+*Full release (including test suite) is scheduled for May 31st.*
 
 ###**Resources**
 
