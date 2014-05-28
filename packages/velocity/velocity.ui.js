@@ -5,8 +5,8 @@
 /*!
 * velocity.ui.js: UI effects pack for Velocity. Load this after Velocity.
 * @version 0.1.0
-* @docs http://velocityjs.org
-* @support <=IE8: Elements will simply fade in/out. IE9+/Android 2.3+: Most effects are fully supported, the rest fade in/out. Other browsers: Full support.
+* @docs http://velocityjs.org/#uiPack
+* @support <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: Full support.
 * @license Copyright Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 * @license Portions adapted from Animate.css, copyright Daniel Eden. MIT License: http://en.wikipedia.org/wiki/MIT_License
 * @license Portions adapted from Magic.css, copyright Christian Pucci. MIT License: http://en.wikipedia.org/wiki/MIT_License
@@ -18,9 +18,9 @@ var effects =
         "callout.bounce": {
             defaultDuration: 550,
             calls: [
-                [ { translateY: "-30px" }, 0.25 ],
+                [ { translateY: -30 }, 0.25 ],
                 [ { translateY: 0 }, 0.125 ],
-                [ { translateY: "-15px" }, 0.125 ],
+                [ { translateY: -15 }, 0.125 ],
                 [ { translateY: 0 }, 0.25 ]
             ]
         },
