@@ -18,6 +18,8 @@ https://www.npmjs.org/package/velocity-animate
 
 **Velocity's codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
 
+**[ NEW ] Velocity's UI Pack:** https://www.youtube.com/watch?v=CdwvR6a39Tg&hd=1
+
 ###**Comparisons**
 
 Famo.us is a full-fledged *mobile app framework* built around a physics engine.
