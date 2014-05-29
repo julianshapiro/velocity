@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.14
+* @version 0.0.15
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */    
@@ -745,11 +745,11 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                    Transform setting is batched in this way to improve performance: the transform style only needs to be updated once when multiple transform subproperties are being animated simultaneously. */
                 var transformProperties = [ "translateX", "translateY", "scale", "scaleX", "scaleY", "skewX", "skewY", "rotateZ" ];
 
-                /* IE9 has support for 2D -- but not 3D -- transforms. Since animating unsupported transform properties results in the browser ignoring the *entire* transform string, we prevent these 3D values from being normalized for these
-                   browsers so that Tween Calculation logic skips animating these properties altogether (since it will detect that they're unsupported and unnormalized.) */
-                if (!(IE <= 9)) {
+                /* IE9 and Android Gingerbread have support for 2D -- but not 3D -- transforms. Since animating unsupported transform properties results in the browser ignoring the *entire* transform string, we prevent these 3D values
+                   from being normalized for these browsers so that tweening skips these properties altogether (since it will ignore them as being unsupported by the browser.) */
+                if (!(IE <= 9) && !velocity.State.isGingerbread) {
                     /* Append 3D transform properties onto transformProperties. */
-                    /* Note: Since the standalone CSS "perspective" property and the CSS transform "perspective" subproperty share the same name, the latter is given a unique token within Velocity. */
+                    /* Note: Since the standalone CSS "perspective" property and the CSS transform "perspective" subproperty share the same name, the latter is given a unique token within Velocity: "transformPerspective". */
                     transformProperties = transformProperties.concat([ "transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY" ]);
                 } 
 
@@ -1000,6 +1000,8 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                     return "inline";
                 } else if (/^(li)$/i.test(tagName)) {
                     return "list-item";
+                } else if (/^(tr)$/i.test(tagName)) {
+                    return "table-row";
                 /* Default to "block" when no match is found. */
                 } else {
                     return "block";
@@ -1344,9 +1346,33 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                 /* Treat a non-empty plain object as a literal properties map. */
                 if ($.isPlainObject(propertiesMap) && !$.isEmptyObject(propertiesMap)) {
                     action = "start";
-                /* Check if a string matches a registered sequence (see Sequences above). If so, trigger the sequence for each element in the set to prevent users from having to handle iteration logic in their sequence code. */
+                /* Check if a string matches a registered sequence (see Sequences above). */
                 } else if (typeof propertiesMap === "string" && velocity.Sequences[propertiesMap]) {
+                    var elementsOriginal = elements,
+                        durationOriginal = options.duration;
+
+                    /* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first (useful in combination with the stagger option). */
+                    if (options.backwards === true) {
+                        elements = (elements.jquery ? [].slice.call(elements) : elements).reverse();
+                    }
+
+                    /* Individually trigger the sequence for each element in the set to prevent users from having to handle iteration logic in their own sequence code. */
                     $.each(elements, function(elementIndex, element) {
+                        /* If the stagger option was passed in, successively delay each element by the stagger value (in ms). */
+                        if (parseFloat(options.stagger)) {
+                            options.delay = parseFloat(options.stagger) * elementIndex;
+                        }
+
+                        /* If the drag option was passed in, successively increase/decrease (depending on the presense of options.backwards) the duration of each element's animation, using floors to prevent producing very short durations. */
+                        if (options.drag) {
+                            /* Default the duration of UI pack effects (callouts and transitions) to 1000ms instead of the usual default duration of 400ms. */
+                            options.duration = parseFloat(durationOriginal) || (/^(callout|transition)/.test(propertiesMap) ? 1000 : 400);
+
+                            /* For each element, take the greater duration of: A) animation completion percentage relative to the original duration, B) 75% of the original duration, or C) a 200ms fallback
+                               (in case duration is already set to a low value). The end result is a baseline of 75% of the sequence's duration that increases/decreases as the end of the element set is approached. */
+                            options.duration = Math.max(options.duration * (options.backwards ? 1 - elementIndex/elementsLength : (elementIndex + 1) / elementsLength), options.duration * 0.75, 200);
+                        }
+
                         /* Pass in the call's options object so that the sequence can optionally extend it. It defaults to an empty object instead of null to reduce the options checking logic required inside the sequence. */
                         /* Note: The element is passed in as both the call's context and its first argument -- allowing for more expressive sequence declarations. */
                         velocity.Sequences[propertiesMap].call(element, element, options || {}, elementIndex, elementsLength);
@@ -1354,9 +1380,9 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
                     /* Since the animation logic resides within the sequence's own code, abort the remainder of this call. (The performance overhead up to this point is virtually non-existant.) */
                     /* Note: The jQuery call chain is kept intact by returning the complete element set. */
-                    return elements;
+                    return elementsOriginal;
                 } else {
-                    if (velocity.debug) console.log("First argument was not a property map, a known action, or a registered sequence. Aborting.")
+                    console.log("First argument was not a property map, a known action, or a registered sequence. Aborting.")
                     
                     return elements;
                 }
@@ -1517,8 +1543,9 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             **********************/
 
             /* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack) on animating elements. HA is removed from the element at the completion of its animation. */
-            /* You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
-            opts.mobileHA = (opts.mobileHA && velocity.State.isMobile);
+            /* Note: Android Gingerbread doesn't support HA. If a null transform hack (mobileHA) is in fact set, it will prevent other tranform subproperties from taking effect. */
+            /* Note: You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
+            opts.mobileHA = (opts.mobileHA && velocity.State.isMobile && !velocity.State.isGingerbread);
 
             /***********************
                Part II: Queueing
@@ -2438,7 +2465,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                         /* Don't set the null transform hack if we've already done so. */
                         if ($.data(element, NAME).transformCache.translate3d === undefined) {
                             /* All entries on the transformCache object are concatenated into a single transform string via flushTransformCache(). */
-                            $.data(element, NAME).transformCache.translate3d = "(0, 0, 0)";
+                            $.data(element, NAME).transformCache.translate3d = "(0px, 0px, 0px)";
 
                             transformPropertyExists = true;
                         }
@@ -2503,12 +2530,29 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                     /* Clear the element's rootPropertyValueCache, which will become stale. */
                     $.data(element, NAME).rootPropertyValueCache = {};
 
-                    /* All mobile devices except for those running Android Gingerbread (which is the oldest widespread Android distribution) have hardware acceleration removed at the end of the animation to avoid straining
-                       the GPU's available memory. Gingerbread is the exception since the layer demotion associated with hardware acceleration removal causes very apparent flickering. We accept this trade-off. */
-                    if (opts.mobileHA && !velocity.State.isGingerbread) {
-                        /* Now that the animation chain is complete, remove the translate3d transform value and flush the changes to the DOM. */
-                        delete $.data(element, NAME).transformCache.translate3d;
+                    /* Transform subproperties that trigger hardware acceleration are de-applied entirely when they hit their zero values so that HA'd elements don't remain blurry. */ 
+                    var transformHAProperties = [ "transformPerspective", "translateZ", "rotateX", "rotateY" ],
+                        transformHAProperty,
+                        transformHAPropertyExists = false;
 
+                    for (var transformHAPropertyIndex in transformHAProperties) {
+                        transformHAProperty = transformHAProperties[transformHAPropertyIndex];
+
+                        /* If any transform subproperty begins with "(0", remove it. */
+                        if (/^\(0[^.]/.test($.data(element, NAME).transformCache[transformHAProperty])) {
+                            transformHAPropertyExists = true;
+                            delete $.data(element, NAME).transformCache[transformHAProperty];
+                        }
+                    }
+
+                    /* Mobile devices have hardware acceleration removed at the end of the animation in order to avoid straining the GPU's available memory. */
+                    if (opts.mobileHA) {
+                        transformHAPropertyExists = true;
+                        delete $.data(element, NAME).transformCache.translate3d;
+                    }
+
+                    /* Flush the subproperty removals to the DOM. */
+                    if (transformHAPropertyExists) {
                         CSS.flushTransformCache(element);
                     }
                 }
@@ -2717,7 +2761,8 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             }
 
             /* If a display value was passed into the sequence, use it. Otherwise, default to "none" for fadeOut and default to the element-specific default value for fadeIn. */
-            if (!opts.display) {
+            /* Note: We allow users to pass in "null" to skip display setting altogether. */
+            if (opts.display !== null) {
                 opts.display = (direction === "In") ? velocity.CSS.Values.getDisplayType(element) : "none";
             }
 

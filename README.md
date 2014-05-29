@@ -8,9 +8,11 @@ Package name is *velocity*.
 **NPM:**
 https://www.npmjs.org/package/velocity-animate
 
-*Full release (including test suite) is scheduled for May 25th.*
+*Test suite release is scheduled for June 10th.*
 
 ###**Resources**
+
+**[ NEW ] Velocity's UI Pack:** https://www.youtube.com/watch?v=CdwvR6a39Tg&hd=1
 
 **Velocity's workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
