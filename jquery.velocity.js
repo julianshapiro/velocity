@@ -193,6 +193,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             loop: false,
             delay: false,
             mobileHA: true,
+            promise: false,
             /* Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring below for further details. */
             _cacheValues: true
         },
@@ -1252,6 +1253,8 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
     CSS.Hooks.register();
     CSS.Normalizations.register();
 
+    velocity.Promise = window.Promise;
+
     /**********************
        velocity.animate
     **********************/
@@ -1321,6 +1324,26 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             }
         }
 
+        /**************
+            Promises
+         *************/
+        /* turning this scope into a "deferred" */ 
+        var promise, resolver, rejecter;
+
+        if (velocity.Promise && (options.promise || velocity.defaults.promise)) {
+            var originalComplete = options.complete;
+
+            promise = new velocity.Promise(function (resolve, reject) {
+                resolver = resolve;
+                rejecter = reject;
+            });
+
+            options.complete = function (value) {
+                originalComplete && originalComplete.call(value, value);
+                resolver(value);
+            };
+        }
+
         /*********************
            Action Detection
         *********************/
@@ -1380,10 +1403,15 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
                     /* Since the animation logic resides within the sequence's own code, abort the remainder of this call. (The performance overhead up to this point is virtually non-existant.) */
                     /* Note: The jQuery call chain is kept intact by returning the complete element set. */
-                    return elementsOriginal;
+                    return promise || elementsOriginal;
                 } else {
                     console.log("First argument was not a property map, a known action, or a registered sequence. Aborting.")
-                    
+
+                    if (promise) {
+                        rejecter(elements);
+                        return promise;
+                    }
+
                     return elements;
                 }
         }
@@ -2304,7 +2332,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         **************/
 
         /* Return the processed elements back to the call chain. */
-        return elements;
+        return promise || elements;
     };
 
     /*****************************
