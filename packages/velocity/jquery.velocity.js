@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.15
+* @version 0.0.16
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */    
@@ -12,8 +12,6 @@
 /****************
      Summary
 ****************/
-
-/* NOTICE: Despite the ensuing code indicating that Velocity works *without* jQuery and *with* Zepto, this support has not yet landed. Stay tuned. */
 
 /*
 Velocity is a concise CSS manipulation library with a performant animation stack built on top of it. To minimize DOM interaction, Velocity reuses previous animation values and batches DOM queries.
@@ -31,13 +29,17 @@ Velocity is structured into four sections:
 Note: The biggest cause of both codebase bloat and codepath obfuscation in Velocity is its support for animating individual properties in compound-value properties (e.g. "textShadowBlur" in "textShadow: 0px 0px 0px black").
 */
 
+/* NOTICE: Despite the ensuing code indicating that Velocity works *without* jQuery and *with* Zepto, this support has not yet landed. */
+
 ;(function (global, window, document, undefined) {  
 
     /*****************
         Constants
     *****************/
 
-    var NAME = "velocity";
+    var NAME = "velocity",
+        DEFAULT_DURATION = 400,
+        DEFAULT_EASING = "swing";
 
     /*********************
        Helper Functions
@@ -104,12 +106,11 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
     }
 
     /* Determine if a variable is an array. */
-    function isArray (variable) {
+    var isArray = Array.isArray || function (variable) {
         return Object.prototype.toString.call(variable) === "[object Array]";
     }
 
-    /* Determine if a variable is a nodeList. */
-    /* Copyright Martin Bohm. MIT License: https://gist.github.com/Tomalak/818a78a226a0738eaade */
+    /* Determine if a variable is a nodeList. Copyright Martin Bohm. MIT License: https://gist.github.com/Tomalak/818a78a226a0738eaade */
     function isNodeList (nodes) {
         var stringRepresentation = Object.prototype.toString.call(nodes);
      
@@ -123,25 +124,28 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         Installation
     *******************/
 
-    /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them. Simply revert to jQuery (and lose Velocity's extra features). */
-    if (IE <= 7) {
-        /* If jQuery is loaded, revert to jQuery's $.animate() function and abort this Velocity declaration. */
-        if (window.jQuery) {
-            window.jQuery.fn.velocity = window.jQuery.fn.animate; 
-            return;
-        } else {
-            throw new Error("For IE<=7, Velocity falls back to jQuery, which must first be loaded.");
-        }
-    /* IE8 is the only supported version of IE that requires jQuery to be loaded. Newer versions of IE work perfectly with Velocity's jQuery shim. */
-    } else if (IE === 8 && !window.jQuery) {
-        throw new Error("For IE8, Velocity requires jQuery to be loaded.");
-    /* We allow the global Velocity variable to pre-exist so long as we were responsible for its creation via the Utilities code. */
+    /* Local to our Velocity scope, assign $ to our jQuery shim if jQuery itself isn't loaded. (The shim is a port of the jQuery utility functions that Velocity uses.) */
+    /* Note: We can't default to Zepto since the shimless version of Velocity does not work with Zepto, which is missing several utility functions that Velocity requires. */
+    var $ = window.jQuery || (global.Velocity && global.Velocity.Utilities);
+
+    if (!$) {
+        throw new Error("Velocity: Either jQuery or Velocity's jQuery shim must first be loaded.")
+    /* We allow the global Velocity variable to pre-exist so long as we were responsible for its creation (via the jQuery shim, which uniquely assigns a Utilities property to the Velocity object). */
     } else if (global.Velocity !== undefined && !global.Velocity.Utilities) {
-        throw new Error("Velocity's namespace is occupied. Aborting.");
-    } else {
-        /* Local to our Velocity scope, default $ to our shim if jQuery isn't loaded. */
-        /* Note: We can't default to Zepto since the shimless version of Velocity does not work with Zepto, which is missing several utility functions that Velocity requires. */
-        var $ = window.jQuery || global.Velocity.Utilities;
+        throw new Error("Velocity: Namespace is occupied.");
+    /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them. Revert to jQuery's $.animate(), and lose Velocity's extra features. */
+    } else if (IE <= 7) {
+        if (!window.jQuery) {
+            throw new Error("Velocity: For IE<=7, Velocity falls back to jQuery, which must first be loaded.");
+        } else {
+            window.jQuery.fn.velocity = window.jQuery.fn.animate; 
+
+            /* Now that $.fn.velocity is aliased, abort this Velocity declaration. */
+            return;
+        }
+    /* IE8 doesn't work with the jQuery shim; it requires jQuery proper. */
+    } else if (IE === 8 && !window.jQuery) {
+        throw new Error("Velocity: For IE8, Velocity requires jQuery to be loaded. (Velocity's jQuery shim does not work with IE8.)");
     }
 
     /*************
@@ -176,6 +180,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         },
         /* Velocity's custom CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
+        Utilities: { /* Defined by Velocity's optional jQuery shim. */ },
         /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). */
         Sequences: {
             /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
@@ -186,23 +191,23 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         /* Page-wide option defaults, which can be overriden by the user. */
         defaults: {
             queue: "",
-            duration: 400,
-            easing: "swing",
+            duration: DEFAULT_DURATION,
+            easing: DEFAULT_EASING,
             complete: null,
             display: null,
             loop: false,
             delay: false,
             mobileHA: true,
-            /* Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring below for further details. */
+            /* Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
             _cacheValues: true
         },
-        /* Velocity's core animation method, later aliased to $.fn. */
+        /* Velocity's core animation method, subsequently aliased to $.fn. */
         animate: function () { /* Defined below. */ },
-        /* Set to 1 or 2 (most verbose) to log debug output to console. */
+        /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     });
 
-    /* Retrieve the appropriate scroll anchor and property name for this browser. Learn more: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
+    /* Retrieve the appropriate scroll anchor and property name for the browser. Learn more: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
     if (window.pageYOffset !== undefined) {
         velocity.State.scrollAnchor = window;
         velocity.State.scrollPropertyLeft = "pageXOffset";
@@ -217,6 +222,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
         Easing
     **************/
 
+    /* Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License */
     var generateBezier = (function () {
         function A (aA1, aA2) { 
             return 1.0 - 3.0 * aA2 + 3.0 * aA1;
@@ -237,7 +243,6 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             return 3.0 * A(aA1, aA2)*aT*aT + 2.0 * B(aA1, aA2) * aT + C(aA1);
         }
 
-        /* Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License */
         return function (mX1, mY1, mX2, mY2) {
             /* Must contain four arguments. */
             if (arguments.length !== 4) {
@@ -411,6 +416,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             }
         });
 
+        /* jQuery's easing generator for the object above. */
         $.each(baseEasings, function(name, easeIn) {
             velocity.Easings["easeIn" + name] = easeIn;
             velocity.Easings["easeOut" + name] = function(p) {
@@ -469,7 +475,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
             if (velocity.Easings[velocity.defaults.easing]) {
                 easing = velocity.defaults.easing;
             } else {
-                easing = "swing";
+                easing = DEFAULT_EASING;
             }
         }
 
@@ -481,7 +487,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
     *****************/
         
     /* The CSS object is a highly condensed and performant CSS stack that fully replaces jQuery's. It handles the validation, getting, and setting of both standard CSS properties and CSS property hooks. */
-    /* Note: A "CSS" shorthand is defined so that our code is easier to read. */
+    /* Note: A "CSS" shorthand is aliased so that our code is easier to read. */
     var CSS = velocity.CSS = {   
 
         /*************
@@ -1366,7 +1372,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                         /* If the drag option was passed in, successively increase/decrease (depending on the presense of options.backwards) the duration of each element's animation, using floors to prevent producing very short durations. */
                         if (options.drag) {
                             /* Default the duration of UI pack effects (callouts and transitions) to 1000ms instead of the usual default duration of 400ms. */
-                            options.duration = parseFloat(durationOriginal) || (/^(callout|transition)/.test(propertiesMap) ? 1000 : 400);
+                            options.duration = parseFloat(durationOriginal) || (/^(callout|transition)/.test(propertiesMap) ? 1000 : DEFAULT_DURATION);
 
                             /* For each element, take the greater duration of: A) animation completion percentage relative to the original duration, B) 75% of the original duration, or C) a 200ms fallback
                                (in case duration is already set to a low value). The end result is a baseline of 75% of the sequence's duration that increases/decreases as the end of the element set is approached. */
@@ -1479,8 +1485,9 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                Option: Delay
             ******************/
 
-            /* Velocity rolls its own delay function since jQuery doesn't have a utility alias for $.fn.delay() (and thus requires jQuery element creation, which we avoid since its overhead includes DOM querying). */
-            if (/^\d/.test(opts.delay)) {
+            /* Since queue:false doesn't respect the item's existing queue, we avoid injecting its delay here (it's set later on). */
+            /* Note: Velocity rolls its own delay function since jQuery doesn't have a utility alias for $.fn.delay() (and thus requires jQuery element creation, which we avoid since its overhead includes DOM querying). */
+            if (/^\d/.test(opts.delay) && opts.queue !== false) {
                 $.queue(element, opts.queue, function(next) {
                     /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
                     velocity.velocityQueueEntryFlag = true;
@@ -1501,7 +1508,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                     break;
 
                 case "normal":
-                    opts.duration = 400;
+                    opts.duration = DEFAULT_DURATION;
                     break;
 
                 case "slow":
@@ -1658,8 +1665,17 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                         $.data(element, NAME).opts.begin = null;
                         $.data(element, NAME).opts.complete = null;
 
+                        /* Since we're extending an opts object that has already been exteded with the defaults options object, we remove non-explicitly-defined properties that are auto-assigned values. */
+                        if (!options.easing) { 
+                            delete opts.easing;
+                        }
+
+                        if (!options.duration) { 
+                            delete opts.duration;
+                        }
+
                         /* The opts object used for reversal is an extension of the options object optionally passed into this reverse call plus the options used in the previous Velocity call. */
-                        opts = $.extend({}, $.data(element, NAME).opts, options);
+                        opts = $.extend({}, $.data(element, NAME).opts, opts);
 
                         /*************************************
                            Tweens Container Reconstruction
@@ -1677,7 +1693,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                                 lastTweensContainer[lastTween].startValue = lastTweensContainer[lastTween].currentValue = lastTweensContainer[lastTween].endValue;
                                 lastTweensContainer[lastTween].endValue = lastStartValue;
 
-                                /* Easing is the only call option that embeds into the individual tween data since it can be defined on a per-property basis. Accordingly, every property's easing value must
+                                /* Easing is the only option that embeds into the individual tween data (since it can be defined on a per-property basis). Accordingly, every property's easing value must
                                    be updated when an options object is passed in with a reverse call. The side effect of this extensibility is that all per-property easing values are forcefully reset to the new value. */
                                 if (options) {
                                     lastTweensContainer[lastTween].easing = opts.easing;
@@ -2217,9 +2233,14 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                 }
             }
 
-            /* When the queue option is set to false, the associated Velocity call is triggered immediately. */
+            /* When the queue option is set to false, the call skips the element's queue and fires immediately. */
             if (opts.queue === false) {
-                buildQueue();
+                /* Since this buildQueue call doesn't respect the element's existing queue (which is where a delay option would have been appended), we manually inject the delay property here with an explicit setTimeout. */
+                if (opts.delay) {
+                    setTimeout(buildQueue, opts.delay);
+                } else {
+                    buildQueue();
+                }
             /* Otherwise, the call undergoes element queueing as normal. */
             /* Note: To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for queuing logic. */
             } else {
