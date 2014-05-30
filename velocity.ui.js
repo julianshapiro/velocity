@@ -4,7 +4,7 @@
 
 /*!
 * velocity.ui.js: UI effects pack for Velocity. Load this after Velocity.
-* @version 0.1.1
+* @version 1.0.0
 * @docs http://velocityjs.org/#uiPack
 * @support <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: Full support.
 * @license Copyright Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
@@ -82,9 +82,41 @@
                     [ { scaleX: 1, scaleY: 1, rotateZ: 0 }, 0.20 ]
                 ]
             },
-            /* Animate.css */
             /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
             "transition.flipXIn": {
+                defaultDuration: 700,
+                calls: [ 
+                    [ { opacity: [ 1, 0 ], transformPerspective: [ 800, 800 ], rotateY: [ 0, -55 ] } ]
+                ],
+                reset: { transformPerspective: 0 }
+            },
+            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            "transition.flipXOut": {
+                defaultDuration: 700,
+                calls: [ 
+                    [ { opacity: [ 0, 1 ], transformPerspective: [ 800, 800 ], rotateY: 55 } ]
+                ],
+                reset: { opacity: [ 1, 1 ], transformPerspective: 0, rotateY: 0 }
+            },
+            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            "transition.flipYIn": {
+                defaultDuration: 700,
+                calls: [ 
+                    [ { opacity: [ 1, 0 ], transformPerspective: [ 800, 800 ], rotateX: [ 0, -35 ] } ]
+                ],
+                reset: { transformPerspective: 0 }
+            },
+            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            "transition.flipYOut": {
+                defaultDuration: 700,
+                calls: [ 
+                    [ { opacity: [ 0, 1 ], transformPerspective: [ 800, 800 ], rotateX: 25 } ]
+                ],
+                reset: { opacity: [ 1, 1 ], transformPerspective: 0, rotateX: 0 }
+            },
+            /* Animate.css */
+            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            "transition.flipBounceXIn": {
                 defaultDuration: 900,
                 calls: [ 
                     [ { opacity: [ 0.725, 0 ], transformPerspective: [ 400, 400 ], rotateY: [ -10, 90 ] }, 0.50 ],
@@ -95,17 +127,17 @@
             },
             /* Animate.css */
             /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
-            "transition.flipXOut": {
+            "transition.flipBounceXOut": {
                 defaultDuration: 800,
                 calls: [ 
                     [ { opacity: [ 0.9, 1 ], transformPerspective: [ 400, 400 ], rotateY: -10 }, 0.50 ],
                     [ { opacity: 0, rotateY: 90 }, 0.50 ]
                 ],
-                reset: { opacity: 1, transformPerspective: 0, rotateY: 0 }
+                reset: { opacity: [ 1, 1 ], transformPerspective: 0, rotateY: 0 }
             },
             /* Animate.css */
             /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
-            "transition.flipYIn": {
+            "transition.flipBounceYIn": {
                 defaultDuration: 850,
                 calls: [ 
                     [ { opacity: [ 0.725, 0 ], transformPerspective: [ 400, 400 ], rotateX: [ -10, 90 ] }, 0.50 ],
@@ -116,13 +148,13 @@
             },
             /* Animate.css */
             /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
-            "transition.flipYOut": {
+            "transition.flipBounceYOut": {
                 defaultDuration: 800,
                 calls: [ 
                     [ { opacity: [ 0.9, 1 ], transformPerspective: [ 400, 400 ], rotateX: -15 }, 0.50 ],
                     [ { opacity: 0, rotateX: 90 }, 0.50 ]
                 ],
-                reset: { opacity: 1, transformPerspective: 0, rotateX: 0 }
+                reset: { opacity: [ 1, 1 ], transformPerspective: 0, rotateX: 0 }
             },
             /* Magic.css */
             "transition.swoopIn": {
@@ -158,26 +190,26 @@
                 reset: { opacity: [ 1, 1 ], scaleX: 1, scaleY: 1, rotateY: 0 }
             },
             "transition.shrinkIn": {
-                defaultDuration: 750,
+                defaultDuration: 700,
                 calls: [ 
                     [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], transformOriginZ: [ 0, 0 ], scaleX: [ 1, 1.625 ], scaleY: [ 1, 1.625 ], translateZ: 0 } ]
                 ]
             },
             "transition.shrinkOut": {
-                defaultDuration: 750,
+                defaultDuration: 700,
                 calls: [ 
                     [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], transformOriginZ: [ 0, 0 ], scaleX: 1.35, scaleY: 1.35, translateZ: 0 } ]
                 ],
                 reset: { opacity: [ 1, 1 ], scaleX: 1, scaleY: 1 }
             },
             "transition.expandIn": {
-                defaultDuration: 750,
+                defaultDuration: 700,
                 calls: [ 
                     [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], transformOriginZ: [ 0, 0 ], scaleX: [ 1, 0.625 ], scaleY: [ 1, 0.625 ], translateZ: 0 } ]
                 ]
             },
             "transition.expandOut": {
-                defaultDuration: 750,
+                defaultDuration: 700,
                 calls: [ 
                     [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], transformOriginZ: [ 0, 0 ], scaleX: 0.5, scaleY: 0.5, translateZ: 0 } ]
                 ],
