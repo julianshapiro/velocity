@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.16
+* @version 0.0.17
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */    
@@ -659,7 +659,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
 
         /* Normalizations standardize CSS property manipulation by pollyfilling browser-specific implementations (e.g. opacity) and reformatting special properties (e.g. clip, rgba) to look like standard ones. */
         Normalizations: {
-            /* Normalizations are passed a normalization vector (either the property's name, its extracted value, or its injected value), the targeted element (which may need to be queried), and the targeted property value. */
+            /* Normalizations are passed a normalization target (either the property's name, its extracted value, or its injected value), the targeted element (which may need to be queried), and the targeted property value. */
             registered: {
                 clip: function(type, element, propertyValue) {
                     switch (type) {
@@ -676,10 +676,8 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                                 /* Remove the "rect()" wrapper. */
                                 extracted = propertyValue.toString().match(CSS.RegEx.valueUnwrap);
 
-                                if (extracted) {
-                                    /* Strip off commas. */
-                                    extracted = extracted[1].replace(/,(\s+)?/g, " ");
-                                }
+                                /* Strip off commas. */
+                                extracted = extracted ? extracted[1].replace(/,(\s+)?/g, " ") : propertyValue;
                             }
 
                             return extracted;
@@ -830,7 +828,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                 var colorProperties = [ "color", "backgroundColor", "borderColor", "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor" ];
 
                 for (var i = 0, colorPropertiesLength = colorProperties.length; i < colorPropertiesLength; i++) {
-                    /* Copyright Tim Down: http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb */
+                    /* Hex to RGB conversion. Copyright Tim Down: http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb */
                     function hexToRgb (hex) {
                         var shortformRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
                             longformRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i,
@@ -1122,7 +1120,7 @@ Note: The biggest cause of both codebase bloat and codepath obfuscation in Veloc
                 var normalizedPropertyName,
                     normalizedPropertyValue;
 
-                normalizedPropertyName = CSS.Normalizations.registered[property]("name", element);                
+                normalizedPropertyName = CSS.Normalizations.registered[property]("name", element);     
 
                 /* Transform values are calculated via normalization extraction (see below), which checks against the element's transformCache. At no point do transform GETs ever actually query the DOM; initial stylesheet values are never processed.
                    This is because parsing 3D transform matrices is not always accurate and would bloat our codebase; thus, normalization extraction defaults initial transform values to their zero-values (e.g. 1 for scaleX and 0 for translateX). */
