@@ -15,11 +15,11 @@ Package name is *velocity-animate*.
 
 ###**Resources**
 
-- **Workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
-
 - **Speed:** http://davidwalsh.name/css-js-animation
 
 - **Codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
+
+- **Workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
 ###**Comparisons**
 
