@@ -204,7 +204,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             loop: false,
             delay: false,
             mobileHA: true,
-            promise: false,
+            promise: true,
             /* Set to false to prevent property values from being cached between immediately consecutive Velocity-initiated calls. See Value Transferring for further details. */
             _cacheValues: true
         },
@@ -1423,10 +1423,12 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                     /* Note: The jQuery call chain is kept intact by returning the complete element set. */
                     return promise || elementsOriginal;
                 } else {
-                    console.log("First argument was not a property map, a known action, or a registered sequence. Aborting.")
+                    var actionError = "First argument was not a property map, a known action, or a registered sequence. Aborting.";
+
+                    console.log(actionError);
 
                     if (promise) {
-                        rejecter(elements);
+                        rejecter(new Error(actionError));
                         return promise;
                     }
 
@@ -2676,6 +2678,8 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
     var framework = window.jQuery || window.Zepto;
 
     if (framework) {
+        /* Disable returning a promise by default, and respect the above frameworks' fluent API. */
+        Velocity.defaults.promise = false;
         /* Assign the object function to Velocity's animate() method. */
         framework.fn.velocity = Velocity.animate;
 
