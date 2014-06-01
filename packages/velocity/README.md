@@ -12,13 +12,13 @@ https://www.npmjs.org/package/velocity-animate
 
 ###**Resources**
 
-**[ NEW ] Velocity's UI Pack:** https://www.youtube.com/watch?v=CdwvR6a39Tg&hd=1
+**[ NEW ] UI Pack:** https://www.youtube.com/watch?v=CdwvR6a39Tg&hd=1
 
-**Velocity's workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
+**Workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
-**Velocity's speed:** http://davidwalsh.name/css-js-animation
+**Speed:** http://davidwalsh.name/css-js-animation
 
-**Velocity's codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
+**Codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
 
 ###**Comparisons**
 
