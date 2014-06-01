@@ -6,7 +6,7 @@
 Package name is *velocity*.
 
 **NPM:**
-https://www.npmjs.org/package/velocity-animate
+Package name is *velocity-animate*.
 
 ###**Resources**
 
