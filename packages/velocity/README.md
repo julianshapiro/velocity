@@ -8,8 +8,6 @@ Package name is *velocity*.
 **NPM:**
 https://www.npmjs.org/package/velocity-animate
 
-[MIT License](LICENSE). © Julian Shapiro (http://twitter.com/shapiro).
-
 ###**Resources**
 
 **[ NEW ] UI Pack:** https://www.youtube.com/watch?v=CdwvR6a39Tg&hd=1
@@ -28,3 +26,6 @@ GSAP is a fast, multi-purpose *animation platform*. It inspired me to pursue the
 
 Velocity is a very fast and lightweight tool for dramatically improving *UI animation performance and workflow*.
 
+====
+
+[MIT License](LICENSE). © Julian Shapiro (http://twitter.com/shapiro).
