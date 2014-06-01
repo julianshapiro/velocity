@@ -1,6 +1,6 @@
 ##Velocity.js
 
-**Documentation:** http://VelocityJS.org
+**Docs:** http://VelocityJS.org
 
 **Bower:**
 Package name is *velocity*.
