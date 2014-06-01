@@ -1,8 +1,9 @@
 {
   "name": "velocity-animate",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "Accelerated JavaScript animation.",
   "keywords": [
+    "velocity",
     "animation",
     "jquery",
     "animate",
