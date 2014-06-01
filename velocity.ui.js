@@ -4,7 +4,7 @@
 
 /*!
 * velocity.ui.js: UI effects pack for Velocity. Load this after Velocity.
-* @version 1.0.0
+* @version 1.0.1
 * @docs http://velocityjs.org/#uiPack
 * @support <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: Full support.
 * @license Copyright Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
@@ -47,10 +47,10 @@
             "callout.flash": {
                 defaultDuration: 1100,
                 calls: [ 
-                    [ { opacity: [ 0, 1 ] }, 0.25 ],
-                    [ { opacity: 1 }, 0.25 ],
-                    [ { opacity: 0 }, 0.25 ],
-                    [ { opacity: 1 }, 0.25 ]
+                    [ { opacity: [ 0, "swing", 1 ] }, 0.25 ],
+                    [ { opacity: [ 1, "swing" ] }, 0.25 ],
+                    [ { opacity: [ 0, "swing" ] }, 0.25 ],
+                    [ { opacity: [ 1, "swing" ] }, 0.25 ]
                 ]
             },
             /* Animate.css */
