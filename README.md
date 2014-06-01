@@ -8,9 +8,12 @@ Package name is *velocity*.
 **NPM:**
 Package name is *velocity-animate*.
 
-###**Resources**
+###**Updates**
 
-**[ NEW ] UI Pack:** https://www.youtube.com/watch?v=CdwvR6a39Tg&hd=1
+- UI Pack: http://velocityjs.org/#uiPack
+- Spring physics: http://velocityjs.org/#easing
+
+###**Resources**
 
 **Workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
