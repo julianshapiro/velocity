@@ -13,6 +13,7 @@ Package name is *velocity-animate*.
 - UI Pack: http://velocityjs.org/#uiPack
 - Spring physics: http://velocityjs.org/#easing
 - Syntactic sugar: https://github.com/julianshapiro/velocity/issues/76 
+- [ Coming Soon ]: jQuery dependency removal.
 
 ###**Resources**
 
