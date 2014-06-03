@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.18
+* @version 0.0.19
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */    
@@ -123,7 +123,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
     /* Determine if variable is a wrapped jQuery or Zepto element. */
     function isWrapped (elements) {
-        return elements.jquery || (window.Zepto && window.Zepto.zepto.isZ(elements))
+        return elements && (elements.jquery || (window.Zepto && window.Zepto.zepto.isZ(elements)));
     }
 
     /******************
@@ -162,7 +162,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
        which is later assigned to $.fn (if jQuery or Zepto are present). Accordingly, Velocity can both act on wrapped DOM elements and stand alone for targeting raw DOM elements. */
     /* Note: The global object also doubles as a publicly-accessible data store for the purposes of unit testing. (Capitalized objects are meant for private use, lowercase objects are meant for public use.) */
     /* Note: We alias both the lowercase and uppercase variants of "velocity" to minimize user issues due to the lowercase nature of the $.fn extension. */ 
-    var Velocity = global.Velocity = global.velocity = $.extend(global.Velocity || {}, {
+    var Velocity = global.Velocity = global.velocity = {
         /* Container for page-wide Velocity state data. */
         State: {
             /* Detect mobile devices to determine if mobileHA should be turned on. */
@@ -186,7 +186,8 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         },
         /* Velocity's custom CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
-        Utilities: { /* Defined by Velocity's optional jQuery shim. */ },
+        /* Defined by Velocity's optional jQuery shim. */
+        Utilities: window.jQuery ? {} : $,
         /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). */
         Sequences: {
             /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
@@ -211,7 +212,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         animate: function () { /* Defined below. */ },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
-    });
+    };
 
     /* Retrieve the appropriate scroll anchor and property name for the browser. Learn more: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
     if (window.pageYOffset !== undefined) {
@@ -1273,14 +1274,14 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         *************************/
 
         /* To allow for expressive CoffeeScript code, Velocity supports an alternative syntax in which "properties" and "options" objects are defined on a container object that's passed in as Velocity's sole argument. */
-        var syntacticSugar = (arguments[0] && arguments[0].properties !== undefined),
+        var syntacticSugar = (arguments[0] && $.isPlainObject(arguments[0].properties)),
             /* When Velocity is called via the utility function ($.Velocity.animate()/Velocity.animate()), elements are explicitly passed in as the first parameter. Thus, argument positioning varies. We normalize them here. */
             elementWrapped = isWrapped(this),
             argumentIndex;
 
         var elements,
             propertiesMap,
-            options;
+            options;            
         
         /* Detect jQuery/Zepto elements being animated via the $.fn method. */
         if (elementWrapped) {
@@ -1290,7 +1291,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         } else {
             elements = syntacticSugar ? arguments[0].elements : arguments[0];
             /* To guard from user errors, extract the raw DOM element(s) from the wrapped object if one was mistakenly passed into the utility function. */
-            elements = isWrapped(elements) ? [].slice.call(elements) : elements;                
+            elements = isWrapped(elements) ? [].slice.call(elements) : elements; 
 
             argumentIndex = 1;
         }
@@ -2669,7 +2670,6 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
     /* slideUp, slideDown */
     $.each([ "Down", "Up" ], function(i, direction) {
-        /* Generate the slide sequences dynamically in order to minimize code redundancy. */
         Velocity.Sequences["slide" + direction] = function (element, options) {
             var opts = $.extend({}, options),
                 originalValues = {
@@ -2687,12 +2687,15 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 complete = opts.complete,
                 isHeightAuto = false;
 
-            /* Unless the user is trying to override the display option, show the element before slideDown begins and hide the element after slideUp completes. */
-            if (direction === "Down") {
-                /* All elements subjected to sliding down are set to the "block" display value (-- )as opposed to an element-appropriate block/inline distinction) because inline elements cannot actually have their dimensions modified. */
-                opts.display = opts.display || "block";
-            } else {
-                opts.display = opts.display || "none";
+            /* Allow the user to set display to null to bypass display toggling. */
+            if (opts.display !== null) {
+                /* Unless the user is trying to override the display option, show the element before slideDown begins and hide the element after slideUp completes. */
+                if (direction === "Down") {
+                    /* All elements subjected to sliding down are set to the "block" display value (-- )as opposed to an element-appropriate block/inline distinction) because inline elements cannot actually have their dimensions modified. */
+                    opts.display = opts.display || Velocity.CSS.Values.getDisplayType(element);
+                } else {
+                    opts.display = opts.display || "none";
+                }
             }
 
             /* Begin callback. */
@@ -2789,7 +2792,6 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
     /* fadeIn, fadeOut */
     $.each([ "In", "Out" ], function(i, direction) {
-        /* Generate the slide sequences dynamically in order to minimize code redundancy. */
         Velocity.Sequences["fade" + direction] = function (element, options, elementsIndex, elementsSize) {
             var opts = $.extend({}, options),
                 propertiesMap = {
