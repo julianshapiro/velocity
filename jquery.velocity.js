@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.19
+* @version 0.0.20
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */    
@@ -200,7 +200,9 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             queue: "",
             duration: DEFAULT_DURATION,
             easing: DEFAULT_EASING,
+            begin: null,
             complete: null,
+            progress: null,
             display: null,
             loop: false,
             delay: false,
@@ -1274,28 +1276,33 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         *************************/
 
         /* To allow for expressive CoffeeScript code, Velocity supports an alternative syntax in which "properties" and "options" objects are defined on a container object that's passed in as Velocity's sole argument. */
-        var syntacticSugar = (arguments[0] && $.isPlainObject(arguments[0].properties)),
+        /* Note: Some Android browsers automatically populate arguments with a "properties" object. We detect it by checking for its "names" property. */
+        var syntacticSugar = (arguments[0] && $.isPlainObject(arguments[0].properties) && !arguments[0].properties.names),
             /* When Velocity is called via the utility function ($.Velocity.animate()/Velocity.animate()), elements are explicitly passed in as the first parameter. Thus, argument positioning varies. We normalize them here. */
-            elementWrapped = isWrapped(this),
+            elementsWrapped,
             argumentIndex;
 
         var elements,
             propertiesMap,
-            options;            
-        
+            options;     
+
         /* Detect jQuery/Zepto elements being animated via the $.fn method. */
-        if (elementWrapped) {
-            elements = this;
+        if (isWrapped(this)) {
             argumentIndex = 0;
+            elements = this;
+            elementsWrapped = this;
         /* Otherwise, raw elements are being animated via the utility function. */
         } else {
-            elements = syntacticSugar ? arguments[0].elements : arguments[0];
-            /* To guard from user errors, extract the raw DOM element(s) from the wrapped object if one was mistakenly passed into the utility function. */
-            elements = isWrapped(elements) ? [].slice.call(elements) : elements; 
-
             argumentIndex = 1;
+            elements = syntacticSugar ? arguments[0].elements : arguments[0];
         }
- 
+
+        elements = isWrapped(elements) ? [].slice.call(elements) : elements; 
+
+        if (!elements) {
+            return;
+        }
+
         if (syntacticSugar) {
             propertiesMap = arguments[0].properties;
             options = arguments[0].options;
@@ -1399,11 +1406,11 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
                     /* Since the animation logic resides within the sequence's own code, abort the remainder of this call. (The performance overhead up to this point is virtually non-existant.) */
                     /* Note: The jQuery call chain is kept intact by returning the complete element set. */
-                    return elementsOriginal;
+                    return elementsWrapped || elementsOriginal;
                 } else {
                     console.log("First argument was not a property map, a known action, or a registered sequence. Aborting.")
                     
-                    return elements;
+                    return elementsWrapped || elements;
                 }
         }
 
@@ -1540,13 +1547,20 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             opts.easing = getEasing(opts.easing, opts.duration);
 
             /**********************
-               Option: Complete
+               Option: Callbacks
             **********************/
 
-            /* The complete option must be a function. Otherwise, default to null. */
-            /* Note: The complete option is the only option that is processed on a call-wide basis since it is fired once per call -- not once per element. */
-            if (options && options.complete && !isFunction(options.complete)) {
-                options.complete = null;
+            /* Callbacks must functions. Otherwise, default to null. */
+            if (opts.begin && !isFunction(opts.begin)) {
+                opts.begin = null;
+            }
+
+            if (opts.progress && !isFunction(opts.progress)) {
+                opts.progress = null;
+            }
+
+            if (opts.complete && !isFunction(opts.complete)) {
+                opts.complete = null;
             }
 
             /********************
@@ -1576,15 +1590,14 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
                the call array is pushed to Velocity.State.calls for live processing by the requestAnimationFrame tick. */
             function buildQueue(next) {
+
                 /*******************
                    Option: Begin
                 *******************/
 
                 /* The begin callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
-                if (elementsIndex === 0 && options && isFunction(options.begin)) {
-                    var rawElements = elements.jquery ? elements.get() : elements;
-
-                    options.begin.call(rawElements, rawElements);
+                if (opts.begin && elementsIndex === 0) {
+                    opts.begin.call(elements, elements);
                 }
 
                 /*****************************************
@@ -2281,21 +2294,18 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
         /**************************
            Element Set Iteration
-        **************************/ 
+        **************************/
 
-        /* Determine elements' type, then individually process each element in the set via processElement(). */
-        if (elementWrapped) {
-            elements.each(processElement);
-        /* Process a single raw DOM element. Check for a nodeType to avoid throwing errors due to invalid input. */
-        } else if (elementsLength === 1 && elements.nodeType) {
+        /* If the "nodeType" property exists on the elements variable, we're animating a single element. */
+        if (elements.nodeType) {
             processElement.call(elements);
-        /* Otherwise, process a set of raw DOM elements. */
+        /* Otherwise, we're animating an element set. */
         } else {
-            for (var rawElementsIndex in elements) {
-                if (elements[rawElementsIndex].nodeType) {
-                    processElement.call(elements[rawElementsIndex]);
-                }
-            }
+            $.each(elements, function(i, element) {
+                if (element.nodeType) {
+                    processElement.call(element);
+                } 
+            });
         }
 
         /********************
@@ -2325,20 +2335,16 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                     reverseOptions.complete = opts.complete;
                 }
 
-                if (elementWrapped) {
-                    elements.velocity("reverse", reverseOptions);
-                } else {
-                    Velocity.animate(elements, "reverse", reverseOptions);
-                }
+                Velocity.animate(elements, "reverse", reverseOptions);
             }
         }
 
-        /**************
-           Chaining
-        **************/
+        /***************
+            Chaining
+        ***************/
 
-        /* Return the processed elements back to the call chain. */
-        return elements;
+        /* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
+        return elementsWrapped || elements;
     };
 
     /*****************************
@@ -2515,6 +2521,11 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                     Velocity.State.calls[i][2].display = false;
                 }
 
+                /* Pass the elements and the timing data into the progress callback. */
+                if (opts.progress) {
+                    opts.progress.call(callContainer[1], callContainer[1], percentComplete, Math.max(0, (timeStart + opts.duration) - timeCurrent), timeStart);
+                }
+
                 /* If this call has finished tweening, pass its index to completeCall() to handle call cleanup. */
                 if (percentComplete === 1) {
                     completeCall(i);
@@ -2592,21 +2603,19 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 }
             }
 
-            /**********************
+            /*********************
                Option: Complete
-            **********************/
+            *********************/
 
             /* The complete callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
             /* Note: If this is a loop, complete callback firing is handled by the loop's final reverse call -- we skip handling it here. */
-            if ((i === callLength - 1) && !opts.loop && opts.complete) {    
-                var rawElements = elements.jquery ? elements.get() : elements;
-
-                opts.complete.call(rawElements, rawElements); 
+            if (opts.complete && !opts.loop && (i === callLength - 1)) {   
+                opts.complete.call(elements, elements); 
             }
 
-            /****************
+            /***************
                Dequeueing
-            ****************/
+            ***************/
 
             /* Fire the next call in the queue so long as this call's queue wasn't set to false (to trigger a parallel animation), which would have already caused the next call to fire. */
             /* Note: Even if the end of the animation queue has been reached, $.dequeue() must still be called in order to completely clear jQuery's animation queue. */
@@ -2671,6 +2680,12 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
     /* slideUp, slideDown */
     $.each([ "Down", "Up" ], function(i, direction) {
         Velocity.Sequences["slide" + direction] = function (element, options) {
+            /* Don't re-run a slide sequence if the element is already at its final display value. */
+            //if ((direction === "Up" && Velocity.CSS.getPropertyValue(element, "display") === 0) ||
+            //    (direction === "Down" && Velocity.CSS.getPropertyValue(element, "display") !== 0)) {
+            //    return;
+            //}
+
             var opts = $.extend({}, options),
                 originalValues = {
                     height: null,
