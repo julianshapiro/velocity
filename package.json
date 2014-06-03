@@ -32,7 +32,7 @@
     "jquery.velocity.js"
   ],
   "dependencies": {
-    "jquery": ">= 1.4.0"
+    "jquery": ">= 1.4.3"
   },
   "devDependencies": {
     "grunt": "^0.4.4",
