@@ -29,7 +29,8 @@
     "url": "http://github.com/julianshapiro/velocity.git"
   },
   "files": [
-    "jquery.velocity.js"
+    "jquery.velocity.js",
+    "velocity.ui.js"
   ],
   "dependencies": {
     "jquery": ">= 1.4.3"
