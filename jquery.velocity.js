@@ -4,10 +4,10 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.20
+* @version 0.0.21
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
-*/    
+*/
 
 /****************
      Summary
@@ -32,7 +32,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
 /* NOTICE: Despite the ensuing code indicating that Velocity works *without* jQuery and *with* Zepto, this support has not yet landed. */
 
-;(function (global, window, document, undefined) {  
+;(function (global, window, document, undefined) {
 
     /*****************
         Constants
@@ -47,7 +47,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
     *********************/
 
     /* IE detection. Gist: https://gist.github.com/julianshapiro/9098609 */
-    var IE = (function() { 
+    var IE = (function() {
         if (document.documentMode) {
             return document.documentMode;
         } else {
@@ -68,10 +68,10 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
     })();
 
     /* RAF polyfill. Gist: https://gist.github.com/julianshapiro/9497513 */
-    var requestAnimationFrame = window.requestAnimationFrame || (function() { 
+    var requestAnimationFrame = window.requestAnimationFrame || (function() {
         var timeLast = 0;
 
-        return window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || function(callback) {                
+        return window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || function(callback) {
             var timeCurrent = (new Date()).getTime(),
                 timeDelta;
 
@@ -114,7 +114,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
     /* Determine if a variable is a nodeList. Copyright Martin Bohm. MIT License: https://gist.github.com/Tomalak/818a78a226a0738eaade */
     function isNodeList (nodes) {
         var stringRepresentation = Object.prototype.toString.call(nodes);
-     
+
         return typeof nodes === "object" &&
             /^\[object (HTMLCollection|NodeList|Object)\]$/.test(stringRepresentation) &&
             nodes.length !== undefined &&
@@ -144,7 +144,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         if (!window.jQuery) {
             throw new Error("Velocity: For IE<=7, Velocity falls back to jQuery, which must first be loaded.");
         } else {
-            window.jQuery.fn.velocity = window.jQuery.fn.animate; 
+            window.jQuery.fn.velocity = window.jQuery.fn.animate;
 
             /* Now that $.fn.velocity is aliased, abort this Velocity declaration. */
             return;
@@ -161,7 +161,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
     /* Velocity registers itself onto a global container (window.jQuery || window.Zepto || window) so that that certain features are accessible beyond just a per-element scope. This master object contains an .animate() method,
        which is later assigned to $.fn (if jQuery or Zepto are present). Accordingly, Velocity can both act on wrapped DOM elements and stand alone for targeting raw DOM elements. */
     /* Note: The global object also doubles as a publicly-accessible data store for the purposes of unit testing. (Capitalized objects are meant for private use, lowercase objects are meant for public use.) */
-    /* Note: We alias both the lowercase and uppercase variants of "velocity" to minimize user issues due to the lowercase nature of the $.fn extension. */ 
+    /* Note: We alias both the lowercase and uppercase variants of "velocity" to minimize user issues due to the lowercase nature of the $.fn extension. */
     var Velocity = global.Velocity = global.velocity = {
         /* Container for page-wide Velocity state data. */
         State: {
@@ -233,7 +233,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
     /* Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License */
     var generateBezier = (function () {
-        function A (aA1, aA2) { 
+        function A (aA1, aA2) {
             return 1.0 - 3.0 * aA2 + 3.0 * aA1;
         }
 
@@ -347,7 +347,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 path = [0],
                 time_lapsed = 0,
                 tolerance = 1 / 10000,
-                DT = 16 / 1000, 
+                DT = 16 / 1000,
                 have_duration, dt, last_state;
 
             tension = parseFloat(tension) || 600;
@@ -390,7 +390,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
     /* Velocity embeds the named easings from jQuery, jQuery UI, and CSS3 in order to save users from having to include additional libraries on their page. */
     (function () {
         /* jQuery's default named easing types. */
-        Velocity.Easings["linear"] = function(p) { 
+        Velocity.Easings["linear"] = function(p) {
             return p;
         };
         Velocity.Easings["swing"] = function(p) {
@@ -455,7 +455,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
         Velocity.Easings["spring"] = function(p) {
             return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
-        };    
+        };
     })();
 
     /* Determine the appropriate easing type given an easing input. */
@@ -494,10 +494,10 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
     /*****************
         CSS Stack
     *****************/
-        
+
     /* The CSS object is a highly condensed and performant CSS stack that fully replaces jQuery's. It handles the validation, getting, and setting of both standard CSS properties and CSS property hooks. */
     /* Note: A "CSS" shorthand is aliased so that our code is easier to read. */
-    var CSS = Velocity.CSS = {   
+    var CSS = Velocity.CSS = {
 
         /*************
             RegEx
@@ -512,7 +512,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         },
 
         /************
-            Hooks 
+            Hooks
         ************/
 
         /* Hooks allow a subproperty (e.g. "boxShadowBlur") of a compound-value CSS property (e.g. "boxShadow: X Y Blur Spread Color") to be animated as if it were a discrete property. */
@@ -608,7 +608,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             /* Convert any rootPropertyValue, null or otherwise, into a space-delimited list of hook values so that the targeted hook can be injected or extracted at its standard position. */
             cleanRootPropertyValue: function(rootProperty, rootPropertyValue) {
                 /* If the rootPropertyValue is wrapped with "rgb()", "clip()", etc., remove the wrapping to normalize the value before manipulation. */
-                if (CSS.RegEx.valueUnwrap.test(rootPropertyValue)) {                        
+                if (CSS.RegEx.valueUnwrap.test(rootPropertyValue)) {
                     rootPropertyValue = rootPropertyValue.match(CSS.Hooks.RegEx.valueUnwrap)[1];
                 }
 
@@ -621,7 +621,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 return rootPropertyValue;
             },
             /* Extracted the hook's value from its root property's value. This is used to get the starting value of an animating hook. */
-            extractValue: function (fullHookName, rootPropertyValue) {  
+            extractValue: function (fullHookName, rootPropertyValue) {
                 var hookData = CSS.Hooks.registered[fullHookName];
 
                 if (hookData) {
@@ -640,7 +640,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             /* Inject the hook's value into its root property's value. This is used to piece back together the root property once Velocity has updated one of its individually hooked values through tweening. */
             injectValue: function (fullHookName, hookValue, rootPropertyValue) {
                 var hookData = CSS.Hooks.registered[fullHookName];
-                        
+
                 if (hookData) {
                     var hookRoot = hookData[0],
                         hookPosition = hookData[1],
@@ -658,12 +658,12 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 } else {
                     /* If the provided fullHookName isn't a registered hook, return the rootPropertyValue that was passed in. */
                     return rootPropertyValue;
-                }   
+                }
             }
         },
 
         /*******************
-           Normalizations 
+           Normalizations
         *******************/
 
         /* Normalizations standardize CSS property manipulation by pollyfilling browser-specific implementations (e.g. opacity) and reformatting special properties (e.g. clip, rgba) to look like standard ones. */
@@ -720,12 +720,12 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                                 element.style.zoom = 1;
 
                                 /* Setting the filter property on elements with certain font property combinations can result in a highly unappealing ultra-bolding effect. There's no way to remedy this throughout a tween,
-                                   but dropping the value altogether (when opacity hits 1) at leasts ensures that the glitch is gone post-tweening. */ 
+                                   but dropping the value altogether (when opacity hits 1) at leasts ensures that the glitch is gone post-tweening. */
                                 if (parseFloat(propertyValue) >= 1) {
                                     return "";
                                 } else {
                                   /* As per the filter property's spec, convert the decimal value to a whole number and wrap the value. */
-                                  return "alpha(opacity=" + parseInt(parseFloat(propertyValue) * 100, 10) + ")";  
+                                  return "alpha(opacity=" + parseInt(parseFloat(propertyValue) * 100, 10) + ")";
                                 }
                         }
                     /* With all other browsers, normalization is not required; return the same values that were passed in. */
@@ -754,7 +754,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 *****************/
 
                 /* Transforms are the subproperties contained by the CSS "transform" property. Transforms must undergo normalization so that they can be referenced in a properties map by their individual names. */
-                /* Note: When transforms are "set", they are actually assigned to a per-element transformCache. When all transform setting is complete complete, CSS.flushTransformCache() must be manually called to flush the values to the DOM. 
+                /* Note: When transforms are "set", they are actually assigned to a per-element transformCache. When all transform setting is complete complete, CSS.flushTransformCache() must be manually called to flush the values to the DOM.
                    Transform setting is batched in this way to improve performance: the transform style only needs to be updated once when multiple transform subproperties are being animated simultaneously. */
                 var transformProperties = [ "translateX", "translateY", "scale", "scaleX", "scaleY", "skewX", "skewY", "rotateZ" ];
 
@@ -764,7 +764,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                     /* Append 3D transform properties onto transformProperties. */
                     /* Note: Since the standalone CSS "perspective" property and the CSS transform "perspective" subproperty share the same name, the latter is given a unique token within Velocity: "transformPerspective". */
                     transformProperties = transformProperties.concat([ "transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY" ]);
-                } 
+                }
 
                 for (var i = 0, transformPropertiesLength = transformProperties.length; i < transformPropertiesLength; i++) {
                     /* Wrap the dynamically generated normalization function in a new scope so that transformName's value is paired with its respective function. (Otherwise, all functions would take the final for loop's transformName.) */
@@ -789,7 +789,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                                 case "inject":
                                     var invalid = false;
 
-                                    /* If an individual transform property contains an unsupported unit type, the browser ignores the *entire* transform property. 
+                                    /* If an individual transform property contains an unsupported unit type, the browser ignores the *entire* transform property.
                                        Thus, protect users from themselves by skipping setting for transform values supplied with invalid unit types. */
                                     /* Switch on the base transform type; ignore the axis by removing the last letter from the transform's name. */
                                     switch (transformName.substr(0, transformName.length - 1)) {
@@ -829,10 +829,10 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 }
 
                 /*************
-                    Colors    
+                    Colors
                 *************/
 
-                /* Since Velocity only animates a single numeric value per property, color animation is achieved by hooking the individual RGBA components of CSS color properties. 
+                /* Since Velocity only animates a single numeric value per property, color animation is achieved by hooking the individual RGBA components of CSS color properties.
                    Accordingly, color values must be normalized (e.g. "#ff0000", "red", and "rgb(255, 0, 0)" ==> "255 0 0 1") so that their components can be injected/extracted by CSS.Hooks logic. */
                 var colorProperties = [ "color", "backgroundColor", "borderColor", "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor" ];
 
@@ -936,13 +936,13 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         },
 
         /************************
-           CSS Property Names 
+           CSS Property Names
         ************************/
 
         Names: {
             /* Camelcase a property name into its JavaScript notation (e.g. "background-color" ==> "backgroundColor"). Camelcasing is used to normalize property names between and across calls. */
             camelCase: function (property) {
-                return property.replace(/-(\w)/g, function (match, subMatch) { 
+                return property.replace(/-(\w)/g, function (match, subMatch) {
                     return subMatch.toUpperCase();
                 });
             },
@@ -982,7 +982,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         },
 
         /************************
-           CSS Property Values 
+           CSS Property Values
         ************************/
 
         Values: {
@@ -1034,7 +1034,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             function computePropertyValue (element, property) {
                 /* When box-sizing isn't set to border-box, height and width style values are incorrectly computed when an element's scrollbars are visible (which expands the element's dimensions). Thus, we defer
                    to the more accurate offsetHeight/Width property, which includes the total dimensions for interior, border, padding, and scrollbar. We subtract border and padding to get the sum of interior + scrollbar. */
-                
+
                 var computedValue = 0;
 
                 /* IE<=8 doesn't support window.getComputedStyle, thus we defer to jQuery, which has an extensive array of hacks to accurately retrieve IE8 property values.
@@ -1051,7 +1051,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                             return element.offsetWidth - (parseFloat(CSS.getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingRight")) || 0);
                         }
                     }
-                    
+
                     var computedStyle;
 
                     /* For elements that Velocity hasn't been called on directly (e.g. when Velocity queries the DOM on behalf of a parent of an element its animating), perform a direct getComputedStyle lookup since the object isn't cached. */
@@ -1070,13 +1070,13 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                         property = "borderTopColor";
                     }
 
-                    /* IE9 has a bug in which the "filter" property must be accessed from computedStyle using the getPropertyValue method instead of a direct property lookup. 
+                    /* IE9 has a bug in which the "filter" property must be accessed from computedStyle using the getPropertyValue method instead of a direct property lookup.
                        The getPropertyValue method is slower than a direct lookup, which is why we avoid it by default. */
                     if (IE === 9 && property === "filter") {
                         computedValue = computedStyle.getPropertyValue(property); /* GET */
                     } else {
                         computedValue = computedStyle[property];
-                    } 
+                    }
 
                     /* Fall back to the property's style value (if defined) when computedValue returns nothing, which can happen when the element hasn't been painted. */
                     if (computedValue === "" || computedValue === null) {
@@ -1125,15 +1125,15 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
             /* If this is a normalized property (e.g. "opacity" becomes "filter" in <=IE8) or "translateX" becomes "transform"), normalize the property's name and value, and handle the special case of transforms. */
             /* Note: Normalizing a property is mutually exclusive from hooking a property since hook-extracted values are strictly numerical and therefore do not require normalization extraction. */
-            } else if (CSS.Normalizations.registered[property]) {  
+            } else if (CSS.Normalizations.registered[property]) {
                 var normalizedPropertyName,
                     normalizedPropertyValue;
 
-                normalizedPropertyName = CSS.Normalizations.registered[property]("name", element);     
+                normalizedPropertyName = CSS.Normalizations.registered[property]("name", element);
 
                 /* Transform values are calculated via normalization extraction (see below), which checks against the element's transformCache. At no point do transform GETs ever actually query the DOM; initial stylesheet values are never processed.
                    This is because parsing 3D transform matrices is not always accurate and would bloat our codebase; thus, normalization extraction defaults initial transform values to their zero-values (e.g. 1 for scaleX and 0 for translateX). */
-                if (normalizedPropertyName !== "transform") {                    
+                if (normalizedPropertyName !== "transform") {
                     normalizedPropertyValue = computePropertyValue(element, CSS.Names.prefixCheck(normalizedPropertyName)[0]); /* GET */
 
                     /* If the value is a CSS null-value and this property has a hook template, use that zero-value template so that hooks can be extracted from it. */
@@ -1153,7 +1153,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             /* Since property lookups are for animation purposes (which entails computing the numeric delta between start and end values), convert CSS null-values to an integer of value 0. */
             if (CSS.Values.isCSSNullValue(propertyValue)) {
                 propertyValue = 0;
-            }            
+            }
 
             if (Velocity.debug >= 2) console.log("Get " + property + ": " + propertyValue);
 
@@ -1162,7 +1162,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
         /* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
         setPropertyValue: function(element, property, propertyValue, rootPropertyValue, scrollData) {
-            var propertyName = property;   
+            var propertyName = property;
 
             /* In order to be subjected to call options and element queueing, scroll animation is routed through Velocity as if it were a standard CSS property. */
             if (property === "scroll") {
@@ -1197,12 +1197,12 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
                         propertyValue = CSS.Hooks.injectValue(hookName, propertyValue, rootPropertyValue);
                         property = hookRoot;
-                    }   
+                    }
 
                     /* Normalize names and values. */
                     if (CSS.Normalizations.registered[property]) {
                         propertyValue = CSS.Normalizations.registered[property]("inject", element, propertyValue);
-                        property = CSS.Normalizations.registered[property]("name", element);  
+                        property = CSS.Normalizations.registered[property]("name", element);
                     }
 
                     /* Assign the appropriate vendor prefix before perform an official style update. */
@@ -1259,7 +1259,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
             CSS.setPropertyValue(element, "transform", transformString);
         }
-    };    
+    };
 
     /* Register hooks and normalizations. */
     CSS.Hooks.register();
@@ -1269,7 +1269,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
        Velocity.animate
     **********************/
 
-    Velocity.animate = function() {        
+    Velocity.animate = function() {
 
         /*************************
            Arguments Assignment
@@ -1284,7 +1284,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
         var elements,
             propertiesMap,
-            options;     
+            options;
 
         /* Detect jQuery/Zepto elements being animated via the $.fn method. */
         if (isWrapped(this)) {
@@ -1297,7 +1297,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             elements = syntacticSugar ? arguments[0].elements : arguments[0];
         }
 
-        elements = isWrapped(elements) ? [].slice.call(elements) : elements; 
+        elements = isWrapped(elements) ? [].slice.call(elements) : elements;
 
         if (!elements) {
             return;
@@ -1313,7 +1313,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
         /* The length of the element set (in the form of a nodeList or an array of elements) is defaulted to 1 in case a single raw DOM element is passed in (which doesn't contain a length property). */
         var elementsLength = (isNodeList(elements) || isArray(elements)) ? elements.length : 1,
-            elementsIndex = 0;   
+            elementsIndex = 0;
 
         /***************************
             Argument Overloading
@@ -1409,7 +1409,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                     return elementsWrapped || elementsOriginal;
                 } else {
                     console.log("First argument was not a property map, a known action, or a registered sequence. Aborting.")
-                    
+
                     return elementsWrapped || elements;
                 }
         }
@@ -1418,7 +1418,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             Call-Wide Variables
         **************************/
 
-        /* A container for CSS unit conversion ratios (e.g. %, rem, and em ==> px) that is used to cache ratios across all properties being animated in a single Velocity call. 
+        /* A container for CSS unit conversion ratios (e.g. %, rem, and em ==> px) that is used to cache ratios across all properties being animated in a single Velocity call.
            Calculating unit ratios necessitates DOM querying and updating, and is therefore avoided (via caching) wherever possible; further, ratios are only calculated when they're needed. */
         /* Note: This container is call-wide instead of page-wide to avoid the risk of using stale conversion metrics across Velocity animations that are not immediately consecutively chained. */
         var unitConversionRatios = {
@@ -1439,7 +1439,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
         /************************
            Element Processing
-        ************************/ 
+        ************************/
 
         /* Element processing consists of three parts -- data processing that cannot go stale and data processing that *can* go stale (i.e. third-party style modifications):
            1) Pre-Queueing: Element-wide variables, including the element's data storage, are instantiated. Call options are prepared. If triggered, the Stop action is executed.
@@ -1458,7 +1458,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             ***************************/
 
             var element = this,
-                /* The runtime opts object is the extension of the current call's options and Velocity's page-wide option defaults. */ 
+                /* The runtime opts object is the extension of the current call's options and Velocity's page-wide option defaults. */
                 opts = $.extend({}, Velocity.defaults, options),
                 /* A container for the processed data associated with each property in the propertyMap. (Each property in the map produces its own "tween".) */
                 tweensContainer = {};
@@ -1605,9 +1605,9 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 *****************************************/
 
                 /* Note: In order to be subjected to chaining and animation options, scroll's tweening is routed through Velocity as if it were a standard CSS property animation. */
-                if (action === "scroll") {   
+                if (action === "scroll") {
                     /* The scroll action uniquely takes an optional "offset" option -- specified in pixels -- that offsets the targeted scroll position. */
-                    var scrollDirection = (/^x$/i.test(opts.axis) ? "Left" : "Top"), 
+                    var scrollDirection = (/^x$/i.test(opts.axis) ? "Left" : "Top"),
                         scrollOffset = parseFloat(opts.offset) || 0,
                         scrollPositionCurrent,
                         scrollPositionCurrentAlternate,
@@ -1664,11 +1664,11 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 ******************************************/
 
                 /* Reverse acts like a "start" action in that a property map is animated toward. The only difference is that the property map used for reverse is the inverse of the map used in the previous call.
-                   Thus, we manipulate the previous call to construct our new map: use the previous map's end values as our new map's start values. Copy over all other data. */ 
+                   Thus, we manipulate the previous call to construct our new map: use the previous map's end values as our new map's start values. Copy over all other data. */
                 /* Note: Reverse can be directly called via the "reverse" parameter, or it can be indirectly triggered via the loop option. (Loops are composed of multiple reverses.) */
                 /* Note: Reverse calls do not need to be consecutively chained onto a currently-animating element in order to operate on cached values; there is no harm to reverse being called on a potentially stale data cache since
                    reverse's behavior is simply defined as reverting to the element's values as they were prior to the previous *Velocity* call. */
-                } else if (action === "reverse") {   
+                } else if (action === "reverse") {
                     /* Abort if there is no prior animation data to reverse to. */
                     if (!$.data(element, NAME).tweensContainer) {
                         /* Dequeue the element so that this queue entry releases itself immediately, allowing subsequent queue entries to run. */
@@ -1692,11 +1692,11 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                         $.data(element, NAME).opts.complete = null;
 
                         /* Since we're extending an opts object that has already been exteded with the defaults options object, we remove non-explicitly-defined properties that are auto-assigned values. */
-                        if (!options.easing) { 
+                        if (!options.easing) {
                             delete opts.easing;
                         }
 
-                        if (!options.duration) { 
+                        if (!options.duration) {
                             delete opts.duration;
                         }
 
@@ -1708,7 +1708,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                         *************************************/
 
                         /* Create a deepy copy (indicated via the true flag) of the previous call's tweensContainer. */
-                        var lastTweensContainer = $.extend(true, {}, $.data(element, NAME).tweensContainer);   
+                        var lastTweensContainer = $.extend(true, {}, $.data(element, NAME).tweensContainer);
 
                         /* Manipulate the previous tweensContainer by replacing its end values and currentValues with its start values. */
                         for (var lastTween in lastTweensContainer) {
@@ -1746,14 +1746,14 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                     /* Note: Conversely, animation reversal (and looping) *always* perform inter-call value transfers; they never requery the DOM. */
                     var lastTweensContainer;
 
-                    /* The per-element isAnimating flag is used to indicate whether it's safe (i.e. the data isn't stale) to transfer over end values to use as start values. If it's set to true and there is a previous 
+                    /* The per-element isAnimating flag is used to indicate whether it's safe (i.e. the data isn't stale) to transfer over end values to use as start values. If it's set to true and there is a previous
                        Velocity call to pull values from, do so. */
                     if ($.data(element, NAME).tweensContainer && $.data(element, NAME).isAnimating === true) {
                         lastTweensContainer = $.data(element, NAME).tweensContainer;
                     }
 
                     /***************************
-                       Tween Data Calculation   
+                       Tween Data Calculation
                     ***************************/
 
                     /* This function parses property data and defaults endValue, easing, and startValue as appropriate. */
@@ -1786,7 +1786,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                             endValue = valueData;
                         }
 
-                        /* Default to the call's easing if a per-property easing type was not defined. */ 
+                        /* Default to the call's easing if a per-property easing type was not defined. */
                         easing = easing || opts.easing;
 
                         /* If functions were passed in as values, pass the function the current element as its context, plus the element's index and the element set's size as arguments. Then, assign the returned value. */
@@ -1822,15 +1822,15 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                         var rootProperty = CSS.Hooks.getRoot(property),
                             rootPropertyValue = false;
 
-                        /* Properties that are not supported by the browser (and do not have an associated normalization) will inherently produce no style changes when set, so they are skipped in order to decrease animation tick overhead. 
-                           Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */ 
+                        /* Properties that are not supported by the browser (and do not have an associated normalization) will inherently produce no style changes when set, so they are skipped in order to decrease animation tick overhead.
+                           Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
                         if (CSS.Names.prefixCheck(rootProperty)[1] === false && CSS.Normalizations.registered[rootProperty] === undefined) {
                             if (Velocity.debug) console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
 
-                            continue;           
+                            continue;
                         }
 
-                        /* If the display option is being set to a non-"none" (e.g. "block") and opacity (filter on IE<=8) is being animated to an endValue of non-zero, the user's intention is to fade in from invisible, 
+                        /* If the display option is being set to a non-"none" (e.g. "block") and opacity (filter on IE<=8) is being animated to an endValue of non-zero, the user's intention is to fade in from invisible,
                            thus we forcefeed opacity a startValue of 0 if its startValue hasn't already been sourced by value transferring or prior forcefeeding. */
                         if ((opts.display && opts.display !== "none") && /opacity|filter/.test(property) && !startValue && endValue !== 0) {
                             startValue = 0;
@@ -1842,7 +1842,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                             if (startValue === undefined) {
                                 startValue = lastTweensContainer[property].endValue + lastTweensContainer[property].unitType;
                             }
-                                    
+
                             /* The previous call's rootPropertyValue is extracted from the element's data cache since that's the instance of rootPropertyValue that gets freshly updated by the tweening process,
                                whereas the rootPropertyValue attached to the incoming lastTweensContainer is equal to the root property's value prior to any tweening. */
                             rootPropertyValue = $.data(element, NAME).rootPropertyValueCache[rootProperty];
@@ -1884,7 +1884,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                                 .toString()
                                 .toLowerCase()
                                 /* Match the unit type at the end of the value. */
-                                .replace(/[%A-z]+$/, function(match) { 
+                                .replace(/[%A-z]+$/, function(match) {
                                     /* Grab the unit type. */
                                     unitType = match;
 
@@ -1913,7 +1913,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                             /* Strip the operator off of the value. */
                             return "";
                         });
-                        endValueUnitType = separatedValue[1];     
+                        endValueUnitType = separatedValue[1];
 
                         /* Parse float values from endValue and startValue. Default to 0 if NaN is returned. */
                         startValue = parseFloat(startValue) || 0;
@@ -1929,21 +1929,21 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                         if (endValueUnitType === "%") {
                             /* A %-value fontSize/lineHeight is relative to the parent's fontSize (as opposed to the parent's dimensions), which is identical to the em unit's behavior, so we piggyback off of that. */
                             if (/^(fontSize|lineHeight)$/.test(property)) {
-                                /* Convert % into an em decimal value. */ 
+                                /* Convert % into an em decimal value. */
                                 endValue = endValue / 100;
                                 endValueUnitType = "em";
-                            /* For scaleX and scaleY, convert the value into its decimal format and strip off the unit type. */ 
+                            /* For scaleX and scaleY, convert the value into its decimal format and strip off the unit type. */
                             } else if (/^scale/.test(property)) {
                                 endValue = endValue / 100;
                                 endValueUnitType = "";
-                            /* For RGB components, take the defined percentage of 255 and strip off the unit type. */ 
+                            /* For RGB components, take the defined percentage of 255 and strip off the unit type. */
                             } else if (/(Red|Green|Blue)$/i.test(property)) {
                                 endValue = (endValue / 100) * 255;
                                 endValueUnitType = "";
                             }
-                        } 
+                        }
 
-                        /* When queried, the browser returns (most) CSS property values in pixels. Therefore, if an endValue with a unit type of %, em, or rem is animated toward, startValue must be converted from pixels into the same unit type 
+                        /* When queried, the browser returns (most) CSS property values in pixels. Therefore, if an endValue with a unit type of %, em, or rem is animated toward, startValue must be converted from pixels into the same unit type
                            as endValue in order for value manipulation logic (increment/decrement) to proceed. Further, if the startValue was forcefed or transferred from a previous call, startValue may also not be in pixels. Unit conversion logic
                            therefore consists of two steps: 1) Calculating the ratio of %,/em/rem relative to pixels then 2) Converting startValue into the same unit of measurement as endValue based on these ratios. */
                         /* Unit conversion ratios are calculated by momentarily setting a value with the target unit type on the element, comparing the returned pixel value, then reverting to the original value. */
@@ -1996,14 +1996,14 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                                 },
                                 elementUnitRatios = {},
                                 /* Note: IE<=8 round to the nearest pixel when returning CSS values, thus we perform conversions using a measurement of 10 (instead of 1) to give our ratios a precision of at least 1 decimal value. */
-                                measurement = 10;                                
+                                measurement = 10;
 
                             /* For organizational purposes, current ratios calculations are consolidated onto the elementUnitRatios object. */
                             elementUnitRatios.remToPxRatio = unitConversionRatios.remToPxRatio;
 
                             /* After temporary unit conversion logic runs, width and height properties that were originally set to "auto" must be set back to "auto" instead of to the actual corresponding pixel value. Leaving the values
                                at their hard-coded pixel value equivalents would inherently prevent the elements from vertically adjusting as the height of its inner content changes. */
-                            /* IE tells us whether or not the property is set to "auto". Other browsers provide no way of determing "auto" values on height/width, and thus we have to trigger additional layout thrashing (see below) to solve this. */             
+                            /* IE tells us whether or not the property is set to "auto". Other browsers provide no way of determing "auto" values on height/width, and thus we have to trigger additional layout thrashing (see below) to solve this. */
                             if (IE) {
                                 var isIEWidthAuto = /^auto$/i.test(element.currentStyle.width),
                                     isIEHeightAuto = /^auto$/i.test(element.currentStyle.height);
@@ -2107,13 +2107,13 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                            to be accurately relative even if the metrics they depend on are dynamically changing during the course of the animation. Conversely, if we always normalized into px and used px for setting values, the px ratio
                            would become stale if the original unit being animated toward was relative and the underlying metrics change during the animation. */
                         /* Since 0 is 0 in any unit type, no conversion is necessary when startValue is 0 -- we just start at 0 with endValueUnitType. */
-                        } else if ((startValueUnitType !== endValueUnitType) && startValue !== 0) {                            
+                        } else if ((startValueUnitType !== endValueUnitType) && startValue !== 0) {
                             /* Unit conversion is also skipped when endValue is 0, but *startValueUnitType* must be used in this case for tween values to remain accurate. */
                             /* Note: Skipping unit conversion here means that if endValueUnitType was originally a relative unit, the animation won't relatively match the underlying metrics if they change, but this is acceptable
-                               since we're animating toward invisibility instead of toward visibility that remains past the point of the animation's completion. */ 
+                               since we're animating toward invisibility instead of toward visibility that remains past the point of the animation's completion. */
                             if (endValue === 0) {
                                 endValueUnitType = startValueUnitType;
-                            } else { 
+                            } else {
                                 /* By this point, we cannot avoid unit conversion (it's undesirable since it causes layout thrashing). If we haven't already, we trigger calculateUnitRatios(), which runs once per element per call. */
                                 elementUnitRatios = elementUnitRatios || calculateUnitRatios();
 
@@ -2125,9 +2125,9 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                                 switch (startValueUnitType) {
                                     case "%":
                                         /* Note: translateX and translateY are the only properties that are %-relative to an element's own dimensions -- not its parent's dimensions. Velocity does not include a special conversion process
-                                           for these properties due of the additional DOM overhead it would entail. Therefore, animating translateX/Y from a % value to a non-% value will produce an incorrect start value. Fortunately, 
+                                           for these properties due of the additional DOM overhead it would entail. Therefore, animating translateX/Y from a % value to a non-% value will produce an incorrect start value. Fortunately,
                                            this sort of cross-unit conversion is rarely done by users in practice. */
-                                        startValue *= (axis === "x" ? elementUnitRatios.percentToPxRatioWidth : elementUnitRatios.percentToPxRatioHeight); 
+                                        startValue *= (axis === "x" ? elementUnitRatios.percentToPxRatioWidth : elementUnitRatios.percentToPxRatioHeight);
                                         break;
 
                                     case "em":
@@ -2146,7 +2146,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                                 /* Invert the px ratios to convert into to the target unit. */
                                 switch (endValueUnitType) {
                                     case "%":
-                                        startValue *= 1 / (axis === "x" ? elementUnitRatios.percentToPxRatioWidth : elementUnitRatios.percentToPxRatioHeight); 
+                                        startValue *= 1 / (axis === "x" ? elementUnitRatios.percentToPxRatioWidth : elementUnitRatios.percentToPxRatioHeight);
                                         break;
 
                                     case "em":
@@ -2237,7 +2237,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
                     /* Once the final element in this call's targeted element set has been processed, push the call array onto Velocity.State.calls for the animation tick to immediately begin processing. */
                     if (elementsIndex === elementsLength - 1) {
-                        /* To speed up iterating over this array, it is compacted (falsey items -- calls that have completed -- are removed) when its length has ballooned to a point that can impact tick performance. 
+                        /* To speed up iterating over this array, it is compacted (falsey items -- calls that have completed -- are removed) when its length has ballooned to a point that can impact tick performance.
                            This only becomes necessary when animation has been continuous with many elements over a long period of time; whenever all active calls are completed, completeCall() clears Velocity.State.calls. */
                         if (Velocity.State.calls.length > 10000) {
                             Velocity.State.calls = compactSparseArray(Velocity.State.calls);
@@ -2283,13 +2283,13 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             *********************/
 
             /* As per jQuery's $.queue() behavior, to fire the first non-custom-queue entry on an element, the element must be dequeued if its queue stack consists *solely* of the current call.
-               (This can be determined by checking for the "inprogress" item that jQuery prepends to active queue stack arrays.) Regardless, whenever the element's queue is further appended with 
+               (This can be determined by checking for the "inprogress" item that jQuery prepends to active queue stack arrays.) Regardless, whenever the element's queue is further appended with
                additional items -- including $.delay()'s or even $.animate() calls, the queue's first entry is automatically fired. This behavior contrasts that of custom queues, which never auto-fire. */
             /* Note: When an element set is being subjected to a non-parallel Velocity call, the animation will not begin until each one of the elements in the set has reached the end of its individually pre-existing queue chain. */
             /* Note: Unfortunately, most people don't fully grasp jQuery's powerful, yet quirky, $.queue() function. Lean more here: http://stackoverflow.com/questions/1058158/can-somebody-explain-jquery-queue-to-me */
-            if ((opts.queue === "" || opts.queue === "fx") && $.queue(element)[0] !== "inprogress") {                
+            if ((opts.queue === "" || opts.queue === "fx") && $.queue(element)[0] !== "inprogress") {
                 $.dequeue(element);
-            }            
+            }
         }
 
         /**************************
@@ -2304,12 +2304,12 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             $.each(elements, function(i, element) {
                 if (element.nodeType) {
                     processElement.call(element);
-                } 
+                }
             });
         }
 
         /********************
-            Option: Loop 
+            Option: Loop
         ********************/
 
         /* The loop option accepts an integer indicating how many times the element should loop between the values in the current call's properties map and the element's property values prior to this call. */
@@ -2375,7 +2375,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 /************************
                    Call-Wide Variables
                 ************************/
-                      
+
                 var callContainer = Velocity.State.calls[i],
                     call = callContainer[0],
                     opts = callContainer[2],
@@ -2474,7 +2474,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                             /*******************
                                Hooks: Part II
                             *******************/
-                            
+
                             /* Now that we have the hook's updated rootPropertyValue (which is the post-processed value provided by the adjustedSetData array), cache it onto the element. */
                             if (CSS.Hooks.registered[property]) {
                                 /* Since adjustedSetData contains normalized data ready for DOM updating, the rootPropertyValue needs to be re-extracted from its normalized form. */
@@ -2537,7 +2537,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         if (Velocity.State.isTicking) {
             requestAnimationFrame(tick);
         }
-    } 
+    }
 
     /**********************
         Call Completion
@@ -2557,7 +2557,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         *************************/
 
         for (var i = 0, callLength = call.length; i < callLength; i++) {
-            var element = call[i].element; 
+            var element = call[i].element;
 
             /* If the display option is set to "none" (meaning the user intends to hide the element), set this value now that the animation is complete. */
             /* Note: The display option is ignored with "reverse" calls, which is what loops are composed of. See reverse's logic for further details. */
@@ -2565,17 +2565,17 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 CSS.setPropertyValue(element, "display", opts.display);
             }
 
-            /* If the element's queue is empty (if only the "inprogress" item is left at position 0) or if its queue is about to run a non-Velocity-initiated entry, turn off the isAnimating flag. 
+            /* If the element's queue is empty (if only the "inprogress" item is left at position 0) or if its queue is about to run a non-Velocity-initiated entry, turn off the isAnimating flag.
                A non-Velocity-initiatied queue entry's logic might alter an element's CSS values and thereby cause Velocity's cached value data to go stale. To detect if a queue entry was initiated by Velocity,
                we check for the existence of our special Velocity.queueEntryFlag declaration, which minifiers won't rename since the flag is assigned to jQuery's global $ object and thus exists out of Velocity's own scope. */
-            if ($.queue(element)[1] === undefined || !/\.velocityQueueEntryFlag/i.test($.queue(element)[1])) {     
+            if ($.queue(element)[1] === undefined || !/\.velocityQueueEntryFlag/i.test($.queue(element)[1])) {
                 /* The element may have been deleted. Ensure that its data cache still exists before acting on it. */
                 if ($.data(element, NAME)) {
                     $.data(element, NAME).isAnimating = false;
                     /* Clear the element's rootPropertyValueCache, which will become stale. */
                     $.data(element, NAME).rootPropertyValueCache = {};
 
-                    /* Transform subproperties that trigger hardware acceleration are de-applied entirely when they hit their zero values so that HA'd elements don't remain blurry. */ 
+                    /* Transform subproperties that trigger hardware acceleration are de-applied entirely when they hit their zero values so that HA'd elements don't remain blurry. */
                     var transformHAProperties = [ "transformPerspective", "translateZ", "rotateX", "rotateY" ],
                         transformHAProperty,
                         transformHAPropertyExists = false;
@@ -2609,8 +2609,8 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
             /* The complete callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
             /* Note: If this is a loop, complete callback firing is handled by the loop's final reverse call -- we skip handling it here. */
-            if (opts.complete && !opts.loop && (i === callLength - 1)) {   
-                opts.complete.call(elements, elements); 
+            if (opts.complete && !opts.loop && (i === callLength - 1)) {
+                opts.complete.call(elements, elements);
             }
 
             /***************
@@ -2663,14 +2663,13 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
         /* Assign the object function's defaults to Velocity's global defaults object. */
         framework.fn.velocity.defaults = Velocity.defaults;
-    /* If this is the standalone version of Velocity. */
-    } else {
-       /* Support for AMD and CommonJS module loaders. */
-        if (typeof define !== "undefined" && define.amd) {
-            define(function() { return Velocity; });
-        } else if (typeof module !== "undefined" && module.exports) {
-            module.exports = Velocity;
-        }
+    }
+
+    /* Support for AMD and CommonJS module loaders. */
+    if (typeof define !== "undefined" && define.amd) {
+        define(function() { return Velocity; });
+    } else if (typeof module !== "undefined" && module.exports) {
+        module.exports = Velocity;
     }
 
     /***********************
@@ -2793,7 +2792,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 for (var property in originalValues) {
                     element.style[property] = originalValues[property][propertyValuePosition];
                 }
-                
+
                 /* If the user passed in a complete callback, fire it now. */
                 if (complete) {
                     complete.call(element, element);
@@ -2825,7 +2824,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             }
 
             Velocity.animate(this, propertiesMap, opts);
-        };     
+        };
     });
 })((window.jQuery || window.Zepto || window), window, document);
 
