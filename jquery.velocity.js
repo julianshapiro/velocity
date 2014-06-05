@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.21
+* @version 0.0.22
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -101,14 +101,19 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         return result;
     }
 
-    /* Determine if a variable is a function. */
-    function isFunction (variable) {
-        return Object.prototype.toString.call(variable) === "[object Function]";
+    /* Determine if a variable is a string. */
+    var isString = function (variable) {
+        return (typeof variable === "string");
     }
 
     /* Determine if a variable is an array. */
     var isArray = Array.isArray || function (variable) {
         return Object.prototype.toString.call(variable) === "[object Array]";
+    }
+
+    /* Determine if a variable is a function. */
+    function isFunction (variable) {
+        return Object.prototype.toString.call(variable) === "[object Function]";
     }
 
     /* Determine if a variable is a nodeList. Copyright Martin Bohm. MIT License: https://gist.github.com/Tomalak/818a78a226a0738eaade */
@@ -463,7 +468,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         var easing = value;
 
         /* The easing option can either be a string that references a pre-registered easing, or it can be a two-/four-item array of integers to be converted into a bezier/spring function. */
-        if (typeof value === "string") {
+        if (isString(value)) {
             /* Ensure that the easing has been assigned to jQuery's Velocity.Easings object. */
             if (!Velocity.Easings[value]) {
                 easing = false;
@@ -967,7 +972,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                         }
 
                         /* Check if the browser supports this property as prefixed. */
-                        if (typeof Velocity.State.prefixElement.style[propertyPrefixed] === "string") {
+                        if (isString(Velocity.State.prefixElement.style[propertyPrefixed])) {
                             /* Cache the match. */
                             Velocity.State.prefixMatches[property] = propertyPrefixed;
 
@@ -1276,8 +1281,8 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         *************************/
 
         /* To allow for expressive CoffeeScript code, Velocity supports an alternative syntax in which "properties" and "options" objects are defined on a container object that's passed in as Velocity's sole argument. */
-        /* Note: Some Android browsers automatically populate arguments with a "properties" object. We detect it by checking for its "names" property. */
-        var syntacticSugar = (arguments[0] && $.isPlainObject(arguments[0].properties) && !arguments[0].properties.names),
+        /* Note: Some browsers automatically populate arguments with a "properties" object. We detect it by checking for its default "names" property. */
+        var syntacticSugar = (arguments[0] && (($.isPlainObject(arguments[0].properties) && !arguments[0].properties.names) || isString(arguments[0].properties))),
             /* When Velocity is called via the utility function ($.Velocity.animate()/Velocity.animate()), elements are explicitly passed in as the first parameter. Thus, argument positioning varies. We normalize them here. */
             elementsWrapped,
             argumentIndex;
@@ -1321,7 +1326,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
         /* Support is included for jQuery's argument overloading: $.animate(propertyMap [, duration] [, easing] [, complete]). Overloading is detected by checking for the absence of an object being passed into options.
            The stop action does not accept animation options, and is therefore excluded from this check. */
-        /* Note: Although argument overloading is an incredibly sloppy practice in JavaScript, support is included so that velocity() can act as a drop-in replacement for $.animate(). */
+        /* Note: Although argument overloading is a sloppy practice in JavaScript, support is included so that velocity() can act as a drop-in replacement for $.animate(). */
         if (propertiesMap !== "stop" && !$.isPlainObject(options)) {
             /* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
             var startingArgumentPosition = argumentIndex + 1;
@@ -1335,7 +1340,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 if (!isArray(arguments[i]) && /^\d/.test(arguments[i])) {
                     options.duration = parseFloat(arguments[i]);
                 /* Treat a string as an easing. */
-                } else if (typeof arguments[i] === "string") {
+                } else if (isString(arguments[i])) {
                     options.easing = arguments[i];
                 /* Also treat two-item (tension, friction) and four-item (cubic bezier points) arrays as an easing. */
                 } else if (isArray(arguments[i]) && (arguments[i].length === 2 || arguments[i].length === 4)) {
@@ -1373,7 +1378,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 if ($.isPlainObject(propertiesMap) && !$.isEmptyObject(propertiesMap)) {
                     action = "start";
                 /* Check if a string matches a registered sequence (see Sequences above). */
-                } else if (typeof propertiesMap === "string" && Velocity.Sequences[propertiesMap]) {
+                } else if (isString(propertiesMap) && Velocity.Sequences[propertiesMap]) {
                     var elementsOriginal = elements,
                         durationOriginal = options.duration;
 
@@ -1472,7 +1477,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             if (action === "stop") {
                 /* Clearing jQuery's $.queue() array is achieved by manually setting it to []. */
                 /* Note: To stop only the animations associated with a specific queue, a custom queue name can optionally be provided in place of an options object. */
-                $.queue(element, (typeof options === "string") ? options : "", []);
+                $.queue(element, isString(options) ? options : "", []);
 
                 /* Since we're stopping, do not proceed with Queueing. */
                 return true;
@@ -1773,7 +1778,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                             if ((!isArray(valueData[1]) && /^[\d-]/.test(valueData[1])) || isFunction(valueData[1])) {
                                 startValue = valueData[1];
                             /* Two or three-item array: If the second item is a string, treat it as an easing. */
-                            } else if (typeof valueData[1] === "string" || isArray(valueData[1])) {
+                            } else if (isString(valueData[1]) || isArray(valueData[1])) {
                                 easing = getEasing(valueData[1], opts.duration);
 
                                 /* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
@@ -2431,7 +2436,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                             var tween = tweensContainer[property],
                                 currentValue,
                                 /* Easing can either be a bezier function or a string that references a pre-registered easing on the Velocity.Easings object. In either case, return the appropriate easing function. */
-                                easing = (typeof tween.easing === "string") ? Velocity.Easings[tween.easing] : tween.easing;
+                                easing = isString(tween.easing) ? Velocity.Easings[tween.easing] : tween.easing;
 
                             /******************************
                                Current Value Calculation
