@@ -33,6 +33,10 @@ Package name is *velocity-animate*.
 
 - **Velocity** is a very fast and lightweight tool for dramatically improving *UI animation performance and workflow*.
 
+###**Used in**
+
+- [MotorCortex.js](http://motorcortexjs.com/) : Web animations abstraction that uses CSS-like syntax.
+
 ====
 
 [MIT License](LICENSE). © Julian Shapiro (http://twitter.com/shapiro).
