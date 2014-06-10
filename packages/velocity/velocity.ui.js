@@ -500,7 +500,9 @@
                         opts.delay = options.delay;
                         opts.begin = options.begin;
 
-                        if (/In$/.test(effectName)) {
+                        if (options.display) {
+                            opts.display = options.display;
+                        } else if (/In$/.test(effectName)) {
                             opts.display = Container.Velocity.CSS.Values.getDisplayType(element);
                         }
                     }
