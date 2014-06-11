@@ -2,13 +2,13 @@
 
 **Docs:** http://VelocityJS.org
 
-**Stack Overflow:** http://stackoverflow.com/questions/tagged/velocity.js (Third-party support forum.)
-
 **Bower:**
 Package name is *velocity*.
 
 **NPM:**
 Package name is *velocity-animate*.
+
+**Stack Overflow:** http://stackoverflow.com/questions/tagged/velocity.js (Third-party support forum.)
 
 ###**Updates**
 
