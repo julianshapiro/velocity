@@ -2,6 +2,8 @@
 
 **Docs:** http://VelocityJS.org
 
+**Stack Overflow:** http://stackoverflow.com/questions/tagged/velocity.js (Forum for usage help.)
+
 **Bower:**
 Package name is *velocity*.
 
