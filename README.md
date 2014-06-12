@@ -15,6 +15,7 @@ Package name is *velocity-animate*.
 ###**Updates**
 
 - *Coming soon: jQuery dependency removal and Zepto support.*
+- Velocity was awarded Stripe's Open Source grant: https://stripe.com/blog/open-source-retreat-grantees
 - UI Pack: http://velocityjs.org/#uiPack
 - Spring physics: http://velocityjs.org/#easing
 - Progress monitoring: http://velocityjs.org/#progress
