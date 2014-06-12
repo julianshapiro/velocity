@@ -2,13 +2,13 @@
 
 **Docs:** http://VelocityJS.org
 
-**Bower:**
-Package name is *velocity*.
-
-**NPM:**
-Package name is *velocity-animate*.
+**Package Managers:** Bower name is *velocity*. NPM name is *velocity-animate*.
 
 **Stack Overflow:** http://stackoverflow.com/questions/tagged/velocity.js (Third-party support forum.)
+
+**Quickstart:**
+
+`<script src="//cdn.jsdelivr.net/jquery.velocity/0.0.22/jquery.velocity.min.js"></script>`
 
 ###**Updates**
 
