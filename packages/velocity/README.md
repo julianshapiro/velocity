@@ -4,8 +4,6 @@
 
 **Package Managers:** Bower name is *velocity*. NPM name is *velocity-animate*.
 
-**Stack Overflow:** http://stackoverflow.com/questions/tagged/velocity.js (Third-party support forum.)
-
 ###**Quickstart**
 
 Include this snippet on your page:
@@ -28,6 +26,8 @@ Include this snippet on your page:
 - **Codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
 
 - **Workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
+
+- **Stack Overflow (support):** http://stackoverflow.com/questions/tagged/velocity.js
 
 ###**Comparisons**
 
