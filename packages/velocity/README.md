@@ -6,7 +6,9 @@
 
 **Stack Overflow:** http://stackoverflow.com/questions/tagged/velocity.js (Third-party support forum.)
 
-**Quickstart:**
+###**Quickstart**
+
+Include this snippet on your page:
 
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.0.22/jquery.velocity.min.js"></script>`
 
