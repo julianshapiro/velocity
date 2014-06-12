@@ -1,12 +1,18 @@
 ##Velocity
 
-**Docs:** http://VelocityJS.org
+**Docs**
 
-**Package Managers:** Bower name is *velocity*. NPM name is *velocity-animate*.
+http://VelocityJS.org
 
-###**Quickstart**
+**Bower**
 
-Include this snippet on your page:
+Package name is *velocity*.
+
+**NPM**
+
+Package name is *velocity-animate*.
+
+**Quickstart**
 
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.0.22/jquery.velocity.min.js"></script>`
 
