@@ -12,12 +12,11 @@ Include this snippet on your page:
 
 ###**Updates**
 
-*Coming soon: Velocity's jQuery dependency will be removed in ~2 weeks. At that time, Zepto will be fully supported. If jQuery/Zepto IS loaded, Velocity will perform exactly as it already does.*
-
 - UI Pack: http://velocityjs.org/#uiPack
 - Spring physics: http://velocityjs.org/#easing
 - Progress monitoring: http://velocityjs.org/#progress
 - Syntactic sugar: https://github.com/julianshapiro/velocity/issues/76
+- *Coming soon: jQuery dependency removal and Zepto support.*
 
 ###**Resources**
 
