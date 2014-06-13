@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.22
+* @version 0.0.23
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -217,6 +217,8 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         },
         /* Velocity's core animation method, subsequently aliased to $.fn. */
         animate: function () { /* Defined below. */ },
+        /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
+        mock: false,
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -1526,23 +1528,28 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                Option: Duration
             *********************/
 
-            /* Support for jQuery's named durations. */
-            switch (opts.duration.toString().toLowerCase()) {
-                case "fast":
-                    opts.duration = 200;
-                    break;
+            /* In mock mode, all animations are forced to 1ms so that they occur immediately upon the next rAF tick. */
+            if (Velocity.mock === true) {
+                opts.duration = 1;
+            } else {
+                /* Support for jQuery's named durations. */
+                switch (opts.duration.toString().toLowerCase()) {
+                    case "fast":
+                        opts.duration = 200;
+                        break;
 
-                case "normal":
-                    opts.duration = DEFAULT_DURATION;
-                    break;
+                    case "normal":
+                        opts.duration = DEFAULT_DURATION;
+                        break;
 
-                case "slow":
-                    opts.duration = 600;
-                    break;
+                    case "slow":
+                        opts.duration = 600;
+                        break;
 
-                default:
-                    /* Remove the potential "ms" suffix and default to 1 if the user is attempting to set a duration of 0 (in order to produce an immediate style change). */
-                    opts.duration = parseFloat(opts.duration) || 1;
+                    default:
+                        /* Remove the potential "ms" suffix and default to 1 if the user is attempting to set a duration of 0 (in order to produce an immediate style change). */
+                        opts.duration = parseFloat(opts.duration) || 1;
+                }
             }
 
             /*******************
@@ -2526,7 +2533,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                     Velocity.State.calls[i][2].display = false;
                 }
 
-                /* Pass the elements and the timing data into the progress callback. */
+                /* Pass the elements and the timing data (percentComplete, msRemaining, and timeStart) into the progress callback. */
                 if (opts.progress) {
                     opts.progress.call(callContainer[1], callContainer[1], percentComplete, Math.max(0, (timeStart + opts.duration) - timeCurrent), timeStart);
                 }
