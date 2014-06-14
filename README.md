@@ -23,10 +23,10 @@ Package name is *velocity-animate*.
 
 ###**Learn**
 
-- **Speed:** http://davidwalsh.name/css-js-animation
-- **Codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
+- **Performance:** http://davidwalsh.name/css-js-animation
 - **Workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
-- **Stack Overflow (support):** http://stackoverflow.com/questions/tagged/velocity.js
+- **Codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
+- **Support:** http://stackoverflow.com/questions/tagged/velocity.js
 
 ###**Comparisons**
 
