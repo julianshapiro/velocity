@@ -19,7 +19,7 @@ Package name is *velocity-animate*.
 - UI Pack: http://velocityjs.org/#uiPack
 - Spring physics: http://velocityjs.org/#easing
 - Progress monitoring: http://velocityjs.org/#progress
-- Syntactic sugar: https://github.com/julianshapiro/velocity/issues/76
+- Coffee script love: https://github.com/julianshapiro/velocity/issues/76
 
 ###**Resources**
 
