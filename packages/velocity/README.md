@@ -10,7 +10,7 @@ Package name is *velocity*.
 Package name is *velocity-animate*.
 
 **Quickstart**  
-`<script src="//cdn.jsdelivr.net/jquery.velocity/0.0.22/jquery.velocity.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/jquery.velocity/0.0.23/jquery.velocity.min.js"></script>`
 
 ###**Updates**
 
