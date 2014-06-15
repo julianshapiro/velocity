@@ -9,10 +9,14 @@ Package name is *velocity*.
 **NPM**  
 Package name is *velocity-animate*.
 
+**Quickstart**  
+`<script src="//cdn.jsdelivr.net/jquery.velocity/0.1.0/jquery.velocity.min.js"></script>`
+
 ###**New**
 
 - *Coming soon: jQuery dependency removal and Zepto support.*
 - Velocity was awarded Stripe's open source grant: https://stripe.com/blog/open-source-retreat-grantees
+- **Immediate stopping**: http://velocityjs.org/#stop
 - UI Pack: http://velocityjs.org/#uiPack
 - Spring physics: http://velocityjs.org/#easing
 - Progress monitoring: http://velocityjs.org/#progress
