@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.0.23
+* @version 0.1.0
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -1278,6 +1278,15 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
     Velocity.animate = function() {
 
+        /*******************
+            Return Chain
+        *******************/
+
+        /* Returns the appropriate element set type (depending on whether jQuery/Zepto-wrapped elements were passed in) back to the call chain. Used for exiting out of Velocity.animate(). */
+        function getChain () {
+            return elementsWrapped || elements;
+        }
+
         /*************************
            Arguments Assignment
         *************************/
@@ -1372,13 +1381,62 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 break;
 
             case "stop":
-                action = "stop";
-                break;
+                /*******************
+                    Action: Stop
+                *******************/
+
+                var callsToStop = [];
+
+                /* When the stop action is triggered, the elements' currently active call is immediately stopped. The active call might have been applied to multiple elements, in which
+                   case all of the call's elements will be subjected to stopping. When an element is stopped, the next item in its animation queue is immediately triggered. */
+                /* An additional argument may be passed in to clear an element's remaining queued calls. Either true (which defaults to the "fx" queue) or a custom queue string can be passed in. */
+                /* Stopping is achieved by traversing active calls for those which contain the targeted element. */
+                /* Note: The stop command runs prior to Queueing since its behavior is intended to take effect *immediately*, regardless of the element's current queue state. */
+                $.each(Velocity.State.calls, function(i, activeCall) {  
+                    /* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
+                    if (activeCall !== false) {    
+                        /* If we're operating on a single element, wrap it in an array so that $.each() can iterate over it. */                  
+                        $.each(activeCall[1].nodeType ? [ activeCall[1] ] : activeCall[1], function(k, activeElement) {
+                            $.each(elements.nodeType ? [ elements ] : elements, function(l, element) {
+                                /* Check that this call was applied to the target element. */
+                                if (element === activeElement) {
+                                    if ($.data(element, NAME)) {
+                                        /* Since "reverse" uses cached start values (the previous call's endValues), these values must be changed to reflect the final value that the elements were actually tweened to. */ 
+                                        $.each($.data(element, NAME).tweensContainer, function(m, activeTween) {
+                                            activeTween.endValue = activeTween.currentValue;
+                                        });
+                                    }
+
+                                    /* Remaining queue clearing. */
+                                    if (options === true || isString(options)) {
+                                        /* Clearing the $.queue() array is achieved by manually setting it to []. */
+                                        $.queue(element, isString(options) ? options : "", []);
+                                    }
+
+                                    callsToStop.push(i);
+                                }
+                            });
+                        });
+                    }
+                });
+
+                /* Prematurely call completeCall() on each matched active call, passing an additional flag to indicate that the complete callback and display:none setting should be skipped. */
+                $.each(callsToStop, function(i, j) {
+                    completeCall(j, true);
+                });
+
+                /* Since we're stopping, do not proceed with Queueing. */
+                return getChain();
 
             default:
                 /* Treat a non-empty plain object as a literal properties map. */
                 if ($.isPlainObject(propertiesMap) && !$.isEmptyObject(propertiesMap)) {
                     action = "start";
+
+                /****************
+                    Sequences
+                ****************/
+
                 /* Check if a string matches a registered sequence (see Sequences above). */
                 } else if (isString(propertiesMap) && Velocity.Sequences[propertiesMap]) {
                     var elementsOriginal = elements,
@@ -1417,7 +1475,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 } else {
                     console.log("First argument was not a property map, a known action, or a registered sequence. Aborting.")
 
-                    return elementsWrapped || elements;
+                    return getChain();
                 }
         }
 
@@ -1469,21 +1527,6 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 opts = $.extend({}, Velocity.defaults, options),
                 /* A container for the processed data associated with each property in the propertyMap. (Each property in the map produces its own "tween".) */
                 tweensContainer = {};
-
-            /********************
-                Action: Stop
-            ********************/
-
-            /* When the stop action is triggered, the elements' remaining queue calls (including loops) are removed, but its in-progress animation runs until completion. This is intentional in order to avoid visually-abrupt stopping. */
-            /* Note: The stop command runs prior to Queueing since its behavior is intended to take effect *immediately*, regardless of the targeted element's current state. */
-            if (action === "stop") {
-                /* Clearing jQuery's $.queue() array is achieved by manually setting it to []. */
-                /* Note: To stop only the animations associated with a specific queue, a custom queue name can optionally be provided in place of an options object. */
-                $.queue(element, isString(options) ? options : "", []);
-
-                /* Since we're stopping, do not proceed with Queueing. */
-                return true;
-            }
 
             /******************
                 Data Cache
@@ -1601,7 +1644,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
             /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
                the call array is pushed to Velocity.State.calls for live processing by the requestAnimationFrame tick. */
-            function buildQueue(next) {
+            function buildQueue (next) {
 
                 /*******************
                    Option: Begin
@@ -2308,17 +2351,13 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
            Element Set Iteration
         **************************/
 
-        /* If the "nodeType" property exists on the elements variable, we're animating a single element. */
-        if (elements.nodeType) {
-            processElement.call(elements);
-        /* Otherwise, we're animating an element set. */
-        } else {
-            $.each(elements, function(i, element) {
-                if (element.nodeType) {
-                    processElement.call(element);
-                }
-            });
-        }
+        /* If the "nodeType" property exists on the elements variable, we're animating a single element. Place it in an array so that $.each can iterate over it. */
+        $.each(elements.nodeType ? [ elements ] : elements, function(i, element) {
+            /* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
+            if (element.nodeType) {
+                processElement.call(element);
+            }
+        });
 
         /********************
             Option: Loop
@@ -2356,7 +2395,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         ***************/
 
         /* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
-        return elementsWrapped || elements;
+        return getChain();
     };
 
     /*****************************
@@ -2412,7 +2451,6 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
                 /* For every call, iterate through each of the elements in its set. */
                 for (var j = 0, callLength = call.length; j < callLength; j++) {
-
                     var tweensContainer = call[j],
                         element = tweensContainer.element;
 
@@ -2556,7 +2594,12 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
     **********************/
 
     /* Note: Unlike tick(), which processes all active calls at once, call completion is handled on a per-call basis. */
-    function completeCall (callIndex) {
+    function completeCall (callIndex, isStopped) {
+        /* Ensure the call exists. */
+        if (!Velocity.State.calls[callIndex]) {
+            return false;
+        }
+
         /* Pull the metadata from the call. */
         var call = Velocity.State.calls[callIndex][0],
             elements = Velocity.State.calls[callIndex][1],
@@ -2567,13 +2610,14 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         /*************************
            Element Finalization
         *************************/
-
+            
         for (var i = 0, callLength = call.length; i < callLength; i++) {
             var element = call[i].element;
 
             /* If the display option is set to "none" (meaning the user intends to hide the element), set this value now that the animation is complete. */
             /* Note: The display option is ignored with "reverse" calls, which is what loops are composed of. See reverse's logic for further details. */
-            if (opts.display === "none" && !opts.loop) {
+            /* Note: display:none isn't set when calls are manually stopped (via Velocity.animate("stop"). */
+            if (!isStopped && opts.display === "none" && !opts.loop) {
                 CSS.setPropertyValue(element, "display", opts.display);
             }
 
@@ -2620,8 +2664,9 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             *********************/
 
             /* The complete callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
+            /* Note: Callbacks aren't fired when calls are manually stopped (via Velocity.animate("stop"). */
             /* Note: If this is a loop, complete callback firing is handled by the loop's final reverse call -- we skip handling it here. */
-            if (opts.complete && !opts.loop && (i === callLength - 1)) {
+            if (!isStopped && opts.complete && !opts.loop && (i === callLength - 1)) {
                 opts.complete.call(elements, elements);
             }
 
