@@ -9,9 +9,6 @@ Package name is *velocity*.
 **NPM**  
 Package name is *velocity-animate*.
 
-**Quickstart**  
-`<script src="//cdn.jsdelivr.net/jquery.velocity/0.0.23/jquery.velocity.min.js"></script>`
-
 ###**New**
 
 - *Coming soon: jQuery dependency removal and Zepto support.*
