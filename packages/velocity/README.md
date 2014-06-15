@@ -15,12 +15,12 @@ Package name is *velocity-animate*.
 ###**New**
 
 - *Coming soon: jQuery dependency removal and Zepto support.*
-- Velocity was awarded Stripe's open source grant: https://stripe.com/blog/open-source-retreat-grantees
 - Immediate stopping: http://velocityjs.org/#stop
 - UI Pack: http://velocityjs.org/#uiPack
 - Spring physics: http://velocityjs.org/#easing
 - Progress monitoring: http://velocityjs.org/#progress
 - Coffee script love: https://github.com/julianshapiro/velocity/issues/76
+- Velocity was awarded Stripe's open source grant: https://stripe.com/blog/open-source-retreat-grantees
 
 ###**Learn**
 
