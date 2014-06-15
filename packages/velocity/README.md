@@ -16,7 +16,6 @@ Package name is *velocity-animate*.
 
 - *Coming soon: jQuery dependency removal and Zepto support.*
 - Immediate stopping: http://velocityjs.org/#stop
-- UI Pack: http://velocityjs.org/#uiPack
 - Spring physics: http://velocityjs.org/#easing
 - Progress monitoring: http://velocityjs.org/#progress
 - Coffee script love: https://github.com/julianshapiro/velocity/issues/76
@@ -24,6 +23,7 @@ Package name is *velocity-animate*.
 
 ###**Learn**
 
+- **UI Pack**: http://velocityjs.org/#uiPack
 - **Performance:** http://davidwalsh.name/css-js-animation
 - **Workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 - **Codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
