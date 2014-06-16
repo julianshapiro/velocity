@@ -25,9 +25,10 @@ Package name is *velocity-animate*.
 ###**Learn**
 
 - **UI Pack**: https://www.youtube.com/watch?v=CdwvR6a39Tg&hd=1
-- **Performance:** http://davidwalsh.name/css-js-animation
-- **Workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
-- **Codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
+- **Performance comparison*: http://davidwalsh.name/css-js-animation
+- **Performance optimizations**: http://www.sitepoint.com/incredibly-fast-ui-animation-using-velocity-js/
+- **Workflow**: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
+- **Codecast**: https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
 
 ###**Comparisons**
 
