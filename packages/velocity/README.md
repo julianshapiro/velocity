@@ -28,7 +28,6 @@ Package name is *velocity-animate*.
 - **Performance:** http://davidwalsh.name/css-js-animation
 - **Workflow:** http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 - **Codecast:** https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
-- **Support:** http://stackoverflow.com/questions/tagged/velocity.js
 
 ###**Comparisons**
 
