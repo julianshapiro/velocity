@@ -12,13 +12,14 @@ Package name is *velocity-animate*.
 **Quickstart**  
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.1.0/jquery.velocity.min.js"></script>`
 
+**Demos**  
+http://codepen.io/julianshapiro/public/
+
 ###**New**
 
 - *Coming soon: jQuery dependency removal and Zepto support.*
 - Immediate stopping: http://velocityjs.org/#stop
-- Documentation panes now contain live CodePen demos.
 - Spring physics: http://velocityjs.org/#easing
-- Progress monitoring: http://velocityjs.org/#progress
 - Coffee script love: https://github.com/julianshapiro/velocity/issues/76
 - Velocity was awarded Stripe's open source grant: https://stripe.com/blog/open-source-retreat-grantees
 
@@ -28,7 +29,6 @@ Package name is *velocity-animate*.
 - **Performance comparison**: http://davidwalsh.name/css-js-animation
 - **Performance optimizations**: http://www.sitepoint.com/incredibly-fast-ui-animation-using-velocity-js/
 - **Workflow**: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
-- **Codecast**: https://www.youtube.com/watch?v=MDLiVB6g2NY&hd=1
 
 ###**Comparisons**
 
