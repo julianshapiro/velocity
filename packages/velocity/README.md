@@ -3,14 +3,14 @@
 **Docs**  
 http://VelocityJS.org
 
-**Package Managers**  
-Bower package is *velocity*. NPM package is *velocity-animate*.
-
 **Quickstart**  
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.1.0/jquery.velocity.min.js"></script>`
 
 **Demos**  
 http://codepen.io/julianshapiro/public/
+
+**Package Managers**  
+Bower package is *velocity*. NPM package is *velocity-animate*.
 
 ###**New**
 
