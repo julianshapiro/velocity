@@ -6,7 +6,7 @@ http://VelocityJS.org
 **Quickstart**  
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.1.0/jquery.velocity.min.js"></script>`
 
-**Demos**  
+**Feature Demos**  
 http://codepen.io/julianshapiro/public/
 
 **Package Managers**  
@@ -18,7 +18,6 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 - Immediate stopping: http://velocityjs.org/#stop
 - Spring physics: http://velocityjs.org/#easing
 - Coffee script love: https://github.com/julianshapiro/velocity/issues/76
-- Velocity was awarded Stripe's open source grant: https://stripe.com/blog/open-source-retreat-grantees
 
 ###**Learn**
 
