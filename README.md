@@ -22,7 +22,7 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 ###**Learn**
 
 - **UI Pack**: https://www.youtube.com/watch?v=CdwvR6a39Tg&hd=1
-- **Performance comparison**: http://davidwalsh.name/css-js-animation
+- **Performance comparisons**: http://davidwalsh.name/css-js-animation
 - **Performance optimizations**: http://www.sitepoint.com/incredibly-fast-ui-animation-using-velocity-js/
 - **Workflow**: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
