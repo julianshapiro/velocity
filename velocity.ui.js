@@ -13,7 +13,7 @@
 */   
 
 (function() {
-    var Container = (jQuery || Zepto || window);
+    var Container = (window.jQuery || window.Zepto || window);
 
     if (!Container.Velocity || !Container.Velocity.Utilities) {
         console.log("Velocity UI Pack: Velocity must first be loaded. Aborting.");
@@ -21,7 +21,7 @@
         return;
     }
 
-    /* Effect declarations. */
+    /* Effects declarations. */
     var effects = 
         { 
             /* Animate.css */
