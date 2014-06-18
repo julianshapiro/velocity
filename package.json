@@ -1,6 +1,6 @@
 {
   "name": "velocity-animate",
-  "version": "0.0.18",
+  "version": "0.1.0",
   "description": "Accelerated JavaScript animation.",
   "keywords": [
     "velocity",
@@ -24,15 +24,13 @@
     }
   ],
   "main": "jquery.velocity.js",
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/julianshapiro/velocity.git"
-  },
+  "repository": "julianshapiro/velocity",
   "files": [
-    "jquery.velocity.js"
+    "jquery.velocity.js",
+    "velocity.ui.js"
   ],
   "dependencies": {
-    "jquery": "latest"
+    "jquery": ">= 1.4.3"
   },
   "devDependencies": {
     "grunt": "^0.4.4",
