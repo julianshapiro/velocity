@@ -32,6 +32,9 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 - **GSAP** is a fast, multi-purpose *animation platform*. It inspired me to pursue the development of Velocity.
 - **Velocity** is a lightweight tool for drastically improving *UI animation performance and workflow*.
 
+###**Changelog**
+
+- 0.1.0: Velocity's `stop` command was changed to stop animations immediately (instead of clearing the remainder of the animation queue.). No other backwards-incompatible changes were made.
 ====
 
 [MIT License](LICENSE). © Julian Shapiro (http://twitter.com/shapiro).
