@@ -24,10 +24,7 @@
     }
   ],
   "main": "jquery.velocity.js",
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/julianshapiro/velocity.git"
-  },
+  "repository": "julianshapiro/velocity",
   "files": [
     "jquery.velocity.js",
     "velocity.ui.js"
