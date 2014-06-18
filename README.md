@@ -34,7 +34,7 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 
 ###**Changelog**
 
-- 0.1.0: Velocity's `stop` command was changed to stop animations immediately (instead of clearing the remainder of the animation queue.). No other backwards-incompatible changes were made.
+- 0.1.0: Velocity's `stop` command was changed to stop animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made.
 
 ====
 
