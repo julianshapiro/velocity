@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.2.0
+* @version 0.2.1
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -157,9 +157,12 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
     }
 
     /* Shorthand alias for jQuery's $.data() utility. */
-    var Data = function (element) {
+    function Data (element) {
         /* Hardcode a reference to the plugin name. */
-        return $.data(element, NAME);
+        var response = $.data(element, NAME);
+
+        /* jQuery <=1.4.2 returns null instead of undefined when no match is found. We normalize this behavior. */
+        return response === null ? undefined : response;
     };
 
     /*************
