@@ -4,7 +4,7 @@
 http://VelocityJS.org
 
 **Quickstart**  
-`<script src="//cdn.jsdelivr.net/jquery.velocity/0.1.0/jquery.velocity.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/jquery.velocity/0.2.0/jquery.velocity.min.js"></script>`
 
 **Feature Demos**  
 http://codepen.io/julianshapiro/public-list
