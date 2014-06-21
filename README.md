@@ -12,12 +12,8 @@ http://codepen.io/julianshapiro/public-list
 **Package Managers**  
 Bower package is *velocity*. NPM package is *velocity-animate*.
 
-###**New**
-
-- *Coming soon: jQuery dependency removal and Zepto support.*
-- Immediate stopping: http://velocityjs.org/#stop
-- Spring physics: http://velocityjs.org/#easing
-- Coffee script love: https://github.com/julianshapiro/velocity/issues/76
+**Coming Soon**  
+jQuery dependency removal and Zepto support.
 
 ###**Learn**
 
