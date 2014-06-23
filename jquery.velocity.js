@@ -2373,7 +2373,8 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
            by the same Velocity call -- are properly batched into the same initial RAF tick and consequently remain in sync thereafter. */
         if (timestamp) {
             /* We ignore RAF's high resolution timestamp since it can be significantly offset when the browser is under high stress; we opt for choppiness over allowing the browser to drop huge chunks of frames. */
-            var timeCurrent = (new Date).getTime();
+            var timeCurrent = (new Date).getTime(),
+                isSkipped;
 
             /********************
                Call Iteration
@@ -2417,6 +2418,8 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
                     var tweensContainer = call[j],
                         element = tweensContainer.element;
+
+                    isSkipped = element.isSkipped;
 
 
                     /* Check to see if this element has been deleted midway through the animation by checking for the continued existence of its data cache. If it's gone, skip animating this element. */
@@ -2538,13 +2541,13 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
                 /* Pass the elements and the timing data (percentComplete, msRemaining, and timeStart) into the progress callback. */
                 /* If the tween wasn't skipped */
-                if (opts.progress && !element.isSkipped) {
+                if (opts.progress && !isSkipped) {
                     opts.progress.call(callContainer[1], callContainer[1], percentComplete, Math.max(0, (timeStart + opts.duration) - timeCurrent), timeStart, callContainer);
                 }
 
                 /* If this call has finished tweening, pass its index to completeCall() to handle call cleanup. */
                 /* Or if this tween was skipped */
-                if (percentComplete === 1 || element.isSkipped) {
+                if (percentComplete === 1 || isSkipped) {
                     completeCall(i);
                 }
 
