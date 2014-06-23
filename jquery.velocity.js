@@ -1721,7 +1721,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
                         /* Create a deepy copy (indicated via the true flag) of the previous call's tweensContainer. */
                         var lastTweensContainer = $.extend(true, {}, $.data(element, NAME).tweensContainer);
-                        
+
                         /* Manipulate the previous tweensContainer by replacing its end values and currentValues with its start values. */
                         for (var lastTween in lastTweensContainer) {
                             /* In addition to tween data, tweensContainers contain an element property that we ignore here. */
@@ -2740,7 +2740,14 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 /* Check for height: "auto" so we can revert back to it when the sliding animation is complete. */
                 function checkHeightAuto() {
                     element.style.display = "block";
-                    originalValues.height = Velocity.CSS.getPropertyValue(element, "height");
+
+                    /* Depending on `content-box` or `border-box` box model,
+                       browser will return number(1) or string(2) for element's
+                       height, parseInt intent to normalize this */
+                    var height = Velocity.CSS.getPropertyValue(element, "height"),
+                        value;
+                    height = parseInt(height, 10);
+                    originalValues.height = height;
 
                     /* We determine if height was originally set to "auto" by checking if the computed "auto" value is identical to the original value. */
                     element.style.height = "auto";
@@ -2774,7 +2781,14 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                         }
 
                         /* Use forcefeeding to animate slideDown properties from 0. */
-                        originalValues[property] = [ Velocity.CSS.getPropertyValue(element, property), 0 ];
+                        /* Depending on `content-box` or `border-box` box model,
+                           browser will return number(1) or string(2) for element's
+                           height, parseInt intent to normalize this */
+                        value = Velocity.CSS.getPropertyValue(element, property);
+                        if (property === 'height'){
+                            value = parseInt(value, 10)
+                        }
+                        originalValues[property] = [ value, 0 ];
                     }
 
                     /* Hide the element inside this begin callback, otherwise it'll momentarily flash itself before the actual animation tick begins. */
@@ -2784,7 +2798,14 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
                     for (var property in originalValues) {
                         /* Use forcefeeding to animate slideUp properties toward 0. */
-                        originalValues[property] = [ 0, Velocity.CSS.getPropertyValue(element, property) ];
+                        /* Depending on `content-box` or `border-box` box model,
+                           browser will return number(1) or string(2) for element's
+                           height, parseInt intent to normalize this */
+                        value = Velocity.CSS.getPropertyValue(element, property);
+                        if (property === 'height'){
+                            value = parseInt(value, 10)
+                        }
+                        originalValues[property] = [ 0, value ];
                     }
 
                     /* As with slideDown, slideUp hides the element's scrollbars while animating since scrollbar height tweening looks unappealing. */
