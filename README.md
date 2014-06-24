@@ -21,6 +21,7 @@ jQuery dependency removal, Zepto support, and SVG animation.
 - **Performance comparisons**: http://davidwalsh.name/css-js-animation
 - **Performance optimizations**: http://www.sitepoint.com/incredibly-fast-ui-animation-using-velocity-js/
 - **Workflow**: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
+- **Easily Improving jQuery Animations**: http://www.sitepoint.com/easily-improving-jquery-animations/
 
 ###**Comparisons**
 
