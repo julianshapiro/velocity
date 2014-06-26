@@ -488,7 +488,7 @@
         (function(effectName) {
             var effect = effects[effectName];
 
-            Container.Velocity.Sequences[effectName] = function (element, options) {
+            Container.Velocity.Sequences[effectName] = function (element, options, elementsIndex, elementsSize) {
                 for (var callIndex = 0; callIndex < effect.calls.length; callIndex++) {
                     var opts = {};
 
@@ -510,15 +510,25 @@
                     if (callIndex === effect.calls.length - 1) {
                         if (effect.reset) {
                             opts.complete = function() {
-                                options.complete && options.complete.call();
+                                /* Since sequences are triggered individually for each element in the animated set, we avoid repeatedly triggering callbacks by firing them only when the final element is reached. */
+                                if (elementsIndex !== elementsSize - 1) {
+                                    options.complete && options.complete.call();
+									options.begin && options.begin.call();
+                                }
+
+                                if(options.opacity)	effect.reset.opacity = [0, 0];
                                 Container.Velocity.animate(element, effect.reset, { duration: 0, queue: false });
                             };
                         } else {
-                            opts.complete = options.complete;
+							/* Since sequences are triggered individually for each element in the animated set, we avoid repeatedly triggering callbacks by firing them only when the final element is reached. */
+							if (elementsIndex !== elementsSize - 1) {
+								opts.complete = options.complete;
+								opts.begin = options.begin;
+							}
                         }
                         
-                        if (/Out$/.test(effectName)) {
-                            opts.display = "none";                        
+                        if (/Out$/.test(effectName) && !options.opacity) {
+                            opts.display = "none";
                         }
                     }
 
