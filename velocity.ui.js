@@ -511,14 +511,16 @@
                         if (effect.reset) {
                             opts.complete = function() {
                                 options.complete && options.complete.call();
+								
+								if(options.opacity)	effect.reset.opacity = [0, 0];
                                 Container.Velocity.animate(element, effect.reset, { duration: 0, queue: false });
                             };
                         } else {
                             opts.complete = options.complete;
                         }
                         
-                        if (/Out$/.test(effectName)) {
-                            opts.display = "none";                        
+                        if (/Out$/.test(effectName) && !options.opacity) {
+                            opts.display = "none";
                         }
                     }
 
