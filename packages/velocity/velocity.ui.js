@@ -3,13 +3,13 @@
 ***************/
 
 /*!
-* velocity.ui.js: UI effects pack for Velocity. Load this after Velocity.
-* @version 1.1.2
+* velocity.ui.js: UI effects pack for Velocity. Load this file after jquery.velocity.js.
+* @version 2.0.0
 * @docs http://velocityjs.org/#uiPack
 * @support <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: Full support.
 * @license Copyright Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
-* @license Portions adapted from Animate.css, copyright Daniel Eden. MIT License: http://en.wikipedia.org/wiki/MIT_License
-* @license Portions adapted from Magic.css, copyright Christian Pucci. MIT License: http://en.wikipedia.org/wiki/MIT_License
+* @license Indicated portions adapted from Animate.css, copyright Daniel Eden. MIT License: http://en.wikipedia.org/wiki/MIT_License
+* @license Indicated portions adapted from Magic.css, copyright Christian Pucci. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */   
 
 (function() {
@@ -488,7 +488,9 @@
         (function(effectName) {
             var effect = effects[effectName];
 
-            Container.Velocity.Sequences[effectName] = function (element, options) {
+            Container.Velocity.Sequences[effectName] = function (element, options, elementsIndex, elementsSize) {
+                var finalElement = (elementsIndex === elementsSize - 1);
+
                 for (var callIndex = 0; callIndex < effect.calls.length; callIndex++) {
                     var opts = {};
 
@@ -498,27 +500,39 @@
 
                     if (callIndex === 0) {
                         opts.delay = options.delay;
-                        opts.begin = options.begin;
 
-                        if (options.display) {
-                            opts.display = options.display;
-                        } else if (/In$/.test(effectName)) {
-                            opts.display = Container.Velocity.CSS.Values.getDisplayType(element);
+                        if (elementsIndex === 0) {
+                            opts.begin = options.begin;
+                        }
+
+                        if (options.display !== null) {
+                            if (options.display) {
+                                opts.display = options.display;
+                            } else if (/In$/.test(effectName)) {
+                                opts.display = Container.Velocity.CSS.Values.getDisplayType(element);
+                            }
                         }
                     }
 
                     if (callIndex === effect.calls.length - 1) {
                         if (effect.reset) {
                             opts.complete = function() {
-                                options.complete && options.complete.call();
+                                if (finalElement) {
+                                    options.complete && options.complete.call();
+                                }
+
                                 Container.Velocity.animate(element, effect.reset, { duration: 0, queue: false });
                             };
-                        } else {
+                        } else if (finalElement) {
                             opts.complete = options.complete;
                         }
-                        
-                        if (/Out$/.test(effectName)) {
-                            opts.display = "none";                        
+
+                        if (options.display !== null) {
+                            if (options.display) {
+                                opts.display = options.display;
+                            } else if (/Out$/.test(effectName)) {
+                                opts.display = "none";                        
+                            }
                         }
                     }
 
