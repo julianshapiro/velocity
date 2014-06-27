@@ -32,7 +32,7 @@ jQuery dependency removal, Zepto support, and SVG animation.
 
 - 0.2.1: Prevent errors from being thrown in old, partially-supported jQuery versions (1.4.0-2).
 - 0.2.0: Added step easing (http://VelocityJS.org/#easing).
-- 0.1.0: Velocity's `stop` command was changed to stop animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made.
+- 0.1.0: The `stop` command now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made. See http://VelocityJS.org/#stop.
 
 ====
 
