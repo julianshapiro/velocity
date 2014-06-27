@@ -497,6 +497,7 @@
                     opts.duration = (options.duration || effect.defaultDuration || 1000) * (effect.calls[callIndex][1] || 1);
                     opts.easing = "ease";
                     opts.loop = effect.calls[callIndex][2];
+                    opts.skipReset = options.skipReset || false;
 
                     if (callIndex === 0) {
                         opts.delay = options.delay;
@@ -515,7 +516,7 @@
                     }
 
                     if (callIndex === effect.calls.length - 1) {
-                        if (effect.reset) {
+                        if (effect.reset && !opts.skipReset) {
                             opts.complete = function() {
                                 if (finalElement) {
                                     options.complete && options.complete.call();
