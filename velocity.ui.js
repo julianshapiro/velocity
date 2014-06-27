@@ -489,11 +489,8 @@
             var effect = effects[effectName];
 
             Container.Velocity.Sequences[effectName] = function (element, options, elementsIndex, elementsSize) {
-<<<<<<< HEAD
-=======
                 var finalElement = (elementsIndex === elementsSize - 1);
 
->>>>>>> bd6760f92aafb908ee7d7988ae35050f2560ce9a
                 for (var callIndex = 0; callIndex < effect.calls.length; callIndex++) {
                     var opts = {};
 
@@ -520,27 +517,6 @@
                     if (callIndex === effect.calls.length - 1) {
                         if (effect.reset) {
                             opts.complete = function() {
-<<<<<<< HEAD
-                                /* Since sequences are triggered individually for each element in the animated set, we avoid repeatedly triggering callbacks by firing them only when the final element is reached. */
-                                if (elementsIndex !== elementsSize - 1) {
-                                    options.complete && options.complete.call();
-									options.begin && options.begin.call();
-                                }
-
-                                if(options.opacity)	effect.reset.opacity = [0, 0];
-                                Container.Velocity.animate(element, effect.reset, { duration: 0, queue: false });
-                            };
-                        } else {
-							/* Since sequences are triggered individually for each element in the animated set, we avoid repeatedly triggering callbacks by firing them only when the final element is reached. */
-							if (elementsIndex !== elementsSize - 1) {
-								opts.complete = options.complete;
-								opts.begin = options.begin;
-							}
-                        }
-                        
-                        if (/Out$/.test(effectName) && !options.opacity) {
-                            opts.display = "none";
-=======
                                 if (finalElement) {
                                     options.complete && options.complete.call();
                                 }
@@ -557,7 +533,6 @@
                             } else if (/Out$/.test(effectName)) {
                                 opts.display = "none";                        
                             }
->>>>>>> bd6760f92aafb908ee7d7988ae35050f2560ce9a
                         }
                     }
 
