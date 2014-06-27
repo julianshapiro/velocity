@@ -215,6 +215,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             complete: null,
             progress: null,
             display: null,
+            visibility: null,
             loop: false,
             delay: false,
             mobileHA: true,
@@ -1638,7 +1639,16 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             if (opts.display) {
                 opts.display = opts.display.toString().toLowerCase();
             }
+                                    
+            /********************
+               Option: Visibility
+            ********************/
 
+            /* Refer to Velocity's documentation (VelocityJS.org/#visibility) for a description of the visibility option's behavior. */
+            if (opts.visibility) {
+                opts.visibility = opts.visibility.toString().toLowerCase();
+            }
+            
             /**********************
                Option: mobileHA
             **********************/
@@ -1750,6 +1760,11 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                         /* If the element was hidden via the display option in the previous call, revert display to block prior to reversal so that the element is visible again. */
                         if (Data(element).opts.display === "none") {
                             Data(element).opts.display = "block";
+                        }
+                        
+                        /* If the element was hidden via the display option in the previous call, revert display to block prior to reversal so that the element is visible again. */
+                        if (Data(element).opts.visibility === "hidden") {
+                            Data(element).opts.visibility = "visible";
                         }
 
                         /* If the loop option was set in the previous call, disable it so that "reverse" calls aren't recursively generated. Further, remove the previous call's callback options;
@@ -2481,6 +2496,15 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                     if (opts.display && opts.display !== "none") {
                         CSS.setPropertyValue(element, "display", opts.display);
                     }
+                                        
+                    /*********************
+                       Visibility Toggling
+                    *********************/
+
+                    /* If the visibility option is set to non-"hidden", set it upfront so that the element has a chance to become visible before tweening begins. (Otherwise, visibility's "hidden" value is set in completeCall() once the animation has completed.) */
+                    if (opts.visibility && opts.visibility !== "hidden") {
+                        CSS.setPropertyValue(element, "visibility", opts.visibility);
+                    }
 
                     /************************
                        Property Iteration
@@ -2582,6 +2606,10 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 if (opts.display && opts.display !== "none") {
                     Velocity.State.calls[i][2].display = false;
                 }
+                
+                if (opts.visibility && opts.visibility !== "hidden") {
+                    Velocity.State.calls[i][2].visibility = false;
+                }
 
                 /* Pass the elements and the timing data (percentComplete, msRemaining, and timeStart) into the progress callback. */
                 if (opts.progress) {
@@ -2631,6 +2659,10 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             /* Note: display:none isn't set when calls are manually stopped (via Velocity.animate("stop"). */
             if (!isStopped && opts.display === "none" && !opts.loop) {
                 CSS.setPropertyValue(element, "display", opts.display);
+            }
+            
+            if (!isStopped && opts.visibility === "hidden" && !opts.loop) {
+                CSS.setPropertyValue(element, "visibility", opts.visibility);
             }
 
             /* If the element's queue is empty (if only the "inprogress" item is left at position 0) or if its queue is about to run a non-Velocity-initiated entry, turn off the isAnimating flag.
@@ -2778,6 +2810,16 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                     opts.display = opts.display || Velocity.CSS.Values.getDisplayType(element);
                 } else {
                     opts.display = opts.display || "none";
+                }
+            }
+            
+            if (opts.visibility !== null) {
+                /* Unless the user is trying to override the display option, show the element before slideDown begins and hide the element after slideUp completes. */
+                if (direction === "Down") {
+                    /* All elements subjected to sliding down are set to the "block" display value (-- )as opposed to an element-appropriate block/inline distinction) because inline elements cannot actually have their dimensions modified. */
+                    opts.visibility = opts.visibility || "visible";
+                } else {
+                    opts.visibility = opts.visibility || "none";
                 }
             }
 
