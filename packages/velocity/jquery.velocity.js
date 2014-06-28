@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.2.1
+* @version 0.3.0
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -125,6 +125,10 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         /* Determine if variable is a wrapped jQuery or Zepto element. */
         isWrapped: function (variable) {
             return variable && (variable.jquery || (window.Zepto && window.Zepto.zepto.isZ(variable)));
+        },
+
+        isSVG: function (variable) {
+            return window.SVGElement && (variable instanceof SVGElement);
         }
     };
 
@@ -557,6 +561,9 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 "borderBottomColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "borderLeftColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "outlineColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
+                "fill": [ "Red Green Blue Alpha", "255 255 255 1" ],
+                "stroke": [ "Red Green Blue Alpha", "255 255 255 1" ],
+                "stopColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "textShadow": [ "Color X Y Blur", "black 0px 0px 0px" ],
                 /* Todo: Add support for inset boxShadows. (webkit places it last whereas IE places it first.) */
                 "boxShadow": [ "Color X Y Blur Spread", "black 0px 0px 0px 0px" ],
@@ -856,7 +863,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
                 /* Since Velocity only animates a single numeric value per property, color animation is achieved by hooking the individual RGBA components of CSS color properties.
                    Accordingly, color values must be normalized (e.g. "#ff0000", "red", and "rgb(255, 0, 0)" ==> "255 0 0 1") so that their components can be injected/extracted by CSS.Hooks logic. */
-                var colorProperties = [ "color", "backgroundColor", "borderColor", "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor" ];
+                var colorProperties = [ "fill", "stroke", "stopColor", "color", "backgroundColor", "borderColor", "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor" ];
 
                 for (var i = 0, colorPropertiesLength = colorProperties.length; i < colorPropertiesLength; i++) {
                     /* Hex to RGB conversion. Copyright Tim Down: http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb */
@@ -969,6 +976,11 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 });
             },
 
+            /* For SVG elements, some CSS properties (namely, dimemsional ones) are GET and SET directly on the SVG element's HTML attributes (instead of via styles). */
+            SVGAttribute: function (property) {
+                return /^(width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y1|transform)$/i.test(property);
+            },
+
             /* Determine whether a property should be set with a vendor prefix. */
             /* If a prefixed version of the property exists, return it. Otherwise, return the original property name. If the property is not at all supported by the browser, return a false flag. */
             prefixCheck: function (property) {
@@ -1018,7 +1030,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             getUnitType: function (property) {
                 if (/^(rotate|skew)/i.test(property)) {
                     return "deg";
-                } else if (/(^(scale|scaleX|scaleY|scaleZ|opacity|alpha|fillOpacity|flexGrow|flexHeight|zIndex|fontWeight)$)|color/i.test(property)) {
+                } else if (/(^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight)$)|((opacity|red|green|blue|alpha)$)/i.test(property)) {
                     /* The above properties are unitless. */
                     return "";
                 } else {
@@ -1167,9 +1179,20 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                 propertyValue = CSS.Normalizations.registered[property]("extract", element, normalizedPropertyValue);
             }
 
-            /* If a value wasn't produced via hook extraction or normalization, query the DOM. */
+            /* If a (numeric) value wasn't produced via hook extraction or normalization, query the DOM. */
             if (!/^[\d-]/.test(propertyValue)) {
-                propertyValue = computePropertyValue(element, CSS.Names.prefixCheck(property)[0]); /* GET */
+                /* For SVG elements, dimensional properties (which SVGAttribute() detects) are tweened via their HTML attribute values instead of their CSS style values. */
+                if (Data(element) && Data(element).isSVG && CSS.Names.SVGAttribute(property)) {
+                    /* Since the height/width attribute values must be set manually, they don't reflect computed values. Thus, we use use getBBox() to ensure we always get values for elements with undefined height/width attributes. */
+                    if (/^(height|width)$/i.test(property)) {
+                        propertyValue = element.getBBox()[property];
+                    /* Otherwise, access the attribute value directly. */
+                    } else {
+                        propertyValue = element.getAttribute(property);
+                    }
+                } else {
+                    propertyValue = computePropertyValue(element, CSS.Names.prefixCheck(property)[0]); /* GET */
+                }
             }
 
             /* Since property lookups are for animation purposes (which entails computing the numeric delta between start and end values), convert CSS null-values to an integer of value 0. */
@@ -1227,14 +1250,20 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                         property = CSS.Normalizations.registered[property]("name", element);
                     }
 
-                    /* Assign the appropriate vendor prefix before perform an official style update. */
+                    /* Assign the appropriate vendor prefix before performing an official style update. */
                     propertyName = CSS.Names.prefixCheck(property)[0];
 
                     /* A try/catch is used for IE<=8, which throws an error when "invalid" CSS values are set, e.g. a negative width. Try/catch is avoided for other browsers since it incurs a performance overhead. */
                     if (IE <= 8) {
                         try {
                             element.style[propertyName] = propertyValue;
-                        } catch (e) { console.log("Error setting [" + propertyName + "] to [" + propertyValue + "]"); }
+                        } catch (error) { console.log("Error setting [" + propertyName + "] to [" + propertyValue + "]"); }
+                    /* SVG elements have their dimensional properties (width, height, x, y, cx, etc.) applied directly as attributes instead of as styles. */
+                    /* Note: IE8 does not support SVG elements, so it's okay that we skip it for SVG animation. */
+                    } else if (Data(element) && Data(element).isSVG && CSS.Names.SVGAttribute(property)) {
+                        /* Note: For SVG attributes, vendor-prefixed property names are never used. */
+                        /* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
+                        element.setAttribute(property, propertyValue);
                     } else {
                         element.style[propertyName] = propertyValue;
                     }
@@ -1248,35 +1277,75 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         },
 
         /* To increase performance by batching transform updates into a single SET, transforms are not directly applied to an element until flushTransformCache() is called. */
-        /* Note: Velocity does not apply transform values in the same order that they were defined in the call's property map. Doing so would become problematic since there'd
-           be no indication of how an element's existing transforms should be re-ordered along with the new ones. */
+        /* Note: Velocity applies transform properties in the same order that they are chronogically introduced to the element's CSS styles. */
         flushTransformCache: function(element) {
-            var transformString = "",
-                transformName,
-                transformValue,
-                perspective;
+            var transformString = "";
 
-            /* Transform properties are stored as members of the transformCache object. Concatenate all the members into a string. */
-            for (transformName in Data(element).transformCache) {
-                transformValue = Data(element).transformCache[transformName];
+            /* SVG elements take a modified version of CSS's transform string (units are dropped and, except for skewX/Y, subproperties are merged into their master property -- e.g. scaleX and scaleY are merged into scale(X Y). */
+            if (Data(element).isSVG) {
+                /* Since transform values are stored in their parentheses-wrapped form, we create a helper function to strip out their numeric values. Further, SVG transform properties
+                   only take unitless (representing pixels) values, so it's okay that parseFloat() strips the unit suffixed to the float value. */
+                function getTransformFloat (transformProperty) {
+                    return parseFloat(CSS.getPropertyValue(element, transformProperty));
+                } 
 
-                /* Transform's perspective subproperty must be set first in order to take effect. We store it for now. */
-                if (transformName === "transformPerspective") {
-                    perspective = transformValue;
-                    continue;
+                /* For organizational purposes, create an object to contain all the transforms that we'll apply to the SVG element. To keep the logic simple, we process *all* transform properties --
+                   even those that may not be explicitly applied (since they default to their zero-values anyway). */ 
+                var SVGTransforms = { 
+                    translate: [ getTransformFloat("translateX"), getTransformFloat("translateY") ],
+                    skewX: [ getTransformFloat("skewX") ], skewY: [ getTransformFloat("skewY") ], 
+                    /* If the scale property is set (non-1), use that value for the scaleX and scaleY values (this behavior mimics the result of animating all these properties at once on HTML elements). */
+                    scale: getTransformFloat("scale") !== 1 ? [ getTransformFloat("scale"), getTransformFloat("scale") ] : [ getTransformFloat("scaleX"), getTransformFloat("scaleY") ],
+                    /* Note: SVG's rotate transform takes three values: rotation degrees followed by the X and Y values defining the rotation's origin point. We ignore the origin values (default them to 0). */
+                    rotate: [ getTransformFloat("rotateZ"), 0, 0 ]
+                };
+
+                /* Iterate through the transform properties in the user-defined property map order. (This mimics the behavior of non-SVG transform animation.) */
+                $.each(Data(element).transformCache, function(transformName) {
+                    /* Except for with skewX/Y, revert the axis-specific transform subproperties to their axis-free master properties so that they match up with SVG's accepted transform properties. */
+                    if (/^translate/i.test(transformName)) {
+                        transformName = "translate";
+                    } else if (/^scale/i.test(transformName)) {
+                        transformName = "scale";
+                    } else if (/^rotate/i.test(transformName)) {
+                        transformName = "rotate";
+                    }
+
+                    /* Check that we haven't yet deleted the property from the SVGTransforms container. */
+                    if (SVGTransforms[transformName]) {
+                        /* Append the transform property in the SVG-supported transform format. As per the spec, surround the space-delimited values in parentheses. */
+                        transformString += transformName + "(" + SVGTransforms[transformName].join(" ") + ")" + " ";
+                        
+                        /* After processing an SVG transform property, delete it from the SVGTransforms container so we don't re-insert the same master property if we encounter another one of its axis-specific properties. */
+                        delete SVGTransforms[transformName];
+                    }
+                });
+            } else {
+                var transformValue,
+                    perspective;
+
+                /* Transform properties are stored as members of the transformCache object. Concatenate all the members into a string. */
+                $.each(Data(element).transformCache, function(transformName) {
+                    transformValue = Data(element).transformCache[transformName];
+
+                    /* Transform's perspective subproperty must be set first in order to take effect. Store it temporarily. */
+                    if (transformName === "transformPerspective") {
+                        perspective = transformValue;
+                        return true;
+                    }
+
+                    /* IE9 only supports one rotation type, rotateZ, which it refers to as "rotate". */
+                    if (IE === 9 && transformName === "rotateZ") {
+                        transformName = "rotate";
+                    }
+
+                    transformString += transformName + transformValue + " ";
+                });
+
+                /* If present, set the perspective subproperty first. */
+                if (perspective) {
+                    transformString = "perspective" + perspective + " " + transformString;
                 }
-
-                /* IE9 only supports one rotation type, rotateZ, which it refers to as "rotate". */
-                if (IE === 9 && transformName === "rotateZ") {
-                    transformName = "rotate";
-                }
-
-                transformString += transformName + transformValue + " ";
-            }
-
-            /* If present, set the perspective subproperty first. */
-            if (perspective) {
-                transformString = "perspective" + perspective + " " + transformString;
             }
 
             CSS.setPropertyValue(element, "transform", transformString);
@@ -1547,6 +1616,8 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             /* A primary design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying. Accordingly, each element has a data cache instantiated on it. */
             if (Data(element) === undefined) {
                 $.data(element, NAME, {
+                    /* Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements. */
+                    isSVG: Type.isSVG(element),
                     /* Keep track of whether the element is currently being animated by Velocity. This is used to ensure that property values are not transferred between non-consecutive (stale) calls. */
                     isAnimating: false,
                     /* A reference to the element's live computedStyle object. You can learn more about computedStyle here: https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle */
@@ -1891,7 +1962,8 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
                         /* Properties that are not supported by the browser (and do not have an associated normalization) will inherently produce no style changes when set, so they are skipped in order to decrease animation tick overhead.
                            Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
-                        if (CSS.Names.prefixCheck(rootProperty)[1] === false && CSS.Normalizations.registered[rootProperty] === undefined) {
+                        /* Note: Since SVG elements have some of their properties directly applied as HTML attributes, there is no way to check for their explicit browser support, and so we skip skip this check for them. */
+                        if (!Data(element).isSVG && CSS.Names.prefixCheck(rootProperty)[1] === false && CSS.Normalizations.registered[rootProperty] === undefined) {
                             if (Velocity.debug) console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
 
                             continue;
@@ -2071,51 +2143,59 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                             /* After temporary unit conversion logic runs, width and height properties that were originally set to "auto" must be set back to "auto" instead of to the actual corresponding pixel value. Leaving the values
                                at their hard-coded pixel value equivalents would inherently prevent the elements from vertically adjusting as the height of its inner content changes. */
                             /* IE tells us whether or not the property is set to "auto". Other browsers provide no way of determing "auto" values on height/width, and thus we have to trigger additional layout thrashing (see below) to solve this. */
-                            if (IE) {
+                            if (IE && !Data(element).isSVG) {
                                 var isIEWidthAuto = /^auto$/i.test(element.currentStyle.width),
                                     isIEHeightAuto = /^auto$/i.test(element.currentStyle.height);
                             }
 
                             /* Note: To minimize layout thrashing, the ensuing unit conversion logic is split into batches to synchronize GETs and SETs. */
                             if (!sameBasePercent || !sameBaseEm) {
-                                originalValues.overflowX = CSS.getPropertyValue(element, "overflowX"); /* GET */
-                                originalValues.overflowY = CSS.getPropertyValue(element, "overflowY"); /* GET */
-                                originalValues.boxSizing = CSS.getPropertyValue(element, "boxSizing"); /* GET */
+                                /* SVG elements have no concept of document flow, and don't support the full range of CSS properties, so we skip the unnecessary stripping of unapplied properties to avoid dirtying their HTML. */
+                                if (!Data(element).isSVG) {
+                                    originalValues.overflowX = CSS.getPropertyValue(element, "overflowX"); /* GET */
+                                    originalValues.overflowY = CSS.getPropertyValue(element, "overflowY"); /* GET */
+                                    originalValues.boxSizing = CSS.getPropertyValue(element, "boxSizing"); /* GET */
+                                
+                                    /* Since % values are relative to their respective axes, ratios are calculated for both width and height. In contrast, only a single ratio is required for rem and em. */
+                                    /* When calculating % values, we set a flag to indiciate that we want the computed value instead of offsetWidth/Height, which incorporate additional dimensions (such as padding and border-width) into their values. */
+                                    originalValues.minWidth = CSS.getPropertyValue(element, "minWidth"); /* GET */
+                                    /* Note: max-width/height must default to "none" when 0 is returned, otherwise the element cannot have its width/height set. */
+                                    originalValues.maxWidth = CSS.getPropertyValue(element, "maxWidth") || "none"; /* GET */
 
-                                /* Since % values are relative to their respective axes, ratios are calculated for both width and height. In contrast, only a single ratio is required for rem and em. */
-                                /* When calculating % values, we set a flag to indiciate that we want the computed value instead of offsetWidth/Height, which incorporate additional dimensions (such as padding and border-width) into their values. */
+                                    originalValues.minHeight = CSS.getPropertyValue(element, "minHeight"); /* GET */
+                                    originalValues.maxHeight = CSS.getPropertyValue(element, "maxHeight") || "none"; /* GET */
+
+                                    originalValues.paddingLeft = CSS.getPropertyValue(element, "paddingLeft"); /* GET */
+                                }
+
                                 originalValues.width = CSS.getPropertyValue(element, "width", null, true); /* GET */
-                                originalValues.minWidth = CSS.getPropertyValue(element, "minWidth"); /* GET */
-                                /* Note: max-width/height must default to "none" when 0 is returned, otherwise the element cannot have its width/height set. */
-                                originalValues.maxWidth = CSS.getPropertyValue(element, "maxWidth") || "none"; /* GET */
-
                                 originalValues.height = CSS.getPropertyValue(element, "height", null, true); /* GET */
-                                originalValues.minHeight = CSS.getPropertyValue(element, "minHeight"); /* GET */
-                                originalValues.maxHeight = CSS.getPropertyValue(element, "maxHeight") || "none"; /* GET */
-
-                                originalValues.paddingLeft = CSS.getPropertyValue(element, "paddingLeft"); /* GET */
                             }
 
                             if (sameBasePercent) {
                                 elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth;
                                 elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight;
                             } else {
-                                CSS.setPropertyValue(element, "overflowX",  "hidden"); /* SET */
-                                CSS.setPropertyValue(element, "overflowY",  "hidden"); /* SET */
-                                CSS.setPropertyValue(element, "boxSizing",  "content-box"); /* SET */
+                                if (!Data(element).isSVG) {
+                                    CSS.setPropertyValue(element, "overflowX",  "hidden"); /* SET */
+                                    CSS.setPropertyValue(element, "overflowY",  "hidden"); /* SET */
+                                    CSS.setPropertyValue(element, "boxSizing",  "content-box"); /* SET */
+
+                                    CSS.setPropertyValue(element, "minWidth", measurement + "%"); /* SET */
+                                    CSS.setPropertyValue(element, "maxWidth", measurement + "%"); /* SET */
+
+                                    CSS.setPropertyValue(element, "minHeight",  measurement + "%"); /* SET */
+                                    CSS.setPropertyValue(element, "maxHeight",  measurement + "%"); /* SET */
+                                }
 
                                 CSS.setPropertyValue(element, "width", measurement + "%"); /* SET */
-                                CSS.setPropertyValue(element, "minWidth", measurement + "%"); /* SET */
-                                CSS.setPropertyValue(element, "maxWidth", measurement + "%"); /* SET */
-
                                 CSS.setPropertyValue(element, "height",  measurement + "%"); /* SET */
-                                CSS.setPropertyValue(element, "minHeight",  measurement + "%"); /* SET */
-                                CSS.setPropertyValue(element, "maxHeight",  measurement + "%"); /* SET */
                             }
 
+                            
                             if (sameBaseEm) {
                                 elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx;
-                            } else {
+                            } else if (!Data(element).isSVG) {
                                 CSS.setPropertyValue(element, "paddingLeft", measurement + "em"); /* SET */
                             }
 
@@ -2126,39 +2206,42 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
                                 elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(element, "height", null, true)) || 1) / measurement; /* GET */
                             }
 
-                            if (!sameBaseEm) {
+                           if (!sameBaseEm) {
                                 elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx = (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 1) / measurement; /* GET */
-                            }
+                           }
 
-                            /* Revert each test property to its original value. */
+                            /* Revert each used test property to its original value. */
                             for (var originalValueProperty in originalValues) {
                                 if (originalValues[originalValueProperty] !== null) {
                                     CSS.setPropertyValue(element, originalValueProperty, originalValues[originalValueProperty]); /* SETs */
                                 }
                             }
 
-                            /* In IE, revert to "auto" for width and height if it was originally set. */
-                            if (IE) {
-                                if (isIEWidthAuto) {
-                                    CSS.setPropertyValue(element, "width", "auto"); /* SET */
-                                }
+                            /* SVG dimensions do not accept an "auto" value, so we skip this reset process for them. */
+                            if (!Data(element).isSVG) {
+                                /* In IE, revert to "auto" for width and height if it was originally set. */
+                                if (IE) {
+                                    if (isIEWidthAuto) {
+                                        CSS.setPropertyValue(element, "width", "auto"); /* SET */
+                                    }
 
-                                if (isIEHeightAuto) {
+                                    if (isIEHeightAuto) {
+                                        CSS.setPropertyValue(element, "height", "auto"); /* SET */
+                                    }
+                                /* For other browsers, additional layout thrashing must be triggered to determine whether a property was originally set to "auto". */
+                                } else {
+                                    /* Set height to "auto" then compare the returned value against the element's current height value. If they're identical, leave height set to "auto".
+                                       If they're different, then "auto" wasn't originally set on the element prior to our conversions, and we revert it to its actual value. */
+                                    /* Note: The following GETs and SETs cannot be batched together due to the cross-effect setting one axis to "auto" has on the other. */
                                     CSS.setPropertyValue(element, "height", "auto"); /* SET */
-                                }
-                            /* For other browsers, additional layout thrashing must be triggered to determine whether a property was originally set to "auto". */
-                            } else {
-                                /* Set height to "auto" then compare the returned value against the element's current height value. If they're identical, leave height set to "auto".
-                                   If they're different, then "auto" wasn't originally set on the element prior to our conversions, and we revert it to its actual value. */
-                                /* Note: The following GETs and SETs cannot be batched together due to the cross-effect setting one axis to "auto" has on the other. */
-                                CSS.setPropertyValue(element, "height", "auto"); /* SET */
-                                if (originalValues.height !== CSS.getPropertyValue(element, "height", null, true)) { /* GET */
-                                    CSS.setPropertyValue(element, "height", originalValues.height); /* SET */
-                                }
+                                    if (originalValues.height !== CSS.getPropertyValue(element, "height", null, true)) { /* GET */
+                                        CSS.setPropertyValue(element, "height", originalValues.height); /* SET */
+                                    }
 
-                                CSS.setPropertyValue(element, "width", "auto"); /* SET */
-                                if (originalValues.width !== CSS.getPropertyValue(element, "width", null, true)) { /* GET */
-                                    CSS.setPropertyValue(element, "width", originalValues.width); /* SET */
+                                    CSS.setPropertyValue(element, "width", "auto"); /* SET */
+                                    if (originalValues.width !== CSS.getPropertyValue(element, "width", null, true)) { /* GET */
+                                        CSS.setPropertyValue(element, "width", originalValues.width); /* SET */
+                                    }
                                 }
                             }
 
@@ -2902,4 +2985,5 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 ******************/
 
 /* When animating height or width to a % value on an element *without* box-sizing:border-box and *with* visible scrollbars on *both* axes, the opposite axis (e.g. height vs width) will be shortened by the height/width of its scrollbar. */
-/* The translateX/Y/Z subproperties of the transform CSS property are %-relative to the element itself -- not its parent. Velocity, however, doesn't make the distinction. Thus, converting to or from the % unit with these subproperties will produce an inaccurate conversion value. */
+/* The translateX/Y/Z subproperties of the transform CSS property are %-relative to the element itself -- not its parent.
+   Velocity, however, doesn't make the distinction. Thus, converting to or from the % unit with these subproperties will produce an inaccurate conversion value. The same issue exists with the cx/cy attributes of SVG circles and ellipses. */

@@ -2,8 +2,8 @@
 node_modules
 test
 min
+README.md
 Gruntfile.js
 velocity.js
 velocity.min.js
 velocity.jquery-shim.js
-velocity.spring.js
