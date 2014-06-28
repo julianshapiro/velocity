@@ -13,7 +13,7 @@ http://codepen.io/julianshapiro/public-list
 Bower package is *velocity*. NPM package is *velocity-animate*.
 
 **Coming Soon**  
-jQuery dependency removal, Zepto support, and SVG animation.
+jQuery dependency removal and Zepto support.
 
 ###**Learn**
 
