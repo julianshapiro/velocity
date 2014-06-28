@@ -6,9 +6,6 @@ http://VelocityJS.org
 **Quickstart**  
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.3.0/jquery.velocity.min.js"></script>`
 
-**Feature Demos**  
-http://codepen.io/julianshapiro/public-list
-
 **Package Managers**  
 Bower package is *velocity*. NPM package is *velocity-animate*.
 
