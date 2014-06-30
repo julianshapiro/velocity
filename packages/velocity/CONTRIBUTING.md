@@ -6,4 +6,4 @@ Unless you're reporting an obvious bug that can be immediately recreated by anyo
 
 **Questions**
 
-Please read the FAQ before asking a question: https://github.com/julianshapiro/velocity/issues/47.
+Please read the FAQ before asking questions: https://github.com/julianshapiro/velocity/issues/47.
