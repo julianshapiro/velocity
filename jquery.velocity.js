@@ -1322,7 +1322,7 @@ Velocity's structure:
                     if (IE <= 8) {
                         try {
                             element.style[propertyName] = propertyValue;
-                        } catch (error) { console.log("Error setting [" + propertyName + "] to [" + propertyValue + "]"); }
+                        } catch (error) { if (Velocity.debug) console.log("Error setting [" + propertyName + "] to [" + propertyValue + "]"); }
                     /* SVG elements have their dimensional properties (width, height, x, y, cx, etc.) applied directly as attributes instead of as styles. */
                     /* Note: IE8 does not support SVG elements, so it's okay that we skip it for SVG animation. */
                     } else if (Data(element) && Data(element).isSVG && CSS.Names.SVGAttribute(property)) {
