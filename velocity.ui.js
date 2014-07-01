@@ -498,29 +498,23 @@
                     opts.easing = "ease";
                     opts.loop = effect.calls[callIndex][2];
 
+                    /* on first animation call */
                     if (callIndex === 0) {
                         opts.delay = options.delay;
 
                         if (elementsIndex === 0) {
                             opts.begin = options.begin;
                         }
-
-                        if (options.display !== null) {
-                            if (options.display) {
-                                opts.display = options.display;
-                            } else if (/In$/.test(effectName)) {
-                                opts.display = Container.Velocity.CSS.Values.getDisplayType(element);
-                            }
-                        }
                     }
 
+                    /* on last animation call */
                     if (callIndex === effect.calls.length - 1) {
                         if (effect.reset) {
                             opts.complete = function() {
                                 if (finalElement) {
                                     options.complete && options.complete.call();
                                 }
-
+								
                                 Container.Velocity.animate(element, effect.reset, { duration: 0, queue: false });
                             };
                         } else if (finalElement) {
@@ -532,8 +526,21 @@
                                 opts.display = options.display;
                             } else if (/Out$/.test(effectName)) {
                                 opts.display = "none";                        
+                            } else if (/In$/.test(effectName)) {
+                                opts.display = Container.Velocity.CSS.Values.getDisplayType(element);
                             }
                         }
+                        
+                        if (options.visibility !== null) {
+                            if (options.visibility) {
+                                opts.visibility = options.visibility;
+                            } else if (/Out$/.test(effectName)) {
+                                opts.visibility = "none";                        
+                            } else if (/In$/.test(effectName)) {
+                                opts.visibility = "visible";
+                            }
+                        }
+                        
                     }
 
                     Container.Velocity.animate(element, effect.calls[callIndex][0], opts);
