@@ -190,6 +190,7 @@ Velocity's structure:
             /* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
             isAndroid: /Android/i.test(navigator.userAgent),
             isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
+            isChrome: window.chrome,
             /* Create a cached element for re-use when checking for CSS property prefixes. */
             prefixElement: document.createElement("div"),
             /* Cache every prefix match to avoid repeating lookups. */
@@ -255,9 +256,9 @@ Velocity's structure:
 
     /* Step easing generator. */
     function generateStep (steps) {
-        return function (p) { 
+        return function (p) {
             return Math.round(p * steps) * (1 / steps);
-        };   
+        };
     }
 
     /* Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License */
@@ -422,8 +423,14 @@ Velocity's structure:
         Velocity.Easings["linear"] = function(p) {
             return p;
         };
+
         Velocity.Easings["swing"] = function(p) {
             return 0.5 - Math.cos(p * Math.PI) / 2;
+        };
+
+        /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
+        Velocity.Easings["spring"] = function(p) {
+            return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
         };
 
         /* CSS3's named easing types. */
@@ -480,11 +487,6 @@ Velocity's structure:
                     1 - easeIn(p * -2 + 2) / 2;
             };
         });
-
-        /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
-        Velocity.Easings["spring"] = function(p) {
-            return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
-        };
     })();
 
     /* Determine the appropriate easing type given an easing input. */
@@ -1017,7 +1019,14 @@ Velocity's structure:
 
             /* For SVG elements, some CSS properties (namely, dimemsional ones) are GET/SET on the element's HTML attributes (instead of via styles). */
             SVGAttribute: function (property) {
-                return /^(width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y1|transform)$/i.test(property);
+                var SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y1";
+
+                /* Certain browsers require SVG transforms to be applied as an attribute. (Otherwise, application via CSS is preferable due to 3D support.) */
+                if (IE || (Velocity.State.isAndroid && !Velocity.State.isChrome)) {
+                    SVGAttributes += "|transform";
+                }
+
+                return new RegExp("^(" + SVGAttributes + ")$", "i").test(property);
             },
 
             /* Determine whether a property should be set with a vendor prefix. */
@@ -1110,7 +1119,7 @@ Velocity's structure:
                *computed* value. You can read more about getComputedStyle here: https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle */
             function computePropertyValue (element, property) {
                 /* When box-sizing isn't set to border-box, height and width style values are incorrectly computed when an
-                   element's scrollbars are visible (which expands the element's dimensions). Thus, we defer to the more accurate 
+                   element's scrollbars are visible (which expands the element's dimensions). Thus, we defer to the more accurate
                    offsetHeight/Width property, which includes the total dimensions for interior, border, padding, and scrollbar.
                    We subtract border and padding to get the sum of interior + scrollbar. */
 
@@ -1322,7 +1331,7 @@ Velocity's structure:
                     if (IE <= 8) {
                         try {
                             element.style[propertyName] = propertyValue;
-                        } catch (error) { if (Velocity.debug) console.log("Error setting [" + propertyName + "] to [" + propertyValue + "]"); }
+                        } catch (error) { if (Velocity.debug) console.log("Browser does not support [" + propertyValue + "] for [" + propertyName + "]"); }
                     /* SVG elements have their dimensional properties (width, height, x, y, cx, etc.) applied directly as attributes instead of as styles. */
                     /* Note: IE8 does not support SVG elements, so it's okay that we skip it for SVG animation. */
                     } else if (Data(element) && Data(element).isSVG && CSS.Names.SVGAttribute(property)) {
@@ -1346,20 +1355,20 @@ Velocity's structure:
         flushTransformCache: function(element) {
             var transformString = "";
 
-            /* SVG elements take a modified version of CSS's transform string (units are dropped and, except for skewX/Y,
-               subproperties are merged into their master property -- e.g. scaleX and scaleY are merged into scale(X Y). */
-            if (Data(element).isSVG) {
+            /* Certain browsers require that SVG transforms be applied as an attribute. However, the SVG transform attribute takes a modified version of CSS's transform string
+               (units are dropped and, except for skewX/Y, subproperties are merged into their master property -- e.g. scaleX and scaleY are merged into scale(X Y). */
+            if ((IE || (Velocity.State.isAndroid && !Velocity.State.isChrome)) && Data(element).isSVG) {
                 /* Since transform values are stored in their parentheses-wrapped form, we use a helper function to strip out their numeric values.
                    Further, SVG transform properties only take unitless (representing pixels) values, so it's okay that parseFloat() strips the unit suffixed to the float value. */
                 function getTransformFloat (transformProperty) {
                     return parseFloat(CSS.getPropertyValue(element, transformProperty));
-                } 
+                }
 
                 /* Create an object to organize all the transforms that we'll apply to the SVG element. To keep the logic simple,
-                   we process *all* transform properties -- even those that may not be explicitly applied (since they default to their zero-values anyway). */ 
-                var SVGTransforms = { 
+                   we process *all* transform properties -- even those that may not be explicitly applied (since they default to their zero-values anyway). */
+                var SVGTransforms = {
                     translate: [ getTransformFloat("translateX"), getTransformFloat("translateY") ],
-                    skewX: [ getTransformFloat("skewX") ], skewY: [ getTransformFloat("skewY") ], 
+                    skewX: [ getTransformFloat("skewX") ], skewY: [ getTransformFloat("skewY") ],
                     /* If the scale property is set (non-1), use that value for the scaleX and scaleY values
                        (this behavior mimics the result of animating all these properties at once on HTML elements). */
                     scale: getTransformFloat("scale") !== 1 ? [ getTransformFloat("scale"), getTransformFloat("scale") ] : [ getTransformFloat("scaleX"), getTransformFloat("scaleY") ],
@@ -1385,7 +1394,7 @@ Velocity's structure:
                     if (SVGTransforms[transformName]) {
                         /* Append the transform property in the SVG-supported transform format. As per the spec, surround the space-delimited values in parentheses. */
                         transformString += transformName + "(" + SVGTransforms[transformName].join(" ") + ")" + " ";
-                        
+
                         /* After processing an SVG transform property, delete it from the SVGTransforms container so we don't
                            re-insert the same master property if we encounter another one of its axis-specific properties. */
                         delete SVGTransforms[transformName];
@@ -1553,17 +1562,17 @@ Velocity's structure:
                 /* Stopping is achieved by traversing active calls for those which contain the targeted element. */
                 /* Note: The stop command runs prior to Queueing since its behavior is intended to take effect *immediately*,
                    regardless of the element's current queue state. */
-                $.each(Velocity.State.calls, function(i, activeCall) {  
+                $.each(Velocity.State.calls, function(i, activeCall) {
                     /* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
-                    if (activeCall !== false) {    
-                        /* If we're operating on a single element, wrap it in an array so that $.each() can iterate over it. */                  
+                    if (activeCall !== false) {
+                        /* If we're operating on a single element, wrap it in an array so that $.each() can iterate over it. */
                         $.each(activeCall[1].nodeType ? [ activeCall[1] ] : activeCall[1], function(k, activeElement) {
                             $.each(elements.nodeType ? [ elements ] : elements, function(l, element) {
                                 /* Check that this call was applied to the target element. */
                                 if (element === activeElement) {
                                     if (Data(element)) {
                                         /* Since "reverse" uses cached start values (the previous call's endValues),
-                                           these values must be changed to reflect the final value that the elements were actually tweened to. */ 
+                                           these values must be changed to reflect the final value that the elements were actually tweened to. */
                                         $.each(Data(element).tweensContainer, function(m, activeTween) {
                                             activeTween.endValue = activeTween.currentValue;
                                         });
@@ -2298,7 +2307,7 @@ Velocity's structure:
                                     originalValues.overflowX = CSS.getPropertyValue(element, "overflowX"); /* GET */
                                     originalValues.overflowY = CSS.getPropertyValue(element, "overflowY"); /* GET */
                                     originalValues.boxSizing = CSS.getPropertyValue(element, "boxSizing"); /* GET */
-                                
+
                                     /* Since % values are relative to their respective axes, ratios are calculated for both width and height.
                                        In contrast, only a single ratio is required for rem and em. */
                                     /* When calculating % values, we set a flag to indiciate that we want the computed value instead of offsetWidth/Height,
@@ -2337,7 +2346,7 @@ Velocity's structure:
                                 CSS.setPropertyValue(element, "height",  measurement + "%"); /* SET */
                             }
 
-                            
+
                             if (sameBaseEm) {
                                 elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx;
                             } else if (!Data(element).isSVG) {
@@ -2473,7 +2482,7 @@ Velocity's structure:
                         /* Operator logic must be performed last since it requires unit-normalized start and end values. */
                         /* Note: Relative *percent values* do not behave how most people think; while one would expect "+=50%"
                            to increase the property 1.5x its current value, it in fact increases the percent units in absolute terms:
-                           
+
                            50 points is added on top of the current % value. */
                         switch (operator) {
                             case "+":
@@ -2897,7 +2906,7 @@ Velocity's structure:
         /*************************
            Element Finalization
         *************************/
-            
+
         for (var i = 0, callLength = call.length; i < callLength; i++) {
             var element = call[i].element;
 
@@ -2987,7 +2996,7 @@ Velocity's structure:
                 remainingCallsExist = true;
 
                 break;
-            }    
+            }
         }
 
         if (remainingCallsExist === false) {
@@ -3047,7 +3056,7 @@ Velocity's structure:
                     overflowX: null,
                     overflowY: null
                 },
-                /* Since the slide functions make use of the begin and complete callbacks, the user's custom callbacks are store 
+                /* Since the slide functions make use of the begin and complete callbacks, the user's custom callbacks are stored
                    upfront for triggering once slideDown/Up's own callback logic is complete. */
                 begin = opts.begin,
                 complete = opts.complete,
