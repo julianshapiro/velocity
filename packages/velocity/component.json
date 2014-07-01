@@ -1,7 +1,7 @@
 {
   "name": "velocity",
   "repository": "julianshapiro/velocity",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Accelerated JavaScript animation.",
   "keywords": [
     "animation",
