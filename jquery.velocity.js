@@ -1620,8 +1620,8 @@ Velocity's structure:
 
                 /* Since we're stopping, do not proceed with Queueing. */
                 if (promise) {
-                    /* Reject promise with chained context to indicate: "no error, simply stopping". */
-                    rejecter(getChain());
+                    /* Just resolve the promise with chained context. */
+                    resolver(getChain());
                     return promise;
                 }
                 return getChain();
