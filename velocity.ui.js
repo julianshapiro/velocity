@@ -515,15 +515,7 @@
                     }
 
                     if (callIndex === effect.calls.length - 1) {
-                        if (effect.reset) {
-                            opts.complete = function() {
-                                if (finalElement) {
-                                    options.complete && options.complete.call();
-                                }
-
-                                Container.Velocity.animate(element, effect.reset, { duration: 0, queue: false });
-                            };
-                        } else if (finalElement) {
+                        if (finalElement) {
                             opts.complete = options.complete;
                         }
 
@@ -533,6 +525,10 @@
                             } else if (/Out$/.test(effectName)) {
                                 opts.display = "none";
                             }
+                        }
+
+                        if (effect.reset) {
+                            Container.Velocity.animate(element, effect.reset, { duration: 0, queue: false });
                         }
                     }
 
