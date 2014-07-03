@@ -4,13 +4,13 @@
 
 /*!
 * velocity.ui.js: UI effects pack for Velocity. Load this file after jquery.velocity.js.
-* @version 2.0.0
+* @version 3.0.0
 * @docs http://velocityjs.org/#uiPack
 * @support <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: Full support.
 * @license Copyright Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 * @license Indicated portions adapted from Animate.css, copyright Daniel Eden. MIT License: http://en.wikipedia.org/wiki/MIT_License
 * @license Indicated portions adapted from Magic.css, copyright Christian Pucci. MIT License: http://en.wikipedia.org/wiki/MIT_License
-*/
+*/   
 
 (function() {
     var Container = (window.jQuery || window.Zepto || window);
@@ -21,9 +21,8 @@
         return;
     }
 
-    /* Effects declarations. */
-    var effects =
-        {
+    var effects = 
+        { 
             /* Animate.css */
             "callout.bounce": {
                 defaultDuration: 550,
@@ -37,16 +36,22 @@
             /* Animate.css */
             "callout.shake": {
                 defaultDuration: 800,
-                calls: [
+                calls: [ 
                     [ { translateX: -10 }, 0.125 ],
-                    [ { translateX: 10 }, 0.125, 3 ],
+                    [ { translateX: 10 }, 0.125 ],
+                    [ "reverse", 0.125 ],
+                    [ "reverse", 0.125 ],
+                    [ "reverse", 0.125 ],
+                    [ "reverse", 0.125 ],
+                    [ "reverse", 0.125 ],
+                    [ "reverse", 0.125 ],
                     [ { translateX: 0 }, 0.125 ]
                 ]
             },
             /* Animate.css */
             "callout.flash": {
                 defaultDuration: 1100,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 0, "swing", 1 ] }, 0.25 ],
                     [ { opacity: [ 1, "swing" ] }, 0.25 ],
                     [ { opacity: [ 0, "swing" ] }, 0.25 ],
@@ -55,8 +60,8 @@
             },
             /* Animate.css */
             "callout.pulse": {
-                defaultDuration: 900,
-                calls: [
+                defaultDuration: 850,
+                calls: [ 
                     [ { scaleX: 1.1, scaleY: 1.1 }, 0.50 ],
                     [ { scaleX: 1, scaleY: 1 }, 0.50 ]
                 ]
@@ -64,7 +69,7 @@
             /* Animate.css */
             "callout.swing": {
                 defaultDuration: 950,
-                calls: [
+                calls: [ 
                     [ { rotateZ: 15 }, 0.20 ],
                     [ { rotateZ: -10 }, 0.20 ],
                     [ { rotateZ: 5 }, 0.20 ],
@@ -75,50 +80,55 @@
             /* Animate.css */
             "callout.tada": {
                 defaultDuration: 1000,
-                calls: [
+                calls: [ 
                     [ { scaleX: 0.9, scaleY: 0.9, rotateZ: -3 }, 0.10 ],
                     [ { scaleX: 1.1, scaleY: 1.1, rotateZ: 3 }, 0.10 ],
-                    [ { scaleX: 1.1, scaleY: 1.1, rotateZ: -3 }, 0.10, 3 ],
+                    [ { scaleX: 1.1, scaleY: 1.1, rotateZ: -3 }, 0.10 ],
+                    [ "reverse", 0.125 ],
+                    [ "reverse", 0.125 ],
+                    [ "reverse", 0.125 ],
+                    [ "reverse", 0.125 ],
+                    [ "reverse", 0.125 ],
                     [ { scaleX: 1, scaleY: 1, rotateZ: 0 }, 0.20 ]
                 ]
             },
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.flipXIn": {
                 defaultDuration: 700,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 1, 0 ], transformPerspective: [ 800, 800 ], rotateY: [ 0, -55 ] } ]
                 ],
                 reset: { transformPerspective: 0 }
             },
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.flipXOut": {
                 defaultDuration: 700,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 0, 1 ], transformPerspective: [ 800, 800 ], rotateY: 55 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], transformPerspective: 0, rotateY: 0 }
+                reset: { transformPerspective: 0, rotateY: 0 }
             },
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.flipYIn": {
-                defaultDuration: 700,
-                calls: [
-                    [ { opacity: [ 1, 0 ], transformPerspective: [ 800, 800 ], rotateX: [ 0, -35 ] } ]
+                defaultDuration: 800,
+                calls: [ 
+                    [ { opacity: [ 1, 0 ], transformPerspective: [ 800, 800 ], rotateX: [ 0, -45 ] } ]
                 ],
                 reset: { transformPerspective: 0 }
             },
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.flipYOut": {
-                defaultDuration: 700,
-                calls: [
+                defaultDuration: 800,
+                calls: [ 
                     [ { opacity: [ 0, 1 ], transformPerspective: [ 800, 800 ], rotateX: 25 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], transformPerspective: 0, rotateX: 0 }
+                reset: { transformPerspective: 0, rotateX: 0 }
             },
             /* Animate.css */
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.flipBounceXIn": {
                 defaultDuration: 900,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 0.725, 0 ], transformPerspective: [ 400, 400 ], rotateY: [ -10, 90 ] }, 0.50 ],
                     [ { opacity: 0.80, rotateY: 10 }, 0.25 ],
                     [ { opacity: 1, rotateY: 0 }, 0.25 ]
@@ -126,20 +136,20 @@
                 reset: { transformPerspective: 0 }
             },
             /* Animate.css */
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.flipBounceXOut": {
                 defaultDuration: 800,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 0.9, 1 ], transformPerspective: [ 400, 400 ], rotateY: -10 }, 0.50 ],
                     [ { opacity: 0, rotateY: 90 }, 0.50 ]
                 ],
-                reset: { opacity: [ 1, 1 ], transformPerspective: 0, rotateY: 0 }
+                reset: { transformPerspective: 0, rotateY: 0 }
             },
             /* Animate.css */
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.flipBounceYIn": {
                 defaultDuration: 850,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 0.725, 0 ], transformPerspective: [ 400, 400 ], rotateX: [ -10, 90 ] }, 0.50 ],
                     [ { opacity: 0.80, rotateX: 10 }, 0.25 ],
                     [ { opacity: 1, rotateX: 0 }, 0.25 ]
@@ -147,78 +157,78 @@
                 reset: { transformPerspective: 0 }
             },
             /* Animate.css */
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.flipBounceYOut": {
                 defaultDuration: 800,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 0.9, 1 ], transformPerspective: [ 400, 400 ], rotateX: -15 }, 0.50 ],
                     [ { opacity: 0, rotateX: 90 }, 0.50 ]
                 ],
-                reset: { opacity: [ 1, 1 ], transformPerspective: 0, rotateX: 0 }
+                reset: { transformPerspective: 0, rotateX: [ 10 ] }
             },
             /* Magic.css */
             "transition.swoopIn": {
                 defaultDuration: 850,
-                calls: [
-                    [ { opacity: [ 1, 0 ], transformOriginX: [ "100%", "25%" ], transformOriginY: [ "100%", "100%" ], transformOriginZ: [ 0, 0 ], scaleX: [ 1, 0 ], scaleY: [ 1, 0 ], translateX: [ 0, -700 ], translateZ: 0 } ]
+                calls: [ 
+                    [ { opacity: [ 1, 0 ], transformOriginX: [ "100%", "25%" ], transformOriginY: [ "100%", "100%" ], scaleX: [ 1, 0 ], scaleY: [ 1, 0 ], translateX: [ 0, -700 ], translateZ: 0 } ]
                 ],
                 reset: { transformOriginX: "50%", transformOriginY: "50%" }
             },
             /* Magic.css */
             "transition.swoopOut": {
                 defaultDuration: 850,
-                calls: [
-                    [ { opacity: [ 0, 1 ], transformOriginX: [ "25%", "100%" ], transformOriginY: [ "100%", "100%" ], transformOriginZ: [ 0, 0 ], scaleX: 0, scaleY: 0, translateX: -700, translateZ: 0 } ]
+                calls: [ 
+                    [ { opacity: [ 0, 1 ], transformOriginX: [ "25%", "100%" ], transformOriginY: [ "100%", "100%" ], scaleX: 0, scaleY: 0, translateX: -700, translateZ: 0 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], transformOriginX: "50%", transformOriginY: "50%", scaleX: 1, scaleY: 1, translateX: 0 }
+                reset: { transformOriginX: "50%", transformOriginY: "50%", scaleX: 1, scaleY: 1, translateX: 0 }
             },
             /* Magic.css */
             /* Support: Loses rotation in IE9/Android 2.3. (Fades and scales only.) */
             "transition.whirlIn": {
-                defaultDuration: 1000,
-                calls: [
-                    [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], transformOriginZ: [ 0, 0 ], scaleX: [ 1, 0 ], scaleY: [ 1, 0 ], rotateY: [ 0, 180 ] } ]
+                defaultDuration: 900,
+                calls: [ 
+                    [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: [ 1, 0 ], scaleY: [ 1, 0 ], rotateY: [ 0, 180 ] } ]
                 ]
             },
             /* Magic.css */
             /* Support: Loses rotation in IE9/Android 2.3. (Fades and scales only.) */
             "transition.whirlOut": {
-                defaultDuration: 1000,
-                calls: [
-                    [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], transformOriginZ: [ 0, 0 ], scaleX: 0, scaleY: 0, rotateY: 180 } ]
+                defaultDuration: 900,
+                calls: [ 
+                    [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: 0, scaleY: 0, rotateY: 180 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], scaleX: 1, scaleY: 1, rotateY: 0 }
+                reset: { scaleX: 1, scaleY: 1, rotateY: 0 }
             },
             "transition.shrinkIn": {
                 defaultDuration: 700,
-                calls: [
-                    [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], transformOriginZ: [ 0, 0 ], scaleX: [ 1, 1.625 ], scaleY: [ 1, 1.625 ], translateZ: 0 } ]
+                calls: [ 
+                    [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: [ 1, 1.625 ], scaleY: [ 1, 1.625 ], translateZ: 0 } ]
                 ]
             },
             "transition.shrinkOut": {
                 defaultDuration: 700,
-                calls: [
-                    [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], transformOriginZ: [ 0, 0 ], scaleX: 1.35, scaleY: 1.35, translateZ: 0 } ]
+                calls: [ 
+                    [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: 1.35, scaleY: 1.35, translateZ: 0 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], scaleX: 1, scaleY: 1 }
+                reset: { scaleX: 1, scaleY: 1 }
             },
             "transition.expandIn": {
                 defaultDuration: 700,
-                calls: [
-                    [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], transformOriginZ: [ 0, 0 ], scaleX: [ 1, 0.625 ], scaleY: [ 1, 0.625 ], translateZ: 0 } ]
+                calls: [ 
+                    [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: [ 1, 0.625 ], scaleY: [ 1, 0.625 ], translateZ: 0 } ]
                 ]
             },
             "transition.expandOut": {
                 defaultDuration: 700,
-                calls: [
-                    [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], transformOriginZ: [ 0, 0 ], scaleX: 0.5, scaleY: 0.5, translateZ: 0 } ]
+                calls: [ 
+                    [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: 0.5, scaleY: 0.5, translateZ: 0 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], scaleX: 1, scaleY: 1 }
+                reset: { scaleX: 1, scaleY: 1 }
             },
             /* Animate.css */
             "transition.bounceIn": {
                 defaultDuration: 1000,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 1, 0 ], scaleX: [ 1.05, 0.3 ], scaleY: [ 1.05, 0.3 ] }, 0.40 ],
                     [ { scaleX: 0.9, scaleY: 0.9, translateZ: 0 }, 0.20 ],
                     [ { scaleX: 1, scaleY: 1 }, 0.50 ]
@@ -226,18 +236,18 @@
             },
             /* Animate.css */
             "transition.bounceOut": {
-                defaultDuration: 1000,
-                calls: [
-                    [ { opacity: [ 1, 1 ], scaleX: 0.95, scaleY: 0.95 }, 0.35 ],
+                defaultDuration: 950,
+                calls: [ 
+                    [ { opacity: 1, scaleX: 0.95, scaleY: 0.95 }, 0.35 ],
                     [ { scaleX: 1.1, scaleY: 1.1, translateZ: 0 }, 0.35 ],
                     [ { opacity: 0, scaleX: 0.3, scaleY: 0.3 }, 0.30 ]
                 ],
-                reset: { opacity: [ 1, 1 ], scaleX: 1, scaleY: 1 }
+                reset: { scaleX: 1, scaleY: 1 }
             },
             /* Animate.css */
             "transition.bounceUpIn": {
-                defaultDuration: 1000,
-                calls: [
+                defaultDuration: 800,
+                calls: [ 
                     [ { opacity: [ 1, "easeOutQuad", 0 ], translateY: [ -30, 1000 ] }, 0.60 ],
                     [ { translateY: 10 }, 0.20 ],
                     [ { translateY: 0 }, 0.20 ]
@@ -246,16 +256,16 @@
             /* Animate.css */
             "transition.bounceUpOut": {
                 defaultDuration: 1000,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 1, "easeInQuad", 1 ], translateY: 20 }, 0.20 ],
                     [ { opacity: 0, translateY: -1000 }, 0.80 ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateY: 0 }
+                reset: { translateY: 0 }
             },
             /* Animate.css */
             "transition.bounceDownIn": {
-                defaultDuration: 1000,
-                calls: [
+                defaultDuration: 800,
+                calls: [ 
                     [ { opacity: [ 1, "easeOutQuad", 0 ], translateY: [ 30, -1000 ] }, 0.60 ],
                     [ { translateY: -10 }, 0.20 ],
                     [ { translateY: 0 }, 0.20 ]
@@ -264,16 +274,16 @@
             /* Animate.css */
             "transition.bounceDownOut": {
                 defaultDuration: 1000,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 1, "easeInQuad", 1 ], translateY: -20 }, 0.20 ],
                     [ { opacity: 0, translateY: 1000 }, 0.80 ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateY: 0 }
+                reset: { translateY: 0 }
             },
             /* Animate.css */
             "transition.bounceLeftIn": {
-                defaultDuration: 900,
-                calls: [
+                defaultDuration: 800,
+                calls: [ 
                     [ { opacity: [ 1, "easeOutQuad", 0 ], translateX: [ 30, -1000 ] }, 0.60 ],
                     [ { translateX: -10 }, 0.20 ],
                     [ { translateX: 0 }, 0.20 ]
@@ -282,16 +292,16 @@
             /* Animate.css */
             "transition.bounceLeftOut": {
                 defaultDuration: 900,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 1, "easeOutQuad", 1 ], translateX: 20 }, 0.20 ],
                     [ { opacity: 0, translateX: -1000 }, 0.80 ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateX: 0 }
+                reset: { translateX: 0 }
             },
             /* Animate.css */
             "transition.bounceRightIn": {
-                defaultDuration: 950,
-                calls: [
+                defaultDuration: 800,
+                calls: [ 
                     [ { opacity: [ 1, "easeOutQuad", 0 ], translateX: [ -30, 1000 ] }, 0.60 ],
                     [ { translateX: 10 }, 0.20 ],
                     [ { translateX: 0 }, 0.20 ]
@@ -300,245 +310,275 @@
             /* Animate.css */
             "transition.bounceRightOut": {
                 defaultDuration: 950,
-                calls: [
-                    [ { opacity: [ 1, "easeOutQuad", 1 ], translateX: -20 }, 0.20 ],
+                calls: [ 
+                    [ { opacity: [ 1, "easeOutQuad", 1 ], translateX: -30 }, 0.20 ],
                     [ { opacity: 0, translateX: 1000 }, 0.80 ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateX: 0 }
+                reset: { translateX: 0 }
             },
             "transition.slideUpIn": {
-                defaultDuration: 1000,
-                calls: [
+                defaultDuration: 900,
+                calls: [ 
                     [ { opacity: [ 1, 0 ], translateY: [ 0, 20 ], translateZ: 0 } ]
                 ]
             },
             "transition.slideUpOut": {
-                defaultDuration: 1000,
-                calls: [
+                defaultDuration: 900,
+                calls: [ 
                     [ { opacity: [ 0, 1 ], translateY: -20, translateZ: 0 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateY: 0 }
+                reset: { translateY: 0 }
             },
             "transition.slideDownIn": {
-                defaultDuration: 1000,
-                calls: [
+                defaultDuration: 900,
+                calls: [ 
                     [ { opacity: [ 1, 0 ], translateY: [ 0, -20 ], translateZ: 0 } ]
                 ]
             },
             "transition.slideDownOut": {
-                defaultDuration: 1000,
-                calls: [
+                defaultDuration: 900,
+                calls: [ 
                     [ { opacity: [ 0, 1 ], translateY: 20, translateZ: 0 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateY: 0 }
+                reset: { translateY: 0 }
             },
             "transition.slideLeftIn": {
                 defaultDuration: 1000,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 1, 0 ], translateX: [ 0, -20 ], translateZ: 0 } ]
                 ]
             },
             "transition.slideLeftOut": {
                 defaultDuration: 1050,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 0, 1 ], translateX: -20, translateZ: 0 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateX: 0 }
+                reset: { translateX: 0 }
             },
             "transition.slideRightIn": {
                 defaultDuration: 1000,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 1, 0 ], translateX: [ 0, 20 ], translateZ: 0 } ]
                 ]
             },
             "transition.slideRightOut": {
                 defaultDuration: 1050,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 0, 1 ], translateX: 20, translateZ: 0 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateX: 0 }
+                reset: { translateX: 0 }
             },
             "transition.slideUpBigIn": {
                 defaultDuration: 850,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 1, 0 ], translateY: [ 0, 75 ], translateZ: 0 } ]
                 ]
             },
             "transition.slideUpBigOut": {
-                defaultDuration: 850,
-                calls: [
+                defaultDuration: 800,
+                calls: [ 
                     [ { opacity: [ 0, 1 ], translateY: -75, translateZ: 0 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateY: 0 }
+                reset: { translateY: 0 }
             },
             "transition.slideDownBigIn": {
                 defaultDuration: 850,
-                calls: [
+                calls: [ 
                     [ { opacity: [ 1, 0 ], translateY: [ 0, -75 ], translateZ: 0 } ]
                 ]
             },
             "transition.slideDownBigOut": {
-                defaultDuration: 850,
-                calls: [
+                defaultDuration: 800,
+                calls: [ 
                     [ { opacity: [ 0, 1 ], translateY: 75, translateZ: 0 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateY: 0 }
+                reset: { translateY: 0 }
             },
             "transition.slideLeftBigIn": {
-                defaultDuration: 850,
-                calls: [
+                defaultDuration: 800,
+                calls: [ 
                     [ { opacity: [ 1, 0 ], translateX: [ 0, -75 ], translateZ: 0 } ]
                 ]
             },
             "transition.slideLeftBigOut": {
-                defaultDuration: 850,
-                calls: [
+                defaultDuration: 750,
+                calls: [ 
                     [ { opacity: [ 0, 1 ], translateX: -75, translateZ: 0 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateX: 0 }
+                reset: { translateX: 0 }
             },
             "transition.slideRightBigIn": {
-                defaultDuration: 850,
-                calls: [
+                defaultDuration: 800,
+                calls: [ 
                     [ { opacity: [ 1, 0 ], translateX: [ 0, 75 ], translateZ: 0 } ]
                 ]
             },
             "transition.slideRightBigOut": {
-                defaultDuration: 850,
-                calls: [
+                defaultDuration: 750,
+                calls: [ 
                     [ { opacity: [ 0, 1 ], translateX: 75, translateZ: 0 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], translateX: 0 }
+                reset: { translateX: 0 }
             },
             /* Magic.css */
             "transition.perspectiveUpIn": {
-                defaultDuration: 900,
-                calls: [
-                    [ { opacity: [ 1, 0 ], transformPerspective: [ 800, 800 ], transformOriginX: [ 0, 0 ], transformOriginY: [ "100%", "100%" ], transformOriginZ: [ 0, 0 ], rotateX: [ 0, -180 ] } ]
+                defaultDuration: 800,
+                calls: [ 
+                    [ { opacity: [ 1, 0 ], transformPerspective: [ 800, 800 ], transformOriginX: [ 0, 0 ], transformOriginY: [ "100%", "100%" ], rotateX: [ 0, -180 ] } ]
                 ],
                 reset: { transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%" }
             },
             /* Magic.css */
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.perspectiveUpOut": {
-                defaultDuration: 950,
-                calls: [
-                    [ { opacity: [ 0, 1 ], transformPerspective: [ 800, 800 ], transformOriginX: [ 0, 0 ], transformOriginY: [ "100%", "100%" ], transformOriginZ: [ 0, 0 ], rotateX: -180 } ]
+                defaultDuration: 850,
+                calls: [ 
+                    [ { opacity: [ 0, 1 ], transformPerspective: [ 800, 800 ], transformOriginX: [ 0, 0 ], transformOriginY: [ "100%", "100%" ], rotateX: -180 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%", rotateX: 0 }
+                reset: { transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%", rotateX: 0 }
             },
             /* Magic.css */
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.perspectiveDownIn": {
-                defaultDuration: 925,
-                calls: [
-                    [ { opacity: [ 1, 0 ], transformPerspective: [ 800, 800 ], transformOriginX: [ 0, 0 ], transformOriginY: [ 0, 0 ], transformOriginZ: [ 0, 0 ], rotateX: [ 0, 180 ] } ]
+                defaultDuration: 800,
+                calls: [ 
+                    [ { opacity: [ 1, 0 ], transformPerspective: [ 800, 800 ], transformOriginX: [ 0, 0 ], transformOriginY: [ 0, 0 ], rotateX: [ 0, 180 ] } ]
                 ],
                 reset: { transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%" }
             },
             /* Magic.css */
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.perspectiveDownOut": {
-                defaultDuration: 950,
-                calls: [
-                    [ { opacity: [ 0, 1 ], transformPerspective: [ 800, 800 ], transformOriginX: [ 0, 0 ], transformOriginY: [ 0, 0 ], transformOriginZ: [ 0, 0 ], rotateX: 180 } ]
+                defaultDuration: 850,
+                calls: [ 
+                    [ { opacity: [ 0, 1 ], transformPerspective: [ 800, 800 ], transformOriginX: [ 0, 0 ], transformOriginY: [ 0, 0 ], rotateX: 180 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%", rotateX: 0 }
+                reset: { transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%", rotateX: 0 }
             },
             /* Magic.css */
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.perspectiveLeftIn": {
                 defaultDuration: 950,
-                calls: [
-                    [ { opacity: [ 1, 0 ], transformPerspective: [ 2000, 2000 ], transformOriginX: [ 0, 0 ], transformOriginY: [ 0, 0 ], transformOriginZ: [ 0, 0 ], rotateY: [ 0, -180 ] } ]
+                calls: [ 
+                    [ { opacity: [ 1, 0 ], transformPerspective: [ 2000, 2000 ], transformOriginX: [ 0, 0 ], transformOriginY: [ 0, 0 ], rotateY: [ 0, -180 ] } ]
                 ],
                 reset: { transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%" }
             },
             /* Magic.css */
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.perspectiveLeftOut": {
                 defaultDuration: 950,
-                calls: [
-                    [ { opacity: [ 0, 1 ], transformPerspective: [ 2000, 2000 ], transformOriginX: [ 0, 0 ], transformOriginY: [ 0, 0 ], transformOriginZ: [ 0, 0 ], rotateY: -180 } ]
+                calls: [ 
+                    [ { opacity: [ 0, 1 ], transformPerspective: [ 2000, 2000 ], transformOriginX: [ 0, 0 ], transformOriginY: [ 0, 0 ], rotateY: -180 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%", rotateY: 0 }
+                reset: { transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%", rotateY: 0 }
             },
             /* Magic.css */
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.perspectiveRightIn": {
                 defaultDuration: 950,
-                calls: [
-                    [ { opacity: [ 1, 0 ],transformPerspective: [ 2000, 2000 ], transformOriginX: [ "100%", "100%" ], transformOriginY: [ 0, 0 ], transformOriginZ: [ 0, 0 ], rotateY: [ 0, 180 ] } ]
+                calls: [ 
+                    [ { opacity: [ 1, 0 ], transformPerspective: [ 2000, 2000 ], transformOriginX: [ "100%", "100%" ], transformOriginY: [ 0, 0 ], rotateY: [ 0, 180 ] } ]
                 ],
                 reset: { transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%" }
             },
             /* Magic.css */
-            /* Support: Loses rotation in IE9/Android 2.3. (Fades only.) */
+            /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
             "transition.perspectiveRightOut": {
                 defaultDuration: 950,
-                calls: [
-                    [ { opacity: [ 0, 1 ], transformPerspective: [ 2000, 2000 ], transformOriginX: [ "100%", "100%" ], transformOriginY: [ 0, 0 ], transformOriginZ: [ 0, 0 ], rotateY: 180 } ]
+                calls: [ 
+                    [ { opacity: [ 0, 1 ], transformPerspective: [ 2000, 2000 ], transformOriginX: [ "100%", "100%" ], transformOriginY: [ 0, 0 ], rotateY: 180 } ]
                 ],
-                reset: { opacity: [ 1, 1 ], transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%", rotateY: 0 }
+                reset: { transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%", rotateY: 0 }
             }
         };
 
-    /* Sequence generator. */
-    for (var effectName in effects) {
-        (function(effectName) {
-            var effect = effects[effectName];
+    /* UI Pack sequence registration. */
+    Container.Velocity.RegisterUI = function (effectName, properties) {
+        /* Register a multi-element-aware custom sequence. */
+        Container.Velocity.Sequences[effectName] = function (element, sequenceOptions, elementsIndex, elementsSize) {
+            var finalElement = (elementsIndex === elementsSize - 1);
 
-            Container.Velocity.Sequences[effectName] = function (element, options, elementsIndex, elementsSize) {
-                var finalElement = (elementsIndex === elementsSize - 1);
+            /* Iterate through each effect's call array. */
+            for (var callIndex = 0; callIndex < properties.calls.length; callIndex++) {
+                var call = properties.calls[callIndex],
+                    propertyMap = call[0],
+                    durationPercentage = call[1],
+                    callOptions = call[2] || {},
+                    opts = {};
 
-                for (var callIndex = 0; callIndex < effect.calls.length; callIndex++) {
-                    var opts = {};
+                /* Assign the whitelisted per-call options. */
+                opts.duration = (sequenceOptions.duration || properties.defaultDuration || 1000) * (durationPercentage || 1);
+                opts.queue = sequenceOptions.queue || "";
+                opts.easing = callOptions.easing || "ease";
+                opts.delay = callOptions.delay || 0;
 
-                    opts.duration = (options.duration || effect.defaultDuration || 1000) * (effect.calls[callIndex][1] || 1);
-                    opts.easing = "ease";
-                    opts.loop = effect.calls[callIndex][2];
+                /* Special processing for the first effect call. */
+                if (callIndex === 0) {
+                    /* If a delay was passed into the sequence, combine it with the first call's delay. */
+                    opts.delay += (sequenceOptions.delay || 0);
 
-                    if (callIndex === 0) {
-                        opts.delay = options.delay;
-
-                        if (elementsIndex === 0) {
-                            opts.begin = options.begin;
-                        }
-
-                        if (options.display !== null) {
-                            if (options.display) {
-                                opts.display = options.display;
-                            } else if (/In$/.test(effectName)) {
-                                opts.display = Container.Velocity.CSS.Values.getDisplayType(element);
-                            }
-                        }
+                    /* Only trigger a begin callback on the first effect call with the first element in the set. */
+                    if (elementsIndex === 0) {
+                        opts.begin = sequenceOptions.begin;
                     }
 
-                    if (callIndex === effect.calls.length - 1) {
-                        if (effect.reset) {
-                            opts.complete = function() {
-                                if (finalElement) {
-                                    options.complete && options.complete.call();
-                                }
-
-                                Container.Velocity.animate(element, effect.reset, { duration: 0, queue: false });
-                            };
-                        } else if (finalElement) {
-                            opts.complete = options.complete;
-                        }
-
-                        if (options.display !== null) {
-                            if (options.display) {
-                                opts.display = options.display;
-                            } else if (/Out$/.test(effectName)) {
-                                opts.display = "none";
-                            }
+                    /* If the user isn't overriding the display option, default to block/inline for "In"-suffixed transitions. */
+                    if (sequenceOptions.display !== null) {
+                        if (sequenceOptions.display && sequenceOptions.display !== "none") {
+                            opts.display = sequenceOptions.display;
+                        } else if (/In$/.test(effectName)) {
+                            opts.display = Container.Velocity.CSS.Values.getDisplayType(element);
                         }
                     }
-
-                    Container.Velocity.animate(element, effect.calls[callIndex][0], opts);
                 }
-            };
-        })(effectName);
+
+                /* Special processing for the last effect call. */
+                if (callIndex === properties.calls.length - 1) {
+                    if (properties.reset) {
+                        opts.complete = function() {
+                            for (var resetProperty in properties.reset) {
+                                var resetValue = properties.reset[resetProperty];
+
+                                /* Format each non-array value in the reset property map to [ value, value ] so that changes apply
+                                   immediately and DOM querying is avoided (via forcefeeding). */
+                                if (typeof resetValue === "string" || typeof resetValue === "number") {
+                                    properties.reset[resetProperty] = [ properties.reset[resetProperty], properties.reset[resetProperty] ];
+                                }
+                            }
+
+                            /* So that the reset values are applied instantly upon the next rAF tick, use a zero duration and parallel queueing. */
+                            var resetOptions = { duration: 0, queue: false };
+
+                            /* Since the reset option uses up the complete callback, we trigger the user's complete callback at the end of ours. */
+                            if (finalElement && sequenceOptions.complete) {
+                                resetOptions.complete = sequenceOptions.complete;
+                            }  
+
+                            Container.Velocity.animate(element, properties.reset, resetOptions);
+                        };
+                    /* Only trigger the user's complete callback on the last effect call with the last element in the set. */
+                    } else if (finalElement && sequenceOptions.complete) {
+                        opts.complete = sequenceOptions.complete;
+                    }
+
+                    /* If the user isn't overriding the display option, default to "none" for "Out"-suffixed transitions. */
+                    if (sequenceOptions.display !== null) {
+                        if (sequenceOptions.display) {
+                            opts.display = sequenceOptions.display;
+                        } else if (/Out$/.test(effectName)) {
+                            opts.display = "none";                        
+                        }
+                    }
+                }
+
+                Container.Velocity.animate(element, propertyMap, opts);
+            }
+        };
+    };
+
+    /* Register the included effects. */
+    for (var effectName in effects) {
+        Container.Velocity.RegisterUI(effectName, effects[effectName]);
     }
 })();
