@@ -1,6 +1,6 @@
 {
   "name": "velocity",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "homepage": "http://velocityjs.org",
   "authors": [
     { "name" : "Julian Shapiro",
@@ -23,7 +23,7 @@
   "license": "MIT",
   "ignore": [
     "*.json",
-    "LICENSE"
+    "*.md"
   ],
   "dependencies": {
     "jquery": "jquery/jquery"

@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.4.0
+* @version 0.4.1
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -583,7 +583,7 @@ Velocity's structure:
                 "boxShadow": [ "Color X Y Blur Spread", "black 0px 0px 0px 0px" ],
                 "clip": [ "Top Right Bottom Left", "0px 0px 0px 0px" ],
                 "backgroundPosition": [ "X Y", "0% 0%" ],
-                "transformOrigin": [ "X Y Z", "50% 50% 0%" ],
+                "transformOrigin": [ "X Y Z", "50% 50% 0px" ],
                 "perspectiveOrigin": [ "X Y", "50% 50%" ]
             },
 
