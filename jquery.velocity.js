@@ -380,7 +380,7 @@ Velocity's structure:
                 DT = 16 / 1000,
                 have_duration, dt, last_state;
 
-            tension = parseFloat(tension) || 600;
+            tension = parseFloat(tension) || 500;
             friction = parseFloat(friction) || 20;
             duration = duration || null;
 

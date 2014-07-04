@@ -23,6 +23,7 @@
   "license": "MIT",
   "ignore": [
     "*.json",
+    "LICENSE",
     "*.md"
   ],
   "dependencies": {
