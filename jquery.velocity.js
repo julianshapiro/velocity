@@ -2041,7 +2041,7 @@ Velocity's structure:
                                 easing = getEasing(valueData[1], opts.duration);
 
                                 /* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
-                                if (valueData[2]) {
+                                if (valueData[2] !== undefined) {
                                     startValue = valueData[2];
                                 }
                             }
