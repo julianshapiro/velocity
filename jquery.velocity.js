@@ -228,6 +228,7 @@ Velocity's structure:
             loop: false,
             delay: false,
             mobileHA: true,
+            promise: true,
             /* Set to false to prevent property values from being cached between consecutive Velocity-initiated chain calls. */
             _cacheValues: true
         },
@@ -1436,6 +1437,9 @@ Velocity's structure:
     CSS.Hooks.register();
     CSS.Normalizations.register();
 
+    /* Attempt to use ES6 Promises as default. */
+    Velocity.Promise = Velocity.Promise || window.Promise;
+
     /**********************
        Velocity.animate
     **********************/
@@ -1498,6 +1502,23 @@ Velocity's structure:
            single raw DOM element is passed in (which doesn't contain a length property). */
         var elementsLength = (Type.isArray(elements) || Type.isNodeList(elements)) ? elements.length : 1,
             elementsIndex = 0;
+
+        /**************
+            Promises
+         *************/
+        /* turning this scope into a "deferred" */ 
+        var promise, resolver, rejecter;
+        if (Velocity.Promise && (options.promise || Velocity.defaults.promise)) {
+            var originalComplete = options.complete;
+             promise = new Velocity.Promise(function (resolve, reject) {
+                resolver = resolve;
+                rejecter = reject;
+            });
+             options.complete = function (value) {
+                originalComplete && originalComplete.call(value, value);
+                resolver(value);
+            };
+        }
 
         /***************************
             Argument Overloading
@@ -1598,6 +1619,11 @@ Velocity's structure:
                 });
 
                 /* Since we're stopping, do not proceed with Queueing. */
+                if (promise) {
+                    /* Just resolve the promise with chained context. */
+                    resolver(getChain());
+                    return promise;
+                }
                 return getChain();
 
             default:
@@ -1647,9 +1673,15 @@ Velocity's structure:
                     /* Since the animation logic resides within the sequence's own code, abort the remainder of this call.
                        (The performance overhead up to this point is virtually non-existant.) */
                     /* Note: The jQuery call chain is kept intact by returning the complete element set. */
-                    return elementsWrapped || elementsOriginal;
+                    return promise || elementsWrapped || elementsOriginal;
                 } else {
-                    console.log("First argument was not a property map, a known action, or a registered sequence. Aborting.")
+                    var errorMsg = "First argument was not a property map, a known action, or a registered sequence. Aborting.";
+                    console.log(errorMsg)
+
+                    if (promise) {
+                        rejecter(new Error(errorMsg));
+                        return promise;
+                    }
 
                     return getChain();
                 }
@@ -2668,7 +2700,7 @@ Velocity's structure:
         ***************/
 
         /* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
-        return getChain();
+        return promise || getChain();
     };
 
     /*****************************
@@ -3018,6 +3050,7 @@ Velocity's structure:
     var framework = window.jQuery || window.Zepto;
 
     if (framework) {
+        Velocity.defaults.promise = false;
         /* Assign the object function to Velocity's animate() method. */
         framework.fn.velocity = Velocity.animate;
 
