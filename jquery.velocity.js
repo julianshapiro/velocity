@@ -216,6 +216,8 @@ Velocity's structure:
         Easings: {
             /* Defined below. */
         },
+        /* Attempt to use ES6 Promises by default. Users can override this with a third-party promises library. */
+        Promise: window.Promise,
         /* Page-wide option defaults, which can be overriden by the user. */
         defaults: {
             queue: "",
@@ -1442,14 +1444,20 @@ Velocity's structure:
 
     Velocity.animate = function() {
 
-        /*******************
-            Return Chain
-        *******************/
+        /******************
+            Call Chain
+        ******************/
 
-        /* Returns the appropriate element set type (depending on whether jQuery/Zepto-wrapped elements were passed in)
-           back to the call chain. Used for exiting out of Velocity.animate(). */
+        /* Logic for determining what to return to the call stack when exiting out of Velocity. */
         function getChain () {
-            return elementsWrapped || elements;
+            /* If we are using the utility function, attempt to return this call's promise. If no promise library was detected,
+               default to null instead of returning the targeted elements so that utility function's return value is standardized. */
+            if (isUtility) {
+                return promise || null;
+            /* Otherwise, if we're using $.fn, return the jQuery-/Zepto-wrapped element set. */
+            } else {
+                return elementsWrapped;
+            }
         }
 
         /*************************
@@ -1460,6 +1468,8 @@ Velocity's structure:
            objects are defined on a container object that's passed in as Velocity's sole argument. */
         /* Note: Some browsers automatically populate arguments with a "properties" object. We detect it by checking for its default "names" property. */
         var syntacticSugar = (arguments[0] && (($.isPlainObject(arguments[0].properties) && !arguments[0].properties.names) || Type.isString(arguments[0].properties))),
+            /* Whether Velocity was called via the utility function (as opposed to on a jQuery/Zepto object). */
+            isUtility,
             /* When Velocity is called via the utility function ($.Velocity.animate()/Velocity.animate()), elements are explicitly
                passed in as the first parameter. Thus, argument positioning varies. We normalize them here. */
             elementsWrapped,
@@ -1471,11 +1481,15 @@ Velocity's structure:
 
         /* Detect jQuery/Zepto elements being animated via the $.fn method. */
         if (Type.isWrapped(this)) {
+            isUtility = false;
+
             argumentIndex = 0;
             elements = this;
             elementsWrapped = this;
         /* Otherwise, raw elements are being animated via the utility function. */
         } else {
+            isUtility = true;
+
             argumentIndex = 1;
             elements = syntacticSugar ? arguments[0].elements : arguments[0];
         }
@@ -1529,6 +1543,28 @@ Velocity's structure:
             }
         }
 
+        /***************
+            Promises
+        ***************/
+
+        var promise,
+            resolver,
+            rejecter;
+
+        /* If this call was made via the utility function (which is the default method of invocation when jQuery/Zepto are not being used), and if 
+           promise support was detected, create a promise object for this call and store references to its resolver and rejecter methods. The resolve
+           method is used when a call completes naturally or is prematurely stopped by the user. In both cases, completeCall() handles the associated
+           call cleanup and promise resolving logic. The reject method is used when an invalid set of arguments is passed into a Velocity call. */
+        /* Note: Velocity employs a call-based queueing architecture, which means that stopping an animating element actually stops the full call that
+           triggered it -- not that one element exclusively. Similarly, there is one promise per call, and all elements targeted by a Velocity call are
+           grouped together for the purposes of resolving and rejecting a promise. */
+        if (isUtility && Velocity.Promise) {
+            promise = new Velocity.Promise(function (resolve, reject) {
+                resolver = resolve;
+                rejecter = reject;
+            });
+        }
+
         /*********************
            Action Detection
         *********************/
@@ -1554,11 +1590,11 @@ Velocity's structure:
 
                 var callsToStop = [];
 
-                /* When the stop action is triggered, the elements' currently active call is immediately stopped.
-                   The active call might have been applied to multiple elements, in which case all of the call's
-                   elements will be subjected to stopping. When an element is stopped, the next item in its animation queue is immediately triggered. */
-                /* An additional argument may be passed in to clear an element's remaining queued calls.
-                   Either true (which defaults to the "fx" queue) or a custom queue string can be passed in. */
+                /* When the stop action is triggered, the elements' currently active call is immediately stopped. The active call might have
+                   been applied to multiple elements, in which case all of the call's elements will be subjected to stopping. When an element
+                   is stopped, the next item in its animation queue is immediately triggered. */
+                /* An additional argument may be passed in to clear an element's remaining queued calls. Either true (which defaults to the "fx" queue)
+                   or a custom queue string can be passed in. */
                 /* Stopping is achieved by traversing active calls for those which contain the targeted element. */
                 /* Note: The stop command runs prior to Queueing since its behavior is intended to take effect *immediately*,
                    regardless of the element's current queue state. */
@@ -1578,10 +1614,23 @@ Velocity's structure:
                                         });
                                     }
 
-                                    /* Remaining queue clearing. */
+                                    /* Clear the remaining queued calls. */
                                     if (options === true || Type.isString(options)) {
-                                        /* Clearing the $.queue() array is achieved by manually setting it to []. */
-                                        $.queue(element, Type.isString(options) ? options : "", []);
+                                        /* The options argument can be overriden with a custom queue's name. */
+                                        var queueName = Type.isString(options) ? options : "";
+
+                                        /* Iterate through the items in the element's queue. */
+                                        $.each($.queue(element, queueName), function(i, item) {
+                                            /* The queue array can contain an "inprogress" sentinal, which we skip. */
+                                            if (Type.isFunction(item)) {
+                                                /* Pass the item's callback a flag indicating that we want to abort from the queue call.
+                                                   (Specifically, the queue will resolve the call's associated promise then abort.)  */
+                                                item("clearQueue");
+                                            }
+                                        });
+
+                                        /* Clearing the $.queue() array is achieved by resetting it to []. */
+                                        $.queue(element, queueName, []);
                                     }
 
                                     callsToStop.push(i);
@@ -1592,12 +1641,17 @@ Velocity's structure:
                 });
 
                 /* Prematurely call completeCall() on each matched active call, passing an additional flag to indicate
-                   that the complete callback and display:none setting should be skipped. */
+                   that the complete callback and display:none setting should be skipped since we're completing prematurely. */
                 $.each(callsToStop, function(i, j) {
                     completeCall(j, true);
                 });
 
-                /* Since we're stopping, do not proceed with Queueing. */
+                if (promise) {
+                    /* Immediately resolve the promise associated with this stop call since stop runs synchronously. */
+                    resolver(elements);
+                }
+
+                /* Since we're stopping, and not proceeding with queueing, exit out of Velocity. */
                 return getChain();
 
             default:
@@ -1611,8 +1665,7 @@ Velocity's structure:
 
                 /* Check if a string matches a registered sequence (see Sequences above). */
                 } else if (Type.isString(propertiesMap) && Velocity.Sequences[propertiesMap]) {
-                    var elementsOriginal = elements,
-                        durationOriginal = options.duration;
+                    var durationOriginal = options.duration;
 
                     /* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first. */
                     if (options.backwards === true) {
@@ -1640,16 +1693,21 @@ Velocity's structure:
 
                         /* Pass in the call's options object so that the sequence can optionally extend it. It defaults to an empty object instead of null to
                            reduce the options checking logic required inside the sequence. */
-                        /* Note: The element is passed in as both the call's context and its first argument -- allowing for more expressive sequence declarations. */
-                        Velocity.Sequences[propertiesMap].call(element, element, options || {}, elementIndex, elementsLength);
+                        Velocity.Sequences[propertiesMap].call(element, element, options || {}, elementIndex, elementsLength, elements, promise ? [ resolver, rejecter ] : undefined);
                     });
 
                     /* Since the animation logic resides within the sequence's own code, abort the remainder of this call.
                        (The performance overhead up to this point is virtually non-existant.) */
                     /* Note: The jQuery call chain is kept intact by returning the complete element set. */
-                    return elementsWrapped || elementsOriginal;
+                    return getChain();
                 } else {
-                    console.log("First argument was not a property map, a known action, or a registered sequence. Aborting.")
+                    var abortError = "Velocity: First argument was not a property map, a known action, or a registered sequence. Aborting.";
+
+                    console.log(abortError);
+
+                    if (promise) {
+                        rejecter(new Error(abortError));
+                    }
 
                     return getChain();
                 }
@@ -1730,8 +1788,7 @@ Velocity's structure:
                     tweensContainer: null,
                     /* The full root property values of each CSS hook being animated on this element are cached so that:
                        1) Concurrently-animating hooks sharing the same root can have their root values' merged into one while tweening.
-                       2) Post-hook-injection root values can be transferred over to consecutively chained Velocity calls as starting root values.
-                    */
+                       2) Post-hook-injection root values can be transferred over to consecutively chained Velocity calls as starting root values. */
                     rootPropertyValueCache: {},
                     /* A cache for transform updates, which must be manually flushed via CSS.flushTransformCache(). */
                     transformCache: {}
@@ -2346,7 +2403,6 @@ Velocity's structure:
                                 CSS.setPropertyValue(element, "height",  measurement + "%"); /* SET */
                             }
 
-
                             if (sameBaseEm) {
                                 elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx;
                             } else if (!Data(element).isSVG) {
@@ -2362,9 +2418,9 @@ Velocity's structure:
                                 elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(element, "height", null, true)) || 1) / measurement; /* GET */
                             }
 
-                           if (!sameBaseEm) {
+                            if (!sameBaseEm) {
                                 elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx = (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 1) / measurement; /* GET */
-                           }
+                            }
 
                             /* Revert each used test property to its original value. */
                             for (var originalValueProperty in originalValues) {
@@ -2523,18 +2579,13 @@ Velocity's structure:
                     tweensContainer.element = element;
                 }
 
-                /***************
-                    Pushing
-                ***************/
+                /*****************
+                    Call Push
+                *****************/
 
                 /* Note: tweensContainer can be empty if all of the properties in this call's property map were skipped due to not
                    being supported by the browser. The element property is used for checking that the tweensContainer has been appended to. */
                 if (tweensContainer.element) {
-
-                    /*****************
-                        Call Push
-                    *****************/
-
                     /* The call array houses the tweensContainers for each element being animated in the current call. */
                     call.push(tweensContainer);
 
@@ -2543,10 +2594,6 @@ Velocity's structure:
                     Data(element).opts = opts;
                     /* Switch on the element's animating flag. */
                     Data(element).isAnimating = true;
-
-                    /******************
-                        Calls Push
-                    ******************/
 
                     /* Once the final element in this call's element set has been processed, push the call array onto
                        Velocity.State.calls for the animation tick to immediately begin processing. */
@@ -2560,7 +2607,7 @@ Velocity's structure:
 
                         /* Add the current call plus its associated metadata (the element set and the call's options) onto the global call container.
                            Anything on this call container is subjected to tick() processing. */
-                        Velocity.State.calls.push([ call, elements, opts ]);
+                        Velocity.State.calls.push([ call, elements, opts, null, resolver ]);
 
                         /* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */
                         if (Velocity.State.isTicking === false) {
@@ -2588,6 +2635,19 @@ Velocity's structure:
             /* Note: To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for queuing logic. */
             } else {
                 $.queue(element, opts.queue, function(next) {
+                    /* If the clearQueue flag was passed in by the stop command, resolve this call's promise if it hasn't already been resolved. 
+                       (Since the stop command is invoked on an element, and not a call, a call can be repeatedly stopped if multiple elements that 
+                       are being animated by the same call are being stopped together. This is why we perform the isFulfilled check.) */
+                    if (next === "clearQueue") {
+                        if (!promise.isFulfilled) {
+                            promise.isFulfilled = true;
+                            resolver(elements);
+                        }
+
+                        /* Do not continue with animation queueing. */
+                        return true;
+                    }
+                    
                     /* This flag indicates to the upcoming completeCall() function that this queue entry was initiated by Velocity.
                        See completeCall() for further details. */
                     Velocity.velocityQueueEntryFlag = true;
@@ -2899,7 +2959,8 @@ Velocity's structure:
         /* Pull the metadata from the call. */
         var call = Velocity.State.calls[callIndex][0],
             elements = Velocity.State.calls[callIndex][1],
-            opts = Velocity.State.calls[callIndex][2];
+            opts = Velocity.State.calls[callIndex][2],
+            resolver = Velocity.State.calls[callIndex][4];
 
         var remainingCallsExist = false;
 
@@ -2967,6 +3028,14 @@ Velocity's structure:
             /* Note: If this is a loop, complete callback firing is handled by the loop's final reverse call -- we skip handling it here. */
             if (!isStopped && opts.complete && !opts.loop && (i === callLength - 1)) {
                 opts.complete.call(elements, elements);
+            }
+
+            /***********************
+               Promise Resolving
+            ***********************/
+
+            if (resolver) {
+                resolver(elements);
             }
 
             /***************
