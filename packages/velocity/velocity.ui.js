@@ -38,7 +38,8 @@
     ******************/
 
     Container.Velocity.RegisterUI = function (effectName, properties) {
-        function animateParentHeight (elements, totalDuration, direction, stagger) {
+        /* Animate the expansion/contraction of the elements' parent's height for In/Out effects. */
+        function animateParentHeight (elements, direction, totalDuration, stagger) {
             var totalHeightDelta = 0,
                 parentNode;
 
@@ -56,7 +57,7 @@
                 });
             });
 
-            /* Animate the parent element's height (with a lessened duration for aesthetic benefits). */
+            /* Animate the parent element's height adjustment (with a varying duration multiplier for aesthetic benefits). */
             Container.Velocity.animate(
                 parentNode,
                 { height: (direction === "In" ? "+" : "-") + "=" + totalHeightDelta },
@@ -77,8 +78,6 @@
                     callOptions = call[2] || {},
                     opts = {};
 
-                sequenceOptions.animateParentHeight = true;
-
                 /* Assign the whitelisted per-call options. */
                 opts.duration = sequenceDuration * (durationPercentage || 1);
                 opts.queue = sequenceOptions.queue || "";
@@ -93,12 +92,12 @@
                     if (elementsIndex === 0) {
                         opts.begin = function() {
                             /* Only trigger a begin callback on the first effect call with the first element in the set. */
-                            sequenceOptions.begin && sequenceOptions.begin(elements, elements);
+                            sequenceOptions.begin && sequenceOptions.begin.call(elements, elements);
 
-                            /* Only trigger animateParentHeight if we're using an In/Out transition. */
+                            /* Only trigger animateParentHeight() if we're using an In/Out transition. */
                             var direction = effectName.match(/(In|Out)$/);
                             if (sequenceOptions.animateParentHeight && direction) {
-                                animateParentHeight(elements, sequenceDuration + opts.delay, direction[0], sequenceOptions.stagger);
+                                animateParentHeight(elements, direction[0], sequenceDuration + opts.delay, sequenceOptions.stagger);
                             }
                         }
                     }
@@ -117,7 +116,7 @@
                 if (callIndex === properties.calls.length - 1) {
                     /* Append promise resolving onto the user's sequence callback. */ 
                     function injectFinalCallbacks () {
-                        sequenceOptions.complete && sequenceOptions.complete(elements, elements);
+                        sequenceOptions.complete && sequenceOptions.complete.call(elements, elements);
 
                         if (promiseData) {
                             promiseData.resolver(elements || element);
