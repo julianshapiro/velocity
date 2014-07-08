@@ -4,7 +4,7 @@
 
 /*!
 * velocity.ui.js: UI effects pack for Velocity. Load this file after jquery.velocity.js.
-* @version 3.1.0
+* @version 4.0.0
 * @docs http://velocityjs.org/#uiPack
 * @support <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: Full support.
 * @license Copyright Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
@@ -13,6 +13,11 @@
 */   
 
 (function() {
+
+    /*************
+        Setup
+    *************/
+
     var Container = (window.jQuery || window.Zepto || window);
 
     if (!Container.Velocity || !Container.Velocity.Utilities) {
@@ -21,22 +26,61 @@
         return;
     }
 
-    /* Sequence registration. */
+    if (!Container.Velocity.version) {
+        var abortError = "Velocity UI Pack: You need to update your jquery.velocity.js to a newer version. Visit http://github.com/julianshapiro/velocity.";
+
+        alert(abortError);
+        throw new Error(abortError);
+    }
+
+    /******************
+       Registration
+    ******************/
+
     Container.Velocity.RegisterUI = function (effectName, properties) {
-        /* Register a multi-element-aware custom sequence. */
-        Container.Velocity.Sequences[effectName] = function (element, sequenceOptions, elementsIndex, elementsSize) {
+        function animateParentHeight (elements, totalDuration, direction, stagger) {
+            var totalHeightDelta = 0,
+                parentNode;
+
+            /* Sum the total height (including padding and margin) of all targeted elements. */
+            Container.Velocity.Utilities.each(elements, function(i, element) {
+                if (stagger) {
+                    /* Increase the totalDuration by the successive delay amounts produced by the stagger option. */
+                    totalDuration += i * stagger;
+                }
+
+                parentNode = element.parentNode;
+
+                Container.Velocity.Utilities.each([ "height", "paddingTop", "paddingBottom", "marginTop", "marginBottom"], function(i, property) {
+                    totalHeightDelta += parseFloat(Container.Velocity.CSS.getPropertyValue(element, property));
+                });
+            });
+
+            /* Animate the parent element's height (with a lessened duration for aesthetic benefits). */
+            Container.Velocity.animate(
+                parentNode,
+                { height: (direction === "In" ? "+" : "-") + "=" + totalHeightDelta },
+                { queue: false, easing: "ease-in-out", duration: totalDuration * (direction === "In" ? 0.6 : 1.1) }
+            );
+        }
+
+        /* Register a custom sequence for each effect. */
+        Container.Velocity.Sequences[effectName] = function (element, sequenceOptions, elementsIndex, elementsSize, elements, promiseData) {
             var finalElement = (elementsIndex === elementsSize - 1);
 
             /* Iterate through each effect's call array. */
             for (var callIndex = 0; callIndex < properties.calls.length; callIndex++) {
                 var call = properties.calls[callIndex],
                     propertyMap = call[0],
+                    sequenceDuration = (sequenceOptions.duration || properties.defaultDuration || 1000),
                     durationPercentage = call[1],
                     callOptions = call[2] || {},
                     opts = {};
 
+                sequenceOptions.animateParentHeight = true;
+
                 /* Assign the whitelisted per-call options. */
-                opts.duration = (sequenceOptions.duration || properties.defaultDuration || 1000) * (durationPercentage || 1);
+                opts.duration = sequenceDuration * (durationPercentage || 1);
                 opts.queue = sequenceOptions.queue || "";
                 opts.easing = callOptions.easing || "ease";
                 opts.delay = callOptions.delay || 0;
@@ -46,9 +90,17 @@
                     /* If a delay was passed into the sequence, combine it with the first call's delay. */
                     opts.delay += (sequenceOptions.delay || 0);
 
-                    /* Only trigger a begin callback on the first effect call with the first element in the set. */
                     if (elementsIndex === 0) {
-                        opts.begin = sequenceOptions.begin;
+                        opts.begin = function() {
+                            /* Only trigger a begin callback on the first effect call with the first element in the set. */
+                            sequenceOptions.begin && sequenceOptions.begin(elements, elements);
+
+                            /* Only trigger animateParentHeight if we're using an In/Out transition. */
+                            var direction = effectName.match(/(In|Out)$/);
+                            if (sequenceOptions.animateParentHeight && direction) {
+                                animateParentHeight(elements, sequenceDuration + opts.delay, direction[0], sequenceOptions.stagger);
+                            }
+                        }
                     }
 
                     /* If the user isn't overriding the display option, default to block/inline for "In"-suffixed transitions. */
@@ -63,8 +115,17 @@
 
                 /* Special processing for the last effect call. */
                 if (callIndex === properties.calls.length - 1) {
-                    if (properties.reset) {
-                        opts.complete = function() {
+                    /* Append promise resolving onto the user's sequence callback. */ 
+                    function injectFinalCallbacks () {
+                        sequenceOptions.complete && sequenceOptions.complete(elements, elements);
+
+                        if (promiseData) {
+                            promiseData.resolver(elements || element);
+                        }
+                    }
+
+                    opts.complete = function() {
+                        if (properties.reset) {
                             for (var resetProperty in properties.reset) {
                                 var resetValue = properties.reset[resetProperty];
 
@@ -79,16 +140,16 @@
                             var resetOptions = { duration: 0, queue: false };
 
                             /* Since the reset option uses up the complete callback, we trigger the user's complete callback at the end of ours. */
-                            if (finalElement && sequenceOptions.complete) {
-                                resetOptions.complete = sequenceOptions.complete;
+                            if (finalElement) {
+                                resetOptions.complete = injectFinalCallbacks;
                             }  
 
                             Container.Velocity.animate(element, properties.reset, resetOptions);
-                        };
-                    /* Only trigger the user's complete callback on the last effect call with the last element in the set. */
-                    } else if (finalElement && sequenceOptions.complete) {
-                        opts.complete = sequenceOptions.complete;
-                    }
+                        /* Only trigger the user's complete callback on the last effect call with the last element in the set. */
+                        } else if (finalElement) {
+                            injectFinalCallbacks();
+                        }
+                    };
 
                     /* If the user isn't overriding the display option, default to "none" for "Out"-suffixed transitions. */
                     if (sequenceOptions.display !== null) {
@@ -104,6 +165,10 @@
             }
         };
     };
+
+    /*********************
+       Packaged Effects
+    *********************/
 
     /* Externalize the packagedEffects data so that they can optionally be modified and re-registered. */
     Container.Velocity.RegisterUI.packagedEffects = 
@@ -175,6 +240,18 @@
                     [ "reverse", 0.125 ],
                     [ "reverse", 0.125 ],
                     [ { scaleX: 1, scaleY: 1, rotateZ: 0 }, 0.20 ]
+                ]
+            },
+            "transition.fadeIn": {
+                defaultDuration: 400,
+                calls: [
+                    [ { opacity: [ 1, 0 ] } ]
+                ]
+            },
+            "transition.fadeOut": {
+                defaultDuration: 400,
+                calls: [
+                    [ { opacity: [ 0, 1 ] } ]
                 ]
             },
             /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
