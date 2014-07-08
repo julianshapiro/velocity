@@ -27,11 +27,11 @@ jQuery dependency removal and Zepto support.
 
 ###**Changelog**
 
-- 0.5.0: Promises support.
+- 0.5.0: Promises support. See http://VelocityJS.org/#promises.
 - 0.4.1: Fixed bug where transformOriginX/Y wouldn't set when forcefed.
 - 0.3.0-0.4.0: SVG animation support. See http://VelocityJS.org/#svg.
 - 0.2.1: Prevent errors from being thrown in old, partially-supported jQuery versions (1.4.0-2).
-- 0.2.0: Added step easing (http://VelocityJS.org/#easing).
+- 0.2.0: Added step easing. See http://VelocityJS.org/#easing.
 - 0.1.0: The `stop` command now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made. See http://VelocityJS.org/#stop.
 
 ====
