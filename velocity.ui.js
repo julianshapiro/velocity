@@ -4,7 +4,7 @@
 
 /*!
 * velocity.ui.js: UI effects pack for Velocity. Load this file after jquery.velocity.js.
-* @version 4.0.0
+* @version 4.0.1
 * @docs http://velocityjs.org/#uiPack
 * @support <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: Full support.
 * @license Copyright Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
@@ -50,18 +50,23 @@
                     totalDuration += i * stagger;
                 }
 
+                var originalDisplay = Container.Velocity.CSS.getPropertyValue(element, "display");
+                Container.Velocity.CSS.setPropertyValue(element, "display", Container.Velocity.CSS.Values.getDisplayType(element));
+
                 parentNode = element.parentNode;
 
                 Container.Velocity.Utilities.each([ "height", "paddingTop", "paddingBottom", "marginTop", "marginBottom"], function(i, property) {
                     totalHeightDelta += parseFloat(Container.Velocity.CSS.getPropertyValue(element, property));
                 });
+
+                Container.Velocity.CSS.setPropertyValue(element, "display", originalDisplay);
             });
 
             /* Animate the parent element's height adjustment (with a varying duration multiplier for aesthetic benefits). */
             Container.Velocity.animate(
                 parentNode,
                 { height: (direction === "In" ? "+" : "-") + "=" + totalHeightDelta },
-                { queue: false, easing: "ease-in-out", duration: totalDuration * (direction === "In" ? 0.6 : 1.1) }
+                { queue: false, easing: "ease-in-out", duration: totalDuration * (direction === "In" ? 0.6 : 1.25) }
             );
         }
 
