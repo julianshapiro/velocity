@@ -27,6 +27,7 @@ jQuery dependency removal and Zepto support.
 
 ###**Changelog**
 
+- 0.5.1: Ability to set display option to empty quotes (""). See http://VelocityJS.org/#display.
 - 0.5.0: Promises support. See http://VelocityJS.org/#promises.
 - 0.4.1: Fixed bug where transformOriginX/Y wouldn't set when forcefed.
 - 0.3.0-0.4.0: SVG animation support. See http://VelocityJS.org/#svg.
