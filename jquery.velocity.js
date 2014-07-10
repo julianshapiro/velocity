@@ -1685,6 +1685,9 @@ Velocity's structure:
                         if (parseFloat(options.stagger)) {
                             options.delay = parseFloat(options.stagger) * elementIndex;
                         }
+                        if (typeof options.stagger === "function") {
+                            options.delay = options.stagger(elementIndex, element)
+                        }
 
                         /* If the drag option was passed in, successively increase/decrease (depending on the presense of options.backwards)
                            the duration of each element's animation, using floors to prevent producing very short durations. */
