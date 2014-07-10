@@ -26,7 +26,7 @@
         return;
     }
 
-    if (!Container.Velocity.version || (Container.Velocity.version.major <= 0 && Container.Velocity.version.minor <= 5 && Container.Velocity.version.patch <= 1)) {
+    if (!Container.Velocity.version || (Container.Velocity.version.major <= 0 && Container.Velocity.version.minor <= 5 && Container.Velocity.version.patch <= 2)) {
         var abortError = "Velocity UI Pack: You need to update Velocity (jquery.velocity.js) to a newer version. Visit http://github.com/julianshapiro/velocity.";
 
         alert(abortError);
@@ -50,16 +50,11 @@
                     totalDuration += i * stagger;
                 }
 
-                var originalDisplay = Container.Velocity.CSS.getPropertyValue(element, "display");
-                Container.Velocity.CSS.setPropertyValue(element, "display", Container.Velocity.CSS.Values.getDisplayType(element));
-
                 parentNode = element.parentNode;
 
                 Container.Velocity.Utilities.each([ "height", "paddingTop", "paddingBottom", "marginTop", "marginBottom"], function(i, property) {
                     totalHeightDelta += parseFloat(Container.Velocity.CSS.getPropertyValue(element, property));
                 });
-
-                Container.Velocity.CSS.setPropertyValue(element, "display", originalDisplay);
             });
 
             /* Animate the parent element's height adjustment (with a varying duration multiplier for aesthetic benefits). */
