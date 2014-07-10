@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.5.2
+* @version 0.5.3
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -241,7 +241,7 @@ Velocity's structure:
         animate: function () { /* Defined below. */ },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 5, patch: 2 },
+        version: { major: 0, minor: 5, patch: 3 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -1141,11 +1141,32 @@ Velocity's structure:
                 /* All other browsers support getComputedStyle. The returned live object reference is cached onto its
                    associated element so that it does not need to be refetched upon every GET. */
                 } else {
+                    /* Browsers do not return height and width values for elements that are set to display:"none". Thus, we temporarily
+                       toggle display to the element type's default value. */
+                    var toggleDisplay = false;
+
+                    if (/^(width|height)$/.test(property) && CSS.getPropertyValue(element, "display") === 0) {
+                        toggleDisplay = true;
+                        CSS.setPropertyValue(element, "display", CSS.Values.getDisplayType(element));
+                    }
+
+                    function revertDisplay () {
+                        if (toggleDisplay) {
+                            CSS.setPropertyValue(element, "display", "none");
+                        }
+                    }
+
                     if (!forceStyleLookup) {
                         if (property === "height" && CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-                            return element.offsetHeight - (parseFloat(CSS.getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingBottom")) || 0);
+                            var contentBoxHeight = element.offsetHeight - (parseFloat(CSS.getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingBottom")) || 0);
+                            revertDisplay();
+
+                            return contentBoxHeight;
                         } else if (property === "width" && CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-                            return element.offsetWidth - (parseFloat(CSS.getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingRight")) || 0);
+                            var contentBoxWidth = element.offsetWidth - (parseFloat(CSS.getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(CSS.getPropertyValue(element, "paddingRight")) || 0);
+                            revertDisplay();
+
+                            return contentBoxWidth;
                         }
                     }
 
@@ -1182,6 +1203,8 @@ Velocity's structure:
                     if (computedValue === "" || computedValue === null) {
                         computedValue = element.style[property];
                     }
+
+                    revertDisplay();
                 }
 
                 /* For top, right, bottom, and left (TRBL) values that are set to "auto" on elements of "fixed" or "absolute" position,
@@ -3117,12 +3140,6 @@ Velocity's structure:
     /* slideUp, slideDown */
     $.each([ "Down", "Up" ], function(i, direction) {
         Velocity.Sequences["slide" + direction] = function (element, options) {
-            /* Don't re-run a slide sequence if the element is already at its final display value. */
-            //if ((direction === "Up" && Velocity.CSS.getPropertyValue(element, "display") === 0) ||
-            //    (direction === "Down" && Velocity.CSS.getPropertyValue(element, "display") !== 0)) {
-            //    return;
-            //}
-
             var opts = $.extend({}, options),
                 originalValues = {
                     height: null,
@@ -3156,8 +3173,7 @@ Velocity's structure:
             opts.begin = function () {
                 /* Check for height: "auto" so we can revert back to it when the sliding animation is complete. */
                 function checkHeightAuto() {
-                    element.style.display = "block";
-                    originalValues.height = Velocity.CSS.getPropertyValue(element, "height");
+                    originalValues.height = parseFloat(Velocity.CSS.getPropertyValue(element, "height"));
 
                     /* Determine if height was originally "auto" by checking if the computed "auto" value is identical to the original value. */
                     element.style.height = "auto";
@@ -3189,18 +3205,25 @@ Velocity's structure:
                             continue;
                         }
 
-                        /* Use forcefeeding to animate slideDown properties from 0. */
-                        originalValues[property] = [ Velocity.CSS.getPropertyValue(element, property), 0 ];
-                    }
+                        var propertyValue = Velocity.CSS.getPropertyValue(element, property);
+                        if (property === "height") {
+                            propertyValue = parseFloat(propertyValue);
+                        }
 
-                    /* Hide the element inside this callback, otherwise it'll momentarily reveal itself before the rAF ticking. */
-                    element.style.display = "none";
+                        /* Use forcefeeding to animate slideDown properties from 0. */
+                        originalValues[property] = [ propertyValue, 0 ];
+                    }
                 } else {
                     checkHeightAuto();
 
                     for (var property in originalValues) {
+                        var propertyValue = Velocity.CSS.getPropertyValue(element, property);
+                        if (property === "height") {
+                            propertyValue = parseFloat(propertyValue);
+                        }
+
                         /* Use forcefeeding to animate slideUp properties toward 0. */
-                        originalValues[property] = [ 0, Velocity.CSS.getPropertyValue(element, property) ];
+                        originalValues[property] = [ 0, propertyValue ];
                     }
 
                     /* Both directions hide scrollbars since scrollbar height tweening looks unappealing. */
@@ -3260,8 +3283,7 @@ Velocity's structure:
             /* If a display was passed in, use it. Otherwise, default to "none" for fadeOut or the element-specific default for fadeIn. */
             /* Note: We allow users to pass in "null" to skip display setting altogether. */
             if (opts.display !== null) {
-                opts.display = (direction === "In") ? "auto" : "none";
-                //opts.display = opts.display || ((direction === "In") ? "auto" : "none");
+                opts.display = opts.display || ((direction === "In") ? "auto" : "none");
             }
 
             Velocity.animate(this, propertiesMap, opts);
