@@ -25,7 +25,7 @@ jQuery dependency removal and Zepto support.
 - **GSAP** is a fast, multi-purpose *animation platform*. It inspired me to pursue the development of Velocity.
 - **Velocity** is a lightweight tool for drastically improving *UI animation performance and workflow*.
 
-###**Changelog**
+###**New Features**
 
 - 0.5.1: Ability to set display option to empty quotes (""). See http://VelocityJS.org/#display.
 - 0.5.0: Promises support. See http://VelocityJS.org/#promises.
