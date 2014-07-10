@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.5.0
+* @version 0.5.2
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -241,7 +241,7 @@ Velocity's structure:
         animate: function () { /* Defined below. */ },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 5, patch: 0 },
+        version: { major: 0, minor: 5, patch: 2 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -1877,6 +1877,10 @@ Velocity's structure:
             /* Refer to Velocity's documentation (VelocityJS.org/#display) for a description of the display option's behavior. */
             if (opts.display) {
                 opts.display = opts.display.toString().toLowerCase();
+
+                if (opts.display === "auto") {
+                    opts.display = Velocity.CSS.Values.getDisplayType(element);
+                }
             }
 
             /**********************
@@ -3142,7 +3146,7 @@ Velocity's structure:
                 if (direction === "Down") {
                     /* All sliding elements are set to the "block" display value (as opposed to an element-appropriate block/inline distinction)
                        because inline elements cannot actually have their dimensions modified. */
-                    opts.display = opts.display || Velocity.CSS.Values.getDisplayType(element);
+                    opts.display = opts.display || "auto";
                 } else {
                     opts.display = opts.display || "none";
                 }
@@ -3256,8 +3260,8 @@ Velocity's structure:
             /* If a display was passed in, use it. Otherwise, default to "none" for fadeOut or the element-specific default for fadeIn. */
             /* Note: We allow users to pass in "null" to skip display setting altogether. */
             if (opts.display !== null) {
-                opts.display = (direction === "In") ? Velocity.CSS.Values.getDisplayType(element) : "none";
-                //opts.display = opts.display || ((direction === "In") ? Velocity.CSS.Values.getDisplayType(element) : "none");
+                opts.display = (direction === "In") ? "auto" : "none";
+                //opts.display = opts.display || ((direction === "In") ? "auto" : "none");
             }
 
             Velocity.animate(this, propertiesMap, opts);
