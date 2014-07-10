@@ -27,6 +27,7 @@
   "repository": "julianshapiro/velocity",
   "files": [
     "jquery.velocity.js",
+    "jquery.velocity.min.js",
     "velocity.ui.js"
   ],
   "dependencies": {
