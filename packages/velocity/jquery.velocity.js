@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.5.1
+* @version 0.5.0
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -241,7 +241,7 @@ Velocity's structure:
         animate: function () { /* Defined below. */ },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 5, patch: 1 },
+        version: { major: 0, minor: 5, patch: 0 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -1095,6 +1095,22 @@ Velocity's structure:
                     /* Default to px for all other properties. */
                     return "px";
                 }
+            },
+            /* HTML elements default to an associated display type when they're not set to display:none. */
+            /* Note: This function is used for correctly setting the non-"none" display value in certain Velocity sequences, such as fadeIn/Out. */
+            getDisplayType: function (element) {
+                var tagName = element.tagName.toString().toLowerCase();
+
+                if (/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(tagName)) {
+                    return "inline";
+                } else if (/^(li)$/i.test(tagName)) {
+                    return "list-item";
+                } else if (/^(tr)$/i.test(tagName)) {
+                    return "table-row";
+                /* Default to "block" when no match is found. */
+                } else {
+                    return "block";
+                }
             }
         },
 
@@ -1859,8 +1875,8 @@ Velocity's structure:
             ********************/
 
             /* Refer to Velocity's documentation (VelocityJS.org/#display) for a description of the display option's behavior. */
-            if (Type.isString(opts.display)) {
-                opts.display = opts.display.toLowerCase();
+            if (opts.display) {
+                opts.display = opts.display.toString().toLowerCase();
             }
 
             /**********************
@@ -2150,7 +2166,7 @@ Velocity's structure:
                         /* If the display option is being set to a non-"none" (e.g. "block") and opacity (filter on IE<=8) is being
                            animated to an endValue of non-zero, the user's intention is to fade in from invisible, thus we forcefeed opacity
                            a startValue of 0 if its startValue hasn't already been sourced by value transferring or prior forcefeeding. */
-                        if ((opts.display !== null && opts.display !== "none") && /opacity|filter/.test(property) && !startValue && endValue !== 0) {
+                        if ((opts.display && opts.display !== "none") && /opacity|filter/.test(property) && !startValue && endValue !== 0) {
                             startValue = 0;
                         }
 
@@ -2797,7 +2813,7 @@ Velocity's structure:
 
                     /* If the display option is set to non-"none", set it upfront so that the element can become visible before tweening begins.
                        (Otherwise, display's "none" value is set in completeCall() once the animation has completed.) */
-                    if (opts.display !== null && opts.display !== "none") {
+                    if (opts.display && opts.display !== "none") {
                         CSS.setPropertyValue(element, "display", opts.display);
                     }
 
@@ -2908,7 +2924,7 @@ Velocity's structure:
 
                 /* The non-"none" display value is only applied to an element once -- when its associated call is first ticked through.
                    Accordingly, it's set to false so that it isn't re-processed by this call in the next tick. */
-                if (opts.display !== null && opts.display !== "none") {
+                if (opts.display && opts.display !== "none") {
                     Velocity.State.calls[i][2].display = false;
                 }
 
@@ -3126,7 +3142,7 @@ Velocity's structure:
                 if (direction === "Down") {
                     /* All sliding elements are set to the "block" display value (as opposed to an element-appropriate block/inline distinction)
                        because inline elements cannot actually have their dimensions modified. */
-                    opts.display = opts.display || "";
+                    opts.display = opts.display || Velocity.CSS.Values.getDisplayType(element);
                 } else {
                     opts.display = opts.display || "none";
                 }
@@ -3240,7 +3256,7 @@ Velocity's structure:
             /* If a display was passed in, use it. Otherwise, default to "none" for fadeOut or the element-specific default for fadeIn. */
             /* Note: We allow users to pass in "null" to skip display setting altogether. */
             if (opts.display !== null) {
-                opts.display = (direction === "In") ? "" : "none";
+                opts.display = (direction === "In") ? Velocity.CSS.Values.getDisplayType(element) : "none";
                 //opts.display = opts.display || ((direction === "In") ? Velocity.CSS.Values.getDisplayType(element) : "none");
             }
 
