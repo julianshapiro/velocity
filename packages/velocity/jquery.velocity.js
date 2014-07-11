@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.5.3
+* @version 0.6.0
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -241,7 +241,7 @@ Velocity's structure:
         animate: function () { /* Defined below. */ },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 5, patch: 3 },
+        version: { major: 0, minor: 6, patch: 0 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -1707,6 +1707,8 @@ Velocity's structure:
                         /* If the stagger option was passed in, successively delay each element by the stagger value (in ms). */
                         if (parseFloat(options.stagger)) {
                             options.delay = parseFloat(options.stagger) * elementIndex;
+                        } else if (Type.isFunction(options.stagger)) {
+                            options.delay = options.stagger.call(element, elementIndex, elementsLength);
                         }
 
                         /* If the drag option was passed in, successively increase/decrease (depending on the presense of options.backwards)
@@ -1893,17 +1895,22 @@ Velocity's structure:
                 opts.complete = null;
             }
 
-            /********************
-               Option: Display
-            ********************/
+            /*********************************
+               Option: Display & Visibility
+            *********************************/
 
-            /* Refer to Velocity's documentation (VelocityJS.org/#display) for a description of the display option's behavior. */
+            /* Refer to Velocity's documentation (VelocityJS.org/#displayAndVisibility) for a description of the display and visibility options' behavior. */
             if (opts.display) {
                 opts.display = opts.display.toString().toLowerCase();
 
+                /* Users can pass in a special "auto" value to instruct Velocity to set the element to its default display value. */
                 if (opts.display === "auto") {
                     opts.display = Velocity.CSS.Values.getDisplayType(element);
                 }
+            }
+
+            if (opts.visibility) {
+                opts.visibility = opts.visibility.toString().toLowerCase();
             }
 
             /**********************
@@ -2026,6 +2033,10 @@ Velocity's structure:
                            revert display to block prior to reversal so that the element is visible again. */
                         if (Data(element).opts.display === "none") {
                             Data(element).opts.display = "block";
+                        }
+
+                        if (Data(element).opts.visibility === "hidden") {
+                            Data(element).opts.visibility = "visible";
                         }
 
                         /* If the loop option was set in the previous call, disable it so that "reverse" calls aren't recursively generated.
@@ -2193,7 +2204,7 @@ Velocity's structure:
                         /* If the display option is being set to a non-"none" (e.g. "block") and opacity (filter on IE<=8) is being
                            animated to an endValue of non-zero, the user's intention is to fade in from invisible, thus we forcefeed opacity
                            a startValue of 0 if its startValue hasn't already been sourced by value transferring or prior forcefeeding. */
-                        if ((opts.display && opts.display !== "none") && /opacity|filter/.test(property) && !startValue && endValue !== 0) {
+                        if (((opts.display && opts.display !== "none") || (opts.visibility && opts.visibility !== "hidden")) && /opacity|filter/.test(property) && !startValue && endValue !== 0) {
                             startValue = 0;
                         }
 
@@ -2834,14 +2845,19 @@ Velocity's structure:
 
                     var transformPropertyExists = false;
 
-                    /*********************
-                       Display Toggling
-                    *********************/
+                    /**********************************
+                       Display & Visibility Toggling
+                    **********************************/
 
                     /* If the display option is set to non-"none", set it upfront so that the element can become visible before tweening begins.
                        (Otherwise, display's "none" value is set in completeCall() once the animation has completed.) */
                     if (opts.display && opts.display !== "none") {
                         CSS.setPropertyValue(element, "display", opts.display);
+                    }
+
+                    /* Same goes with the visibility option, but its "none" equivalent is "hidden". */
+                    if (opts.visibility && opts.visibility !== "hidden") {
+                        CSS.setPropertyValue(element, "visibility", opts.visibility);
                     }
 
                     /************************
@@ -2955,6 +2971,10 @@ Velocity's structure:
                     Velocity.State.calls[i][2].display = false;
                 }
 
+                if (opts.visibility && opts.visibility !== "hidden") {
+                    Velocity.State.calls[i][2].visibility = false;
+                }
+
                 /* Pass the elements and the timing data (percentComplete, msRemaining, and timeStart) into the progress callback. */
                 if (opts.progress) {
                     opts.progress.call(callContainer[1],
@@ -3006,8 +3026,14 @@ Velocity's structure:
             /* If the user set display to "none" (intending to hide the element), set it now that the animation has completed. */
             /* Note: display:none isn't set when calls are manually stopped (via Velocity.animate("stop"). */
             /* Note: Display is ignored with "reverse" calls, which is what loops are composed of, since this behavior would be undesirable. */
-            if (!isStopped && opts.display === "none" && !opts.loop) {
-                CSS.setPropertyValue(element, "display", opts.display);
+            if (!isStopped && !opts.loop) {
+                if (opts.display === "none") {
+                    CSS.setPropertyValue(element, "display", opts.display);
+                }
+
+                if (opts.visibility === "hidden") {
+                    CSS.setPropertyValue(element, "visibility", opts.visibility);
+                }
             }
 
             /* If the element's queue is empty (if only the "inprogress" item is left at position 0) or if its queue is about to run

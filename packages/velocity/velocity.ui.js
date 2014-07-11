@@ -4,7 +4,7 @@
 
 /*!
 * velocity.ui.js: UI effects pack for Velocity. Load this file after jquery.velocity.js.
-* @version 4.0.3
+* @version 4.0.4
 * @docs http://velocityjs.org/#uiPack
 * @support <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: Full support.
 * @license Copyright Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
@@ -61,7 +61,7 @@
             Container.Velocity.animate(
                 parentNode,
                 { height: (direction === "In" ? "+" : "-") + "=" + totalHeightDelta },
-                { queue: false, easing: "ease-in-out", duration: totalDuration * (direction === "In" ? 0.6 : 1.25) }
+                { queue: false, easing: "ease-in-out", duration: totalDuration * (direction === "In" ? 0.6 : 1) }
             );
         }
 
@@ -102,7 +102,7 @@
                         }
                     }
 
-                    /* If the user isn't overriding the display option, default to block/inline for "In"-suffixed transitions. */
+                    /* If the user isn't overriding the display option, default to "auto" for "In"-suffixed transitions. */
                     if (sequenceOptions.display !== null) {
                         if (sequenceOptions.display && sequenceOptions.display !== "none") {
                             opts.display = sequenceOptions.display;
@@ -110,12 +110,22 @@
                             opts.display = "auto";
                         }
                     }
+
+                    if (sequenceOptions.visibility && sequenceOptions.visibility !== "hidden") {
+                        opts.visibility = sequenceOptions.visibility;
+                    }
                 }
 
                 /* Special processing for the last effect call. */
                 if (callIndex === properties.calls.length - 1) {
                     /* Append promise resolving onto the user's sequence callback. */ 
                     function injectFinalCallbacks () {
+                        if (sequenceOptions.display === undefined && /Out$/.test(effectName)) {
+                            Container.Velocity.Utilities.each(elements, function(i, element) {
+                                Container.Velocity.CSS.setPropertyValue(element, "display", "none");
+                            });
+                        }
+
                         sequenceOptions.complete && sequenceOptions.complete.call(elements, elements);
 
                         if (promiseData) {
@@ -149,14 +159,9 @@
                             injectFinalCallbacks();
                         }
                     };
-
-                    /* If the user isn't overriding the display option, default to "none" for "Out"-suffixed transitions. */
-                    if (sequenceOptions.display !== null) {
-                        if (sequenceOptions.display) {
-                            opts.display = sequenceOptions.display;
-                        } else if (/Out$/.test(effectName)) {
-                            opts.display = "none";                        
-                        }
+                    
+                    if (sequenceOptions.visibility === "hidden") {
+                        opts.visibility = sequenceOptions.visibility;
                     }
                 }
 
