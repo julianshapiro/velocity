@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.6.0
+* @version 0.7.0
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -241,7 +241,7 @@ Velocity's structure:
         animate: function () { /* Defined below. */ },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 6, patch: 0 },
+        version: { major: 0, minor: 7, patch: 0 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -1110,6 +1110,21 @@ Velocity's structure:
                 /* Default to "block" when no match is found. */
                 } else {
                     return "block";
+                }
+            },
+            /* The class add/remove functions are used to temporarily apply an ":animating" class to elements while they're animating. */
+            addClass: function (element, className) {
+                if (element.classList) {
+                    element.classList.add(className);
+                } else {
+                    element.className += (element.className.length ? " " : "") + className;
+                }
+            },
+            removeClass: function (element, className) {
+                if (element.classList) {
+                    element.classList.remove(className);
+                } else {
+                    element.className = element.className.replace(new RegExp("(^|\\s)" + className.split(" ").join("|") + "(\\s|$)", "gi"), " ");
                 }
             }
         },
@@ -2631,6 +2646,9 @@ Velocity's structure:
                 /* Note: tweensContainer can be empty if all of the properties in this call's property map were skipped due to not
                    being supported by the browser. The element property is used for checking that the tweensContainer has been appended to. */
                 if (tweensContainer.element) {
+                    /* Apply the ":animating" indicator class. */
+                    CSS.Values.addClass(element, ":animating");
+
                     /* The call array houses the tweensContainers for each element being animated in the current call. */
                     call.push(tweensContainer);
 
@@ -3048,21 +3066,17 @@ Velocity's structure:
                     /* Clear the element's rootPropertyValueCache, which will become stale. */
                     Data(element).rootPropertyValueCache = {};
 
-                    /* 3D transforms, which trigger hardware acceleration, are de-applied entirely when they hit their zero values
-                       so that HA'd elements don't remain blurry from subpixel rendering. */
-                    var transformHAProperties = [ "transformPerspective", "translateZ", "rotateX", "rotateY" ],
-                        transformHAProperty,
-                        transformHAPropertyExists = false;
+                    var transformHAPropertyExists = false;
+                    /* If any transform subproperty is at its default value (regardless of unit type), remove it. This has the
+                       dual benefit of avoiding random browser transform bugs and removing hardware acceleration to free up RAM. */
+                    $.each(Data(element).transformCache, function(transformName, transformValue) {
+                        var defaultValue = /^scale/.test(transformName) ? 1 : 0;
 
-                    for (var transformHAPropertyIndex in transformHAProperties) {
-                        transformHAProperty = transformHAProperties[transformHAPropertyIndex];
-
-                        /* If any transform subproperty begins with "(0", remove it. */
-                        if (/^\(0[^.]/.test(Data(element).transformCache[transformHAProperty])) {
+                        if (new RegExp("^\\(" + defaultValue + "[^.]").test(transformValue)) {
                             transformHAPropertyExists = true;
-                            delete Data(element).transformCache[transformHAProperty];
+                            delete Data(element).transformCache[transformName];
                         }
-                    }
+                    });
 
                     /* Mobile devices have hardware acceleration removed at the end of the animation in order to avoid hogging the GPU's memory. */
                     if (opts.mobileHA) {
@@ -3074,6 +3088,9 @@ Velocity's structure:
                     if (transformHAPropertyExists) {
                         CSS.flushTransformCache(element);
                     }
+
+                    /* Remove the ":animating" indicator class. */
+                    CSS.Values.removeClass(element, ":animating");
                 }
             }
 
