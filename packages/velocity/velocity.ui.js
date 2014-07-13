@@ -331,7 +331,7 @@
                     [ { opacity: [ 0.9, 1 ], transformPerspective: [ 400, 400 ], rotateX: -15 }, 0.50 ],
                     [ { opacity: 0, rotateX: 90 }, 0.50 ]
                 ],
-                reset: { transformPerspective: 0, rotateX: [ 10 ] }
+                reset: { transformPerspective: 0, rotateX: 0 }
             },
             /* Magic.css */
             "transition.swoopIn": {
