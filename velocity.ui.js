@@ -4,7 +4,7 @@
 
 /*!
 * velocity.ui.js: UI effects pack for Velocity. Load this file after jquery.velocity.js.
-* @version 4.0.4
+* @version 4.0.5
 * @docs http://velocityjs.org/#uiPack
 * @support <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: Full support.
 * @license Copyright Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
@@ -107,7 +107,9 @@
                         if (sequenceOptions.display && sequenceOptions.display !== "none") {
                             opts.display = sequenceOptions.display;
                         } else if (/In$/.test(effectName)) {
-                            opts.display = "auto";
+                            /* Inline elements cannot be subjected to transforms, so we switch them to inline-block. */
+                            var defaultDisplay = Container.Velocity.CSS.Values.getDisplayType(element);
+                            opts.display = (defaultDisplay === "inline") ? "inline-block" : defaultDisplay;
                         }
                     }
 
@@ -159,7 +161,7 @@
                             injectFinalCallbacks();
                         }
                     };
-                    
+
                     if (sequenceOptions.visibility === "hidden") {
                         opts.visibility = sequenceOptions.visibility;
                     }
@@ -191,14 +193,13 @@
             "callout.shake": {
                 defaultDuration: 800,
                 calls: [ 
-                    [ { translateX: -10 }, 0.125 ],
-                    [ { translateX: 10 }, 0.125 ],
-                    [ "reverse", 0.125 ],
-                    [ "reverse", 0.125 ],
-                    [ "reverse", 0.125 ],
-                    [ "reverse", 0.125 ],
-                    [ "reverse", 0.125 ],
-                    [ "reverse", 0.125 ],
+                    [ { translateX: -11 }, 0.125 ],
+                    [ { translateX: 11 }, 0.125 ],
+                    [ { translateX: -11 }, 0.125 ],
+                    [ { translateX: 11 }, 0.125 ],
+                    [ { translateX: -11 }, 0.125 ],
+                    [ { translateX: 11 }, 0.125 ],
+                    [ { translateX: -11 }, 0.125 ],
                     [ { translateX: 0 }, 0.125 ]
                 ]
             },
@@ -206,15 +207,15 @@
             "callout.flash": {
                 defaultDuration: 1100,
                 calls: [ 
-                    [ { opacity: [ 0, "swing", 1 ] }, 0.25 ],
-                    [ { opacity: [ 1, "swing" ] }, 0.25 ],
-                    [ { opacity: [ 0, "swing" ] }, 0.25 ],
-                    [ { opacity: [ 1, "swing" ] }, 0.25 ]
+                    [ { opacity: [ 0, "easeInOutQuad", 1 ] }, 0.25 ],
+                    [ { opacity: [ 1, "easeInOutQuad" ] }, 0.25 ],
+                    [ { opacity: [ 0, "easeInOutQuad" ] }, 0.25 ],
+                    [ { opacity: [ 1, "easeInOutQuad" ] }, 0.25 ]
                 ]
             },
             /* Animate.css */
             "callout.pulse": {
-                defaultDuration: 850,
+                defaultDuration: 825,
                 calls: [ 
                     [ { scaleX: 1.1, scaleY: 1.1 }, 0.50 ],
                     [ { scaleX: 1, scaleY: 1 }, 0.50 ]
@@ -247,13 +248,13 @@
                 ]
             },
             "transition.fadeIn": {
-                defaultDuration: 400,
+                defaultDuration: 500,
                 calls: [
                     [ { opacity: [ 1, 0 ] } ]
                 ]
             },
             "transition.fadeOut": {
-                defaultDuration: 400,
+                defaultDuration: 500,
                 calls: [
                     [ { opacity: [ 0, 1 ] } ]
                 ]
@@ -336,7 +337,7 @@
             "transition.swoopIn": {
                 defaultDuration: 850,
                 calls: [ 
-                    [ { opacity: [ 1, 0 ], transformOriginX: [ "100%", "25%" ], transformOriginY: [ "100%", "100%" ], scaleX: [ 1, 0 ], scaleY: [ 1, 0 ], translateX: [ 0, -700 ], translateZ: 0 } ]
+                    [ { opacity: [ 1, 0 ], transformOriginX: [ "100%", "50%" ], transformOriginY: [ "100%", "100%" ], scaleX: [ 1, 0 ], scaleY: [ 1, 0 ], translateX: [ 0, -700 ], translateZ: 0 } ]
                 ],
                 reset: { transformOriginX: "50%", transformOriginY: "50%" }
             },
@@ -344,7 +345,7 @@
             "transition.swoopOut": {
                 defaultDuration: 850,
                 calls: [ 
-                    [ { opacity: [ 0, 1 ], transformOriginX: [ "25%", "100%" ], transformOriginY: [ "100%", "100%" ], scaleX: 0, scaleY: 0, translateX: -700, translateZ: 0 } ]
+                    [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "100%" ], transformOriginY: [ "100%", "100%" ], scaleX: 0, scaleY: 0, translateX: -700, translateZ: 0 } ]
                 ],
                 reset: { transformOriginX: "50%", transformOriginY: "50%", scaleX: 1, scaleY: 1, translateX: 0 }
             },
@@ -353,7 +354,7 @@
             "transition.whirlIn": {
                 defaultDuration: 900,
                 calls: [ 
-                    [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: [ 1, 0 ], scaleY: [ 1, 0 ], rotateY: [ 0, 180 ] } ]
+                    [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: [ 1, 0 ], scaleY: [ 1, 0 ], rotateY: [ 0, 160 ] } ]
                 ]
             },
             /* Magic.css */
@@ -361,20 +362,20 @@
             "transition.whirlOut": {
                 defaultDuration: 900,
                 calls: [ 
-                    [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: 0, scaleY: 0, rotateY: 180 } ]
+                    [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: 0, scaleY: 0, rotateY: 160 } ]
                 ],
                 reset: { scaleX: 1, scaleY: 1, rotateY: 0 }
             },
             "transition.shrinkIn": {
                 defaultDuration: 700,
                 calls: [ 
-                    [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: [ 1, 1.625 ], scaleY: [ 1, 1.625 ], translateZ: 0 } ]
+                    [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: [ 1, 1.5 ], scaleY: [ 1, 1.5 ], translateZ: 0 } ]
                 ]
             },
             "transition.shrinkOut": {
-                defaultDuration: 700,
+                defaultDuration: 650,
                 calls: [ 
-                    [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: 1.35, scaleY: 1.35, translateZ: 0 } ]
+                    [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: 1.3, scaleY: 1.3, translateZ: 0 } ]
                 ],
                 reset: { scaleX: 1, scaleY: 1 }
             },
@@ -393,7 +394,7 @@
             },
             /* Animate.css */
             "transition.bounceIn": {
-                defaultDuration: 1000,
+                defaultDuration: 800,
                 calls: [ 
                     [ { opacity: [ 1, 0 ], scaleX: [ 1.05, 0.3 ], scaleY: [ 1.05, 0.3 ] }, 0.40 ],
                     [ { scaleX: 0.9, scaleY: 0.9, translateZ: 0 }, 0.20 ],
@@ -402,11 +403,11 @@
             },
             /* Animate.css */
             "transition.bounceOut": {
-                defaultDuration: 950,
+                defaultDuration: 800,
                 calls: [ 
-                    [ { opacity: 1, scaleX: 0.95, scaleY: 0.95 }, 0.35 ],
-                    [ { scaleX: 1.1, scaleY: 1.1, translateZ: 0 }, 0.35 ],
-                    [ { opacity: 0, scaleX: 0.3, scaleY: 0.3 }, 0.30 ]
+                    [ { scaleX: 0.95, scaleY: 0.95 }, 0.40 ],
+                    [ { scaleX: 1.1, scaleY: 1.1, translateZ: 0 }, 0.40 ],
+                    [ { opacity: [ 0, 1 ], scaleX: 0.3, scaleY: 0.3 }, 0.20 ]
                 ],
                 reset: { scaleX: 1, scaleY: 1 }
             },
@@ -414,7 +415,7 @@
             "transition.bounceUpIn": {
                 defaultDuration: 800,
                 calls: [ 
-                    [ { opacity: [ 1, "easeOutQuad", 0 ], translateY: [ -30, 1000 ] }, 0.60 ],
+                    [ { opacity: [ 1, 0 ], translateY: [ -30, 1000 ] }, 0.60, { easing: "easeOutCirc" } ],
                     [ { translateY: 10 }, 0.20 ],
                     [ { translateY: 0 }, 0.20 ]
                 ]
@@ -423,8 +424,8 @@
             "transition.bounceUpOut": {
                 defaultDuration: 1000,
                 calls: [ 
-                    [ { opacity: [ 1, "easeInQuad", 1 ], translateY: 20 }, 0.20 ],
-                    [ { opacity: 0, translateY: -1000 }, 0.80 ]
+                    [ { translateY: 20 }, 0.20 ],
+                    [ { opacity: [ 0, "easeInCirc", 1 ], translateY: -1000 }, 0.80 ]
                 ],
                 reset: { translateY: 0 }
             },
@@ -432,7 +433,7 @@
             "transition.bounceDownIn": {
                 defaultDuration: 800,
                 calls: [ 
-                    [ { opacity: [ 1, "easeOutQuad", 0 ], translateY: [ 30, -1000 ] }, 0.60 ],
+                    [ { opacity: [ 1, 0 ], translateY: [ 30, -1000 ] }, 0.60, { easing: "easeOutCirc" } ],
                     [ { translateY: -10 }, 0.20 ],
                     [ { translateY: 0 }, 0.20 ]
                 ]
@@ -441,44 +442,44 @@
             "transition.bounceDownOut": {
                 defaultDuration: 1000,
                 calls: [ 
-                    [ { opacity: [ 1, "easeInQuad", 1 ], translateY: -20 }, 0.20 ],
-                    [ { opacity: 0, translateY: 1000 }, 0.80 ]
+                    [ { translateY: -20 }, 0.20 ],
+                    [ { opacity: [ 0, "easeInCirc", 1 ], translateY: 1000 }, 0.80 ]
                 ],
                 reset: { translateY: 0 }
             },
             /* Animate.css */
             "transition.bounceLeftIn": {
-                defaultDuration: 800,
+                defaultDuration: 750,
                 calls: [ 
-                    [ { opacity: [ 1, "easeOutQuad", 0 ], translateX: [ 30, -1000 ] }, 0.60 ],
+                    [ { opacity: [ 1, 0 ], translateX: [ 30, -1250 ] }, 0.60, { easing: "easeOutCirc" } ],
                     [ { translateX: -10 }, 0.20 ],
                     [ { translateX: 0 }, 0.20 ]
                 ]
             },
             /* Animate.css */
             "transition.bounceLeftOut": {
-                defaultDuration: 900,
+                defaultDuration: 750,
                 calls: [ 
-                    [ { opacity: [ 1, "easeOutQuad", 1 ], translateX: 20 }, 0.20 ],
-                    [ { opacity: 0, translateX: -1000 }, 0.80 ]
+                    [ { translateX: 30 }, 0.20 ],
+                    [ { opacity: [ 0, "easeInCirc", 1 ], translateX: -1250 }, 0.80 ]
                 ],
                 reset: { translateX: 0 }
             },
             /* Animate.css */
             "transition.bounceRightIn": {
-                defaultDuration: 800,
+                defaultDuration: 750,
                 calls: [ 
-                    [ { opacity: [ 1, "easeOutQuad", 0 ], translateX: [ -30, 1000 ] }, 0.60 ],
+                    [ { opacity: [ 1, 0 ], translateX: [ -30, 1250 ] }, 0.60, { easing: "easeOutCirc" } ],
                     [ { translateX: 10 }, 0.20 ],
                     [ { translateX: 0 }, 0.20 ]
                 ]
             },
             /* Animate.css */
             "transition.bounceRightOut": {
-                defaultDuration: 950,
+                defaultDuration: 750,
                 calls: [ 
-                    [ { opacity: [ 1, "easeOutQuad", 1 ], translateX: -30 }, 0.20 ],
-                    [ { opacity: 0, translateX: 1000 }, 0.80 ]
+                    [ { translateX: -30 }, 0.20 ],
+                    [ { opacity: [ 0, "easeInCirc", 1 ], translateX: 1250 }, 0.80 ]
                 ],
                 reset: { translateX: 0 }
             },
