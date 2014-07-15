@@ -872,9 +872,9 @@ Velocity's structure:
                                         case "scal":
                                         case "scale":
                                             /* Chrome on Android has a bug in which scaled elements blur if their initial scale
-                                               value is below 1 (which can happen with forcefeeding). Thus, we detect a yet-unset scale property
+                                               value is below 1. Thus, we detect a yet-unset scale property
                                                and ensure that its first value is always 1. More info: http://stackoverflow.com/questions/10417890/css3-animations-with-transform-causes-blurred-elements-on-webkit/10417962#10417962 */
-                                            if (Velocity.State.isAndroid && Data(element).transformCache[transformName] === undefined) {
+                                            if (propertyValue === undefined && Velocity.State.isAndroid && Data(element).transformCache[transformName] === undefined) {
                                                 propertyValue = 1;
                                             }
 
