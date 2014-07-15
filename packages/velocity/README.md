@@ -27,7 +27,7 @@ jQuery dependency removal and Zepto support.
 
 ###**New Features**
 
-- 0.7.0: Elements receive an `:animating` class while animating. Transforms are removed when they hit 0.
+- 0.7.0: Transforms are removed when they hit 0.
 - 0.6.0: Can set `display: "auto"` and can set `visibility`. See http://VelocityJS.org/#displayAndVisibility.
 - 0.5.0: Promises support. See http://VelocityJS.org/#promises.
 - 0.3.0-0.4.0: SVG animation support. See http://VelocityJS.org/#svg.
