@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.7.0
+* @version 0.8.0
 * @docs http://velocityjs.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -66,8 +66,8 @@ Velocity's structure:
         return undefined;
     })();
 
-    /* RAF polyfill. Gist: https://gist.github.com/julianshapiro/9497513 */
-    var requestAnimationFrame = window.requestAnimationFrame || (function() {
+    /* rAF polyfill. Gist: https://gist.github.com/julianshapiro/9497513 */
+    var rAFPollyfill = (function() {
         var timeLast = 0;
 
         return window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || function(callback) {
@@ -82,6 +82,8 @@ Velocity's structure:
             return setTimeout(function() { callback(timeCurrent + timeDelta); }, timeDelta);
         };
     })();
+
+    var rAF = window.requestAnimationFrame || rAFPollyfill;
 
     /* Array compacting. Copyright Lo-Dash. MIT License: https://github.com/lodash/lodash/blob/master/LICENSE.txt */
     function compactSparseArray (array) {
@@ -241,7 +243,7 @@ Velocity's structure:
         animate: function () { /* Defined below. */ },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 7, patch: 0 },
+        version: { major: 0, minor: 8, patch: 0 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -255,6 +257,31 @@ Velocity's structure:
         Velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
         Velocity.State.scrollPropertyLeft = "scrollLeft";
         Velocity.State.scrollPropertyTop = "scrollTop";
+    }
+
+    /**************
+        Timing
+    **************/
+
+    /* Inactive browser tabs pause rAF, which results in all active animations immediately sprinting to their completion states when the tab refocuses.
+       To get around this, we dynamically switch rAF to setTimeout (which the browser *doesn't* pause) when the tab loses focus. We skip this for mobile
+       devices to avoid wasting battery power on inactive tabs. */
+    /* Note: Tab focus detection doesn't work on older versions of IE, but that's okay since they don't support rAF to begin with. */
+    if (!Velocity.State.isMobile && document.hidden !== undefined) {
+        document.addEventListener("visibilitychange", function() {
+            /* Reassign the rAF function (which the global tick() function uses) based on the tab's focus state. */
+            if (document.hidden) {
+                rAF = function(callback) { 
+                    /* The tick function needs a truthy first argument to pass its internal timestamp check. */
+                    return setTimeout(function() { callback(true) }, 16);
+                };
+
+                /* The rAF loop has been paused by the browser, so we manually restart the tick. */
+                tick();
+            } else {
+                rAF = window.requestAnimationFrame || rAFPollyfill;
+            }
+        });
     }
 
     /**************
@@ -874,7 +901,7 @@ Velocity's structure:
                                             /* Chrome on Android has a bug in which scaled elements blur if their initial scale
                                                value is below 1 (which can happen with forcefeeding). Thus, we detect a yet-unset scale property
                                                and ensure that its first value is always 1. More info: http://stackoverflow.com/questions/10417890/css3-animations-with-transform-causes-blurred-elements-on-webkit/10417962#10417962 */
-                                            if (Velocity.State.isAndroid && Data(element).transformCache[transformName] === undefined) {
+                                            if (Velocity.State.isAndroid && Data(element).transformCache[transformName] === undefined && propertyValue < 1) {
                                                 propertyValue = 1;
                                             }
 
@@ -1112,7 +1139,7 @@ Velocity's structure:
                     return "block";
                 }
             },
-            /* The class add/remove functions are used to temporarily apply an ":animating" class to elements while they're animating. */
+            /* The class add/remove functions are used to temporarily apply an "animating" class to elements while they're animating. */
             addClass: function (element, className) {
                 if (element.classList) {
                     element.classList.add(className);
@@ -1124,7 +1151,7 @@ Velocity's structure:
                 if (element.classList) {
                     element.classList.remove(className);
                 } else {
-                    element.className = element.className.replace(new RegExp("(^|\\s)" + className.split(" ").join("|") + "(\\s|$)", "gi"), " ");
+                    element.className = element.className.toString().replace(new RegExp("(^|\\s)" + className.split(" ").join("|") + "(\\s|$)", "gi"), " ");
                 }
             }
         },
@@ -1633,6 +1660,18 @@ Velocity's structure:
                     Action: Stop
                 *******************/
 
+                /* Clear the currently-active delay on each targeted element. */
+                $.each(Type.isNode(elements) ? [ elements ] : elements, function(i, element) {
+                    if (Data(element) && Data(element).delayTimer) {
+                        /* Stop the timer from triggering its cached next() function. */
+                        clearTimeout(Data(element).delayTimer.setTimeout);
+                        /* Manually call the next() function so that the subsequent queue items can progress. */
+                        Data(element).delayTimer.next();
+
+                        delete Data(element).delayTimer;
+                    }
+                });
+
                 var callsToStop = [];
 
                 /* When the stop action is triggered, the elements' currently active call is immediately stopped. The active call might have
@@ -1670,7 +1709,7 @@ Velocity's structure:
                                             if (Type.isFunction(item)) {
                                                 /* Pass the item's callback a flag indicating that we want to abort from the queue call.
                                                    (Specifically, the queue will resolve the call's associated promise then abort.)  */
-                                                item("clearQueue");
+                                                item(null, true);
                                             }
                                         });
 
@@ -1781,7 +1820,10 @@ Velocity's structure:
                 lastEmToPx: null,
                 /* The rem==>px ratio is relative to the document's fontSize -- not any property belonging to the element.
                    Thus, it is automatically call-wide cached whenever the rem unit is being animated. */
-                remToPxRatio: null
+                remToPx: null,
+                /* Similarly, viewport units are relative to the window's current dimensions. */
+                vwToPx: null,
+                vhToPx: null
             };
 
         /* A container for all the ensuing tween data and metadata associated with this call.
@@ -1854,8 +1896,12 @@ Velocity's structure:
                     /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
                     Velocity.velocityQueueEntryFlag = true;
 
-                    /* The ensuing queue item (which is assigned to the "next" argument that $.queue() automatically passes in) will be triggered after a setTimeout delay. */
-                    setTimeout(next, parseFloat(opts.delay));
+                    /* The ensuing queue item (which is assigned to the "next" argument that $.queue() automatically passes in) will be triggered after a setTimeout delay. 
+                       The setTimeout is stored so that it can be subjected to clearTimeout() if this animation is prematurely stopped via Velocity's "stop" command. */
+                    Data(element).delayTimer = { 
+                        setTimeout: setTimeout(next, parseFloat(opts.delay)),
+                        next: next
+                    };
                 });
             }
 
@@ -1954,7 +2000,14 @@ Velocity's structure:
 
                 /* The begin callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
                 if (opts.begin && elementsIndex === 0) {
-                    opts.begin.call(elements, elements);
+                    /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
+                    try {
+                        opts.begin.call(elements, elements);
+                    } catch (error) { 
+                        setTimeout(function() {
+                            throw error;
+                        }, 1);
+                    }
                 }
 
                 /*****************************************
@@ -2265,7 +2318,7 @@ Velocity's structure:
                         var separatedValue,
                             endValueUnitType,
                             startValueUnitType,
-                            operator;
+                            operator = false;
 
                         /* Separates a property value into its numeric value and its unit type. */
                         function separateValue (property, value) {
@@ -2374,10 +2427,16 @@ Velocity's structure:
 
                             /* Whereas % and em ratios are determined on a per-element basis, the rem unit type only needs to be checked
                                once per call since it is exclusively dependant upon document.body's fontSize. If this is the first time
-                               that calculateUnitRatios() is being run during this call, remToPxRatio will still be set to its default value of null, so we calculate it now. */
-                            if (unitConversionRatios.remToPxRatio === null) {
+                               that calculateUnitRatios() is being run during this call, remToPx will still be set to its default value of null, so we calculate it now. */
+                            if (unitConversionRatios.remToPx === null) {
                                 /* Default to most browsers' default fontSize of 16px in the case of 0. */
-                                unitConversionRatios.remToPxRatio = parseFloat(CSS.getPropertyValue(document.body, "fontSize")) || 16; /* GET */
+                                unitConversionRatios.remToPx = parseFloat(CSS.getPropertyValue(document.body, "fontSize")) || 16; /* GET */
+                            }
+
+                            /* The viewport units are relative to the window's inner dimensions. */
+                            if (unitConversionRatios.vwToPx === null) {
+                                unitConversionRatios.vwToPx = parseFloat(window.innerWidth) / 100; /* GET */
+                                unitConversionRatios.vhToPx = parseFloat(window.innerHeight) / 100; /* GET */
                             }
 
                             var originalValues = {
@@ -2403,8 +2462,10 @@ Velocity's structure:
                                    of 10 (instead of 1) to give our ratios a precision of at least 1 decimal value. */
                                 measurement = 10;
 
-                            /* For organizational purposes, current ratios calculations are consolidated onto the elementUnitRatios object. */
-                            elementUnitRatios.remToPxRatio = unitConversionRatios.remToPxRatio;
+                            /* For organizational purposes, current ratio calculations are consolidated onto the elementUnitRatios object. */
+                            elementUnitRatios.remToPx = unitConversionRatios.remToPx;
+                            elementUnitRatios.vwToPx = unitConversionRatios.vwToPx;
+                            elementUnitRatios.vhToPx = unitConversionRatios.vhToPx;
 
                             /* After temporary unit conversion logic runs, width and height properties that were originally set to "auto" must be set back
                                to "auto" instead of to the actual corresponding pixel value. Leaving the values at their hard-coded pixel value equivalents
@@ -2464,7 +2525,7 @@ Velocity's structure:
                             }
 
                             if (sameBaseEm) {
-                                elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx;
+                                elementUnitRatios.emToPx = unitConversionRatios.lastEmToPx;
                             } else if (!Data(element).isSVG) {
                                 CSS.setPropertyValue(element, "paddingLeft", measurement + "em"); /* SET */
                             }
@@ -2479,7 +2540,7 @@ Velocity's structure:
                             }
 
                             if (!sameBaseEm) {
-                                elementUnitRatios.emToPxRatio = unitConversionRatios.lastEmToPx = (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 1) / measurement; /* GET */
+                                elementUnitRatios.emToPx = unitConversionRatios.lastEmToPx = (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 1) / measurement; /* GET */
                             }
 
                             /* Revert each used test property to its original value. */
@@ -2557,17 +2618,12 @@ Velocity's structure:
                                         startValue *= (axis === "x" ? elementUnitRatios.percentToPxRatioWidth : elementUnitRatios.percentToPxRatioHeight);
                                         break;
 
-                                    case "em":
-                                        startValue *= elementUnitRatios.emToPxRatio;
-                                        break;
-
-                                    case "rem":
-                                        startValue *= elementUnitRatios.remToPxRatio;
-                                        break;
-
                                     case "px":
                                         /* px acts as our midpoint in the unit conversion process; do nothing. */
                                         break;
+
+                                    default:
+                                        startValue *= elementUnitRatios[startValueUnitType + "ToPx"];
                                 }
 
                                 /* Invert the px ratios to convert into to the target unit. */
@@ -2576,17 +2632,12 @@ Velocity's structure:
                                         startValue *= 1 / (axis === "x" ? elementUnitRatios.percentToPxRatioWidth : elementUnitRatios.percentToPxRatioHeight);
                                         break;
 
-                                    case "em":
-                                        startValue *= 1 / elementUnitRatios.emToPxRatio;
-                                        break;
-
-                                    case "rem":
-                                        startValue *= 1 / elementUnitRatios.remToPxRatio;
-                                        break;
-
                                     case "px":
                                         /* startValue is already in px, do nothing; we're done. */
                                         break;
+
+                                    default:
+                                        startValue *= 1 / elementUnitRatios[endValueUnitType + "ToPx"];
                                 }
                             }
                         }
@@ -2598,7 +2649,6 @@ Velocity's structure:
                         /* Operator logic must be performed last since it requires unit-normalized start and end values. */
                         /* Note: Relative *percent values* do not behave how most people think; while one would expect "+=50%"
                            to increase the property 1.5x its current value, it in fact increases the percent units in absolute terms:
-
                            50 points is added on top of the current % value. */
                         switch (operator) {
                             case "+":
@@ -2646,8 +2696,8 @@ Velocity's structure:
                 /* Note: tweensContainer can be empty if all of the properties in this call's property map were skipped due to not
                    being supported by the browser. The element property is used for checking that the tweensContainer has been appended to. */
                 if (tweensContainer.element) {
-                    /* Apply the ":animating" indicator class. */
-                    CSS.Values.addClass(element, ":animating");
+                    /* Apply the "animating" indicator class. */
+                    CSS.Values.addClass(element, "animating");
 
                     /* The call array houses the tweensContainers for each element being animated in the current call. */
                     call.push(tweensContainer);
@@ -2697,10 +2747,10 @@ Velocity's structure:
             /* Otherwise, the call undergoes element queueing as normal. */
             /* Note: To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for queuing logic. */
             } else {
-                $.queue(element, opts.queue, function(next) {
+                $.queue(element, opts.queue, function(next, clearQueue) {
                     /* If the clearQueue flag was passed in by the stop command, resolve this call's promise. (Promises can only be resolved once,
                        so it's fine if this is repeatedly triggered for each element in the associated call.) */
-                    if (next === "clearQueue") {
+                    if (clearQueue === true) {
                         if (promiseData.promise) {
                             promiseData.resolver(elements);
                         }
@@ -3011,7 +3061,7 @@ Velocity's structure:
 
         /* Note: completeCall() sets the isTicking flag to false when the last call on Velocity.State.calls has completed. */
         if (Velocity.State.isTicking) {
-            requestAnimationFrame(tick);
+            rAF(tick);
         }
     }
 
@@ -3089,8 +3139,8 @@ Velocity's structure:
                         CSS.flushTransformCache(element);
                     }
 
-                    /* Remove the ":animating" indicator class. */
-                    CSS.Values.removeClass(element, ":animating");
+                    /* Remove the "animating" indicator class. */
+                    CSS.Values.removeClass(element, "animating");
                 }
             }
 
@@ -3100,14 +3150,21 @@ Velocity's structure:
 
             /* Complete is fired once per call (not once per element) and is passed the full raw DOM element set as both its context and its first argument. */
             /* Note: Callbacks aren't fired when calls are manually stopped (via Velocity.animate("stop"). */
-            /* Note: If this is a loop, complete callback firing is handled by the loop's final reverse call -- we skip handling it here. */
+            /* Note: If this is a loop, complete callback firing is only triggered on the loop's final reverse call. */
             if (!isStopped && opts.complete && !opts.loop && (i === callLength - 1)) {
-                opts.complete.call(elements, elements);
+                /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
+                try {
+                    opts.complete.call(elements, elements);
+                } catch (error) { 
+                    setTimeout(function() {
+                        throw error;
+                    }, 1);
+                }
             }
 
-            /***********************
+            /**********************
                Promise Resolving
-            ***********************/
+            **********************/
 
             if (resolver) {
                 resolver(elements);
