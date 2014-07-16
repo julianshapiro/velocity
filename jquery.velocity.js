@@ -1917,11 +1917,6 @@ Velocity's structure:
             /* Refer to Velocity's documentation (VelocityJS.org/#displayAndVisibility) for a description of the display and visibility options' behavior. */
             if (opts.display) {
                 opts.display = opts.display.toString().toLowerCase();
-
-                /* Users can pass in a special "auto" value to instruct Velocity to set the element to its default display value. */
-                if (opts.display === "auto") {
-                    opts.display = Velocity.CSS.Values.getDisplayType(element);
-                }
             }
 
             if (opts.visibility) {
@@ -2870,7 +2865,7 @@ Velocity's structure:
                     /* If the display option is set to non-"none", set it upfront so that the element can become visible before tweening begins.
                        (Otherwise, display's "none" value is set in completeCall() once the animation has completed.) */
                     if (opts.display && opts.display !== "none") {
-                        CSS.setPropertyValue(element, "display", opts.display);
+                        CSS.setPropertyValue(element, "display", opts.display === "auto" ? null : opts.display);
                     }
 
                     /* Same goes with the visibility option, but its "none" equivalent is "hidden". */
