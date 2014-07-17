@@ -22,8 +22,8 @@ jQuery dependency removal and Zepto support.
 ###**Comparisons**
 
 - **Famo.us** is a full-fledged *mobile app framework* built around a physics engine.
-- **GSAP** is a fast, multi-purpose *animation platform*. It inspired me to pursue the development of Velocity.
-- **Velocity** is a lightweight tool for drastically improving *UI animation performance and workflow*.
+- **CSS transitions** are meant for simple interface flourishes triggered by hover states.
+- **Velocity** is a lightweight tool for injecting rich motion design into your UI.
 
 ###**New Features**
 
