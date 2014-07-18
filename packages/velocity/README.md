@@ -23,7 +23,7 @@ jQuery dependency removal and Zepto support.
 
 - **Famo.us** is a full-fledged *mobile app framework* built around a physics engine.
 - **CSS transitions** are meant for simple interface flourishes triggered by hover states.
-- **Velocity** is a lightweight tool for injecting rich motion design into your UI.
+- **Velocity** is a tool for injecting rich motion design into your UI.
 
 ###**New Features**
 
