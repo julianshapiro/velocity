@@ -27,6 +27,7 @@ jQuery dependency removal and Zepto support.
 
 ###**New Features**
 
+- 0.9.0: Support for hex values. See http://VelocityJS.org/#colors. `velocity-animating` indicator class. 
 - 0.8.0: Support for the vw/vh CSS units.
 - 0.6.0: Can set `display: "auto"` and can set `visibility`. See http://VelocityJS.org/#displayAndVisibility.
 - 0.5.0: Promises support. See http://VelocityJS.org/#promises.
