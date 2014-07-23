@@ -1749,7 +1749,8 @@ Velocity's structure:
 
                 /* Check if a string matches a registered sequence (see Sequences above). */
                 } else if (Type.isString(propertiesMap) && Velocity.Sequences[propertiesMap]) {
-                    var durationOriginal = options.duration;
+                    var durationOriginal = options.duration,
+                        delayOriginal = options.delay;
 
                     /* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first. */
                     if (options.backwards === true) {
@@ -1764,6 +1765,8 @@ Velocity's structure:
                         } else if (Type.isFunction(options.stagger)) {
                             options.delay = options.stagger.call(element, elementIndex, elementsLength);
                         }
+                        
+                        options.delay += (delayOriginal) ? delayOriginal : 0;
 
                         /* If the drag option was passed in, successively increase/decrease (depending on the presense of options.backwards)
                            the duration of each element's animation, using floors to prevent producing very short durations. */
