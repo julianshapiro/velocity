@@ -197,6 +197,7 @@ Velocity's structure:
             isAndroid: /Android/i.test(navigator.userAgent),
             isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
             isChrome: window.chrome,
+            isFirefox: /Firefox/i.test(navigator.userAgent),
             /* Create a cached element for re-use when checking for CSS property prefixes. */
             prefixElement: document.createElement("div"),
             /* Cache every prefix match to avoid repeating lookups. */
@@ -243,7 +244,7 @@ Velocity's structure:
         animate: function () { /* Defined below. */ },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 8, patch: 0 },
+        version: { major: 0, minor: 9, patch: 0 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -576,10 +577,21 @@ Velocity's structure:
 
         RegEx: {
             /* Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
+            isHex: /^#([A-f\d]{3}){1,2}$/i,
             valueUnwrap: /^[A-z]+\((.*)\)$/i,
             wrappedValueAlreadyExtracted: /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
             /* Split a multi-value property into an array of subvalues, e.g. "rgba(4, 3, 2, 1) 4px 3px 2px 1px" ==> [ "rgba(4, 3, 2, 1)", "4px", "3px", "2px", "1px" ]. */
             valueSplit: /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/ig
+        },
+
+        /************
+            Lists
+        ************/
+
+        Lists: {
+            colors: [ "fill", "stroke", "stopColor", "color", "backgroundColor", "borderColor", "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor" ],
+            transformsBase: [ "translateX", "translateY", "scale", "scaleX", "scaleY", "skewX", "skewY", "rotateZ" ],
+            transforms3D: [ "transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY" ]
         },
 
         /************
@@ -598,20 +610,6 @@ Velocity's structure:
             /* Templates are a concise way of indicating which subproperties must be individually registered for each compound-value CSS property. */
             /* Each template consists of the compound-value's base name, its constituent subproperty names, and those subproperties' default values. */
             templates: {
-                /* Note: Colors are defaulted to white -- as opposed to black -- since colors that are
-                   currently set to "transparent" default to their respective template below when color-animated,
-                   and white is typically a closer match to transparent than black is. */
-                "color": [ "Red Green Blue Alpha", "255 255 255 1" ],
-                "backgroundColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
-                "borderColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
-                "borderTopColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
-                "borderRightColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
-                "borderBottomColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
-                "borderLeftColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
-                "outlineColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
-                "fill": [ "Red Green Blue Alpha", "255 255 255 1" ],
-                "stroke": [ "Red Green Blue Alpha", "255 255 255 1" ],
-                "stopColor": [ "Red Green Blue Alpha", "255 255 255 1" ],
                 "textShadow": [ "Color X Y Blur", "black 0px 0px 0px" ],
                 /* Todo: Add support for inset boxShadows. (webkit places it last whereas IE places it first.) */
                 "boxShadow": [ "Color X Y Blur Spread", "black 0px 0px 0px 0px" ],
@@ -630,6 +628,14 @@ Velocity's structure:
             },
             /* Convert the templates into individual hooks then append them to the registered object above. */
             register: function () {
+                /* Color hooks registration. */
+                /* Note: Colors are defaulted to white -- as opposed to black -- since colors that are
+                   currently set to "transparent" default to their respective template below when color-animated,
+                   and white is typically a closer match to transparent than black is. */
+                for (var i = 0; i < CSS.Lists.colors.length; i++) {
+                    CSS.Hooks.templates[CSS.Lists.colors[i]] = [ "Red Green Blue Alpha", "255 255 255 1" ];
+                }
+
                 var rootProperty,
                     hookTemplate,
                     hookNames;
@@ -652,7 +658,7 @@ Velocity's structure:
                             CSS.Hooks.templates[rootProperty] = [ hookNames.join(" "), defaultValues.join(" ") ];
                         }
                     }
-                 }
+                }
 
                 /* Hook registration. */
                 for (rootProperty in CSS.Hooks.templates) {
@@ -849,24 +855,21 @@ Velocity's structure:
                    setting is complete complete, CSS.flushTransformCache() must be manually called to flush the values to the DOM.
                    Transform setting is batched in this way to improve performance: the transform style only needs to be updated
                    once when multiple transform subproperties are being animated simultaneously. */
-                var transformProperties = [ "translateX", "translateY", "scale", "scaleX", "scaleY", "skewX", "skewY", "rotateZ" ];
-
-                /* IE9 and Android Gingerbread have support for 2D -- but not 3D -- transforms. Since animating unsupported
+                /* Note: IE9 and Android Gingerbread have support for 2D -- but not 3D -- transforms. Since animating unsupported
                    transform properties results in the browser ignoring the *entire* transform string, we prevent these 3D values
                    from being normalized for these browsers so that tweening skips these properties altogether
                    (since it will ignore them as being unsupported by the browser.) */
                 if (!(IE <= 9) && !Velocity.State.isGingerbread) {
-                    /* Append 3D transform properties onto transformProperties. */
                     /* Note: Since the standalone CSS "perspective" property and the CSS transform "perspective" subproperty
                     share the same name, the latter is given a unique token within Velocity: "transformPerspective". */
-                    transformProperties = transformProperties.concat([ "transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY" ]);
+                    CSS.Lists.transformsBase = CSS.Lists.transformsBase.concat(CSS.Lists.transforms3D);
                 }
 
-                for (var i = 0, transformPropertiesLength = transformProperties.length; i < transformPropertiesLength; i++) {
+                for (var i = 0; i < CSS.Lists.transformsBase.length; i++) {
                     /* Wrap the dynamically generated normalization function in a new scope so that transformName's value is
                     paired with its respective function. (Otherwise, all functions would take the final for loop's transformName.) */
                     (function() {
-                        var transformName = transformProperties[i];
+                        var transformName = CSS.Lists.transformsBase[i];
 
                         CSS.Normalizations.registered[transformName] = function (type, element, propertyValue) {
                             switch (type) {
@@ -877,7 +880,7 @@ Velocity's structure:
                                 case "extract":
                                     /* If this transform has yet to be assigned a value, return its null value. */
                                     if (Data(element).transformCache[transformName] === undefined) {
-                                        /* Scale transformProperties default to 1 whereas all other transform properties default to 0. */
+                                        /* Scale CSS.Lists.transformsBase default to 1 whereas all other transform properties default to 0. */
                                         return /^scale/i.test(transformName) ? 1 : 0;
                                     /* When transform values are set, they are wrapped in parentheses as per the CSS spec.
                                        Thus, when extracting their values (for tween calculations), we strip off the parentheses. */
@@ -893,7 +896,7 @@ Velocity's structure:
                                     switch (transformName.substr(0, transformName.length - 1)) {
                                         /* Whitelist unit types for each transform. */
                                         case "translate":
-                                            invalid = !/(%|px|em|rem|\d)$/i.test(propertyValue);
+                                            invalid = !/(%|px|em|rem|vw|vh|\d)$/i.test(propertyValue);
                                             break;
                                         /* Since an axis-free "scale" property is supported as well, a little hack is used here to detect it by chopping off its last letter. */
                                         case "scal":
@@ -933,31 +936,13 @@ Velocity's structure:
 
                 /* Since Velocity only animates a single numeric value per property, color animation is achieved by hooking the individual RGBA components of CSS color properties.
                    Accordingly, color values must be normalized (e.g. "#ff0000", "red", and "rgb(255, 0, 0)" ==> "255 0 0 1") so that their components can be injected/extracted by CSS.Hooks logic. */
-                var colorProperties = [ "fill", "stroke", "stopColor", "color", "backgroundColor", "borderColor",
-                                        "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor" ];
-
-                for (var i = 0, colorPropertiesLength = colorProperties.length; i < colorPropertiesLength; i++) {
-                    /* Hex to RGB conversion. Copyright Tim Down: http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb */
-                    function hexToRgb (hex) {
-                        var shortformRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
-                            longformRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i,
-                            rgbParts;
-
-                        hex = hex.replace(shortformRegex, function (m, r, g, b) {
-                            return r + r + g + g + b + b;
-                        });
-
-                        rgbParts = longformRegex.exec(hex);
-
-                        return rgbParts ? "rgb(" + (parseInt(rgbParts[1], 16) + " " + parseInt(rgbParts[2], 16) + " " + parseInt(rgbParts[3], 16)) + ")" : "rgb(0 0 0)";
-                    }
-
+                for (var i = 0; i < CSS.Lists.colors.length; i++) {
                     /* Wrap the dynamically generated normalization function in a new scope so that colorName's value is paired with its respective function.
                        (Otherwise, all functions would take the final for loop's colorName.) */
                     (function () {
-                        var colorName = colorProperties[i];
+                        var colorName = CSS.Lists.colors[i];
 
-                        /* Note: In IE<=8, which support rgb but not rgba, colorProperties are reverted to rgb by stripping off the alpha component. */
+                        /* Note: In IE<=8, which support rgb but not rgba, color properties are reverted to rgb by stripping off the alpha component. */
                         CSS.Normalizations.registered[colorName] = function(type, element, propertyValue) {
                             switch (type) {
                                 case "name":
@@ -972,22 +957,12 @@ Velocity's structure:
                                     } else {
                                         var converted,
                                             colorNames = {
-                                                aqua: "rgb(0, 255, 255);",
                                                 black: "rgb(0, 0, 0)",
                                                 blue: "rgb(0, 0, 255)",
-                                                fuchsia: "rgb(255, 0, 255)",
                                                 gray: "rgb(128, 128, 128)",
                                                 green: "rgb(0, 128, 0)",
-                                                lime: "rgb(0, 255, 0)",
-                                                maroon: "rgb(128, 0, 0)",
-                                                navy: "rgb(0, 0, 128)",
-                                                olive: "rgb(128, 128, 0)",
-                                                purple: "rgb(128, 0, 128)",
                                                 red: "rgb(255, 0, 0)",
-                                                silver: "rgb(192, 192, 192)",
-                                                teal: "rgb(0, 128, 128)",
-                                                white: "rgb(255, 255, 255)",
-                                                yellow: "rgb(255, 255, 0)"
+                                                white: "rgb(255, 255, 255)"
                                             };
 
                                         /* Convert color names to rgb. */
@@ -999,8 +974,8 @@ Velocity's structure:
                                                 converted = colorNames.black;
                                             }
                                         /* Convert hex values to rgb. */
-                                        } else if (/^#([A-f\d]{3}){1,2}$/i.test(propertyValue)) {
-                                            converted = hexToRgb(propertyValue);
+                                        } else if (CSS.RegEx.isHex.test(propertyValue)) {
+                                            converted = "rgb(" + CSS.Values.hexToRgb(propertyValue).join(" ") + ")";
                                         /* If the provided color doesn't match any of the accepted color formats, default to black. */
                                         } else if (!(/^rgba?\(/i.test(propertyValue))) {
                                             converted = colorNames.black;
@@ -1051,11 +1026,11 @@ Velocity's structure:
                 });
             },
 
-            /* For SVG elements, some CSS properties (namely, dimemsional ones) are GET/SET on the element's HTML attributes (instead of via styles). */
+            /* For SVG elements, some properties (namely, dimensional ones) are GET/SET via the element's HTML attributes (instead of via CSS styles). */
             SVGAttribute: function (property) {
-                var SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y1";
+                var SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2";
 
-                /* Certain browsers require SVG transforms to be applied as an attribute. (Otherwise, application via CSS is preferable due to 3D support.) */
+                /* Certain browsers require an SVG transform to be applied as an attribute. (Otherwise, application via CSS is preferable due to 3D support.) */
                 if (IE || (Velocity.State.isAndroid && !Velocity.State.isChrome)) {
                     SVGAttributes += "|transform";
                 }
@@ -1103,6 +1078,20 @@ Velocity's structure:
         ************************/
 
         Values: {
+            /* Hex to RGB conversion. Copyright Tim Down: http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb */
+            hexToRgb: function (hex) {
+                var shortformRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
+                    longformRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i,
+                    rgbParts;
+
+                hex = hex.replace(shortformRegex, function (m, r, g, b) {
+                    return r + r + g + g + b + b;
+                });
+
+                rgbParts = longformRegex.exec(hex);
+
+                return rgbParts ? [ parseInt(rgbParts[1], 16), parseInt(rgbParts[2], 16), parseInt(rgbParts[3], 16) ] : [ 0, 0, 0 ];
+            },
             isCSSNullValue: function (value) {
                 /* The browser defaults CSS values that have not been set to either 0 or one of several possible null-value strings.
                    Thus, we check for both falsiness and these special strings. */
@@ -1139,7 +1128,7 @@ Velocity's structure:
                     return "block";
                 }
             },
-            /* The class add/remove functions are used to temporarily apply an "animating" class to elements while they're animating. */
+            /* The class add/remove functions are used to temporarily apply a "velocity-animating" class to elements while they're animating. */
             addClass: function (element, className) {
                 if (element.classList) {
                     element.classList.add(className);
@@ -1226,9 +1215,9 @@ Velocity's structure:
                         computedStyle = Data(element).computedStyle;
                     }
 
-                    /* IE doesn't return a value for borderColor -- it only returns individual values for each border side's color.
-                       As a polyfill, default to querying for just the top border's color. */
-                    if (IE && property === "borderColor") {
+                    /* IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
+                       As a polyfill for querying individual border side colors, just return the top border's color. */
+                    if ((IE || Velocity.State.isFirefox) && property === "borderColor") {
                         property = "borderTopColor";
                     }
 
@@ -1665,8 +1654,11 @@ Velocity's structure:
                     if (Data(element) && Data(element).delayTimer) {
                         /* Stop the timer from triggering its cached next() function. */
                         clearTimeout(Data(element).delayTimer.setTimeout);
+
                         /* Manually call the next() function so that the subsequent queue items can progress. */
-                        Data(element).delayTimer.next();
+                        if (Data(element).delayTimer.next) {
+                            Data(element).delayTimer.next();
+                        }
 
                         delete Data(element).delayTimer;
                     }
@@ -1749,7 +1741,8 @@ Velocity's structure:
 
                 /* Check if a string matches a registered sequence (see Sequences above). */
                 } else if (Type.isString(propertiesMap) && Velocity.Sequences[propertiesMap]) {
-                    var durationOriginal = options.duration;
+                    var durationOriginal = options.duration,
+                        delayOriginal = options.delay || 0;
 
                     /* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first. */
                     if (options.backwards === true) {
@@ -1758,11 +1751,11 @@ Velocity's structure:
 
                     /* Individually trigger the sequence for each element in the set to prevent users from having to handle iteration logic in their sequence. */
                     $.each(elements, function(elementIndex, element) {
-                        /* If the stagger option was passed in, successively delay each element by the stagger value (in ms). */
+                        /* If the stagger option was passed in, successively delay each element by the stagger value (in ms). Retain the original delay value. */
                         if (parseFloat(options.stagger)) {
-                            options.delay = parseFloat(options.stagger) * elementIndex;
+                            options.delay = delayOriginal + (parseFloat(options.stagger) * elementIndex);
                         } else if (Type.isFunction(options.stagger)) {
-                            options.delay = options.stagger.call(element, elementIndex, elementsLength);
+                            options.delay = delayOriginal + options.stagger.call(element, elementIndex, elementsLength);
                         }
 
                         /* If the drag option was passed in, successively increase/decrease (depending on the presense of options.backwards)
@@ -2074,6 +2067,8 @@ Velocity's structure:
                         element: element
                     };
 
+                    if (Velocity.debug) console.log("tweensContainer (scroll): ", tweensContainer.scroll, element);
+
                 /******************************************
                    Tween Data Construction (for Reverse)
                 ******************************************/
@@ -2113,7 +2108,7 @@ Velocity's structure:
                         Data(element).opts.begin = null;
                         Data(element).opts.complete = null;
 
-                        /* Since we're extending an opts object that has already been exteded with the defaults options object,
+                        /* Since we're extending an opts object that has already been extended with the defaults options object,
                            we remove non-explicitly-defined properties that are auto-assigned values. */
                         if (!options.easing) {
                             delete opts.easing;
@@ -2146,9 +2141,11 @@ Velocity's structure:
                                 /* Easing is the only option that embeds into the individual tween data (since it can be defined on a per-property basis).
                                    Accordingly, every property's easing value must be updated when an options object is passed in with a reverse call.
                                    The side effect of this extensibility is that all per-property easing values are forcefully reset to the new value. */
-                                if (options) {
+                                if (!$.isEmptyObject(options)) {
                                     lastTweensContainer[lastTween].easing = opts.easing;
                                 }
+
+                                if (Velocity.debug) console.log("reverse tweensContainer (" + lastTween + "): " + JSON.stringify(lastTweensContainer[lastTween]), element);
                             }
                         }
 
@@ -2190,7 +2187,7 @@ Velocity's structure:
                        or 2) an array in the form of [ endValue, [, easing] [, startValue] ].
                        The optional third parameter is a forcefed startValue to be used instead of querying the DOM for
                        the element's current value. Read Velocity's docmentation to learn more about forcefeeding: VelocityJS.org/#forcefeeding */
-                    function parsePropertyValue (valueData) {
+                    function parsePropertyValue (valueData, skipResolvingEasing) {
                         var endValue = undefined,
                             easing = undefined,
                             startValue = undefined;
@@ -2199,16 +2196,16 @@ Velocity's structure:
                            A) [ endValue, easing, startValue ], B) [ endValue, easing ], or C) [ endValue, startValue ] */
                         if (Type.isArray(valueData)) {
                             /* endValue is always the first item in the array. Don't bother validating endValue's value now
-                               since the ensuing property cycling logic inherently does that. */
+                               since the ensuing property cycling logic does that. */
                             endValue = valueData[0];
 
-                            /* Two-item array format: If the second item is a number or a function, treat it as a
-                               start value since easings can only be strings or arrays. */
-                            if ((!Type.isArray(valueData[1]) && /^[\d-]/.test(valueData[1])) || Type.isFunction(valueData[1])) {
+                            /* Two-item array format: If the second item is a number, function, or hex string, treat it as a
+                               start value since easings can only be non-hex strings or arrays. */
+                            if ((!Type.isArray(valueData[1]) && /^[\d-]/.test(valueData[1])) || Type.isFunction(valueData[1]) || CSS.RegEx.isHex.test(valueData[1])) {
                                 startValue = valueData[1];
-                            /* Two or three-item array: If the second item is a string, treat it as an easing. */
-                            } else if (Type.isString(valueData[1]) || Type.isArray(valueData[1])) {
-                                easing = getEasing(valueData[1], opts.duration);
+                            /* Two or three-item array: If the second item is a non-hex string or an array, treat it as an easing. */
+                            } else if ((Type.isString(valueData[1]) && !CSS.RegEx.isHex.test(valueData[1])) || Type.isArray(valueData[1])) {
+                                easing = skipResolvingEasing ? valueData[1] : getEasing(valueData[1], opts.duration);
 
                                 /* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
                                 if (valueData[2] !== undefined) {
@@ -2237,9 +2234,35 @@ Velocity's structure:
                         return [ endValue || 0, easing, startValue ];
                     }
 
+                    /* Cycle through each property in the map, looking for shorthand color properties (e.g. "color" as opposed to "colorRed"). Inject the corresponding
+                       colorRed, colorGreen, and colorBlue RGB component tweens into the propertiesMap (which Velocity understands) and remove the shorthand property. */
+                    $.each(propertiesMap, function(property, value) {
+                        /* Parse the value data for each shorthand. */
+                        var valueData = parsePropertyValue(value, true),
+                            endValue = valueData[0],
+                            easing = valueData[1],
+                            startValue = valueData[2];
+
+                        /* Find shorthand color properties that have been passed a hex string. */
+                        if (RegExp(CSS.Lists.colors.join("|")).test(property) && CSS.RegEx.isHex.test(endValue)) {
+                            /* Convert the hex strings into their RGB component arrays. */
+                            var colorComponents = [ "Red", "Green", "Blue" ],
+                                endValueRGB = CSS.Values.hexToRgb(endValue),
+                                startValueRGB = startValue ? CSS.Values.hexToRgb(startValue) : undefined;
+
+                            /* Inject the RGB component tweens into propertiesMap. */
+                            for (var i = 0; i < colorComponents.length; i++) {
+                                propertiesMap[property + colorComponents[i]] = [ endValueRGB[i], easing, startValueRGB ? startValueRGB[i] : startValueRGB ]; 
+                            }
+
+                            /* Remove the intermediary shorthand property entry now that we've processed it. */
+                            delete propertiesMap[property];
+                        }                        
+                    });
+
                     /* Create a tween out of each property, and append its associated data to tweensContainer. */
                     for (var property in propertiesMap) {
-                        /* Normalize property names via camel casing so that properties can be consistently manipulated. */
+
                         /**************************
                            Start Value Sourcing
                         **************************/
@@ -2696,8 +2719,8 @@ Velocity's structure:
                 /* Note: tweensContainer can be empty if all of the properties in this call's property map were skipped due to not
                    being supported by the browser. The element property is used for checking that the tweensContainer has been appended to. */
                 if (tweensContainer.element) {
-                    /* Apply the "animating" indicator class. */
-                    CSS.Values.addClass(element, "animating");
+                    /* Apply the "velocity-animating" indicator class. */
+                    CSS.Values.addClass(element, "velocity-animating");
 
                     /* The call array houses the tweensContainers for each element being animated in the current call. */
                     call.push(tweensContainer);
@@ -3139,8 +3162,8 @@ Velocity's structure:
                         CSS.flushTransformCache(element);
                     }
 
-                    /* Remove the "animating" indicator class. */
-                    CSS.Values.removeClass(element, "animating");
+                    /* Remove the "velocity-animating" indicator class. */
+                    CSS.Values.removeClass(element, "velocity-animating");
                 }
             }
 
@@ -3277,7 +3300,7 @@ Velocity's structure:
 
                     /* Determine if height was originally "auto" by checking if the computed "auto" value is identical to the original value. */
                     element.style.height = "auto";
-                    if (Velocity.CSS.getPropertyValue(element, "height") === originalValues.height) {
+                    if (parseFloat(Velocity.CSS.getPropertyValue(element, "height")) === originalValues.height) {
                         isHeightAuto = true;
                     }
 
@@ -3306,6 +3329,7 @@ Velocity's structure:
                         }
 
                         var propertyValue = Velocity.CSS.getPropertyValue(element, property);
+
                         if (property === "height") {
                             propertyValue = parseFloat(propertyValue);
                         }
@@ -3318,6 +3342,7 @@ Velocity's structure:
 
                     for (var property in originalValues) {
                         var propertyValue = Velocity.CSS.getPropertyValue(element, property);
+
                         if (property === "height") {
                             propertyValue = parseFloat(propertyValue);
                         }
