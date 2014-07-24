@@ -10,7 +10,7 @@ http://VelocityJS.org
 Bower package is *velocity*. NPM package is *velocity-animate*.
 
 **Coming Soon**  
-jQuery dependency removal and Zepto support.
+jQuery dependency removal and Zepto support. See https://github.com/julianshapiro/velocity/issues/205.
 
 ###**Learn**
 
