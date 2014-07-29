@@ -1,4 +1,4 @@
-##Velocity 0.9.0
+##Velocity (0.9.0)
 
 **Docs**  
 http://VelocityJS.org
