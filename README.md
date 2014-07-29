@@ -9,9 +9,6 @@ http://VelocityJS.org
 **Package Managers**  
 Bower package is *velocity*. NPM package is *velocity-animate*.
 
-**Coming Soon**  
-jQuery dependency removal and Zepto support. See https://github.com/julianshapiro/velocity/issues/205.
-
 ###**Learn**
 
 - **UI Pack**: http://www.smashingmagazine.com/2014/06/18/faster-ui-animations-with-velocity-js/
@@ -32,7 +29,6 @@ jQuery dependency removal and Zepto support. See https://github.com/julianshapir
 - 0.6.0: Can set `display: "auto"` and can set `visibility`. See http://VelocityJS.org/#displayAndVisibility.
 - 0.5.0: Promises support. See http://VelocityJS.org/#promises.
 - 0.3.0-0.4.0: SVG animation support. See http://VelocityJS.org/#svg.
-- 0.2.0: Added step easing. See http://VelocityJS.org/#easing.
 - 0.1.0: The `stop` command now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made. See http://VelocityJS.org/#stop.
 
 ====
