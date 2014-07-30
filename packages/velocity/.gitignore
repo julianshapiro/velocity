@@ -3,7 +3,5 @@ node_modules
 test
 min
 README.md
-Gruntfile.js
-velocity.js
-velocity.min.js
+Gruntfile.js.bak
 velocity.jquery-shim.js
