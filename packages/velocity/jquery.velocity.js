@@ -4,8 +4,8 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.10.0
-* @docs http://velocityjs.org
+* @version 0.10.1
+* @docs http://VelocityJS.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
 
@@ -81,7 +81,7 @@ Velocity's structure:
         };
     })();
 
-    var rAF = window.requestAnimationFrame || rAFPollyfill;
+    var ticker = window.requestAnimationFrame || rAFPollyfill;
 
     /* Array compacting. Copyright Lo-Dash. MIT License: https://github.com/lodash/lodash/blob/master/LICENSE.txt */
     function compactSparseArray (array) {
@@ -252,7 +252,7 @@ Velocity's structure:
         animate: function () { /* Defined below. */ },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 10, patch: 0 },
+        version: { major: 0, minor: 10, patch: 1 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     }, window.Velocity);
@@ -280,15 +280,15 @@ Velocity's structure:
         document.addEventListener("visibilitychange", function() {
             /* Reassign the rAF function (which the global tick() function uses) based on the tab's focus state. */
             if (document.hidden) {
-                rAF = function(callback) { 
-                    /* The tick function needs a truthy first argument to pass its internal timestamp check. */
+                ticker = function(callback) { 
+                    /* The tick function needs a truthy first argument in order to pass its internal timestamp check. */
                     return setTimeout(function() { callback(true) }, 16);
                 };
 
                 /* The rAF loop has been paused by the browser, so we manually restart the tick. */
                 tick();
             } else {
-                rAF = window.requestAnimationFrame || rAFPollyfill;
+                ticker = window.requestAnimationFrame || rAFPollyfill;
             }
         });
     }
@@ -2226,7 +2226,9 @@ Velocity's structure:
                         }
 
                         /* Default to the call's easing if a per-property easing type was not defined. */
-                        easing = easing || opts.easing;
+                        if (!skipResolvingEasing) {
+                            easing = easing || opts.easing;
+                        }
 
                         /* If functions were passed in as values, pass the function the current element as its context,
                            plus the element's index and the element set's size as arguments. Then, assign the returned value. */
@@ -2245,26 +2247,28 @@ Velocity's structure:
                     /* Cycle through each property in the map, looking for shorthand color properties (e.g. "color" as opposed to "colorRed"). Inject the corresponding
                        colorRed, colorGreen, and colorBlue RGB component tweens into the propertiesMap (which Velocity understands) and remove the shorthand property. */
                     $.each(propertiesMap, function(property, value) {
-                        /* Parse the value data for each shorthand. */
-                        var valueData = parsePropertyValue(value, true),
-                            endValue = valueData[0],
-                            easing = valueData[1],
-                            startValue = valueData[2];
-
                         /* Find shorthand color properties that have been passed a hex string. */
-                        if (RegExp(CSS.Lists.colors.join("|")).test(property) && CSS.RegEx.isHex.test(endValue)) {
-                            /* Convert the hex strings into their RGB component arrays. */
-                            var colorComponents = [ "Red", "Green", "Blue" ],
-                                endValueRGB = CSS.Values.hexToRgb(endValue),
-                                startValueRGB = startValue ? CSS.Values.hexToRgb(startValue) : undefined;
+                        if (RegExp("^" + CSS.Lists.colors.join("$|^") + "$").test(property)) {
+                            /* Parse the value data for each shorthand. */
+                            var valueData = parsePropertyValue(value, true),
+                                endValue = valueData[0],
+                                easing = valueData[1],
+                                startValue = valueData[2];
 
-                            /* Inject the RGB component tweens into propertiesMap. */
-                            for (var i = 0; i < colorComponents.length; i++) {
-                                propertiesMap[property + colorComponents[i]] = [ endValueRGB[i], easing, startValueRGB ? startValueRGB[i] : startValueRGB ]; 
+                            if (CSS.RegEx.isHex.test(endValue)) {
+                                /* Convert the hex strings into their RGB component arrays. */
+                                var colorComponents = [ "Red", "Green", "Blue" ],
+                                    endValueRGB = CSS.Values.hexToRgb(endValue),
+                                    startValueRGB = startValue ? CSS.Values.hexToRgb(startValue) : undefined;
+
+                                /* Inject the RGB component tweens into propertiesMap. */
+                                for (var i = 0; i < colorComponents.length; i++) {
+                                    propertiesMap[property + colorComponents[i]] = [ endValueRGB[i], easing, startValueRGB ? startValueRGB[i] : startValueRGB ]; 
+                                }
+
+                                /* Remove the intermediary shorthand property entry now that we've processed it. */
+                                delete propertiesMap[property];
                             }
-
-                            /* Remove the intermediary shorthand property entry now that we've processed it. */
-                            delete propertiesMap[property];
                         }                        
                     });
 
@@ -3094,7 +3098,8 @@ Velocity's structure:
 
         /* Note: completeCall() sets the isTicking flag to false when the last call on Velocity.State.calls has completed. */
         if (Velocity.State.isTicking) {
-            rAF(tick);
+            /* If mock is on (http://VelocityJS.org/#mock), use synchronous code (with mock's forced duration of 0) to immediately toggle end values. */
+            Velocity.mock ? tick(true) : ticker(tick);
         }
     }
 
