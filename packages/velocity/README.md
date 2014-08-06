@@ -17,12 +17,6 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 - **Workflow**: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 - **SVG animation**: http://davidwalsh.name/svg-animation
 
-###**Comparisons**
-
-- **Famo.us** is a full-fledged *mobile app framework* built around a physics engine.
-- **CSS transitions** are meant for simple interface flourishes triggered by hover states.
-- **Velocity** is a tool for injecting rich motion design into your UI.
-
 ###**New Features**
 
 - 0.10.1: Mock. See http://VelocityJS.org/#mock.
@@ -33,6 +27,12 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 - 0.5.0: Promises support. See http://VelocityJS.org/#promises.
 - 0.3.0-0.4.0: SVG animation support. See http://VelocityJS.org/#svg.
 - 0.1.0: The `stop` command now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made. See http://VelocityJS.org/#stop.
+
+###**Comparisons**
+
+- **Famo.us** is a full-fledged *mobile app framework* built around a physics engine.
+- **CSS transitions** are meant for simple interface flourishes triggered by hover states.
+- **Velocity** is a tool for injecting rich motion design into your UI.
 
 ====
 
