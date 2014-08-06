@@ -32,7 +32,19 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
 /* NOTICE: Despite the ensuing code indicating that Velocity works *without* jQuery and *with* Zepto, this support has not yet landed. */
 
-;(function (global, window, document, undefined) {
+(function (factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['jquery'], factory);
+    } else if (typeof exports === 'object') {
+        // Node/CommonJS
+        factory(require('jquery'));
+    } else {
+        // Browser globals
+        factory(window.jQuery || window.Zepto);
+    }
+}(function (jQuery) {
+return function (global, window, document, undefined) {
 
     /*****************
         Constants
@@ -132,7 +144,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
 
     /* Local to our Velocity scope, assign $ to our jQuery shim if jQuery itself isn't loaded. (The shim is a port of the jQuery utility functions that Velocity uses.) */
     /* Note: We can't default to Zepto since the shimless version of Velocity does not work with Zepto, which is missing several utility functions that Velocity requires. */
-    var $ = window.jQuery || (global.Velocity && global.Velocity.Utilities);
+    var $ = jQuery || (global.Velocity && global.Velocity.Utilities);
 
     if (!$) {
         throw new Error("Velocity: Either jQuery or Velocity's jQuery shim must first be loaded.")
@@ -141,16 +153,16 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         throw new Error("Velocity: Namespace is occupied.");
     /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them. Revert to jQuery's $.animate(), and lose Velocity's extra features. */
     } else if (IE <= 7) {
-        if (!window.jQuery) {
+        if (!jQuery) {
             throw new Error("Velocity: For IE<=7, Velocity falls back to jQuery, which must first be loaded.");
         } else {
-            window.jQuery.fn.velocity = window.jQuery.fn.animate;
+            jQuery.fn.velocity = jQuery.fn.animate;
 
             /* Now that $.fn.velocity is aliased, abort this Velocity declaration. */
             return;
         }
     /* IE8 doesn't work with the jQuery shim; it requires jQuery proper. */
-    } else if (IE === 8 && !window.jQuery) {
+    } else if (IE === 8 && !jQuery) {
         throw new Error("Velocity: For IE8, Velocity requires jQuery to be loaded. (Velocity's jQuery shim does not work with IE8.)");
     }
 
@@ -187,7 +199,7 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
         /* Velocity's custom CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
         /* Defined by Velocity's optional jQuery shim. */
-        Utilities: window.jQuery ? {} : $,
+        Utilities: jQuery ? {} : $,
         /* Container for the user's custom animation sequences that are referenced by name via Velocity's first argument (in place of a properties map object). */
         Sequences: {
             /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
@@ -2655,21 +2667,13 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
     *******************/
 
     /* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls. If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method. */
-    var framework = window.jQuery || window.Zepto;
 
-    if (framework) {
+    if (jQuery) {
         /* Assign the object function to Velocity's animate() method. */
-        framework.fn.velocity = Velocity.animate;
+        jQuery.fn.velocity = Velocity.animate;
 
         /* Assign the object function's defaults to Velocity's global defaults object. */
-        framework.fn.velocity.defaults = Velocity.defaults;
-    }
-
-    /* Support for AMD and CommonJS module loaders. */
-    if (typeof define !== "undefined" && define.amd) {
-        define(function() { return Velocity; });
-    } else if (typeof module !== "undefined" && module.exports) {
-        module.exports = Velocity;
+        jQuery.fn.velocity.defaults = Velocity.defaults;
     }
 
     /***********************
@@ -2826,7 +2830,10 @@ The biggest cause of both codebase bloat and codepath obfuscation is support for
             Velocity.animate(this, propertiesMap, opts);
         };
     });
-})((window.jQuery || window.Zepto || window), window, document);
+
+    return Velocity;
+}((jQuery || window), window, document);
+}));
 
 /******************
    Known Issues
