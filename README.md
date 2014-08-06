@@ -12,8 +12,8 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 ###**Learn**
 
 - **UI Pack**: http://www.smashingmagazine.com/2014/06/18/faster-ui-animations-with-velocity-js/
-- **Performance comparisons**: http://davidwalsh.name/css-js-animation
-- **Performance optimizations**: http://www.sitepoint.com/incredibly-fast-ui-animation-using-velocity-js/
+- **Perf. comparisons**: http://davidwalsh.name/css-js-animation
+- **Perf. optimizations**: http://www.sitepoint.com/incredibly-fast-ui-animation-using-velocity-js/
 - **Workflow**: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 - **SVG animation**: http://davidwalsh.name/svg-animation
 
@@ -27,7 +27,7 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 
 - 0.10.1: Mock. See http://VelocityJS.org/#mock.
 - 0.10.0: Infinite looping. See http://VelocityJS.org/#loop. 
-- 0.9.0: Support for hex values. See http://VelocityJS.org/#colors. `velocity-animating` indicator class. 
+- 0.9.0: Support for hex values. See http://VelocityJS.org/#colors.
 - 0.8.0: Support for the vw/vh CSS units.
 - 0.6.0: Can set `display: "auto"` and can set `visibility`. See http://VelocityJS.org/#displayAndVisibility.
 - 0.5.0: Promises support. See http://VelocityJS.org/#promises.
