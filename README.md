@@ -11,7 +11,7 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 
 ###**Learn**
 
-- **UI Pack**: http://www.smashingmagazine.com/2014/06/18/faster-ui-animations-with-velocity-js/
+- **UI Effects**: http://www.smashingmagazine.com/2014/06/18/faster-ui-animations-with-velocity-js/
 - **Perf. comparisons**: http://davidwalsh.name/css-js-animation
 - **Perf. optimizations**: http://www.sitepoint.com/incredibly-fast-ui-animation-using-velocity-js/
 - **Workflow**: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
@@ -19,14 +19,14 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 
 ###**New Features**
 
-- 0.10.1: Mock. See http://VelocityJS.org/#mock.
-- 0.10.0: Infinite looping. See http://VelocityJS.org/#loop. 
-- 0.9.0: Support for hex values. See http://VelocityJS.org/#colors.
-- 0.8.0: Support for the vw/vh CSS units.
-- 0.6.0: Can set `display: "auto"` and can set `visibility`. See http://VelocityJS.org/#displayAndVisibility.
-- 0.5.0: Promises support. See http://VelocityJS.org/#promises.
-- 0.3.0-0.4.0: SVG animation support. See http://VelocityJS.org/#svg.
-- 0.1.0: The `stop` command now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made. See http://VelocityJS.org/#stop.
+- 0.10.1: Mock UI testing. http://VelocityJS.org/#mock.
+- 0.10.0: Infinite looping. http://VelocityJS.org/#loop. 
+- 0.9.0: Hex values. http://VelocityJS.org/#colors.
+- 0.8.0: vw/vh CSS units.
+- 0.6.0: `display: "auto"` and `visibility`. http://VelocityJS.org/#displayAndVisibility.
+- 0.5.0: Promises. http://VelocityJS.org/#promises.
+- 0.3.0-0.4.0: SVG animation. http://VelocityJS.org/#svg.
+- 0.1.0: `stop` now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made. http://VelocityJS.org/#stop.
 
 ###**Comparisons**
 
