@@ -4,7 +4,6 @@
 http://VelocityJS.org
 
 **Quickstart**  
-`<script src="//cdn.jsdelivr.net/jquery.velocity/0.10.1/jquery.velocity.min.js"></script>`
 
 ```sh
 bower install velocity
@@ -13,6 +12,9 @@ bower install velocity
 ```sh
 npm install velocity-animate
 ```
+
+`<script src="//cdn.jsdelivr.net/jquery.velocity/0.10.1/jquery.velocity.min.js"></script>`
+
 
 ###**Learn**
 
