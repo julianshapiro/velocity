@@ -29,16 +29,20 @@ Velocity's structure:
     Velocity.js
 ******************/
 
-;(function (factory) {
-    if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        define(['jquery'], factory);
-    } else if (typeof exports === 'object') {
-        // Node/CommonJS
-        factory(require('jquery'));
-    } else {
-        // Browser globals
-        factory(window.jQuery || window.Zepto);
+;(function (factory) {    
+    /* AMD module. */
+    if (typeof define === "function" && define.amd) {
+        if (window.Velocity) {
+            define(factory);
+        } else {
+            define(["jquery"], factory)
+        }
+    /* CommonJS module. */
+    } else if (typeof exports === "object") {
+        factory(window.Velocity ? require("jquery") : undefined);
+    /* Browser globals. */
+    } else {        
+        factory(window.jQuery);
     }
 }(function (jQuery) {
 return function (global, window, document, undefined) {
@@ -161,17 +165,14 @@ return function (global, window, document, undefined) {
        Dependencies
     *****************/
 
-    /* Local to our Velocity scope, assign $ to our jQuery shim if jQuery itself isn't loaded.
-       (The shim is a port of the jQuery utility functions that Velocity uses.) */
-    /* Note: We can't default to Zepto since the shimless version of Velocity does not work with Zepto,
-       which is missing several utility functions that Velocity requires. */
-    var $ = jQuery || (global.Velocity && global.Velocity.Utilities);
+    /* Local to our Velocity scope, assign $ to jQuery or the jQuery shim. (The shim is a port of the jQuery utility functions that Velocity uses.) */
+    var $ = jQuery || (window.Velocity && window.Velocity.Utilities);
 
     if (!$) {
         throw new Error("Velocity: Either jQuery or Velocity's jQuery shim must first be loaded.")
     /* We allow the global Velocity variable to pre-exist so long as we were responsible for its creation
       (via the jQuery shim, which uniquely assigns a Utilities property to the Velocity object). */
-    } else if (global.Velocity !== undefined && !global.Velocity.Utilities) {
+    } else if (global.Velocity !== undefined && global.Velocity.Utilities == undefined) {
         throw new Error("Velocity: Namespace is occupied.");
     /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them.
        Revert to jQuery's $.animate(), and lose Velocity's extra features. */
@@ -186,7 +187,7 @@ return function (global, window, document, undefined) {
         }
     /* IE8 doesn't work with the jQuery shim; it requires jQuery proper. */
     } else if (IE === 8 && !jQuery) {
-        throw new Error("Velocity: For IE8, Velocity requires jQuery to be loaded. (Velocity's jQuery shim does not work with IE8.)");
+        throw new Error("Velocity: For IE8, Velocity requires jQuery proper to be loaded; Velocity's jQuery shim does not work with IE8.");
     }
 
     /* Shorthand alias for jQuery's $.data() utility. */
@@ -202,13 +203,9 @@ return function (global, window, document, undefined) {
         State
     *************/
 
-    /* Velocity registers itself onto a global container (window.jQuery || window.Zepto || window) so that that
-       certain features are accessible beyond just a per-element scope. This master object contains an .animate() method,
-       which is later assigned to $.fn (if jQuery or Zepto are present). Accordingly, Velocity can both act on wrapped
-       DOM elements and stand alone for targeting raw DOM elements. */
     /* Note: The global object also doubles as a publicly-accessible data store for the purposes of unit testing. */
     /* Note: Alias the lowercase and uppercase variants of "velocity" to minimize user confusion due to the lowercase nature of the $.fn extension. */
-    var Velocity = global.Velocity = global.velocity = $.extend({
+    var Velocity = {
         /* Container for page-wide Velocity state data. */
         State: {
             /* Detect mobile devices to determine if mobileHA should be turned on. */
@@ -235,7 +232,7 @@ return function (global, window, document, undefined) {
         /* Velocity's custom CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
         /* Defined by Velocity's optional jQuery shim. */
-        Utilities: jQuery,
+        Utilities: $,
         /* Container for the user's custom animation sequences that are referenced by name in place of a properties map object. */
         Sequences: {
             /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
@@ -267,7 +264,7 @@ return function (global, window, document, undefined) {
         version: { major: 0, minor: 10, patch: 1 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
-    }, window.Velocity);
+    };
 
     /* Retrieve the appropriate scroll anchor and property name for the browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
     if (window.pageYOffset !== undefined) {
@@ -899,7 +896,7 @@ return function (global, window, document, undefined) {
                                 /* Transform values are cached onto a per-element transformCache object. */
                                 case "extract":
                                     /* If this transform has yet to be assigned a value, return its null value. */
-                                    if (Data(element).transformCache[transformName] === undefined) {
+                                    if (Data(element) === undefined || Data(element).transformCache[transformName] === undefined) {
                                         /* Scale CSS.Lists.transformsBase default to 1 whereas all other transform properties default to 0. */
                                         return /^scale/i.test(transformName) ? 1 : 0;
                                     /* When transform values are set, they are wrapped in parentheses as per the CSS spec.
@@ -1766,7 +1763,7 @@ return function (global, window, document, undefined) {
 
                     /* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first. */
                     if (options.backwards === true) {
-                        elements = (elements.jquery ? [].slice.call(elements) : elements).reverse();
+                        elements = (Type.isWrapped(elements) ? [].slice.call(elements) : elements).reverse();
                     }
 
                     /* Individually trigger the sequence for each element in the set to prevent users from having to handle iteration logic in their sequence. */
@@ -2040,7 +2037,7 @@ return function (global, window, document, undefined) {
                        as opposed to the browser window itself. This is useful for scrolling toward an element that's inside an overflowing parent element. */
                     if (opts.container) {
                         /* Ensure that either a jQuery object or a raw DOM element was passed in. */
-                        if (opts.container.jquery || Type.isNode(opts.container)) {
+                        if (Type.isWrapped(opts.container) || Type.isNode(opts.container)) {
                             /* Extract the raw DOM element from the jQuery wrapper. */
                             opts.container = opts.container[0] || opts.container;
                             /* Note: Unlike other properties in Velocity, the browser's scroll position is never cached since it so frequently changes
@@ -3268,19 +3265,24 @@ return function (global, window, document, undefined) {
         }
     }
 
-    /*******************
-        Installation
-    *******************/
+    /******************
+        Frameworks
+    ******************/
 
     /* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls.
        If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method. */
+    var framework = jQuery || window.Zepto;
 
-    if (jQuery) {
-        /* Assign the object function to Velocity's animate() method. */
-        jQuery.fn.velocity = Velocity.animate;
+    /* Velocity registers itself onto a global container (window.jQuery || window.Zepto || window) so that certain features are
+       accessible beyond just a per-element scope. This master object contains an .animate() method, which is later assigned to $.fn
+       (if jQuery or Zepto are present). Accordingly, Velocity can both act on wrapped DOM elements and stand alone for targeting raw DOM elements. */
+    (framework || window).Velocity = Velocity;
 
+    if (framework) {
+        /* Assign the element function to Velocity's core animate() method. */
+        framework.fn.velocity = Velocity.animate;
         /* Assign the object function's defaults to Velocity's global defaults object. */
-        jQuery.fn.velocity.defaults = Velocity.defaults;
+        framework.fn.velocity.defaults = Velocity.defaults;
     }
 
     /***********************
