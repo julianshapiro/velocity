@@ -6,8 +6,6 @@ http://VelocityJS.org
 **Quickstart**  
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.10.1/jquery.velocity.min.js"></script>`
 
-**Package Managers**  
-
 ```sh
 bower install velocity
 ```
