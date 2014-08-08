@@ -17,7 +17,7 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 - **Workflow**: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 - **SVG animation**: http://davidwalsh.name/svg-animation
 
-###**New Features**
+###**New**
 
 - 0.10.1: Mock UI testing. http://VelocityJS.org/#mock.
 - 0.10.0: Infinite looping. http://VelocityJS.org/#loop. 
