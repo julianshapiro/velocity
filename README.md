@@ -11,9 +11,9 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 
 ###**Learn**
 
-- **UI Effects**: http://www.smashingmagazine.com/2014/06/18/faster-ui-animations-with-velocity-js/
+- **UI Effects**: http://smashingmagazine.com/2014/06/18/faster-ui-animations-with-velocity-js
 - **Perf. comparisons**: http://davidwalsh.name/css-js-animation
-- **Perf. optimizations**: http://www.sitepoint.com/incredibly-fast-ui-animation-using-velocity-js/
+- **Perf. optimizations**: http://www.sitepoint.com/incredibly-fast-ui-animation-using-velocity-js
 - **Workflow**: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 - **SVG animation**: http://davidwalsh.name/svg-animation
 
@@ -32,12 +32,12 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 
 - **Famo.us** is a full-fledged *mobile app framework* built around a physics engine.
 - **CSS transitions** are meant for simple interface flourishes triggered by hover states.
-- **Velocity** is a tool for injecting rich motion design into your UI.
+- **Velocity** is allows you to inject rich motion design into your UI.
 
 ###**Credits**
 
-- Thanks to <a href="https://stripe.com/blog/stripe-open-source-retreat">Stripe</a> for sponsoring Velocity's development.
-- Thanks to <a href="http://browserstack.com">BrowserStack</a> for providing testing services. 
+- <a href="https://stripe.com/blog/stripe-open-source-retreat">Stripe</a> sponsors Velocity's development.
+- <a href="http://browserstack.com">BrowserStack</a> provides testing services. 
 
 ====
 
