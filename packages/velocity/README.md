@@ -44,7 +44,7 @@ npm install velocity-animate
 ###**Credits**
 
 - <a href="https://stripe.com/blog/stripe-open-source-retreat">Stripe</a> sponsors Velocity's development.
-- <a href="http://browserstack.com">BrowserStack</a> provides testing services. 
+- <a href="http://browserstack.com">BrowserStack</a> provides Velocity's testing services. 
 
 ====
 
