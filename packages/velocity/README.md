@@ -7,7 +7,14 @@ http://VelocityJS.org
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.10.1/jquery.velocity.min.js"></script>`
 
 **Package Managers**  
-Bower package is *velocity*. NPM package is *velocity-animate*.
+
+```sh
+bower install velocity
+```
+
+```sh
+npm install velocity-animate
+```
 
 ###**Learn**
 
