@@ -34,6 +34,11 @@ Bower package is *velocity*. NPM package is *velocity-animate*.
 - **CSS transitions** are meant for simple interface flourishes triggered by hover states.
 - **Velocity** is a tool for injecting rich motion design into your UI.
 
+###**Credits**
+
+- Thanks to <a href="https://stripe.com/blog/stripe-open-source-retreat">Stripe</a> for sponsoring Velocity's development.
+- Thanks to <a href="http://browserstack.com">BrowserStack</a> for providing testing services. 
+
 ====
 
 [MIT License](LICENSE). © Julian Shapiro (http://twitter.com/shapiro).
