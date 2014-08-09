@@ -14,7 +14,7 @@ http://VelocityJS.org
 
 ###**Learn**
 
-- **UI Effects**: http://smashingmagazine.com/2014/06/18/faster-ui-animations-with-velocity-js
+- **UI effects**: http://smashingmagazine.com/2014/06/18/faster-ui-animations-with-velocity-js
 - **Perf. comparisons**: http://davidwalsh.name/css-js-animation
 - **Perf. optimizations**: http://www.sitepoint.com/incredibly-fast-ui-animation-using-velocity-js
 - **Workflow**: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
