@@ -166,7 +166,12 @@ return function (global, window, document, undefined) {
     *****************/
 
     /* Local to our Velocity scope, assign $ to jQuery or the jQuery shim. (The shim is a port of the jQuery utility functions that Velocity uses.) */
-    var $ = jQuery || (window.Velocity && window.Velocity.Utilities);
+    var $;
+    if (jQuery && jQuery.fn) {
+        $ = jQuery;
+    } else if (window.Velocity && window.Velocity.Utilities) {
+        $ = window.Velocity.Utilities;
+    }
 
     if (!$) {
         throw new Error("Velocity: Either jQuery or Velocity's jQuery shim must first be loaded.")
@@ -3310,7 +3315,13 @@ return function (global, window, document, undefined) {
 
     /* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls.
        If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method. */
-    var framework = jQuery || window.Zepto;
+    var framework;
+
+    if (jQuery && jQuery.fn) {
+        framework = jQuery;
+    } else if (window.Zepto) {
+        framework = window.Zepto;
+    }
 
     /* Velocity registers itself onto a global container (window.jQuery || window.Zepto || window) so that certain features are
        accessible beyond just a per-element scope. This master object contains an .animate() method, which is later assigned to $.fn
