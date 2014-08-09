@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.10.1
+* @version 0.11.0
 * @docs http://VelocityJS.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -257,11 +257,69 @@ return function (global, window, document, undefined) {
             /* Set to false to prevent property values from being cached between consecutive Velocity-initiated chain calls. */
             _cacheValues: true
         },
-        /* Velocity's core animation method, subsequently aliased to $.fn. */
+        /* A design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying.
+           Accordingly, each element has a data cache instantiated on it. */
+        init: function (element) {
+            $.data(element, NAME, {
+                /* Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements. */
+                isSVG: Type.isSVG(element),
+                /* Keep track of whether the element is currently being animated by Velocity.
+                   This is used to ensure that property values are not transferred between non-consecutive (stale) calls. */
+                isAnimating: false,
+                /* A reference to the element's live computedStyle object. Learn more here: https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle */
+                computedStyle: null,
+                /* Tween data is cached for each animation on the element so that data can be passed across calls --
+                   in particular, end values are used as subsequent start values in consecutive Velocity calls. */
+                tweensContainer: null,
+                /* The full root property values of each CSS hook being animated on this element are cached so that:
+                   1) Concurrently-animating hooks sharing the same root can have their root values' merged into one while tweening.
+                   2) Post-hook-injection root values can be transferred over to consecutively chained Velocity calls as starting root values. */
+                rootPropertyValueCache: {},
+                /* A cache for transform updates, which must be manually flushed via CSS.flushTransformCache(). */
+                transformCache: {}
+            });
+        },
+        /* Velocity's core animation method, later aliased to $.fn if a framework (jQuery or Zepto) is detected. */
         animate: function () { /* Defined below. */ },
+        /* A reimplementation of jQuery's $.css(), used for getting/setting Velocity's hooked CSS properties. */
+        hook: function (elements, arg2, arg3) {
+            var value = undefined;
+
+            /* Unwrap jQuery/Zepto objects. */
+            if (Type.isWrapped(elements)) {
+                elements = [].slice.call(elements);
+            }
+
+            $.each(Type.isNode(elements) ? [ elements ] : elements, function(i, element) {
+                /* Initialize Velocity's per-element data cache if this element hasn't previously been animated. */
+                if (Data(element) === undefined) {
+                    Velocity.init(element);
+                }
+
+                /* Get property value. If an element set was passed in, only return the value for the first element. */
+                if (arg3 === undefined) {
+                    if (value === undefined) {
+                        value = Velocity.CSS.getPropertyValue(element, arg2);
+                    }
+                /* Set property value. */
+                } else {
+                    /* sPV returns an array of the normalized propertyName/propertyValue pair used to update the DOM. */
+                    var adjustedSet = Velocity.CSS.setPropertyValue(element, arg2, arg3);
+
+                    /* Transform properties don't automatically set. They have to be flushed to the DOM. */
+                    if (adjustedSet[0] === "transform") {
+                        Velocity.CSS.flushTransformCache(element);
+                    }
+
+                    value = adjustedSet;
+                }
+            });
+
+            return value;
+        },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 10, patch: 1 },
+        version: { major: 0, minor: 11, patch: 0 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -1868,30 +1926,11 @@ return function (global, window, document, undefined) {
                 tweensContainer = {};
 
             /******************
-                Data Cache
+               Element Init
             ******************/
-
-            /* A primary design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying.
-               Accordingly, each element has a data cache instantiated on it. */
+            
             if (Data(element) === undefined) {
-                $.data(element, NAME, {
-                    /* Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements. */
-                    isSVG: Type.isSVG(element),
-                    /* Keep track of whether the element is currently being animated by Velocity.
-                       This is used to ensure that property values are not transferred between non-consecutive (stale) calls. */
-                    isAnimating: false,
-                    /* A reference to the element's live computedStyle object. Learn more here: https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle */
-                    computedStyle: null,
-                    /* Tween data is cached for each animation on the element so that data can be passed across calls --
-                       in particular, end values are used as subsequent start values in consecutive Velocity calls. */
-                    tweensContainer: null,
-                    /* The full root property values of each CSS hook being animated on this element are cached so that:
-                       1) Concurrently-animating hooks sharing the same root can have their root values' merged into one while tweening.
-                       2) Post-hook-injection root values can be transferred over to consecutively chained Velocity calls as starting root values. */
-                    rootPropertyValueCache: {},
-                    /* A cache for transform updates, which must be manually flushed via CSS.flushTransformCache(). */
-                    transformCache: {}
-                });
+                Velocity.init(element);
             }
 
             /******************
