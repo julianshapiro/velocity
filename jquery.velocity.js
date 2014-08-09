@@ -167,6 +167,8 @@ return function (global, window, document, undefined) {
 
     /* Local to our Velocity scope, assign $ to jQuery or the jQuery shim. (The shim is a port of the jQuery utility functions that Velocity uses.) */
     var $;
+    /* The argument passed in by the module loader can either be jQuery (if it was required) or a helper function provided by the module loader
+       (in the case that Velocity's jQuery shim is being used). We check for jQuery by sniffing its unique .fn property. */
     if (jQuery && jQuery.fn) {
         $ = jQuery;
     } else if (window.Velocity && window.Velocity.Utilities) {
