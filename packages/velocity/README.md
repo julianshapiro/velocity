@@ -9,7 +9,7 @@
 
 `npm install velocity-animate`
 
-`<script src="//cdn.jsdelivr.net/jquery.velocity/0.10.1/jquery.velocity.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.0/jquery.velocity.min.js"></script>`
 
 
 ###**Learn**
@@ -22,7 +22,7 @@
 
 ###**New**
 
-- 0.11.0: Can now use module loaders with Velocity without having to shim jQuery.
+- 0.11.0: Can load Velcity module without having to shim jQuery. Also: [VelocityJS.org/#hook](http://VelocityJS.org/#hook)
 - 0.10.1: Mock UI testing. [VelocityJS.org/#mock](http://VelocityJS.org/#mock)
 - 0.10.0: Infinite looping. [VelocityJS.org/#loop](http://VelocityJS.org/#loop)
 - 0.9.0: Hex values. [VelocityJS.org/#colors](http://VelocityJS.org/#colors)
