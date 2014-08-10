@@ -1,7 +1,7 @@
-##Velocity (0.10.1)
+##Velocity (0.11.0)
 
 **Docs**  
-http://VelocityJS.org
+[VelocityJS.org](http://VelocityJS.org)
 
 **Quickstart**  
 
@@ -22,14 +22,15 @@ http://VelocityJS.org
 
 ###**New**
 
-- 0.10.1: Mock UI testing. http://VelocityJS.org/#mock.
-- 0.10.0: Infinite looping. http://VelocityJS.org/#loop. 
-- 0.9.0: Hex values. http://VelocityJS.org/#colors.
+- 0.11.0: Can now use module loaders with Velocity without having to shim jQuery.
+- 0.10.1: Mock UI testing. [VelocityJS.org/#mock](http://VelocityJS.org/#mock)
+- 0.10.0: Infinite looping. [VelocityJS.org/#loop](http://VelocityJS.org/#loop)
+- 0.9.0: Hex values. [VelocityJS.org/#colors](http://VelocityJS.org/#colors)
 - 0.8.0: vw/vh CSS units.
-- 0.6.0: `display: "auto"` and `visibility`. http://VelocityJS.org/#displayAndVisibility.
-- 0.5.0: Promises. http://VelocityJS.org/#promises.
-- 0.3.0-0.4.0: SVG animation. http://VelocityJS.org/#svg.
-- 0.1.0: `stop` now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made. http://VelocityJS.org/#stop.
+- 0.6.0: `display: "auto"` and `visibility`. [VelocityJS.org/#displayAndVisibility](http://VelocityJS.org/#displayAndVisibility)
+- 0.5.0: Promises. [VelocityJS.org/#promises](http://VelocityJS.org/#promises)
+- 0.3.0-0.4.0: SVG animation. [VelocityJS.org/#svg](http://VelocityJS.org/#svg)
+- 0.1.0: `stop` now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made. [VelocityJS.org/#stop](http://VelocityJS.org/#stop)
 
 ###**Comparisons**
 
