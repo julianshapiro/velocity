@@ -22,7 +22,7 @@
 
 ###**New**
 
-- 0.11.0: Can load Velcity module without having to shim jQuery. Also: [VelocityJS.org/#hook](http://VelocityJS.org/#hook)
+- 0.11.0: Can load Velocity module without having to shim jQuery. Also: [VelocityJS.org/#hook](http://VelocityJS.org/#hook)
 - 0.10.1: Mock UI testing. [VelocityJS.org/#mock](http://VelocityJS.org/#mock)
 - 0.10.0: Infinite looping. [VelocityJS.org/#loop](http://VelocityJS.org/#loop)
 - 0.9.0: Hex values. [VelocityJS.org/#colors](http://VelocityJS.org/#colors)
