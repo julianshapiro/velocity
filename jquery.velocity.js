@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.10.1
+* @version 0.11.0
 * @docs http://VelocityJS.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -29,7 +29,23 @@ Velocity's structure:
     Velocity.js
 ******************/
 
-;(function (global, window, document, undefined) {
+;(function (factory) {    
+    /* AMD module. */
+    if (typeof define === "function" && define.amd) {
+        if (window.Velocity) {
+            define(factory);
+        } else {
+            define(["jquery"], factory)
+        }
+    /* CommonJS module. */
+    } else if (typeof exports === "object") {
+        factory(window.Velocity ? require("jquery") : undefined);
+    /* Browser globals. */
+    } else {        
+        factory(window.jQuery);
+    }
+}(function (jQuery) {
+return function (global, window, document, undefined) {
 
     /*****************
         Constants
@@ -149,32 +165,36 @@ Velocity's structure:
        Dependencies
     *****************/
 
-    /* Local to our Velocity scope, assign $ to our jQuery shim if jQuery itself isn't loaded.
-       (The shim is a port of the jQuery utility functions that Velocity uses.) */
-    /* Note: We can't default to Zepto since the shimless version of Velocity does not work with Zepto,
-       which is missing several utility functions that Velocity requires. */
-    var $ = window.jQuery || (global.Velocity && global.Velocity.Utilities);
+    /* Local to our Velocity scope, assign $ to jQuery or the jQuery shim. (The shim is a port of the jQuery utility functions that Velocity uses.) */
+    var $;
+    /* The argument passed in by the module loader can either be jQuery (if it was required) or a helper function provided by the module loader
+       (in the case that Velocity's jQuery shim is being used). We check for jQuery by sniffing its unique .fn property. */
+    if (jQuery && jQuery.fn) {
+        $ = jQuery;
+    } else if (window.Velocity && window.Velocity.Utilities) {
+        $ = window.Velocity.Utilities;
+    }
 
     if (!$) {
         throw new Error("Velocity: Either jQuery or Velocity's jQuery shim must first be loaded.")
     /* We allow the global Velocity variable to pre-exist so long as we were responsible for its creation
       (via the jQuery shim, which uniquely assigns a Utilities property to the Velocity object). */
-    } else if (global.Velocity !== undefined && !global.Velocity.Utilities) {
+    } else if (global.Velocity !== undefined && global.Velocity.Utilities == undefined) {
         throw new Error("Velocity: Namespace is occupied.");
     /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them.
        Revert to jQuery's $.animate(), and lose Velocity's extra features. */
     } else if (IE <= 7) {
-        if (!window.jQuery) {
+        if (!jQuery) {
             throw new Error("Velocity: For IE<=7, Velocity falls back to jQuery, which must first be loaded.");
         } else {
-            window.jQuery.fn.velocity = window.jQuery.fn.animate;
+            jQuery.fn.velocity = jQuery.fn.animate;
 
             /* Now that $.fn.velocity is aliased, abort this Velocity declaration. */
             return;
         }
     /* IE8 doesn't work with the jQuery shim; it requires jQuery proper. */
-    } else if (IE === 8 && !window.jQuery) {
-        throw new Error("Velocity: For IE8, Velocity requires jQuery to be loaded. (Velocity's jQuery shim does not work with IE8.)");
+    } else if (IE === 8 && !jQuery) {
+        throw new Error("Velocity: For IE8, Velocity requires jQuery proper to be loaded; Velocity's jQuery shim does not work with IE8.");
     }
 
     /* Shorthand alias for jQuery's $.data() utility. */
@@ -190,13 +210,9 @@ Velocity's structure:
         State
     *************/
 
-    /* Velocity registers itself onto a global container (window.jQuery || window.Zepto || window) so that that
-       certain features are accessible beyond just a per-element scope. This master object contains an .animate() method,
-       which is later assigned to $.fn (if jQuery or Zepto are present). Accordingly, Velocity can both act on wrapped
-       DOM elements and stand alone for targeting raw DOM elements. */
     /* Note: The global object also doubles as a publicly-accessible data store for the purposes of unit testing. */
     /* Note: Alias the lowercase and uppercase variants of "velocity" to minimize user confusion due to the lowercase nature of the $.fn extension. */
-    var Velocity = global.Velocity = global.velocity = $.extend({
+    var Velocity = {
         /* Container for page-wide Velocity state data. */
         State: {
             /* Detect mobile devices to determine if mobileHA should be turned on. */
@@ -223,7 +239,7 @@ Velocity's structure:
         /* Velocity's custom CSS stack. Made global for unit testing. */
         CSS: { /* Defined below. */ },
         /* Defined by Velocity's optional jQuery shim. */
-        Utilities: window.jQuery,
+        Utilities: $,
         /* Container for the user's custom animation sequences that are referenced by name in place of a properties map object. */
         Sequences: {
             /* Manually registered by the user. Learn more: VelocityJS.org/#sequences */
@@ -248,14 +264,72 @@ Velocity's structure:
             /* Set to false to prevent property values from being cached between consecutive Velocity-initiated chain calls. */
             _cacheValues: true
         },
-        /* Velocity's core animation method, subsequently aliased to $.fn. */
+        /* A design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying.
+           Accordingly, each element has a data cache instantiated on it. */
+        init: function (element) {
+            $.data(element, NAME, {
+                /* Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements. */
+                isSVG: Type.isSVG(element),
+                /* Keep track of whether the element is currently being animated by Velocity.
+                   This is used to ensure that property values are not transferred between non-consecutive (stale) calls. */
+                isAnimating: false,
+                /* A reference to the element's live computedStyle object. Learn more here: https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle */
+                computedStyle: null,
+                /* Tween data is cached for each animation on the element so that data can be passed across calls --
+                   in particular, end values are used as subsequent start values in consecutive Velocity calls. */
+                tweensContainer: null,
+                /* The full root property values of each CSS hook being animated on this element are cached so that:
+                   1) Concurrently-animating hooks sharing the same root can have their root values' merged into one while tweening.
+                   2) Post-hook-injection root values can be transferred over to consecutively chained Velocity calls as starting root values. */
+                rootPropertyValueCache: {},
+                /* A cache for transform updates, which must be manually flushed via CSS.flushTransformCache(). */
+                transformCache: {}
+            });
+        },
+        /* Velocity's core animation method, later aliased to $.fn if a framework (jQuery or Zepto) is detected. */
         animate: function () { /* Defined below. */ },
+        /* A reimplementation of jQuery's $.css(), used for getting/setting Velocity's hooked CSS properties. */
+        hook: function (elements, arg2, arg3) {
+            var value = undefined;
+
+            /* Unwrap jQuery/Zepto objects. */
+            if (Type.isWrapped(elements)) {
+                elements = [].slice.call(elements);
+            }
+
+            $.each(Type.isNode(elements) ? [ elements ] : elements, function(i, element) {
+                /* Initialize Velocity's per-element data cache if this element hasn't previously been animated. */
+                if (Data(element) === undefined) {
+                    Velocity.init(element);
+                }
+
+                /* Get property value. If an element set was passed in, only return the value for the first element. */
+                if (arg3 === undefined) {
+                    if (value === undefined) {
+                        value = Velocity.CSS.getPropertyValue(element, arg2);
+                    }
+                /* Set property value. */
+                } else {
+                    /* sPV returns an array of the normalized propertyName/propertyValue pair used to update the DOM. */
+                    var adjustedSet = Velocity.CSS.setPropertyValue(element, arg2, arg3);
+
+                    /* Transform properties don't automatically set. They have to be flushed to the DOM. */
+                    if (adjustedSet[0] === "transform") {
+                        Velocity.CSS.flushTransformCache(element);
+                    }
+
+                    value = adjustedSet;
+                }
+            });
+
+            return value;
+        },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 10, patch: 1 },
+        version: { major: 0, minor: 11, patch: 0 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
-    }, window.Velocity);
+    };
 
     /* Retrieve the appropriate scroll anchor and property name for the browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
     if (window.pageYOffset !== undefined) {
@@ -280,7 +354,7 @@ Velocity's structure:
         document.addEventListener("visibilitychange", function() {
             /* Reassign the rAF function (which the global tick() function uses) based on the tab's focus state. */
             if (document.hidden) {
-                ticker = function(callback) { 
+                ticker = function(callback) {
                     /* The tick function needs a truthy first argument in order to pass its internal timestamp check. */
                     return setTimeout(function() { callback(true) }, 16);
                 };
@@ -887,7 +961,7 @@ Velocity's structure:
                                 /* Transform values are cached onto a per-element transformCache object. */
                                 case "extract":
                                     /* If this transform has yet to be assigned a value, return its null value. */
-                                    if (Data(element).transformCache[transformName] === undefined) {
+                                    if (Data(element) === undefined || Data(element).transformCache[transformName] === undefined) {
                                         /* Scale CSS.Lists.transformsBase default to 1 whereas all other transform properties default to 0. */
                                         return /^scale/i.test(transformName) ? 1 : 0;
                                     /* When transform values are set, they are wrapped in parentheses as per the CSS spec.
@@ -1614,13 +1688,13 @@ Velocity's structure:
             Promises
         ***************/
 
-        var promiseData = { 
+        var promiseData = {
                 promise: null,
                 resolver: null,
                 rejecter: null
             };
 
-        /* If this call was made via the utility function (which is the default method of invocation when jQuery/Zepto are not being used), and if 
+        /* If this call was made via the utility function (which is the default method of invocation when jQuery/Zepto are not being used), and if
            promise support was detected, create a promise object for this call and store references to its resolver and rejecter methods. The resolve
            method is used when a call completes naturally or is prematurely stopped by the user. In both cases, completeCall() handles the associated
            call cleanup and promise resolving logic. The reject method is used when an invalid set of arguments is passed into a Velocity call. */
@@ -1754,7 +1828,7 @@ Velocity's structure:
 
                     /* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first. */
                     if (options.backwards === true) {
-                        elements = (elements.jquery ? [].slice.call(elements) : elements).reverse();
+                        elements = (Type.isWrapped(elements) ? [].slice.call(elements) : elements).reverse();
                     }
 
                     /* Individually trigger the sequence for each element in the set to prevent users from having to handle iteration logic in their sequence. */
@@ -1859,30 +1933,11 @@ Velocity's structure:
                 tweensContainer = {};
 
             /******************
-                Data Cache
+               Element Init
             ******************/
-
-            /* A primary design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying.
-               Accordingly, each element has a data cache instantiated on it. */
+            
             if (Data(element) === undefined) {
-                $.data(element, NAME, {
-                    /* Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements. */
-                    isSVG: Type.isSVG(element),
-                    /* Keep track of whether the element is currently being animated by Velocity.
-                       This is used to ensure that property values are not transferred between non-consecutive (stale) calls. */
-                    isAnimating: false,
-                    /* A reference to the element's live computedStyle object. Learn more here: https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle */
-                    computedStyle: null,
-                    /* Tween data is cached for each animation on the element so that data can be passed across calls --
-                       in particular, end values are used as subsequent start values in consecutive Velocity calls. */
-                    tweensContainer: null,
-                    /* The full root property values of each CSS hook being animated on this element are cached so that:
-                       1) Concurrently-animating hooks sharing the same root can have their root values' merged into one while tweening.
-                       2) Post-hook-injection root values can be transferred over to consecutively chained Velocity calls as starting root values. */
-                    rootPropertyValueCache: {},
-                    /* A cache for transform updates, which must be manually flushed via CSS.flushTransformCache(). */
-                    transformCache: {}
-                });
+                Velocity.init(element);
             }
 
             /******************
@@ -1897,9 +1952,9 @@ Velocity's structure:
                     /* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
                     Velocity.velocityQueueEntryFlag = true;
 
-                    /* The ensuing queue item (which is assigned to the "next" argument that $.queue() automatically passes in) will be triggered after a setTimeout delay. 
+                    /* The ensuing queue item (which is assigned to the "next" argument that $.queue() automatically passes in) will be triggered after a setTimeout delay.
                        The setTimeout is stored so that it can be subjected to clearTimeout() if this animation is prematurely stopped via Velocity's "stop" command. */
-                    Data(element).delayTimer = { 
+                    Data(element).delayTimer = {
                         setTimeout: setTimeout(next, parseFloat(opts.delay)),
                         next: next
                     };
@@ -2004,7 +2059,7 @@ Velocity's structure:
                     /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
                     try {
                         opts.begin.call(elements, elements);
-                    } catch (error) { 
+                    } catch (error) {
                         setTimeout(function() {
                             throw error;
                         }, 1);
@@ -2028,7 +2083,7 @@ Velocity's structure:
                        as opposed to the browser window itself. This is useful for scrolling toward an element that's inside an overflowing parent element. */
                     if (opts.container) {
                         /* Ensure that either a jQuery object or a raw DOM element was passed in. */
-                        if (opts.container.jquery || Type.isNode(opts.container)) {
+                        if (Type.isWrapped(opts.container) || Type.isNode(opts.container)) {
                             /* Extract the raw DOM element from the jQuery wrapper. */
                             opts.container = opts.container[0] || opts.container;
                             /* Note: Unlike other properties in Velocity, the browser's scroll position is never cached since it so frequently changes
@@ -2263,13 +2318,13 @@ Velocity's structure:
 
                                 /* Inject the RGB component tweens into propertiesMap. */
                                 for (var i = 0; i < colorComponents.length; i++) {
-                                    propertiesMap[property + colorComponents[i]] = [ endValueRGB[i], easing, startValueRGB ? startValueRGB[i] : startValueRGB ]; 
+                                    propertiesMap[property + colorComponents[i]] = [ endValueRGB[i], easing, startValueRGB ? startValueRGB[i] : startValueRGB ];
                                 }
 
                                 /* Remove the intermediary shorthand property entry now that we've processed it. */
                                 delete propertiesMap[property];
                             }
-                        }                        
+                        }
                     });
 
                     /* Create a tween out of each property, and append its associated data to tweensContainer. */
@@ -2793,7 +2848,7 @@ Velocity's structure:
                         /* Do not continue with animation queueing. */
                         return true;
                     }
-                    
+
                     /* This flag indicates to the upcoming completeCall() function that this queue entry was initiated by Velocity.
                        See completeCall() for further details. */
                     Velocity.velocityQueueEntryFlag = true;
@@ -3192,7 +3247,7 @@ Velocity's structure:
                 /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
                 try {
                     opts.complete.call(elements, elements);
-                } catch (error) { 
+                } catch (error) {
                     setTimeout(function() {
                         throw error;
                     }, 1);
@@ -3256,27 +3311,30 @@ Velocity's structure:
         }
     }
 
-    /*******************
-        Installation
-    *******************/
+    /******************
+        Frameworks
+    ******************/
 
     /* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls.
        If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method. */
-    var framework = window.jQuery || window.Zepto;
+    var framework;
 
-    if (framework) {
-        /* Assign the object function to Velocity's animate() method. */
-        framework.fn.velocity = Velocity.animate;
-
-        /* Assign the object function's defaults to Velocity's global defaults object. */
-        framework.fn.velocity.defaults = Velocity.defaults;
+    if (jQuery && jQuery.fn) {
+        framework = jQuery;
+    } else if (window.Zepto) {
+        framework = window.Zepto;
     }
 
-    /* Support for AMD and CommonJS module loaders. */
-    if (typeof define !== "undefined" && define.amd) {
-        define(function() { return Velocity; });
-    } else if (typeof module !== "undefined" && module.exports) {
-        module.exports = Velocity;
+    /* Velocity registers itself onto a global container (window.jQuery || window.Zepto || window) so that certain features are
+       accessible beyond just a per-element scope. This master object contains an .animate() method, which is later assigned to $.fn
+       (if jQuery or Zepto are present). Accordingly, Velocity can both act on wrapped DOM elements and stand alone for targeting raw DOM elements. */
+    (framework || window).Velocity = Velocity;
+
+    if (framework) {
+        /* Assign the element function to Velocity's core animate() method. */
+        framework.fn.velocity = Velocity.animate;
+        /* Assign the object function's defaults to Velocity's global defaults object. */
+        framework.fn.velocity.defaults = Velocity.defaults;
     }
 
     /***********************
@@ -3449,7 +3507,10 @@ Velocity's structure:
             Velocity.animate(this, propertiesMap, opts);
         };
     });
-})((window.jQuery || window.Zepto || window), window, document);
+
+    return Velocity;
+}((jQuery || window), window, document);
+}));
 
 /******************
    Known Issues
