@@ -9,7 +9,7 @@
 
 `npm install velocity-animate`
 
-`<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.0/jquery.velocity.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.1/jquery.velocity.min.js"></script>`
 
 
 ###**Learn**
