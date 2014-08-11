@@ -4,13 +4,13 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.11.0
+* @version 0.11.1
 * @docs http://VelocityJS.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
 
 /****************
-     Summary
+    Overview
 ****************/
 
 /*
@@ -169,7 +169,8 @@ return function (global, window, document, undefined) {
     var $;
     /* The argument passed in by the module loader can either be jQuery (if it was required) or a helper function provided by the module loader
        (in the case that Velocity's jQuery shim is being used). We check for jQuery by sniffing its unique .fn property. */
-    if (jQuery && jQuery.fn) {
+
+    if (jQuery && jQuery.fn !== undefined) {
         $ = jQuery;
     } else if (window.Velocity && window.Velocity.Utilities) {
         $ = window.Velocity.Utilities;
@@ -326,7 +327,7 @@ return function (global, window, document, undefined) {
         },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 11, patch: 0 },
+        version: { major: 0, minor: 11, patch: 1 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -340,31 +341,6 @@ return function (global, window, document, undefined) {
         Velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
         Velocity.State.scrollPropertyLeft = "scrollLeft";
         Velocity.State.scrollPropertyTop = "scrollTop";
-    }
-
-    /**************
-        Timing
-    **************/
-
-    /* Inactive browser tabs pause rAF, which results in all active animations immediately sprinting to their completion states when the tab refocuses.
-       To get around this, we dynamically switch rAF to setTimeout (which the browser *doesn't* pause) when the tab loses focus. We skip this for mobile
-       devices to avoid wasting battery power on inactive tabs. */
-    /* Note: Tab focus detection doesn't work on older versions of IE, but that's okay since they don't support rAF to begin with. */
-    if (!Velocity.State.isMobile && document.hidden !== undefined) {
-        document.addEventListener("visibilitychange", function() {
-            /* Reassign the rAF function (which the global tick() function uses) based on the tab's focus state. */
-            if (document.hidden) {
-                ticker = function(callback) {
-                    /* The tick function needs a truthy first argument in order to pass its internal timestamp check. */
-                    return setTimeout(function() { callback(true) }, 16);
-                };
-
-                /* The rAF loop has been paused by the browser, so we manually restart the tick. */
-                tick();
-            } else {
-                ticker = window.requestAnimationFrame || rAFPollyfill;
-            }
-        });
     }
 
     /**************
@@ -1878,31 +1854,24 @@ return function (global, window, document, undefined) {
             Call-Wide Variables
         **************************/
 
-        /* A container for CSS unit conversion ratios (e.g. %, rem, and em ==> px) that is used to cache ratios across all properties
+        /* A container for CSS unit conversion ratios (e.g. %, rem, and em ==> px) that is used to cache ratios across all elements
            being animated in a single Velocity call. Calculating unit ratios necessitates DOM querying and updating, and is therefore
-           avoided (via caching) wherever possible; further, ratios are only calculated when they're needed. */
-        /* Note: This container is call-wide instead of page-wide to avoid the risk of using stale conversion metrics across
-           Velocity animations that are not immediately consecutively chained. */
-        var unitConversionRatios = {
-                /* Performance optimization insight: When the parent element, CSS position value, and fontSize do not differ amongst elements,
-                   the elements' unit ratios are identical. */
+           avoided (via caching) wherever possible. This container is call-wide instead of page-wide to avoid the risk of using stale
+           conversion metrics across Velocity animations that are not immediately consecutively chained. */
+        var callUnitConversionData = {
                 lastParent: null,
                 lastPosition: null,
                 lastFontSize: null,
-                /* Percent is the only unit types whose ratio is dependant upon axis. */
                 lastPercentToPxWidth: null,
                 lastPercentToPxHeight: null,
                 lastEmToPx: null,
-                /* The rem==>px ratio is relative to the document's fontSize -- not any property belonging to the element.
-                   Thus, it is automatically call-wide cached whenever the rem unit is being animated. */
                 remToPx: null,
-                /* Similarly, viewport units are relative to the window's current dimensions. */
                 vwToPx: null,
                 vhToPx: null
             };
 
-        /* A container for all the ensuing tween data and metadata associated with this call.
-           This container gets pushed to the page-wide Velocity.State.calls array that is processed during animation ticking. */
+        /* A container for all the ensuing tween data and metadata associated with this call. This container gets pushed to the page-wide
+           Velocity.State.calls array that is processed during animation ticking. */
         var call = [];
 
         /************************
@@ -1930,7 +1899,8 @@ return function (global, window, document, undefined) {
                 opts = $.extend({}, Velocity.defaults, options),
                 /* A container for the processed data associated with each property in the propertyMap.
                    (Each property in the map produces its own "tween".) */
-                tweensContainer = {};
+                tweensContainer = {},
+                elementUnitConversionData;
 
             /******************
                Element Init
@@ -2458,8 +2428,6 @@ return function (global, window, document, undefined) {
                            Value & Unit Conversion
                         *****************************/
 
-                        var elementUnitRatios;
-
                         /* Custom support for properties that don't actually accept the % unit type, but where pollyfilling is trivial and relatively foolproof. */
                         if (endValueUnitType === "%") {
                             /* A %-value fontSize/lineHeight is relative to the parent's fontSize (as opposed to the parent's dimensions),
@@ -2483,195 +2451,111 @@ return function (global, window, document, undefined) {
                            %, em, or rem is animated toward, startValue must be converted from pixels into the same unit type as endValue in order
                            for value manipulation logic (increment/decrement) to proceed. Further, if the startValue was forcefed or transferred
                            from a previous call, startValue may also not be in pixels. Unit conversion logic therefore consists of two steps:
-                           1) Calculating the ratio of %,/em/rem relative to pixels then 2) Converting startValue into the same unit of measurement as endValue based on these ratios. */
-                        /* Unit conversion ratios are calculated by momentarily setting a value with the target unit type on the element,
-                           comparing the returned pixel value, then reverting to the original value. */
+                           1) Calculating the ratio of %/em/rem/vh/vw relative to pixels
+                           2) Converting startValue into the same unit of measurement as endValue based on these ratios. */
+                        /* Unit conversion ratios are calculated by inserting a sibling node next to the target node, copying over its position property,
+                           setting values with the target unit type then comparing the returned pixel value. */
                         /* Note: Even if only one of these unit types is being animated, all unit ratios are calculated at once since the overhead
                            of batching the SETs and GETs together upfront outweights the potential overhead
-                                 of layout thrashing caused by re-querying for uncalculated ratios for subsequently-processed properties. */
-                        /* Note: Instead of adjusting the CSS properties on the target element, an alternative way of performing value conversion
-                           is to inject a cloned element into the element's parent and manipulate *its* values instead.
-                           This is a cleaner method that avoids the ensuing rounds of layout thrashing, but it's ultimately less performant.
-                           due to the overhead involved with DOM tree modification (element insertion/deletion). */
+                           of layout thrashing caused by re-querying for uncalculated ratios for subsequently-processed properties. */
                         /* Todo: Shift this logic into the calls' first tick instance so that it's synced with RAF. */
-                        /* Todo: Store the original values and skip re-setting if we're animating height or width in the properties map. */
+
                         function calculateUnitRatios () {
-                            /* The properties below are used to determine whether the element differs sufficiently from this same call's
-                               prior element (in the overall element set) to also differ in its unit conversion ratios. If the properties
-                               match up with those of the prior element, the prior element's conversion ratios are used. Like most optimizations
-                               in Velocity, this is done to minimize DOM querying. */
+
+                            /************************
+                                Same Ratio Checks
+                            ************************/
+
+                            /* The properties below are used to determine whether the element differs sufficiently from this call's
+                               previously iterated element to also differ in its unit conversion ratios. If the properties match up with those
+                               of the prior element, the prior element's conversion ratios are used. Like most optimizations in Velocity,
+                               this is done to minimize DOM querying. */
                             var sameRatioIndicators = {
-                                    parent: element.parentNode, /* GET */
+                                    myParent: element.parentNode || document.body, /* GET */
                                     position: CSS.getPropertyValue(element, "position"), /* GET */
                                     fontSize: CSS.getPropertyValue(element, "fontSize") /* GET */
                                 },
-                                /* Determine if the same % ratio can be used. % is relative to the element's position value and the parent's width and height dimensions. */
-                                sameBasePercent = ((sameRatioIndicators.position === unitConversionRatios.lastPosition) && (sameRatioIndicators.parent === unitConversionRatios.lastParent)),
-                                /* Determine if the same em ratio can be used. em is relative to the element's fontSize, which itself is relative to the parent's fontSize. */
-                                sameBaseEm = ((sameRatioIndicators.fontSize === unitConversionRatios.lastFontSize) && (sameRatioIndicators.parent === unitConversionRatios.lastParent));
+                                /* Determine if the same % ratio can be used. % is based on the element's position value and its parent's width and height dimensions. */
+                                samePercentRatio = ((sameRatioIndicators.position === callUnitConversionData.lastPosition) && (sameRatioIndicators.myParent === callUnitConversionData.lastParent)),
+                                /* Determine if the same em ratio can be used. em is relative to the element's fontSize. */
+                                sameEmRatio = (sameRatioIndicators.fontSize === callUnitConversionData.lastFontSize);
 
                             /* Store these ratio indicators call-wide for the next element to compare against. */
-                            unitConversionRatios.lastParent = sameRatioIndicators.parent;
-                            unitConversionRatios.lastPosition = sameRatioIndicators.position;
-                            unitConversionRatios.lastFontSize = sameRatioIndicators.fontSize;
+                            callUnitConversionData.lastParent = sameRatioIndicators.myParent;
+                            callUnitConversionData.lastPosition = sameRatioIndicators.position;
+                            callUnitConversionData.lastFontSize = sameRatioIndicators.fontSize;
 
-                            /* Whereas % and em ratios are determined on a per-element basis, the rem unit type only needs to be checked
-                               once per call since it is exclusively dependant upon document.body's fontSize. If this is the first time
-                               that calculateUnitRatios() is being run during this call, remToPx will still be set to its default value of null, so we calculate it now. */
-                            if (unitConversionRatios.remToPx === null) {
-                                /* Default to most browsers' default fontSize of 16px in the case of 0. */
-                                unitConversionRatios.remToPx = parseFloat(CSS.getPropertyValue(document.body, "fontSize")) || 16; /* GET */
-                            }
+                            /***************************
+                               Element-Specific Units
+                            ***************************/
+                             
+                            /* Note: IE8 rounds to the nearest pixel when returning CSS values, thus we perform conversions using a measurement
+                               of 100 (instead of 1) to give our ratios a precision of at least 2 decimal values. */
+                            var measurement = 100,
+                                unitRatios = {};
 
-                            /* The viewport units are relative to the window's inner dimensions. */
-                            if (unitConversionRatios.vwToPx === null) {
-                                unitConversionRatios.vwToPx = parseFloat(window.innerWidth) / 100; /* GET */
-                                unitConversionRatios.vhToPx = parseFloat(window.innerHeight) / 100; /* GET */
-                            }
+                            if (!sameEmRatio || !samePercentRatio) {
+                                var dummy = Data(element).isSVG ? document.createElementNS("http://www.w3.org/2000/svg", "rect") : document.createElement("div");
+                                Velocity.init(dummy);
+                                sameRatioIndicators.myParent.appendChild(dummy);
 
-                            var originalValues = {
-                                    /* To accurately and consistently calculate conversion ratios, the element's overflow and box-sizing are temporarily removed.
-                                       Both properties modify an element's visible dimensions. */
-                                    /* Note: Overflow must be manipulated on a per-axis basis since the plain overflow property overwrites its subproperties' values. */
-                                    overflowX: null,
-                                    overflowY: null,
-                                    boxSizing: null,
-                                    /* width and height act as our proxy properties for measuring the horizontal and vertical % ratios.
-                                       Since they can be artificially constrained by their min-/max- equivalents, those properties are converted as well. */
-                                    width: null,
-                                    minWidth: null,
-                                    maxWidth: null,
-                                    height: null,
-                                    minHeight: null,
-                                    maxHeight: null,
-                                    /* paddingLeft arbitrarily acts as our proxy for the em ratio. */
-                                    paddingLeft: null
-                                },
-                                elementUnitRatios = {},
-                                /* Note: IE<=8 round to the nearest pixel when returning CSS values, thus we perform conversions using a measurement
-                                   of 10 (instead of 1) to give our ratios a precision of at least 1 decimal value. */
-                                measurement = 10;
+                                Velocity.CSS.setPropertyValue(dummy, "position", sameRatioIndicators.position);
+                                Velocity.CSS.setPropertyValue(dummy, "fontSize", sameRatioIndicators.fontSize);
+                                /* To accurately and consistently calculate conversion ratios, the element's cascaded overflow and box-sizing are stripped.
+                                   Similarly, since width/height can be artificially constrained by their min-/max- equivalents, these are controlled for as well. */
+                                /* Note: Overflow must be also be controlled for per-axis since the overflow property overwrites its per-axis values. */
+                                Velocity.CSS.setPropertyValue(dummy, "overflow", "hidden");
+                                Velocity.CSS.setPropertyValue(dummy, "overflowX", "hidden");
+                                Velocity.CSS.setPropertyValue(dummy, "overflowY", "hidden");
+                                Velocity.CSS.setPropertyValue(dummy, "boxSizing", "content-box");
+                                /* paddingLeft arbitrarily acts as our proxy property for the em ratio. */
+                                Velocity.CSS.setPropertyValue(dummy, "paddingLeft", measurement + "em");
+                                /* width and height act as our proxy properties for measuring the horizontal and vertical % ratios. */
+                                Velocity.CSS.setPropertyValue(dummy, "minWidth", measurement + "%");
+                                Velocity.CSS.setPropertyValue(dummy, "maxWidth", measurement + "%");
+                                Velocity.CSS.setPropertyValue(dummy, "width", measurement + "%");
+                                Velocity.CSS.setPropertyValue(dummy, "minHeight", measurement + "%");
+                                Velocity.CSS.setPropertyValue(dummy, "maxHeight", measurement + "%");
+                                Velocity.CSS.setPropertyValue(dummy, "height", measurement + "%");
 
-                            /* For organizational purposes, current ratio calculations are consolidated onto the elementUnitRatios object. */
-                            elementUnitRatios.remToPx = unitConversionRatios.remToPx;
-                            elementUnitRatios.vwToPx = unitConversionRatios.vwToPx;
-                            elementUnitRatios.vhToPx = unitConversionRatios.vhToPx;
+                                /* Divide the returned value by the measurement to get the ratio between 1% and 1px. Default to 1 since working with 0 can produce Infinite. */
+                                unitRatios.percentToPxWidth = callUnitConversionData.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(dummy, "width", null, true)) || 1) / measurement; /* GET */
+                                unitRatios.percentToPxHeight = callUnitConversionData.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(dummy, "height", null, true)) || 1) / measurement; /* GET */
+                                unitRatios.emToPx = callUnitConversionData.lastEmToPx = (parseFloat(CSS.getPropertyValue(dummy, "paddingLeft")) || 1) / measurement; /* GET */
 
-                            /* After temporary unit conversion logic runs, width and height properties that were originally set to "auto" must be set back
-                               to "auto" instead of to the actual corresponding pixel value. Leaving the values at their hard-coded pixel value equivalents
-                               would inherently prevent the elements from vertically adjusting as the height of its inner content changes. */
-                            /* IE tells us whether or not the property is set to "auto". Other browsers provide no way of determing "auto" values on height/width,
-                               and thus we have to trigger additional layout thrashing (see below) to solve this. */
-                            if (IE && !Data(element).isSVG) {
-                                var isIEWidthAuto = /^auto$/i.test(element.currentStyle.width),
-                                    isIEHeightAuto = /^auto$/i.test(element.currentStyle.height);
-                            }
-
-                            /* Note: To minimize layout thrashing, the ensuing unit conversion logic is split into batches to synchronize GETs and SETs. */
-                            if (!sameBasePercent || !sameBaseEm) {
-                                /* SVG elements have no concept of document flow, and don't support the full range of CSS properties,
-                                   so we skip the unnecessary stripping of unapplied properties to avoid dirtying their HTML. */
-                                if (!Data(element).isSVG) {
-                                    originalValues.overflowX = CSS.getPropertyValue(element, "overflowX"); /* GET */
-                                    originalValues.overflowY = CSS.getPropertyValue(element, "overflowY"); /* GET */
-                                    originalValues.boxSizing = CSS.getPropertyValue(element, "boxSizing"); /* GET */
-
-                                    /* Since % values are relative to their respective axes, ratios are calculated for both width and height.
-                                       In contrast, only a single ratio is required for rem and em. */
-                                    /* When calculating % values, we set a flag to indiciate that we want the computed value instead of offsetWidth/Height,
-                                       which incorporate additional dimensions (such as padding and border-width) into their values. */
-                                    originalValues.minWidth = CSS.getPropertyValue(element, "minWidth"); /* GET */
-                                    /* Note: max-width/height must default to "none" when 0 is returned, otherwise the element cannot have its width/height set. */
-                                    originalValues.maxWidth = CSS.getPropertyValue(element, "maxWidth") || "none"; /* GET */
-
-                                    originalValues.minHeight = CSS.getPropertyValue(element, "minHeight"); /* GET */
-                                    originalValues.maxHeight = CSS.getPropertyValue(element, "maxHeight") || "none"; /* GET */
-
-                                    originalValues.paddingLeft = CSS.getPropertyValue(element, "paddingLeft"); /* GET */
-                                }
-
-                                originalValues.width = CSS.getPropertyValue(element, "width", null, true); /* GET */
-                                originalValues.height = CSS.getPropertyValue(element, "height", null, true); /* GET */
-                            }
-
-                            if (sameBasePercent) {
-                                elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth;
-                                elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight;
+                                sameRatioIndicators.myParent.removeChild(dummy);
                             } else {
-                                if (!Data(element).isSVG) {
-                                    CSS.setPropertyValue(element, "overflowX",  "hidden"); /* SET */
-                                    CSS.setPropertyValue(element, "overflowY",  "hidden"); /* SET */
-                                    CSS.setPropertyValue(element, "boxSizing",  "content-box"); /* SET */
-
-                                    CSS.setPropertyValue(element, "minWidth", measurement + "%"); /* SET */
-                                    CSS.setPropertyValue(element, "maxWidth", measurement + "%"); /* SET */
-
-                                    CSS.setPropertyValue(element, "minHeight",  measurement + "%"); /* SET */
-                                    CSS.setPropertyValue(element, "maxHeight",  measurement + "%"); /* SET */
-                                }
-
-                                CSS.setPropertyValue(element, "width", measurement + "%"); /* SET */
-                                CSS.setPropertyValue(element, "height",  measurement + "%"); /* SET */
+                                unitRatios.emToPx = callUnitConversionData.lastEmToPx;
+                                unitRatios.percentToPxWidth = callUnitConversionData.lastPercentToPxWidth;
+                                unitRatios.percentToPxHeight = callUnitConversionData.lastPercentToPxHeight;
                             }
 
-                            if (sameBaseEm) {
-                                elementUnitRatios.emToPx = unitConversionRatios.lastEmToPx;
-                            } else if (!Data(element).isSVG) {
-                                CSS.setPropertyValue(element, "paddingLeft", measurement + "em"); /* SET */
+                            /***************************
+                               Element-Agnostic Units
+                            ***************************/
+
+                            /* Whereas % and em ratios are determined on a per-element basis, the rem unit only needs to be checked
+                               once per call since it's exclusively dependant upon document.body's fontSize. If this is the first time
+                               that calculateUnitRatios() is being run during this call, remToPx will still be set to its default value of null,
+                               so we calculate it now. */
+                            if (callUnitConversionData.remToPx === null) {
+                                /* Default to browsers' default fontSize of 16px in the case of 0. */
+                                callUnitConversionData.remToPx = parseFloat(CSS.getPropertyValue(document.body, "fontSize")) || 16; /* GET */
                             }
 
-                            /* The following pixel-value GETs cannot be batched with the prior GETs since they depend upon the values
-                               temporarily set immediately above; layout thrashing cannot be avoided here. */
-                            if (!sameBasePercent) {
-                                /* Divide the returned value by the measurement value to get the ratio between 1% and 1px.
-                                   Default to 1 since conversion logic using 0 can produce Infinite. */
-                                elementUnitRatios.percentToPxRatioWidth = unitConversionRatios.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(element, "width", null, true)) || 1) / measurement; /* GET */
-                                elementUnitRatios.percentToPxRatioHeight = unitConversionRatios.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(element, "height", null, true)) || 1) / measurement; /* GET */
+                            /* Similarly, viewport units are %-relative to the window's inner dimensions. */
+                            if (callUnitConversionData.vwToPx === null) {
+                                callUnitConversionData.vwToPx = parseFloat(window.innerWidth) / 100; /* GET */
+                                callUnitConversionData.vhToPx = parseFloat(window.innerHeight) / 100; /* GET */
                             }
 
-                            if (!sameBaseEm) {
-                                elementUnitRatios.emToPx = unitConversionRatios.lastEmToPx = (parseFloat(CSS.getPropertyValue(element, "paddingLeft")) || 1) / measurement; /* GET */
-                            }
+                            unitRatios.remToPx = callUnitConversionData.remToPx;
+                            unitRatios.vwToPx = callUnitConversionData.vwToPx;
+                            unitRatios.vhToPx = callUnitConversionData.vhToPx;
 
-                            /* Revert each used test property to its original value. */
-                            for (var originalValueProperty in originalValues) {
-                                if (originalValues[originalValueProperty] !== null) {
-                                    CSS.setPropertyValue(element, originalValueProperty, originalValues[originalValueProperty]); /* SETs */
-                                }
-                            }
+                            if (Velocity.debug >= 1) console.log("Unit ratios: " + JSON.stringify(unitRatios), element);
 
-                            /* SVG dimensions do not accept an "auto" value, so we skip this reset process for them. */
-                            if (!Data(element).isSVG) {
-                                /* In IE, revert to "auto" for width and height if it was originally set. */
-                                if (IE) {
-                                    if (isIEWidthAuto) {
-                                        CSS.setPropertyValue(element, "width", "auto"); /* SET */
-                                    }
-
-                                    if (isIEHeightAuto) {
-                                        CSS.setPropertyValue(element, "height", "auto"); /* SET */
-                                    }
-                                /* For other browsers, additional layout thrashing must unfortunately be triggered to determine whether a dimension property was originally "auto". */
-                                } else {
-                                    /* Set height to "auto" then compare the returned value against the element's current height value.
-                                       If they're identical, leave height set to "auto". If they're different, then "auto" wasn't originally
-                                       set on the element prior to our conversions, and we revert it to its actual value. */
-                                    /* Note: The following GETs and SETs cannot be batched together due to the cross-effect setting one axis to "auto" has on the other. */
-                                    CSS.setPropertyValue(element, "height", "auto"); /* SET */
-                                    if (originalValues.height !== CSS.getPropertyValue(element, "height", null, true)) { /* GET */
-                                        CSS.setPropertyValue(element, "height", originalValues.height); /* SET */
-                                    }
-
-                                    CSS.setPropertyValue(element, "width", "auto"); /* SET */
-                                    if (originalValues.width !== CSS.getPropertyValue(element, "width", null, true)) { /* GET */
-                                        CSS.setPropertyValue(element, "width", originalValues.width); /* SET */
-                                    }
-                                }
-                            }
-
-                            if (Velocity.debug >= 1) console.log("Unit ratios: " + JSON.stringify(elementUnitRatios), element);
-
-                            return elementUnitRatios;
+                            return unitRatios;
                         }
 
                         /* The * and / operators, which are not passed in with an associated unit, inherently use startValue's unit. Skip value and unit conversion. */
@@ -2692,7 +2576,7 @@ return function (global, window, document, undefined) {
                             } else {
                                 /* By this point, we cannot avoid unit conversion (it's undesirable since it causes layout thrashing).
                                    If we haven't already, we trigger calculateUnitRatios(), which runs once per element per call. */
-                                elementUnitRatios = elementUnitRatios || calculateUnitRatios();
+                                elementUnitConversionData = elementUnitConversionData || calculateUnitRatios();
 
                                 /* The following RegEx matches CSS properties that have their % values measured relative to the x-axis. */
                                 /* Note: W3C spec mandates that all of margin and padding's properties (even top and bottom) are %-relative to the *width* of the parent element. */
@@ -2705,7 +2589,7 @@ return function (global, window, document, undefined) {
                                         /* Note: translateX and translateY are the only properties that are %-relative to an element's own dimensions -- not its parent's dimensions.
                                            Velocity does not include a special conversion process to account for this behavior. Therefore, animating translateX/Y from a % value
                                            to a non-% value will produce an incorrect start value. Fortunately, this sort of cross-unit conversion is rarely done by users in practice. */
-                                        startValue *= (axis === "x" ? elementUnitRatios.percentToPxRatioWidth : elementUnitRatios.percentToPxRatioHeight);
+                                        startValue *= (axis === "x" ? elementUnitConversionData.percentToPxWidth : elementUnitConversionData.percentToPxHeight);
                                         break;
 
                                     case "px":
@@ -2713,13 +2597,13 @@ return function (global, window, document, undefined) {
                                         break;
 
                                     default:
-                                        startValue *= elementUnitRatios[startValueUnitType + "ToPx"];
+                                        startValue *= elementUnitConversionData[startValueUnitType + "ToPx"];
                                 }
 
                                 /* Invert the px ratios to convert into to the target unit. */
                                 switch (endValueUnitType) {
                                     case "%":
-                                        startValue *= 1 / (axis === "x" ? elementUnitRatios.percentToPxRatioWidth : elementUnitRatios.percentToPxRatioHeight);
+                                        startValue *= 1 / (axis === "x" ? elementUnitConversionData.percentToPxWidth : elementUnitConversionData.percentToPxHeight);
                                         break;
 
                                     case "px":
@@ -2727,7 +2611,7 @@ return function (global, window, document, undefined) {
                                         break;
 
                                     default:
-                                        startValue *= 1 / elementUnitRatios[endValueUnitType + "ToPx"];
+                                        startValue *= 1 / elementUnitConversionData[endValueUnitType + "ToPx"];
                                 }
                             }
                         }
@@ -2934,9 +2818,34 @@ return function (global, window, document, undefined) {
         return getChain();
     };
 
-    /*****************************
-       Tick (Calls Processing)
-    *****************************/
+    /**************
+        Timing
+    **************/
+
+    /* Inactive browser tabs pause rAF, which results in all active animations immediately sprinting to their completion states when the tab refocuses.
+       To get around this, we dynamically switch rAF to setTimeout (which the browser *doesn't* pause) when the tab loses focus. We skip this for mobile
+       devices to avoid wasting battery power on inactive tabs. */
+    /* Note: Tab focus detection doesn't work on older versions of IE, but that's okay since they don't support rAF to begin with. */
+    if (!Velocity.State.isMobile && document.hidden !== undefined) {
+        document.addEventListener("visibilitychange", function() {
+            /* Reassign the rAF function (which the global tick() function uses) based on the tab's focus state. */
+            if (document.hidden) {
+                ticker = function(callback) {
+                    /* The tick function needs a truthy first argument in order to pass its internal timestamp check. */
+                    return setTimeout(function() { callback(true) }, 16);
+                };
+
+                /* The rAF loop has been paused by the browser, so we manually restart the tick. */
+                tick();
+            } else {
+                ticker = window.requestAnimationFrame || rAFPollyfill;
+            }
+        });
+    }
+
+    /************
+        Tick
+    ************/
 
     /* Note: All calls to Velocity are pushed to the Velocity.State.calls array, which is fully iterated through upon each tick. */
     function tick (timestamp) {
