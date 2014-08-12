@@ -20,6 +20,6 @@
     "jquery.velocity.js"
   ],
   "dependencies": {
-    "jquery/jquery": "*"
+    "components/jquery": "*"
   }
 }
