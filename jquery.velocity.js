@@ -4,7 +4,7 @@
 
 /*!
 * Velocity.js: Accelerated JavaScript animation.
-* @version 0.11.1
+* @version 0.11.2
 * @docs http://VelocityJS.org
 * @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 */
@@ -39,7 +39,7 @@ Velocity's structure:
         }
     /* CommonJS module. */
     } else if (typeof exports === "object") {
-        factory(window.Velocity ? require("jquery") : undefined);
+        factory(window.Velocity ? undefined : require("jquery"));
     /* Browser globals. */
     } else {        
         factory(window.jQuery);
@@ -327,7 +327,7 @@ return function (global, window, document, undefined) {
         },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 11, patch: 1 },
+        version: { major: 0, minor: 11, patch: 2 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
