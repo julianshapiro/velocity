@@ -38,7 +38,7 @@
 
 - **Famo.us** is a full-fledged *mobile app framework* built around a physics engine.
 - **CSS transitions** are meant for simple interface flourishes triggered by hover states.
-- **Velocity** is allows you to inject rich motion design into your UI.
+- **Velocity** allows you to inject rich motion design into your UI.
 
 ###**Credits**
 
