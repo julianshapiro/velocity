@@ -5,12 +5,13 @@
 
 **Quickstart**  
 
-`bower install velocity`
-
-`npm install velocity-animate`
+`bower install velocity` or `npm install velocity-animate`
 
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.2/jquery.velocity.min.js"></script>`
 
+**Author**
+
+Follow [Julian Shapiro](http://twitter.com/shapiro) for tweets on UI animation.
 
 ###**Learn**
 
@@ -22,9 +23,9 @@
 
 ###**New**
 
-- 0.11.4: Fixed AMD and CommonJS module loading issues. Fixed `mock` behavior from 0.10.1.
+- 0.11.4: AMD and CommonJS module loading without having to shim jQuery. Fixed `mock` behavior from 0.10.1.
 - 0.11.1: **Huge performance boost, and elements are no longer dirtied with inline styles.**
-- 0.11.0: Can load Velocity module without having to shim jQuery. Also: [VelocityJS.org/#hook](http://VelocityJS.org/#hook)
+- 0.11.0: CSS transform setting/getting. [VelocityJS.org/#hook](http://VelocityJS.org/#hook)
 - 0.10.1: Mock UI testing. [VelocityJS.org/#mock](http://VelocityJS.org/#mock)
 - 0.10.0: Infinite looping. [VelocityJS.org/#loop](http://VelocityJS.org/#loop)
 - 0.9.0: Hex values. [VelocityJS.org/#colors](http://VelocityJS.org/#colors)
@@ -38,6 +39,7 @@
 
 - **Famo.us** is a full-fledged *mobile app framework* built around a physics engine.
 - **CSS transitions** are meant for simple interface flourishes triggered by hover states.
+- **jQuery's $.animate()** is slow and poorly-equipped for motion design.
 - **Velocity** allows you to inject rich motion design into your UI.
 
 ###**Credits**
