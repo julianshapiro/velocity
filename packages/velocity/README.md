@@ -1,4 +1,4 @@
-##Velocity (0.11.2)
+##Velocity (0.11.4)
 
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
@@ -22,7 +22,7 @@
 
 ###**New**
 
-- 0.11.2: Fixed CommonJS module loading issue.
+- 0.11.4: Fixed AMD and CommonJS module loading issues. Fixed `mock` behavior from 0.10.1.
 - 0.11.1: **Huge performance boost, and elements are no longer dirtied with inline styles.**
 - 0.11.0: Can load Velocity module without having to shim jQuery. Also: [VelocityJS.org/#hook](http://VelocityJS.org/#hook)
 - 0.10.1: Mock UI testing. [VelocityJS.org/#mock](http://VelocityJS.org/#mock)
