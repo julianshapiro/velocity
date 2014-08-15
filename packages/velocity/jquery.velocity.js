@@ -1,19 +1,11 @@
-/***************
-    Details
-***************/
+/******************
+    Velocity.js
+******************/
 
-/*!
-* Velocity.js: Accelerated JavaScript animation.
-* @version 0.11.4
-* @docs http://VelocityJS.org
-* @license Copyright 2014 Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
-*/
-
-/****************
-    Structure
-****************/
+/*! VelocityJS.org (0.11.5). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 
 /*
+Structure:
 - CSS: CSS stack that works independently from the rest of Velocity.
 - animate(): Core animation method that iterates over the targeted elements and queues the incoming call onto each element individually.
   - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options.
@@ -23,10 +15,6 @@
 - tick(): The single requestAnimationFrame loop responsible for tweening all in-progress calls.
 - completeCall(): Handles the cleanup process for each Velocity call.
 */
-
-/******************
-    Velocity.js
-******************/
 
 ;(function (factory) {    
     /* CommonJS module. */
@@ -327,7 +315,7 @@ return function (global, window, document, undefined) {
         },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 11, patch: 4 },
+        version: { major: 0, minor: 11, patch: 5 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -3123,12 +3111,12 @@ return function (global, window, document, undefined) {
                     Data(element).rootPropertyValueCache = {};
 
                     var transformHAPropertyExists = false;
-                    /* If any transform subproperty is at its default value (regardless of unit type), remove it. This has the
-                       dual benefit of avoiding random browser transform bugs and removing hardware acceleration to free up RAM. */
-                    $.each(Data(element).transformCache, function(transformName, transformValue) {
-                        var defaultValue = /^scale/.test(transformName) ? 1 : 0;
+                    /* If any 3D transform subproperty is at its default value (regardless of unit type), remove it. */
+                    $.each(CSS.Lists.transforms3D, function(i, transformName) {
+                        var defaultValue = /^scale/.test(transformName) ? 1 : 0,
+                            currentValue = Data(element).transformCache[transformName];
 
-                        if (new RegExp("^\\(" + defaultValue + "[^.]").test(transformValue)) {
+                        if (Data(element).transformCache[transformName] !== undefined && new RegExp("^\\(" + defaultValue + "[^.]").test(currentValue)) {
                             transformHAPropertyExists = true;
                             delete Data(element).transformCache[transformName];
                         }
