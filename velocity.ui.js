@@ -4,9 +4,9 @@
 
 /*!
 * velocity.ui.js: UI effects pack for Velocity. Load this file after jquery.velocity.js.
-* @version 4.1.0
+* @version 4.1.1
 * @docs http://velocityjs.org/#uiPack
-* @support <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: Full support.
+* @support <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: full support.
 * @license Copyright Julian Shapiro. MIT License: http://en.wikipedia.org/wiki/MIT_License
 * @license Indicated portions adapted from Animate.css, copyright Daniel Eden. MIT License: http://en.wikipedia.org/wiki/MIT_License
 * @license Indicated portions adapted from Magic.css, copyright Christian Pucci. MIT License: http://en.wikipedia.org/wiki/MIT_License
@@ -21,7 +21,7 @@
     var Container = (window.jQuery || window.Zepto || window);
 
     if (!Container.Velocity || !Container.Velocity.Utilities) {
-        console.log("Velocity UI Pack: Velocity must be loaded first. Aborting.");
+        window.console && console.log("Velocity UI Pack: Velocity must be loaded first. Aborting.");
 
         return;
     }
@@ -34,7 +34,7 @@
     }
 
     /******************
-       Registration
+       Register UI
     ******************/
 
     Container.Velocity.RegisterUI = function (effectName, properties) {
@@ -83,6 +83,7 @@
                 opts.queue = sequenceOptions.queue || "";
                 opts.easing = callOptions.easing || "ease";
                 opts.delay = callOptions.delay || 0;
+                opts._cacheValues = callOptions._cacheValues || true;
 
                 /* Special processing for the first effect call. */
                 if (callIndex === 0) {
