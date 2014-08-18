@@ -2,7 +2,7 @@
    Velocity UI Pack
 **********************/
 
-/* VelocityJS.org UI Pack (4.1.1). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
+/* VelocityJS.org UI Pack (4.1.2). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
 
 (function() {
 
@@ -36,7 +36,7 @@
                 parentNode;
 
             /* Sum the total height (including padding and margin) of all targeted elements. */
-            Container.Velocity.Utilities.each(elements, function(i, element) {
+            Container.Velocity.Utilities.each(elements.nodeType ? [ elements ] : elements, function(i, element) {
                 if (stagger) {
                     /* Increase the totalDuration by the successive delay amounts produced by the stagger option. */
                     totalDuration += i * stagger;
@@ -116,7 +116,7 @@
                     /* Append promise resolving onto the user's sequence callback. */ 
                     function injectFinalCallbacks () {
                         if ((sequenceOptions.display === undefined || sequenceOptions.display === "none") && /Out$/.test(effectName)) {
-                            Container.Velocity.Utilities.each(elements, function(i, element) {
+                            Container.Velocity.Utilities.each(elements.nodeType ? [ elements ] : elements, function(i, element) {
                                 Container.Velocity.CSS.setPropertyValue(element, "display", "none");
                             });
                         }
