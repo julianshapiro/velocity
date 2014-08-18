@@ -1,4 +1,4 @@
-##Velocity (0.11.5)
+##Velocity (0.11.6)
 
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
@@ -7,7 +7,7 @@
 
 `bower install velocity` **or** `npm install velocity-animate`
 
-`<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.5/jquery.velocity.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.6/jquery.velocity.min.js"></script>`
 
 **Author**
 
