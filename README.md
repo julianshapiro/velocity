@@ -42,4 +42,4 @@
 
 ====
 
-[MIT License](LICENSE). © Julian Shapiro (http://twitter.com/shapiro).
+[MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).
