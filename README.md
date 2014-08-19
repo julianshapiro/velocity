@@ -6,8 +6,7 @@
 **Quickstart**  
 
 `bower install velocity`  
-`npm install velocity-animate`
-
+`npm install velocity-animate`  
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.6/jquery.velocity.min.js"></script>`
 
 ###**Learn**
