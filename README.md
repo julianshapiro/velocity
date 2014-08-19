@@ -5,13 +5,10 @@
 
 **Quickstart**  
 
-`bower install velocity` **or** `npm install velocity-animate`
+`bower install velocity`
+`npm install velocity-animate`
 
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.6/jquery.velocity.min.js"></script>`
-
-**Author**
-
-Follow [Julian Shapiro](http://twitter.com/shapiro) for tweets on UI animation.
 
 ###**Learn**
 
@@ -22,7 +19,6 @@ Follow [Julian Shapiro](http://twitter.com/shapiro) for tweets on UI animation.
 
 ###**New**
 
-- 0.11.5: 2D transform values are no longer auto-removed when they hit their default values.
 - 0.11.4: AMD and CommonJS module loading without having to shim jQuery.
 - 0.11.1: **Huge performance boost, and elements are no longer dirtied with inline styles.**
 - 0.11.0: CSS transform setting/getting. [VelocityJS.org/#hook](http://VelocityJS.org/#hook)
