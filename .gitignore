@@ -1,7 +1,0 @@
-.gitignore
-node_modules
-test
-min
-README.md
-Gruntfile.js.bak
-velocity.jquery-shim.js
