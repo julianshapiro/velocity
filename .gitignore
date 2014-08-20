@@ -1,7 +1,0 @@
-.gitignore
-node_modules
-test
-README.md
-Gruntfile.js
-component.json
-velocity.jquery-shim.js
