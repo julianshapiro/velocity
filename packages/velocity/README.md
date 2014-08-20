@@ -11,7 +11,7 @@
 
 **Which file should I use?**
 
-`jquery.velocity.js` will soon be renamed to `velocity.js` as the jQuery dependency is dropped. See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information.
+See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information. `jquery.velocity.js` will soon be renamed to `velocity.js` as the jQuery dependency is dropped.
 
 ###**Learn**
 
