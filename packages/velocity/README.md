@@ -9,7 +9,7 @@
 `npm install velocity-animate`  
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.7/jquery.velocity.min.js"></script>`
 
-**Velocity.js**
+**Which file should I use?**
 
 `jquery.velocity.js` will soon be renamed to `velocity.js` as the jQuery dependency is dropped. See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information.
 
