@@ -2,24 +2,12 @@
     Velocity.js
 ******************/
 
-/*! VelocityJS.org (0.11.6). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
-
-/*
-Structure:
-- CSS: CSS stack that works independently from the rest of Velocity.
-- animate(): Core animation method that iterates over the targeted elements and queues the incoming call onto each element individually.
-  - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options.
-  - Queueing: The logic that runs once the call has reached its point of execution in the element's $.queue() stack.
-              Most logic is placed here to avoid risking it becoming stale (if the element's properties have changed).
-  - Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
-- tick(): The single requestAnimationFrame loop responsible for tweening all in-progress calls.
-- completeCall(): Handles the cleanup process for each Velocity call.
-*/
+/*! VelocityJS.org (0.11.7). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 
 ;(function (factory) {    
     /* CommonJS module. */
     if (typeof module === "object" && typeof module.exports === "object") {
-        module.exports = factory(window.Velocity ? undefined : require("jquery"));
+        module.exports = factory(window.Velocity ? window.jQuery : require("jquery"));
     /* AMD module. */
     } else if (typeof define === "function" && define.amd) {        
         if (window.Velocity) {
@@ -33,6 +21,17 @@ Structure:
     }
 }(function (jQuery) {
 return function (global, window, document, undefined) {
+    /*
+    Structure:
+    - CSS: CSS stack that works independently from the rest of Velocity.
+    - animate(): Core animation method that iterates over the targeted elements and queues the incoming call onto each element individually.
+      - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options.
+      - Queueing: The logic that runs once the call has reached its point of execution in the element's $.queue() stack.
+                  Most logic is placed here to avoid risking it becoming stale (if the element's properties have changed).
+      - Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
+    - tick(): The single requestAnimationFrame loop responsible for tweening all in-progress calls.
+    - completeCall(): Handles the cleanup process for each Velocity call.
+    */
 
     /*****************
         Constants
@@ -178,7 +177,7 @@ return function (global, window, document, undefined) {
        Revert to jQuery's $.animate(), and lose Velocity's extra features. */
     } else if (IE <= 7) {
         if (!jQuery) {
-            throw new Error("Velocity: For IE<=7, Velocity falls back to jQuery, which must first be loaded.");
+            throw new Error("Velocity: In IE<=7, Velocity falls back to jQuery, which must first be loaded.");
         } else {
             jQuery.fn.velocity = jQuery.fn.animate;
 
@@ -187,7 +186,7 @@ return function (global, window, document, undefined) {
         }
     /* IE8 doesn't work with the jQuery shim; it requires jQuery proper. */
     } else if (IE === 8 && !jQuery) {
-        throw new Error("Velocity: For IE8, Velocity requires jQuery proper to be loaded; Velocity's jQuery shim does not work with IE8.");
+        throw new Error("Velocity: In IE8, Velocity requires jQuery proper to be loaded; Velocity's jQuery shim does not work with IE8.");
     }
 
     /* Shorthand alias for jQuery's $.data() utility. */
@@ -319,7 +318,7 @@ return function (global, window, document, undefined) {
         },
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 11, patch: 6 },
+        version: { major: 0, minor: 11, patch: 7 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -2669,7 +2668,9 @@ return function (global, window, document, undefined) {
                     call.push(tweensContainer);
 
                     /* Store the tweensContainer on the element, plus the current call's opts so that Velocity can reference this data the next time this element is animated. */
-                    Data(element).tweensContainer = tweensContainer;
+                    if (opts.queue !== false) {
+                        Data(element).tweensContainer = tweensContainer;
+                    }
                     Data(element).opts = opts;
                     /* Switch on the element's animating flag. */
                     Data(element).isAnimating = true;
