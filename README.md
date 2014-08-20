@@ -9,6 +9,10 @@
 `npm install velocity-animate`  
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.7/jquery.velocity.min.js"></script>`
 
+**Velocity.js**
+
+`jquery.velocity.js` will soon be renamed to `velocity.js` as the jQuery dependency is dropped. See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information.
+
 ###**Learn**
 
 - **UI effects**: http://smashingmagazine.com/2014/06/18/faster-ui-animations-with-velocity-js
