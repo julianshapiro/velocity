@@ -1,7 +1,7 @@
 .gitignore
 node_modules
 test
-min
 README.md
-Gruntfile.js.bak
+Gruntfile.js
+component.json
 velocity.jquery-shim.js
