@@ -1,4 +1,4 @@
-##Velocity (0.11.6)
+##Velocity (0.11.7)
 
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
@@ -7,7 +7,7 @@
 
 `bower install velocity`  
 `npm install velocity-animate`  
-`<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.7/jquery.velocity.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.6/jquery.velocity.min.js"></script>`
 
 **Which file should I use?**
 
