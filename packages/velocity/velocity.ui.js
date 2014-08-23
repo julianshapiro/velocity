@@ -2,7 +2,7 @@
    Velocity UI Pack
 **********************/
 
-/* VelocityJS.org UI Pack (4.1.2). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
+/* VelocityJS.org UI Pack (4.1.3). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
 
 (function() {
 
@@ -18,7 +18,7 @@
         return;
     }
 
-    if (!Container.Velocity.version || (Container.Velocity.version.major <= 0 && Container.Velocity.version.minor <= 5 && Container.Velocity.version.patch <= 2)) {
+    if (!Container.Velocity.version || (Container.Velocity.version.major <= 0 && Container.Velocity.version.minor <= 11 && Container.Velocity.version.patch < 8)) {
         var abortError = "Velocity UI Pack: You need to update Velocity (jquery.velocity.js) to a newer version. Visit http://github.com/julianshapiro/velocity.";
 
         alert(abortError);
@@ -97,7 +97,7 @@
 
                     /* If the user isn't overriding the display option, default to "auto" for "In"-suffixed transitions. */
                     if (sequenceOptions.display !== null) {
-                        if (sequenceOptions.display && sequenceOptions.display !== "none") {
+                        if (sequenceOptions.display !== undefined && sequenceOptions.display !== "none") {
                             opts.display = sequenceOptions.display;
                         } else if (/In$/.test(effectName)) {
                             /* Inline elements cannot be subjected to transforms, so we switch them to inline-block. */
