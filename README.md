@@ -7,11 +7,11 @@
 
 `bower install velocity`  
 `npm install velocity-animate`  
-`<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.8/jquery.velocity.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.9/jquery.velocity.min.js"></script>`
 
 **Which file should I use?**
 
-See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information. `jquery.velocity.js` will soon be renamed to `velocity.js` as the jQuery dependency is dropped.
+See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information. `jquery.velocity.js` will soon be renamed to `velocity.js`. jQuery support will remain the same.
 
 ###**Learn**
 
@@ -26,8 +26,7 @@ See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more
 - 0.11.0: CSS transform setting/getting. [VelocityJS.org/#hook](http://VelocityJS.org/#hook)
 - 0.10.0: Infinite looping. [VelocityJS.org/#loop](http://VelocityJS.org/#loop)
 - 0.9.0: Hex colors. [VelocityJS.org/#colors](http://VelocityJS.org/#colors)
-- 0.8.0: vw/vh CSS units.
-- 0.6.0: `display: "auto"` and `visibility`. [VelocityJS.org/#displayAndVisibility](http://VelocityJS.org/#displayAndVisibility)
+- 0.6.0: `visibility`. [VelocityJS.org/#displayAndVisibility](http://VelocityJS.org/#displayAndVisibility)
 - 0.5.0: Promises. [VelocityJS.org/#promises](http://VelocityJS.org/#promises)
 - 0.3.0-0.4.0: SVG animation. [VelocityJS.org/#svg](http://VelocityJS.org/#svg)
 - 0.1.0: `stop` now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made. [VelocityJS.org/#stop](http://VelocityJS.org/#stop)
