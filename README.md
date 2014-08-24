@@ -16,7 +16,7 @@ See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more
 
 ###**Learn**
 
-- **UI animation**: http://smashingmagazine.com/2014/06/18/faster-ui-animations-with-velocity-js
+- **Motion design**: http://smashingmagazine.com/2014/06/18/faster-ui-animations-with-velocity-js
 - **Performance comparisons**: http://davidwalsh.name/css-js-animation
 - **Workflow**: http://css-tricks.com/improving-ui-animation-workflow-velocity-js
 
