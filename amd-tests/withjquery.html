@@ -20,6 +20,9 @@ requirejs.config({
 	paths: {
 		jquery: 'vendor/jquery-2.1.1.min',
 		velocity: '../../jquery.velocity'
+	},
+	shim: {
+		velocity: ['jquery']
 	}
 })
 

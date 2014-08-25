@@ -7,7 +7,7 @@ Velocity presently has two builds, `jquery.velocity.js` and `velocity.js`.
 
 Both velocity builds can be used with requirejs and r.js simply by including it in your project and requiring it.
 
-If you're using `jquery.velocity.js`, ensure that jQuery is also in your project (and that it is required before Velocity).
+If you're using `jquery.velocity.js`, make sure jQuery is shimmed as a dependency in your requirejs configuration.
 
 As is usual for jQuery plugins, `jquery.velocity.js` extends jQuery.fn, which means that you only have to require it once if you choose to use it like `$(<<selector>>).velocity(<<velocity-options>>)`.
 
