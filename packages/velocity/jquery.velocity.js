@@ -10,16 +10,13 @@
         module.exports = factory(window.Velocity ? window.jQuery : require("jquery"));
     /* AMD module. */
     } else if (typeof define === "function" && define.amd) {
-        if (window.Velocity) {
-            define(factory);
-        } else {
-            define([ "jquery" ], factory);
-        }
+        define(factory);
     /* Browser globals. */
     } else {        
-        factory(window.jQuery);
+        factory();
     }
-}(function (jQuery) {
+}(function () {
+var jQuery = window.jQuery;
 return function (global, window, document, undefined) {
 
     /***************

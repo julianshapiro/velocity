@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>RequireJS with jQuery</title>
+	<style>
+.foo {
+	width: 200px; height: 200px; background: red; margin-top: 200px; margin-left: 200px;
+}
+	</style>
+</head>
+<body>
+	<div class="foo"></div>
+	<button>animate</button>
+	<script src="js/vendor/require.js"></script>
+	<script>
+
+requirejs.config({
+	baseUrl: 'js',
+	paths: {
+		jquery: 'vendor/jquery-2.1.1.min',
+		velocity: '../../jquery.velocity'
+	},
+	shim: {
+		velocity: ['jquery']
+	}
+})
+
+require(['init-withjquery'])
+	</script>
+</body>
+</html>
