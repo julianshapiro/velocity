@@ -1,6 +1,6 @@
 {
   "name": "velocity",
-  "version": "0.11.9",
+  "version": "1.0.0",
   "homepage": "http://velocityjs.org",
   "authors": [
     { "name" : "Julian Shapiro",
@@ -8,7 +8,7 @@
     }
   ],
   "description": "Accelerated JavaScript animation.",
-  "main": "./jquery.velocity.js",
+  "main": "./velocity.js",
   "keywords": [
     "animation",
     "jquery",
