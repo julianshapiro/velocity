@@ -96,9 +96,16 @@ return function (global, window, document, undefined) {
         return result;
     }
 
-    /* Wrap single elements in an array so that $.each() can iterate with the element instead of its node's children. */
-    function createElementsArray (elements) {
-        return Type.isNode(elements) ? [ elements ] : elements;
+    function sanitizeElements (elements) {
+        /* Unwrap jQuery/Zepto objects. */
+        if (Type.isWrapped(elements)) {
+            elements = [].slice.call(elements);
+        /* Wrap a single element in an array so that $.each() can iterate with the element instead of its node's children. */
+        } else if (Type.isNode(elements)) {
+            elements = [ elements ];
+        }
+
+        return elements;
     }
 
     var Type = {
@@ -1542,12 +1549,9 @@ return function (global, window, document, undefined) {
     Velocity.hook = function (elements, arg2, arg3) {
         var value = undefined;
 
-        /* Unwrap jQuery/Zepto objects. */
-        if (Type.isWrapped(elements)) {
-            elements = [].slice.call(elements);
-        }
+        elements = sanitizeElements(elements);
 
-        $.each(createElementsArray(elements), function(i, element) {
+        $.each(elements, function(i, element) {
             /* Initialize Velocity's per-element data cache if this element hasn't previously been animated. */
             if (Data(element) === undefined) {
                 Velocity.init(element);
@@ -1631,7 +1635,7 @@ return function (global, window, document, undefined) {
             elements = syntacticSugar ? arguments[0].elements : arguments[0];
         }
 
-        elements = Type.isWrapped(elements) ? [].slice.call(elements) : elements;
+        elements = sanitizeElements(elements);
 
         if (!elements) {
             return;
@@ -1647,7 +1651,7 @@ return function (global, window, document, undefined) {
 
         /* The length of the element set (in the form of a nodeList or an array of elements) is defaulted to 1 in case a
            single raw DOM element is passed in (which doesn't contain a length property). */
-        var elementsLength = (Type.isArray(elements) || Type.isNodeList(elements)) ? elements.length : 1,
+        var elementsLength = elements.length,
             elementsIndex = 0;
 
         /***************************
@@ -1728,7 +1732,7 @@ return function (global, window, document, undefined) {
                 *******************/
 
                 /* Clear the currently-active delay on each targeted element. */
-                $.each(createElementsArray(elements), function(i, element) {
+                $.each(elements, function(i, element) {
                     if (Data(element) && Data(element).delayTimer) {
                         /* Stop the timer from triggering its cached next() function. */
                         clearTimeout(Data(element).delayTimer.setTimeout);
@@ -1757,7 +1761,7 @@ return function (global, window, document, undefined) {
                     /* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
                     if (activeCall) {
                         /* Iterate through the active call's targeted elements. */
-                        $.each(createElementsArray(activeCall[1]), function(k, activeElement) {
+                        $.each(activeCall[1], function(k, activeElement) {
                             var queueName = Type.isString(options) ? options : "";
 
                             if (options !== undefined && activeCall[2].queue !== queueName) {
@@ -1765,7 +1769,7 @@ return function (global, window, document, undefined) {
                             }  
 
                             /* Iterate through the calls targeted by the stop command. */
-                            $.each(createElementsArray(elements), function(l, element) {                                
+                            $.each(elements, function(l, element) {                                
                                 /* Check that this call was applied to the target element. */
                                 if (element === activeElement) {
                                     /* Optionally clear the remaining queued calls. */
@@ -1830,11 +1834,11 @@ return function (global, window, document, undefined) {
 
                     /* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first. */
                     if (opts.backwards === true) {
-                        elements = (Type.isWrapped(elements) ? [].slice.call(elements) : elements).reverse();
+                        elements = elements.reverse();
                     }
 
                     /* Individually trigger the sequence for each element in the set to prevent users from having to handle iteration logic in their sequence. */
-                    $.each(createElementsArray(elements), function(elementIndex, element) {
+                    $.each(elements, function(elementIndex, element) {
                         /* If the stagger option was passed in, successively delay each element by the stagger value (in ms). Retain the original delay value. */
                         if (parseFloat(opts.stagger)) {
                             opts.delay = delayOriginal + (parseFloat(opts.stagger) * elementIndex);
@@ -2057,9 +2061,7 @@ return function (global, window, document, undefined) {
                     try {
                         opts.begin.call(elements, elements);
                     } catch (error) {
-                        setTimeout(function() {
-                            throw error;
-                        }, 1);
+                        setTimeout(function() { throw error; }, 1);
                     }
                 }
 
@@ -2801,7 +2803,7 @@ return function (global, window, document, undefined) {
 
         /* If the "nodeType" property exists on the elements variable, we're animating a single element.
            Place it in an array so that $.each() can iterate over it. */
-        $.each(createElementsArray(elements), function(i, element) {
+        $.each(elements, function(i, element) {
             /* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
             if (Type.isNode(element)) {
                 processElement.call(element);
@@ -2909,7 +2911,7 @@ return function (global, window, document, undefined) {
 
             /* Iterate through each active call. */
             for (var i = 0, callsLength = Velocity.State.calls.length; i < callsLength; i++) {
-                /* When a velocity call is completed, its Velocity.State.calls entry is set to false. Continue on to the next call. */
+                /* When a Velocity call is completed, its Velocity.State.calls entry is set to false. Continue on to the next call. */
                 if (!Velocity.State.calls[i]) {
                     continue;
                 }
@@ -3172,6 +3174,7 @@ return function (global, window, document, undefined) {
 
                         if (Data(element).transformCache[transformName] !== undefined && new RegExp("^\\(" + defaultValue + "[^.]").test(currentValue)) {
                             transformHAPropertyExists = true;
+
                             delete Data(element).transformCache[transformName];
                         }
                     });
@@ -3203,9 +3206,7 @@ return function (global, window, document, undefined) {
                 try {
                     opts.complete.call(elements, elements);
                 } catch (error) {
-                    setTimeout(function() {
-                        throw error;
-                    }, 1);
+                    setTimeout(function() { throw error; }, 1);
                 }
             }
 
@@ -3223,6 +3224,15 @@ return function (global, window, document, undefined) {
             ****************************/
 
             if (opts.loop === true && !isStopped) {
+                /* If a rotateX/Y/Z property is being animated to 360 deg with loop:true, swap tween start/end values to enable
+                   continuous iterative rotation looping. (Otherise, the element would just rotate back and forth.) */
+                $.each(Data(element).tweensContainer, function(propertyName, tweenContainer) {
+                    if (/^rotate/.test(propertyName) && parseFloat(tweenContainer.endValue) === 360) {
+                        tweenContainer.endValue = 0;
+                        tweenContainer.startValue = 360;
+                    }
+                });
+
                 Velocity(element, "reverse", { loop: true, delay: opts.delay });
             }
 
