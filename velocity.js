@@ -1,4 +1,4 @@
-/*! VelocityJS.org (0.11.9). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
+/*! VelocityJS.org (1.0.0). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 
 /*************************
    Velocity jQuery Shim
@@ -410,12 +410,10 @@
     Velocity.js
 ******************/
 
-/*! VelocityJS.org (0.11.9). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
-
 ;(function (factory) {    
     /* CommonJS module. */
     if (typeof module === "object" && typeof module.exports === "object") {
-        module.exports = factory(window.Velocity ? window.jQuery : require("jquery"));
+        module.exports = factory();
     /* AMD module. */
     } else if (typeof define === "function" && define.amd) {
         define(factory);
@@ -424,7 +422,9 @@
         factory();
     }
 }(function () {
+
 var jQuery = window.jQuery;
+
 return function (global, window, document, undefined) {
 
     /***************
@@ -697,7 +697,7 @@ return function (global, window, document, undefined) {
         hook: null, /* Defined below. */
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 11, patch: 9 },
+        version: { major: 1, minor: 0, patch: 0 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };

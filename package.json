@@ -1,6 +1,6 @@
 {
   "name": "velocity-animate",
-  "version": "0.11.9",
+  "version": "1.0.0",
   "description": "Accelerated JavaScript animation.",
   "keywords": [
     "velocity",
@@ -26,8 +26,8 @@
   "main": "jquery.velocity.js",
   "repository": "julianshapiro/velocity",
   "files": [
-    "jquery.velocity.js",
-    "jquery.velocity.min.js",
+    "velocity.js",
+    "velocity.min.js",
     "velocity.ui.js",
     "velocity.ui.min.js"
   ],
