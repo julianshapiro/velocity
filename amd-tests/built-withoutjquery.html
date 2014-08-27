@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>RequireJS without jQuery</title>
+	<style>
+.foo {
+	width: 200px; height: 200px; background: red; margin-top: 200px; margin-left: 200px;
+}
+	</style>
+</head>
+<body>
+	<div class="foo"></div>
+	<button>animate</button>
+	<script src="built-withoutjquery.js"></script>
+	<script>
+
+requirejs.config({
+	baseUrl: 'js',
+	paths: {
+		velocity: '../../velocity'
+	}
+})
+
+require(['init-nojquery'])
+	</script>
+</body>
+</html>

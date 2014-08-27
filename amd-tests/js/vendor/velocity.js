@@ -1,4 +1,4 @@
-/*! VelocityJS.org (0.11.9). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
+/*! VelocityJS.org (0.11.8). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 
 /*************************
    Velocity jQuery Shim
@@ -410,7 +410,7 @@
     Velocity.js
 ******************/
 
-/*! VelocityJS.org (0.11.9). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
+/*! VelocityJS.org (0.11.8). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 
 ;(function (factory) {    
     /* CommonJS module. */
@@ -421,17 +421,13 @@
         define(factory);
     /* Browser globals. */
     } else {        
-        factory();
+        factory(window.jQuery);
     }
 }(function () {
 var jQuery = window.jQuery;
 return function (global, window, document, undefined) {
-
-    /***************
-        Summary
-    ***************/
-
     /*
+    Structure:
     - CSS: CSS stack that works independently from the rest of Velocity.
     - animate(): Core animation method that iterates over the targeted elements and queues the incoming call onto each element individually.
       - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options.
@@ -484,6 +480,8 @@ return function (global, window, document, undefined) {
         };
     })();
 
+    var ticker = window.requestAnimationFrame || rAFShim;
+
     /* Array compacting. Copyright Lo-Dash. MIT License: https://github.com/lodash/lodash/blob/master/LICENSE.txt */
     function compactSparseArray (array) {
         var index = -1,
@@ -501,16 +499,9 @@ return function (global, window, document, undefined) {
         return result;
     }
 
-    function sanitizeElements (elements) {
-        /* Unwrap jQuery/Zepto objects. */
-        if (Type.isWrapped(elements)) {
-            elements = [].slice.call(elements);
-        /* Wrap a single element in an array so that $.each() can iterate with the element instead of its node's children. */
-        } else if (Type.isNode(elements)) {
-            elements = [ elements ];
-        }
-
-        return elements;
+    /* Wrap single elements in an array so that $.each() can iterate with the element instead of its node's children. */
+    function createElementsArray (elements) {
+        return Type.isNode(elements) ? [ elements ] : elements;
     }
 
     var Type = {
@@ -697,7 +688,7 @@ return function (global, window, document, undefined) {
         hook: null, /* Defined below. */
         /* Set to true to force a duration of 1ms for all animations so that UI testing can be performed without waiting on animations to complete. */
         mock: false,
-        version: { major: 0, minor: 11, patch: 9 },
+        version: { major: 0, minor: 11, patch: 8 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
@@ -853,6 +844,7 @@ return function (global, window, document, undefined) {
     /* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
        then adjusts the time delta -- using the relation between actual time and duration -- to calculate the path for the duration-constrained animation. */
     var generateSpringRK4 = (function () {
+
         function springAccelerationForState (state) {
             return (-state.tension * state.x) - (state.friction * state.v);
         }
@@ -944,7 +936,6 @@ return function (global, window, document, undefined) {
         /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
         spring: function(p) { return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6)); }
     };
-
     $.each(
         [
             /* CSS3's named easing types. */
@@ -1954,9 +1945,12 @@ return function (global, window, document, undefined) {
     Velocity.hook = function (elements, arg2, arg3) {
         var value = undefined;
 
-        elements = sanitizeElements(elements);
+        /* Unwrap jQuery/Zepto objects. */
+        if (Type.isWrapped(elements)) {
+            elements = [].slice.call(elements);
+        }
 
-        $.each(elements, function(i, element) {
+        $.each(createElementsArray(elements), function(i, element) {
             /* Initialize Velocity's per-element data cache if this element hasn't previously been animated. */
             if (Data(element) === undefined) {
                 Velocity.init(element);
@@ -2040,7 +2034,7 @@ return function (global, window, document, undefined) {
             elements = syntacticSugar ? arguments[0].elements : arguments[0];
         }
 
-        elements = sanitizeElements(elements);
+        elements = Type.isWrapped(elements) ? [].slice.call(elements) : elements;
 
         if (!elements) {
             return;
@@ -2056,7 +2050,7 @@ return function (global, window, document, undefined) {
 
         /* The length of the element set (in the form of a nodeList or an array of elements) is defaulted to 1 in case a
            single raw DOM element is passed in (which doesn't contain a length property). */
-        var elementsLength = elements.length,
+        var elementsLength = (Type.isArray(elements) || Type.isNodeList(elements)) ? elements.length : 1,
             elementsIndex = 0;
 
         /***************************
@@ -2137,7 +2131,7 @@ return function (global, window, document, undefined) {
                 *******************/
 
                 /* Clear the currently-active delay on each targeted element. */
-                $.each(elements, function(i, element) {
+                $.each(createElementsArray(elements), function(i, element) {
                     if (Data(element) && Data(element).delayTimer) {
                         /* Stop the timer from triggering its cached next() function. */
                         clearTimeout(Data(element).delayTimer.setTimeout);
@@ -2166,7 +2160,7 @@ return function (global, window, document, undefined) {
                     /* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
                     if (activeCall) {
                         /* Iterate through the active call's targeted elements. */
-                        $.each(activeCall[1], function(k, activeElement) {
+                        $.each(createElementsArray(activeCall[1]), function(k, activeElement) {
                             var queueName = Type.isString(options) ? options : "";
 
                             if (options !== undefined && activeCall[2].queue !== queueName) {
@@ -2174,9 +2168,17 @@ return function (global, window, document, undefined) {
                             }  
 
                             /* Iterate through the calls targeted by the stop command. */
-                            $.each(elements, function(l, element) {                                
+                            $.each(createElementsArray(elements), function(l, element) {                                
                                 /* Check that this call was applied to the target element. */
                                 if (element === activeElement) {
+                                    if (Data(element)) {
+                                        /* Since "reverse" uses cached start values (the previous call's endValues),
+                                           these values must be changed to reflect the final value that the elements were actually tweened to. */
+                                        $.each(Data(element).tweensContainer, function(m, activeTween) {
+                                            activeTween.endValue = activeTween.currentValue;
+                                        });
+                                    }
+
                                     /* Optionally clear the remaining queued calls. */
                                     if (options !== undefined) {
                                         /* Iterate through the items in the element's queue. */
@@ -2191,14 +2193,6 @@ return function (global, window, document, undefined) {
 
                                         /* Clearing the $.queue() array is achieved by resetting it to []. */
                                         $.queue(element, queueName, []);
-                                    }
-
-                                    if (Data(element) && queueName === "") {
-                                        /* Since "reverse" uses cached start values (the previous call's endValues),
-                                           these values must be changed to reflect the final value that the elements were actually tweened to. */
-                                        $.each(Data(element).tweensContainer, function(m, activeTween) {
-                                            activeTween.endValue = activeTween.currentValue;
-                                        });
                                     }
 
                                     callsToStop.push(i);
@@ -2233,39 +2227,38 @@ return function (global, window, document, undefined) {
 
                 /* Check if a string matches a registered sequence (see Sequences above). */
                 } else if (Type.isString(propertiesMap) && Velocity.Sequences[propertiesMap]) {
-                    var opts = $.extend({}, options),
-                        durationOriginal = opts.duration,
-                        delayOriginal = opts.delay || 0;
+                    var durationOriginal = options.duration,
+                        delayOriginal = options.delay || 0;
 
                     /* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first. */
-                    if (opts.backwards === true) {
-                        elements = elements.reverse();
+                    if (options.backwards === true) {
+                        elements = (Type.isWrapped(elements) ? [].slice.call(elements) : elements).reverse();
                     }
 
                     /* Individually trigger the sequence for each element in the set to prevent users from having to handle iteration logic in their sequence. */
-                    $.each(elements, function(elementIndex, element) {
+                    $.each(createElementsArray(elements), function(elementIndex, element) {
                         /* If the stagger option was passed in, successively delay each element by the stagger value (in ms). Retain the original delay value. */
-                        if (parseFloat(opts.stagger)) {
-                            opts.delay = delayOriginal + (parseFloat(opts.stagger) * elementIndex);
-                        } else if (Type.isFunction(opts.stagger)) {
-                            opts.delay = delayOriginal + opts.stagger.call(element, elementIndex, elementsLength);
+                        if (parseFloat(options.stagger)) {
+                            options.delay = delayOriginal + (parseFloat(options.stagger) * elementIndex);
+                        } else if (Type.isFunction(options.stagger)) {
+                            options.delay = delayOriginal + options.stagger.call(element, elementIndex, elementsLength);
                         }
 
-                        /* If the drag option was passed in, successively increase/decrease (depending on the presense of opts.backwards)
+                        /* If the drag option was passed in, successively increase/decrease (depending on the presense of options.backwards)
                            the duration of each element's animation, using floors to prevent producing very short durations. */
-                        if (opts.drag) {
+                        if (options.drag) {
                             /* Default the duration of UI pack effects (callouts and transitions) to 1000ms instead of the usual default duration of 400ms. */
-                            opts.duration = parseFloat(durationOriginal) || (/^(callout|transition)/.test(propertiesMap) ? 1000 : DURATION_DEFAULT);
+                            options.duration = parseFloat(durationOriginal) || (/^(callout|transition)/.test(propertiesMap) ? 1000 : DURATION_DEFAULT);
 
                             /* For each element, take the greater duration of: A) animation completion percentage relative to the original duration,
                                B) 75% of the original duration, or C) a 200ms fallback (in case duration is already set to a low value).
                                The end result is a baseline of 75% of the sequence's duration that increases/decreases as the end of the element set is approached. */
-                            opts.duration = Math.max(opts.duration * (opts.backwards ? 1 - elementIndex/elementsLength : (elementIndex + 1) / elementsLength), opts.duration * 0.75, 200);
+                            options.duration = Math.max(options.duration * (options.backwards ? 1 - elementIndex/elementsLength : (elementIndex + 1) / elementsLength), options.duration * 0.75, 200);
                         }
 
-                        /* Pass in the call's opts object so that the sequence can optionally extend it. It defaults to an empty object instead of null to
-                           reduce the opts checking logic required inside the sequence. */
-                        Velocity.Sequences[propertiesMap].call(element, element, opts || {}, elementIndex, elementsLength, elements, promiseData.promise ? promiseData : undefined);
+                        /* Pass in the call's options object so that the sequence can optionally extend it. It defaults to an empty object instead of null to
+                           reduce the options checking logic required inside the sequence. */
+                        Velocity.Sequences[propertiesMap].call(element, element, options || {}, elementIndex, elementsLength, elements, promiseData.promise ? promiseData : undefined);
                     });
 
                     /* Since the animation logic resides within the sequence's own code, abort the remainder of this call.
@@ -2466,7 +2459,9 @@ return function (global, window, document, undefined) {
                     try {
                         opts.begin.call(elements, elements);
                     } catch (error) {
-                        setTimeout(function() { throw error; }, 1);
+                        setTimeout(function() {
+                            throw error;
+                        }, 1);
                     }
                 }
 
@@ -2933,32 +2928,30 @@ return function (global, window, document, undefined) {
 
                             if (!sameEmRatio || !samePercentRatio) {
                                 var dummy = Data(element).isSVG ? document.createElementNS("http://www.w3.org/2000/svg", "rect") : document.createElement("div");
-                                
                                 Velocity.init(dummy);
                                 sameRatioIndicators.myParent.appendChild(dummy);
 
+                                Velocity.CSS.setPropertyValue(dummy, "position", sameRatioIndicators.position);
+                                Velocity.CSS.setPropertyValue(dummy, "fontSize", sameRatioIndicators.fontSize);
                                 /* To accurately and consistently calculate conversion ratios, the element's cascaded overflow and box-sizing are stripped.
                                    Similarly, since width/height can be artificially constrained by their min-/max- equivalents, these are controlled for as well. */
                                 /* Note: Overflow must be also be controlled for per-axis since the overflow property overwrites its per-axis values. */
-                                $.each([ "overflow", "overflowX", "overflowY" ], function(i, property) {
-                                    Velocity.CSS.setPropertyValue(dummy, property, "hidden");
-                                });
-                                Velocity.CSS.setPropertyValue(dummy, "position", sameRatioIndicators.position);
-                                Velocity.CSS.setPropertyValue(dummy, "fontSize", sameRatioIndicators.fontSize);
+                                Velocity.CSS.setPropertyValue(dummy, "overflow", "hidden");
+                                Velocity.CSS.setPropertyValue(dummy, "overflowX", "hidden");
+                                Velocity.CSS.setPropertyValue(dummy, "overflowY", "hidden");
                                 Velocity.CSS.setPropertyValue(dummy, "boxSizing", "content-box");
-                                
+                                /* paddingLeft arbitrarily acts as our proxy property for the em ratio. */
+                                Velocity.CSS.setPropertyValue(dummy, "paddingLeft", measurement + "em");
                                 /* width and height act as our proxy properties for measuring the horizontal and vertical % ratios. */
                                 $.each([ "minWidth", "maxWidth", "width", "minHeight", "maxHeight", "height" ], function(i, property) {
                                     Velocity.CSS.setPropertyValue(dummy, property, measurement + "%");
                                 });
-                                /* paddingLeft arbitrarily acts as our proxy property for the em ratio. */
-                                Velocity.CSS.setPropertyValue(dummy, "paddingLeft", measurement + "em");
 
                                 /* Divide the returned value by the measurement to get the ratio between 1% and 1px. Default to 1 since working with 0 can produce Infinite. */
                                 unitRatios.percentToPxWidth = callUnitConversionData.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(dummy, "width", null, true)) || 1) / measurement; /* GET */
                                 unitRatios.percentToPxHeight = callUnitConversionData.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(dummy, "height", null, true)) || 1) / measurement; /* GET */
                                 unitRatios.emToPx = callUnitConversionData.lastEmToPx = (parseFloat(CSS.getPropertyValue(dummy, "paddingLeft")) || 1) / measurement; /* GET */
-                                
+
                                 sameRatioIndicators.myParent.removeChild(dummy);
                             } else {
                                 unitRatios.emToPx = callUnitConversionData.lastEmToPx;
@@ -3017,10 +3010,10 @@ return function (global, window, document, undefined) {
                                 /* By this point, we cannot avoid unit conversion (it's undesirable since it causes layout thrashing).
                                    If we haven't already, we trigger calculateUnitRatios(), which runs once per element per call. */
                                 elementUnitConversionData = elementUnitConversionData || calculateUnitRatios();
-                                
+
                                 /* The following RegEx matches CSS properties that have their % values measured relative to the x-axis. */
                                 /* Note: W3C spec mandates that all of margin and padding's properties (even top and bottom) are %-relative to the *width* of the parent element. */
-                                var axis = (/margin|padding|left|right|width|text|word|letter/i.test(property) || /X$/.test(property) || property === "x") ? "x" : "y";
+                                var axis = (/margin|padding|left|right|width|text|word|letter/i.test(property) || /X$/.test(property)) ? "x" : "y";
 
                                 /* In order to avoid generating n^2 bespoke conversion functions, unit conversion is a two-step process:
                                    1) Convert startValue into pixels. 2) Convert this new pixel value into endValue's unit type. */
@@ -3116,12 +3109,11 @@ return function (global, window, document, undefined) {
                     /* The call array houses the tweensContainers for each element being animated in the current call. */
                     call.push(tweensContainer);
 
-                    /* Store the tweensContainer and options if we're working on the default effects queue, so that they can be used by the reverse command. */
-                    if (opts.queue === "") {
+                    /* Store the tweensContainer on the element, plus the current call's opts so that Velocity can reference this data the next time this element is animated. */
+                    if (opts.queue !== false) {
                         Data(element).tweensContainer = tweensContainer;
-                        Data(element).opts = opts;
                     }
-
+                    Data(element).opts = opts;
                     /* Switch on the element's animating flag. */
                     Data(element).isAnimating = true;
 
@@ -3208,7 +3200,7 @@ return function (global, window, document, undefined) {
 
         /* If the "nodeType" property exists on the elements variable, we're animating a single element.
            Place it in an array so that $.each() can iterate over it. */
-        $.each(elements, function(i, element) {
+        $.each(createElementsArray(elements), function(i, element) {
             /* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
             if (Type.isNode(element)) {
                 processElement.call(element);
@@ -3270,8 +3262,6 @@ return function (global, window, document, undefined) {
         Timing
     **************/
 
-    var ticker = window.requestAnimationFrame || rAFShim;
-
     /* Inactive browser tabs pause rAF, which results in all active animations immediately sprinting to their completion states when the tab refocuses.
        To get around this, we dynamically switch rAF to setTimeout (which the browser *doesn't* pause) when the tab loses focus. We skip this for mobile
        devices to avoid wasting battery power on inactive tabs. */
@@ -3316,7 +3306,7 @@ return function (global, window, document, undefined) {
 
             /* Iterate through each active call. */
             for (var i = 0, callsLength = Velocity.State.calls.length; i < callsLength; i++) {
-                /* When a Velocity call is completed, its Velocity.State.calls entry is set to false. Continue on to the next call. */
+                /* When a velocity call is completed, its Velocity.State.calls entry is set to false. Continue on to the next call. */
                 if (!Velocity.State.calls[i]) {
                     continue;
                 }
@@ -3494,6 +3484,7 @@ return function (global, window, document, undefined) {
                 if (opts.display !== undefined && opts.display !== "none") {
                     Velocity.State.calls[i][2].display = false;
                 }
+
                 if (opts.visibility && opts.visibility !== "hidden") {
                     Velocity.State.calls[i][2].visibility = false;
                 }
@@ -3579,7 +3570,6 @@ return function (global, window, document, undefined) {
 
                         if (Data(element).transformCache[transformName] !== undefined && new RegExp("^\\(" + defaultValue + "[^.]").test(currentValue)) {
                             transformHAPropertyExists = true;
-
                             delete Data(element).transformCache[transformName];
                         }
                     });
@@ -3611,7 +3601,9 @@ return function (global, window, document, undefined) {
                 try {
                     opts.complete.call(elements, elements);
                 } catch (error) {
-                    setTimeout(function() { throw error; }, 1);
+                    setTimeout(function() {
+                        throw error;
+                    }, 1);
                 }
             }
 
@@ -3629,15 +3621,6 @@ return function (global, window, document, undefined) {
             ****************************/
 
             if (opts.loop === true && !isStopped) {
-                /* If a rotateX/Y/Z property is being animated to 360 deg with loop:true, swap tween start/end values to enable
-                   continuous iterative rotation looping. (Otherise, the element would just rotate back and forth.) */
-                $.each(Data(element).tweensContainer, function(propertyName, tweenContainer) {
-                    if (/^rotate/.test(propertyName) && parseFloat(tweenContainer.endValue) === 360) {
-                        tweenContainer.endValue = 0;
-                        tweenContainer.startValue = 360;
-                    }
-                });
-
                 Velocity(element, "reverse", { loop: true, delay: opts.delay });
             }
 
@@ -3730,10 +3713,6 @@ return function (global, window, document, undefined) {
                 /* If the user passed in a begin callback, fire it now. */
                 begin && begin.call(element, element);
 
-                /* Force vertical overflow content to clip so that sliding works as expected. */
-                inlineValues.overflowY = element.style.overflowY;
-                element.style.overflowY = "hidden";
-
                 /* Cache the elements' original vertical dimensional property values so that we can animate back to them. */
                 for (var property in computedValues) {
                     /* Cache all inline values, we reset to upon animation completion. */
@@ -3765,14 +3744,17 @@ return function (global, window, document, undefined) {
     $.each([ "In", "Out" ], function(i, direction) {
         Velocity.Sequences["fade" + direction] = function (element, options, elementsIndex, elementsSize, elements, promiseData) {
             var opts = $.extend({}, options),
-                propertiesMap = { opacity: (direction === "In") ? 1 : 0 },
-                originalComplete = opts.complete;
+                propertiesMap = {
+                    opacity: (direction === "In") ? 1 : 0
+                };
 
             /* Since sequences are triggered individually for each element in the animated set, avoid repeatedly triggering
                callbacks by firing them only when the final element has been reached. */
             if (elementsIndex !== elementsSize - 1) {
                 opts.complete = opts.begin = null;
             } else {
+                var originalComplete = opts.complete;
+
                 opts.complete = function() {
                     if (originalComplete) {
                         originalComplete.call(element, element);
