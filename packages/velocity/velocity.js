@@ -15,13 +15,9 @@
          Setup
     ***************/
 
-    /* If jQuery is already loaded, there's no point in loading this shim and polluting the window object with Velocity. */
+    /* If jQuery is already loaded, there's no point in loading this shim. */
     if (window.jQuery) {
         return;
-    }
-
-    if (window.Velocity !== undefined) {
-        throw new Error("Velocity is already loaded. The shim must be loaded BEFORE jquery.velocity.js.");
     }
 
     /* jQuery base. */
@@ -422,9 +418,6 @@
         factory();
     }
 }(function () {
-
-var jQuery = window.jQuery;
-
 return function (global, window, document, undefined) {
 
     /***************
@@ -562,37 +555,25 @@ return function (global, window, document, undefined) {
        Dependencies
     *****************/
 
-    /* Local to our Velocity scope, assign $ to jQuery or the jQuery shim. (The shim is a port of the jQuery utility functions that Velocity uses.) */
-    var $;    
+    var $,
+        isJQuery = false;
 
-    /* The argument passed in by the module loader can either be jQuery (if it was required) or a helper function provided by the module loader
-       (in the case that Velocity's jQuery shim is being used). We check for jQuery by sniffing its unique .fn property. */
-    if (jQuery && jQuery.fn !== undefined) {
-        $ = jQuery;
-    } else if (window.Velocity && window.Velocity.Utilities) {
+    if (global.fn && global.fn.jquery) {
+        $ = global;
+        isJQuery = true;
+    } else {
         $ = window.Velocity.Utilities;
     }
 
-    if (!$) {
-        throw new Error("Velocity: Either jQuery or Velocity's jQuery shim must first be loaded.")
-    /* We allow the global Velocity variable to pre-exist so long as we were responsible for its creation
-      (via the jQuery shim, which uniquely assigns a Utilities property to the Velocity object). */
-    } else if (global.Velocity !== undefined && global.Velocity.Utilities == undefined) {
-        throw new Error("Velocity: Namespace is occupied.");
-    /* Nothing prevents Velocity from working on IE6+7, but it is not worth the time to test on them.
-       Revert to jQuery's $.animate(), and lose Velocity's extra features. */
+    // run IE tests
+    if (IE <= 8 && !isJQuery) {
+        throw new Error("Velocity: IE8 and below require jQuery to be loaded first.");
     } else if (IE <= 7) {
-        if (!jQuery) {
-            throw new Error("Velocity: In IE<=7, Velocity falls back to jQuery, which must first be loaded.");
-        } else {
-            jQuery.fn.velocity = jQuery.fn.animate;
+        /* Revert to jQuery's $.animate(), and lose Velocity's extra features. */
+        jQuery.fn.velocity = jQuery.fn.animate;
 
-            /* Now that $.fn.velocity is aliased, abort this Velocity declaration. */
-            return;
-        }
-    /* IE8 doesn't work with the jQuery shim; it requires jQuery proper. */
-    } else if (IE === 8 && !jQuery) {
-        throw new Error("Velocity: In IE8, Velocity requires jQuery proper to be loaded; Velocity's jQuery shim does not work with IE8.");
+        /* Now that $.fn.velocity is aliased, abort this Velocity declaration. */
+        return;
     }
 
     /* Shorthand alias for jQuery's $.data() utility. */
@@ -3371,9 +3352,12 @@ return function (global, window, document, undefined) {
                     /* If the display option is set to non-"none", set it upfront so that the element can become visible before tweening begins.
                        (Otherwise, display's "none" value is set in completeCall() once the animation has completed.) */
                     if (opts.display !== undefined && opts.display !== null && opts.display !== "none") {
-                        /* Popular versions of major browsers only support the prefixed value of flex. */
                         if (opts.display === "flex") {
-                            CSS.setPropertyValue(element, "display", (IE ? "-ms-" : "-webkit-") + opts.display);
+                            var flexValues = [ "-webkit-box", "-moz-box", "-ms-flexbox", "-webkit-flex" ];
+
+                            $.each(flexValues, function(i, flexValue) {
+                                CSS.setPropertyValue(element, "display", flexValue);
+                            });
                         }
 
                         CSS.setPropertyValue(element, "display", opts.display);
@@ -3686,25 +3670,17 @@ return function (global, window, document, undefined) {
     ******************/
 
     /* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls.
-       If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method. */
-    var framework;
-
-    if (jQuery && jQuery.fn !== undefined) {
-        framework = jQuery;
-    } else if (window.Zepto) {
-        framework = window.Zepto;
-    }
-
-    /* Velocity registers itself onto a global container (window.jQuery || window.Zepto || window) so that certain features are
+       If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method.  Velocity
+       also registers itself onto a global container (window.jQuery || window.Zepto || window) so that certain features are
        accessible beyond just a per-element scope. This master object contains an .animate() method, which is later assigned to $.fn
        (if jQuery or Zepto are present). Accordingly, Velocity can both act on wrapped DOM elements and stand alone for targeting raw DOM elements. */
-    (framework || window).Velocity = Velocity;
+    global.Velocity = Velocity;
 
-    if (framework) {
+    if (global !== window) {
         /* Assign the element function to Velocity's core animate() method. */
-        framework.fn.velocity = animate;
+        global.fn.velocity = animate;
         /* Assign the object function's defaults to Velocity's global defaults object. */
-        framework.fn.velocity.defaults = Velocity.defaults;
+        global.fn.velocity.defaults = Velocity.defaults;
     }
 
     /***********************
@@ -3793,7 +3769,7 @@ return function (global, window, document, undefined) {
     });
 
     return Velocity;
-}((jQuery || window), window, document);
+}((window.jQuery || window.Zepto || window), window, document);
 }));
 
 /******************
