@@ -22,14 +22,7 @@ See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more
 
 ###**New**
 
-- 0.11.4: AMD and CommonJS module loading without having to shim jQuery.
-- 0.11.1: **Huge performance boost, and elements are no longer dirtied with inline styles.**
-- 0.11.0: CSS transform setting/getting. [VelocityJS.org/#hook](http://VelocityJS.org/#hook)
-- 0.10.0: Infinite looping. [VelocityJS.org/#loop](http://VelocityJS.org/#loop)
-- 0.9.0: Hex colors. [VelocityJS.org/#colors](http://VelocityJS.org/#colors)
-- 0.6.0: `visibility`. [VelocityJS.org/#displayAndVisibility](http://VelocityJS.org/#displayAndVisibility)
-- 0.5.0: Promises. [VelocityJS.org/#promises](http://VelocityJS.org/#promises)
-- 0.3.0-0.4.0: SVG animation. [VelocityJS.org/#svg](http://VelocityJS.org/#svg)
+- 1.0.0: Coming soon. `jquery.velocity.js` will just be called `velocity.js`. jQuery will no longer be required, but Velocity works as normal if jQuery is present. Two backwards-incompatible changes: 1) You must iterate through begin/complete/promise/progress callback elements since they are always passed wrapped in an array now. 2) The `bounce` and `elastic` easings have been dropped.
 - 0.1.0: `stop` now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made. [VelocityJS.org/#stop](http://VelocityJS.org/#stop)
 
 ###**Comparisons**
