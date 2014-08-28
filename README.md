@@ -12,7 +12,7 @@
 
 **Which file should I use?**
 
-See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information. If you're using Velocity with jQuery, just use `jquery.velocity.js`.
+If you're using Velocity with jQuery, just use `jquery.velocity.js`. See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information. 
 
 ###**New**
 
