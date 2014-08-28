@@ -2,23 +2,18 @@
    Velocity UI Pack
 **********************/
 
-/* VelocityJS.org UI Pack (4.1.3). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
+/* VelocityJS.org UI Pack (4.1.4). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
 
-(function() {
+;(function (global, window, document) {
 
-    /*************
-        Setup
-    *************/
+    /**************
+        Checks
+    **************/
 
-    var Container = (window.jQuery || window.Zepto || window);
-
-    if (!Container.Velocity || !Container.Velocity.Utilities) {
+    if (!global.Velocity || !global.Velocity.Utilities) {
         window.console && console.log("Velocity UI Pack: Velocity must be loaded first. Aborting.");
-
         return;
-    }
-
-    if (!Container.Velocity.version || (Container.Velocity.version.major <= 0 && Container.Velocity.version.minor <= 11 && Container.Velocity.version.patch < 8)) {
+    } else if (!global.Velocity.version || (global.Velocity.version.major <= 0 && global.Velocity.version.minor <= 11 && global.Velocity.version.patch < 8)) {
         var abortError = "Velocity UI Pack: You need to update Velocity (jquery.velocity.js) to a newer version. Visit http://github.com/julianshapiro/velocity.";
 
         alert(abortError);
@@ -29,14 +24,14 @@
        Register UI
     ******************/
 
-    Container.Velocity.RegisterUI = function (effectName, properties) {
+    global.Velocity.RegisterUI = function (effectName, properties) {
         /* Animate the expansion/contraction of the elements' parent's height for In/Out effects. */
         function animateParentHeight (elements, direction, totalDuration, stagger) {
             var totalHeightDelta = 0,
                 parentNode;
 
             /* Sum the total height (including padding and margin) of all targeted elements. */
-            Container.Velocity.Utilities.each(elements.nodeType ? [ elements ] : elements, function(i, element) {
+            global.Velocity.Utilities.each(elements.nodeType ? [ elements ] : elements, function(i, element) {
                 if (stagger) {
                     /* Increase the totalDuration by the successive delay amounts produced by the stagger option. */
                     totalDuration += i * stagger;
@@ -44,13 +39,13 @@
 
                 parentNode = element.parentNode;
 
-                Container.Velocity.Utilities.each([ "height", "paddingTop", "paddingBottom", "marginTop", "marginBottom"], function(i, property) {
-                    totalHeightDelta += parseFloat(Container.Velocity.CSS.getPropertyValue(element, property));
+                global.Velocity.Utilities.each([ "height", "paddingTop", "paddingBottom", "marginTop", "marginBottom"], function(i, property) {
+                    totalHeightDelta += parseFloat(global.Velocity.CSS.getPropertyValue(element, property));
                 });
             });
 
             /* Animate the parent element's height adjustment (with a varying duration multiplier for aesthetic benefits). */
-            Container.Velocity.animate(
+            global.Velocity.animate(
                 parentNode,
                 { height: (direction === "In" ? "+" : "-") + "=" + totalHeightDelta },
                 { queue: false, easing: "ease-in-out", duration: totalDuration * (direction === "In" ? 0.6 : 1) }
@@ -58,7 +53,7 @@
         }
 
         /* Register a custom sequence for each effect. */
-        Container.Velocity.Sequences[effectName] = function (element, sequenceOptions, elementsIndex, elementsSize, elements, promiseData) {
+        global.Velocity.Sequences[effectName] = function (element, sequenceOptions, elementsIndex, elementsSize, elements, promiseData) {
             var finalElement = (elementsIndex === elementsSize - 1);
 
             /* Iterate through each effect's call array. */
@@ -101,7 +96,7 @@
                             opts.display = sequenceOptions.display;
                         } else if (/In$/.test(effectName)) {
                             /* Inline elements cannot be subjected to transforms, so we switch them to inline-block. */
-                            var defaultDisplay = Container.Velocity.CSS.Values.getDisplayType(element);
+                            var defaultDisplay = global.Velocity.CSS.Values.getDisplayType(element);
                             opts.display = (defaultDisplay === "inline") ? "inline-block" : defaultDisplay;
                         }
                     }
@@ -116,8 +111,8 @@
                     /* Append promise resolving onto the user's sequence callback. */ 
                     function injectFinalCallbacks () {
                         if ((sequenceOptions.display === undefined || sequenceOptions.display === "none") && /Out$/.test(effectName)) {
-                            Container.Velocity.Utilities.each(elements.nodeType ? [ elements ] : elements, function(i, element) {
-                                Container.Velocity.CSS.setPropertyValue(element, "display", "none");
+                            global.Velocity.Utilities.each(elements.nodeType ? [ elements ] : elements, function(i, element) {
+                                global.Velocity.CSS.setPropertyValue(element, "display", "none");
                             });
                         }
 
@@ -148,7 +143,7 @@
                                 resetOptions.complete = injectFinalCallbacks;
                             }  
 
-                            Container.Velocity.animate(element, properties.reset, resetOptions);
+                            global.Velocity.animate(element, properties.reset, resetOptions);
                         /* Only trigger the user's complete callback on the last effect call with the last element in the set. */
                         } else if (finalElement) {
                             injectFinalCallbacks();
@@ -160,12 +155,12 @@
                     }
                 }
 
-                Container.Velocity.animate(element, propertyMap, opts);
+                global.Velocity.animate(element, propertyMap, opts);
             }
         };
 
         /* Return the Velocity object so that RegisterUI calls can be chained. */
-        return Container.Velocity;
+        return global.Velocity;
     };
 
     /*********************
@@ -174,7 +169,7 @@
 
     /* Externalize the packagedEffects data so that they can optionally be modified and re-registered. */
     /* Support: <=IE8: Callouts will have no effect, and transitions will simply fade in/out. IE9/Android 2.3: Most effects are fully supported, the rest fade in/out. All other browsers: full support. */
-    Container.Velocity.RegisterUI.packagedEffects = 
+    global.Velocity.RegisterUI.packagedEffects = 
         { 
             /* Animate.css */
             "callout.bounce": {
@@ -658,7 +653,7 @@
         };
 
     /* Register the packaged effects. */
-    for (var effectName in Container.Velocity.RegisterUI.packagedEffects) {
-        Container.Velocity.RegisterUI(effectName, Container.Velocity.RegisterUI.packagedEffects[effectName]);
+    for (var effectName in global.Velocity.RegisterUI.packagedEffects) {
+        global.Velocity.RegisterUI(effectName, global.Velocity.RegisterUI.packagedEffects[effectName]);
     }
-})();
+})(window.jQuery || window.Zepto || window, window, document);
