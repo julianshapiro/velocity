@@ -4,7 +4,19 @@
 
 /* VelocityJS.org UI Pack (4.1.4). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
 
-;(function (global, window, document) {
+;(function (factory) {    
+    /* CommonJS module. */
+    if (typeof module === "object" && typeof module.exports === "object") {
+        module.exports = factory();
+    /* AMD module. */
+    } else if (typeof define === "function" && define.amd) {
+        define(factory);
+    /* Browser globals. */
+    } else {        
+        factory();
+    }
+}(function() {
+return function (global, window, document, undefined) {
 
     /**************
         Checks
@@ -656,4 +668,5 @@
     for (var effectName in global.Velocity.RegisterUI.packagedEffects) {
         global.Velocity.RegisterUI(effectName, global.Velocity.RegisterUI.packagedEffects[effectName]);
     }
-})(window.jQuery || window.Zepto || window, window, document);
+}((window.jQuery || window.Zepto || window), window, document);
+}));
