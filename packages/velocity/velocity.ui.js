@@ -10,7 +10,7 @@
         module.exports = factory();
     /* AMD module. */
     } else if (typeof define === "function" && define.amd) {
-        define(factory);
+        define([ "velocity" ], factory);
     /* Browser globals. */
     } else {        
         factory();
