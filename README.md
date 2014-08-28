@@ -1,4 +1,4 @@
-##Velocity (0.11.9)
+##Velocity (1.0.0)
 
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
@@ -10,13 +10,9 @@
 
 `<script src="//cdn.jsdelivr.net/jquery.velocity/0.11.9/jquery.velocity.min.js"></script>`
 
-**Which file should I use?**
+###**Updates**
 
-If you're using Velocity with jQuery, just use `jquery.velocity.js`. See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information. 
-
-###**New**
-
-- **1.0.0**: Coming soon. `jquery.velocity.js` will be renamed to `velocity.js`. jQuery will no longer be required, but Velocity will work as normal if jQuery is present. Two backwards-incompatible changes: 1) You must iterate through begin/complete/promise/progress callback elements since they are always passed wrapped in an array now. 2) The `bounce` and `elastic` easings have been removed.
+- **1.0.0**: See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information. 
 - **0.1.0**: `stop` now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made.
 
 ###**Learn**
