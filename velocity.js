@@ -3229,7 +3229,7 @@ return function (global, window, document, undefined) {
                     reverseOptions.complete = opts.complete;
                 }
 
-                Velocity(elements, "reverse", reverseOptions);
+                animate(elements, "reverse", reverseOptions);
             }
         }
 
