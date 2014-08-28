@@ -8,7 +8,7 @@
 `bower install velocity`  
 `npm install velocity-animate`  
 
-`<script src="cdn.jsdelivr.net/velocity/1.0.0/velocity.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/velocity/1.0.0/velocity.min.js"></script>`
 
 ###**Updates**
 
