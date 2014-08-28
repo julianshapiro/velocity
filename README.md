@@ -12,7 +12,7 @@
 
 ###**Updates**
 
-- **1.0.0**: Important. File name change. See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information. 
+- **1.0.0**: Important! File name change. See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information. 
 - **0.1.0**: `stop` now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made.
 
 ###**Learn**
