@@ -417,7 +417,7 @@
     } else {        
         factory();
     }
-}(function () {
+}(function() {
 return function (global, window, document, undefined) {
 
     /***************
@@ -565,9 +565,8 @@ return function (global, window, document, undefined) {
         $ = window.Velocity.Utilities;
     }
 
-    // run IE tests
     if (IE <= 8 && !isJQuery) {
-        throw new Error("Velocity: IE8 and below require jQuery to be loaded first.");
+        throw new Error("Velocity: IE8 and below require jQuery to be loaded before Velocity.");
     } else if (IE <= 7) {
         /* Revert to jQuery's $.animate(), and lose Velocity's extra features. */
         jQuery.fn.velocity = jQuery.fn.animate;
@@ -1011,8 +1010,8 @@ return function (global, window, document, undefined) {
         *************/
 
         RegEx: {
-            /* Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
             isHex: /^#([A-f\d]{3}){1,2}$/i,
+            /* Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
             valueUnwrap: /^[A-z]+\((.*)\)$/i,
             wrappedValueAlreadyExtracted: /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
             /* Split a multi-value property into an array of subvalues, e.g. "rgba(4, 3, 2, 1) 4px 3px 2px 1px" ==> [ "rgba(4, 3, 2, 1)", "4px", "3px", "2px", "1px" ]. */
@@ -2058,8 +2057,8 @@ return function (global, window, document, undefined) {
                 /* Treat a number as a duration. Parse it out. */
                 /* Note: The following RegEx will return true if passed an array with a number as its first item.
                    Thus, arrays are skipped from this check. */
-                if (!Type.isArray(arguments[i]) && /^\d/.test(arguments[i])) {
-                    options.duration = parseFloat(arguments[i]);
+                if (!Type.isArray(arguments[i]) && (/fast|normal|slow/i.test(arguments[i].toString()) || /^\d/.test(arguments[i]))) {
+                    options.duration = arguments[i];
                 /* Treat strings and arrays as easings. */
                 } else if (Type.isString(arguments[i]) || Type.isArray(arguments[i])) {
                     options.easing = arguments[i];
@@ -3702,13 +3701,13 @@ return function (global, window, document, undefined) {
                 opts.display = (direction === "Down" ? (Velocity.CSS.Values.getDisplayType(element) === "inline" ? "inline-block" : "block") : "none");
             }
 
-            opts.begin = function (element) {
+            opts.begin = function () {
                 /* If the user passed in a begin callback, fire it now. */
-                begin && begin.call(element, element);
+                begin && begin.call(elements, elements);
 
                 /* Force vertical overflow content to clip so that sliding works as expected. */
-                inlineValues.overflowY = element.style.overflowY;
-                element.style.overflowY = "hidden";
+                inlineValues.overflow = element.style.overflow;
+                element.style.overflow = "hidden";
 
                 /* Cache the elements' original vertical dimensional property values so that we can animate back to them. */
                 for (var property in computedValues) {
@@ -3722,15 +3721,15 @@ return function (global, window, document, undefined) {
                 }
             }
 
-            opts.complete = function (element) {
+            opts.complete = function () {
                 /* Reset element to its pre-slide inline values once its slide animation is complete. */
                 for (var property in inlineValues) {
                     element.style[property] = inlineValues[property];
                 }
 
                 /* If the user passed in a complete callback, fire it now. */
-                complete && complete.call(element, element);
-                promiseData && promiseData.resolver(elements || element);
+                complete && complete.call(elements, elements);
+                promiseData && promiseData.resolver(elements);
             };
 
             Velocity(element, computedValues, opts);
@@ -3751,10 +3750,10 @@ return function (global, window, document, undefined) {
             } else {
                 opts.complete = function() {
                     if (originalComplete) {
-                        originalComplete.call(element, element);
+                        originalComplete.call(elements, elements);
                     }
 
-                    promiseData && promiseData.resolver(elements || element);
+                    promiseData && promiseData.resolver(elements);
                 }
             }
 
