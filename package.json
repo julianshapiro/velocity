@@ -23,7 +23,7 @@
       "url": "http://julian.com/"
     }
   ],
-  "main": "jquery.velocity.js",
+  "main": "velocity.js",
   "repository": "julianshapiro/velocity",
   "files": [
     "velocity.js",
