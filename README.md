@@ -3,16 +3,15 @@
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
 
+**Author**  
+[Julian Shapiro](http://twitter.com/shapiro)
+
 **Quickstart**  
 
 `bower install velocity`  
 `npm install velocity-animate`  
 
 `<script src="//cdn.jsdelivr.net/velocity/1.0.0/velocity.min.js"></script>`
-
-**Author**  
-
-[Julian Shapiro](http://twitter.com/shapiro)
 
 ###**Updates**
 
