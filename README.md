@@ -10,6 +10,10 @@
 
 `<script src="//cdn.jsdelivr.net/velocity/1.0.0/velocity.min.js"></script>`
 
+**Author**  
+
+[Julian Shapiro](http://twitter.com/shapiro)
+
 ###**Updates**
 
 - **1.0.0**: File name changed to `velocity.js`. See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information. 
