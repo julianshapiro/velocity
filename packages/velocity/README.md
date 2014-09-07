@@ -3,7 +3,7 @@
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
 
-**Want to see something amazing?**
+**Want to see something amazing?**  
 Announcing [Velocity Motion Designer](https://twitter.com/Shapiro/status/508392482967928833).
 
 **Quickstart**  
