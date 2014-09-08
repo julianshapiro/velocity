@@ -4,7 +4,7 @@
 [VelocityJS.org](http://VelocityJS.org)
 
 **Want to see something amazing?**  
-Announcing [Velocity Motion Designer](https://twitter.com/Shapiro/status/508392482967928833)
+Announcing [Velocity Motion Designer](https://twitter.com/Shapiro/status/508392482967928833)!
 
 **Quickstart**  
 
@@ -15,8 +15,8 @@ Announcing [Velocity Motion Designer](https://twitter.com/Shapiro/status/5083924
 
 ###**Updates**
 
-- **1.0.0**: File name changed to `velocity.js`. See [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies) for more information. 
-- **0.1.0**: `stop` now stops animations *immediately* (instead of just clearing the remainder of the animation queue). No other backwards-incompatible changes were made.
+- **1.0.0**: File name changed to `velocity.js`. Read [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies). 
+- **0.1.0**: `stop` now stops animations *immediately* (instead of only clearing the remainder of the animation queue). No other backwards-incompatible changes were made.
 
 ###**Learn**
 
@@ -27,10 +27,10 @@ Announcing [Velocity Motion Designer](https://twitter.com/Shapiro/status/5083924
 
 ###**Comparisons**
 
-- **Famo.us** is a full-fledged *mobile app framework* built around a physics engine.
-- **CSS transitions** are meant for simple interface flourishes triggered by hover states.
+- **Famo.us** is a full-fledged app framework built around a physics engine.
+- **CSS transitions** are meant for simple interface flourishes.
 - **jQuery's $.animate()** is slow and poorly-equipped for motion design.
-- **Velocity** allows you to inject rich motion design into your UI.
+- **Velocity** is a fast, feature-rich standalone alternative to jQuery's $.animate().
 
 ###**Credits**
 
