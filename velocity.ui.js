@@ -6,7 +6,7 @@
 
 ;(function (factory) {
     /* CommonJS module. */
-    if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
+    if (typeof require === "function" && typeof exports === "object" ) {
         module.exports = factory();
     /* AMD module. */
     } else if (typeof define === "function" && define.amd) {
