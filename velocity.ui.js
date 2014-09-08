@@ -6,11 +6,11 @@
 
 ;(function (factory) {
     /* CommonJS module. */
-    if (typeof module === "object" && typeof module.exports === "object") {
+    if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
         module.exports = factory();
     /* AMD module. */
     } else if (typeof define === "function" && define.amd) {
-        define([ "velocity-animate" ], factory);
+        define([ "velocity" ], factory);
     /* Browser globals. */
     } else {
         factory();
