@@ -8,6 +8,7 @@ Announcing [Velocity Motion Designer](https://twitter.com/Shapiro/status/5083924
 
 **Quickstart**  
 
+Package Managers:  
 `bower install velocity`  
 `npm install velocity-animate`  
 
