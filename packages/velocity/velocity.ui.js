@@ -401,7 +401,7 @@ return function (global, window, document, undefined) {
             /* Magic.css */
             /* Support: Loses rotation in IE9/Android 2.3. (Fades and scales only.) */
             "transition.whirlIn": {
-                defaultDuration: 750,
+                defaultDuration: 850,
                 calls: [
                     [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: [ 1, 0 ], scaleY: [ 1, 0 ], rotateY: [ 0, 160 ] }, 1, { easing: "easeInOutSine" } ]
                 ]
@@ -409,20 +409,20 @@ return function (global, window, document, undefined) {
             /* Magic.css */
             /* Support: Loses rotation in IE9/Android 2.3. (Fades and scales only.) */
             "transition.whirlOut": {
-                defaultDuration: 850,
+                defaultDuration: 750,
                 calls: [
-                    [ { opacity: [ 0, "easeInOutQuint", 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: 0, scaleY: 0, rotateY: 160 }, 1, { easing: "easeInOutSine" } ]
+                    [ { opacity: [ 0, "easeInOutQuint", 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: 0, scaleY: 0, rotateY: 160 }, 1, { easing: "swing" } ]
                 ],
                 reset: { scaleX: 1, scaleY: 1, rotateY: 0 }
             },
             "transition.shrinkIn": {
-                defaultDuration: 700,
+                defaultDuration: 750,
                 calls: [
                     [ { opacity: [ 1, 0 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: [ 1, 1.5 ], scaleY: [ 1, 1.5 ], translateZ: 0 } ]
                 ]
             },
             "transition.shrinkOut": {
-                defaultDuration: 650,
+                defaultDuration: 600,
                 calls: [
                     [ { opacity: [ 0, 1 ], transformOriginX: [ "50%", "50%" ], transformOriginY: [ "50%", "50%" ], scaleX: 1.3, scaleY: 1.3, translateZ: 0 } ]
                 ],
@@ -454,9 +454,9 @@ return function (global, window, document, undefined) {
             "transition.bounceOut": {
                 defaultDuration: 800,
                 calls: [
-                    [ { scaleX: 0.95, scaleY: 0.95 }, 0.40 ],
-                    [ { scaleX: 1.1, scaleY: 1.1, translateZ: 0 }, 0.40 ],
-                    [ { opacity: [ 0, 1 ], scaleX: 0.3, scaleY: 0.3 }, 0.20 ]
+                    [ { scaleX: 0.95, scaleY: 0.95 }, 0.35 ],
+                    [ { scaleX: 1.1, scaleY: 1.1, translateZ: 0 }, 0.35 ],
+                    [ { opacity: [ 0, 1 ], scaleX: 0.3, scaleY: 0.3 }, 0.30 ]
                 ],
                 reset: { scaleX: 1, scaleY: 1 }
             },
@@ -641,8 +641,7 @@ return function (global, window, document, undefined) {
                 defaultDuration: 800,
                 calls: [
                     [ { opacity: [ 1, 0 ], transformPerspective: [ 800, 800 ], transformOriginX: [ 0, 0 ], transformOriginY: [ "100%", "100%" ], rotateX: [ 0, -180 ] } ]
-                ],
-                reset: { transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%" }
+                ]
             },
             /* Magic.css */
             /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
@@ -738,7 +737,7 @@ return function (global, window, document, undefined) {
                         var elements = nextCall.elements.nodeType ? [ nextCall.elements ] : nextCall.elements;
 
                         callbackOriginal && callbackOriginal.call(elements, elements);
-                        $.Velocity(currentCall);
+                        Velocity(currentCall);
                     }
 
                     nextCall.options = $.extend({}, nextCall.options, options);
@@ -748,7 +747,7 @@ return function (global, window, document, undefined) {
             sequence.reverse();
         }
 
-        $.Velocity(sequence[0]);
+        Velocity(sequence[0]);
     };
 }((window.jQuery || window.Zepto || window), window, document);
 }));
