@@ -9,10 +9,10 @@ Announcing [Velocity Motion Designer](https://twitter.com/Shapiro/status/5083924
 **Quickstart**  
 
 Velocity:  
-`<script src="//cdn.jsdelivr.net/velocity/1.0.0/velocity.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/velocity/1.1.0/velocity.min.js"></script>`
 
 Velocity UI pack:  
-`<script src="//cdn.jsdelivr.net/velocity/1.0.0/velocity.ui.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/velocity/1.1.0/velocity.ui.min.js"></script>`
 
 Package managers:  
 `bower install velocity`  
