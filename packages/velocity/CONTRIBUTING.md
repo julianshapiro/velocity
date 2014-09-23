@@ -7,3 +7,5 @@
 - For a variety of reasons, I rarely merge pull requests. There is no need to make one; just explain your issue and I will take care of it. Thank you so much.
 
 - Please skim the FAQ before asking questions: https://github.com/julianshapiro/velocity/issues/47.
+
+- @ydaniv provides moderation support for Velocity's GitHub issues.
