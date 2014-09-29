@@ -3150,13 +3150,6 @@ return function (global, window, document, undefined) {
                     /* Once the final element in this call's element set has been processed, push the call array onto
                        Velocity.State.calls for the animation tick to immediately begin processing. */
                     if (elementsIndex === elementsLength - 1) {
-                        /* To speed up iterating over this array, it is compacted (falsey items -- calls that have completed -- are removed)
-                           when its length has ballooned to a point that can impact tick performance. This only becomes necessary when animation
-                           has been continuous with many elements over a long period of time; whenever all active calls are completed, completeCall() clears Velocity.State.calls. */
-                        if (Velocity.State.calls.length > 10000) {
-                            Velocity.State.calls = compactSparseArray(Velocity.State.calls);
-                        }
-
                         /* Add the current call plus its associated metadata (the element set and the call's options) onto the global call container.
                            Anything on this call container is subjected to tick() processing. */
                         Velocity.State.calls.push([ call, elements, opts, null, promiseData.resolver ]);
@@ -3337,6 +3330,13 @@ return function (global, window, document, undefined) {
             /********************
                Call Iteration
             ********************/
+
+            /* To speed up iterating over this array, it is compacted (falsey items -- calls that have completed -- are removed)
+            when its length has ballooned to a point that can impact tick performance. This only becomes necessary when animation
+            has been continuous with many elements over a long period of time; whenever all active calls are completed, completeCall() clears Velocity.State.calls. */
+            if (Velocity.State.calls.length > 10000) {
+                Velocity.State.calls = compactSparseArray(Velocity.State.calls);
+            }
 
             /* Iterate through each active call. */
             for (var i = 0, callsLength = Velocity.State.calls.length; i < callsLength; i++) {
