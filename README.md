@@ -1,4 +1,4 @@
-##Mobify Velocity (1.1.2) -- a fork of Velocity
+##Mobify Velocity (1.1.2)
 
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
