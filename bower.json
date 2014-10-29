@@ -27,7 +27,7 @@
     "*.md"
   ],
   "dependencies": {
-    "jquery": "jquery/jquery"
+    "jquery": "*"
   },
   "repository" :
   { 
