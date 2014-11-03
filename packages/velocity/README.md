@@ -37,9 +37,9 @@ Package managers:
 - **Velocity** is a fast, feature-rich standalone alternative to jQuery's $.animate().
 
 ###**Users**
-[tumblr.com](tumblr.com) [scribd.com](scribd.com) [gap.com](gap.com) [complex.com](complex.com) [orbitz.com](orbitz.com) [htc.com](htc.com) [eater.com](eater.com) [seatgeek.com](seatgeek.com) [warbyparker.com](warbyparker.com) [oldnavy.com](oldnavy.com) [trove.com](trove.com) [saucelabs.com](saucelabs.com) [diy.org](diy.org) [siftscience.com](siftscience.com) [dropcam.com](dropcam.com) [birchbox.com](birchbox.com) [clinkle.com](clinkle.com) [weezer.com](weezer.com)
+[tumblr.com](http://tumblr.com) [scribd.com](http://scribd.com) [gap.com](http://gap.com) [complex.com](http://complex.com) [orbitz.com](http://orbitz.com) [htc.com](http://htc.com) [eater.com](http://eater.com) [seatgeek.com](http://seatgeek.com) [warbyparker.com](http://warbyparker.com) [oldnavy.com](http://oldnavy.com) [trove.com](http://trove.com) [saucelabs.com](http://saucelabs.com) [diy.org](http://diy.org) [siftscience.com](http://siftscience.com) [dropcam.com](http://dropcam.com) [birchbox.com](http://birchbox.com) [clinkle.com](http://clinkle.com) [weezer.com](http://weezer.com)
 
 ====
 
-[Stripe](https://stripe.com/blog/stripe-open-source-retreat) sponsors Velocity's development. [BrowserStack](browserstack.com) provides testing services.
+[Stripe](https://stripe.com/blog/stripe-open-source-retreat) sponsors Velocity's development. [BrowserStack](browserstack.com) provides testing services.  
 [MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).
