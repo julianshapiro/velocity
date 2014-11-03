@@ -41,5 +41,5 @@ Package managers:
 
 ====
 
-<a href="https://stripe.com/blog/stripe-open-source-retreat">Stripe</a> sponsors Velocity's development.  
+[Stripe](https://stripe.com/blog/stripe-open-source-retreat) sponsors Velocity's development. [BrowserStack](browserstack.com) provides testing services.
 [MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).
