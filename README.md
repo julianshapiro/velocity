@@ -41,6 +41,9 @@ Package managers:
 
 - <a href="https://stripe.com/blog/stripe-open-source-retreat">Stripe</a> sponsors Velocity's development.
 - <a href="http://browserstack.com">BrowserStack</a> provides Velocity's testing services. 
+ 
+###**Users**
+[tumblr.com](tumblr.com) [scribd.com](scribd.com) [gap.com](gap.com) [complex.com](complex.com) [orbitz.com](orbitz.com) [htc.com](htc.com) [eater.com](eater.com) [seatgeek.com](seatgeek.com) [warbyparker.com](warbyparker.com) [oldnavy.com](oldnavy.com) [trove.com](trove.com) [saucelabs.com](saucelabs.com) [diy.org](diy.org) [siftscience.com](siftscience.com) [dropcam.com](dropcam.com) [birchbox.com](birchbox.com) [clinkle.com](clinkle.com) [weezer.com](weezer.com)
 
 ====
 
