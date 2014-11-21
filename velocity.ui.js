@@ -22,12 +22,17 @@ return function (global, window, document, undefined) {
         Checks
     *************/
 
-    if (!global.Velocity || !global.Velocity.Utilities) {
-        window.console && console.log("Velocity UI Pack: Velocity must be loaded first. Aborting.");
-        return;
+    /* CommonJS module. */
+    if (typeof require === "function" && typeof exports === "object" ) {
+      var Velocity = require('velocity-animate'),
+          $ = Velocity.Utilities;
+      /* Browser globals. */
+    } else if (!global.Velocity || !global.Velocity.Utilities) {
+      window.console && console.log("Velocity UI Pack: Velocity must be loaded first. Aborting.");
+      return;
     } else {
-        var Velocity = global.Velocity,
-            $ = Velocity.Utilities;
+      var Velocity = global.Velocity,
+          $ = Velocity.Utilities;
     }
 
     var velocityVersion = Velocity.version,
