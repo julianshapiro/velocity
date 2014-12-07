@@ -1,7 +1,7 @@
 ##Velocity 1.1.0
 
-**New**
-There's now a mailing list for big Velocity updates. The list will also include UI animation advice. Sign up on http://VelocityJS.org  (see the navigation bar).
+**New**  
+There's now a mailing list for big Velocity updates. The list will also include UI animation advice. Sign up on [VelocityJS.org](http://VelocityJS.org) (see the navigation bar).
 
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
