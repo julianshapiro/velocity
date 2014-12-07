@@ -3,9 +3,6 @@
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
 
-**Want to see something awesome?**  
-Announcing [Velocity Motion Designer](https://twitter.com/Shapiro/status/508392482967928833)!
-
 **Quickstart**  
 
 Velocity:  
@@ -20,6 +17,7 @@ Package managers:
 
 ###**Updates**
 
+- *There's now a mailing list for big Velocity updates. The list will also include UI animation advice. Sign up on http://VelocityJS.org  (see the navigation bar).*
 - **1.0.0**: File name changed to `velocity.js`. Read [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies). 
 - **0.1.0**: `stop` now stops animations *immediately* (instead of only clearing the remainder of the animation queue). No other backwards-incompatible changes were made.
 
