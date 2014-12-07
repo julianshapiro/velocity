@@ -1,5 +1,8 @@
 ##Velocity 1.1.0
 
+**New**
+There's now a mailing list for big Velocity updates. The list will also include UI animation advice. Sign up on http://VelocityJS.org  (see the navigation bar).
+
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
 
@@ -17,7 +20,6 @@ Package managers:
 
 ###**Updates**
 
-- *There's now a mailing list for big Velocity updates. The list will also include UI animation advice. Sign up on http://VelocityJS.org  (see the navigation bar).*
 - **1.0.0**: File name changed to `velocity.js`. Read [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies). 
 - **0.1.0**: `stop` now stops animations *immediately* (instead of only clearing the remainder of the animation queue). No other backwards-incompatible changes were made.
 
