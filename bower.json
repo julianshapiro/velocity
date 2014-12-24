@@ -23,6 +23,7 @@
   "license": "MIT",
   "ignore": [
     "*.json",
+    "!/bower.json",
     "LICENSE",
     "*.md"
   ],
