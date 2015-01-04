@@ -947,8 +947,11 @@ return function (global, window, document, undefined) {
         var easing = value;
 
         /* The easing option can either be a string that references a pre-registered easing,
+           or a function that accepts an argument between 0 and 1 and returns a value between 0 and 1
            or it can be a two-/four-item array of integers to be converted into a bezier/spring function. */
-        if (Type.isString(value)) {
+        if (Type.isFunction(value)) {
+            return value;
+        } else if (Type.isString(value)) {
             /* Ensure that the easing has been assigned to jQuery's Velocity.Easings object. */
             if (!Velocity.Easings[value]) {
                 easing = false;
