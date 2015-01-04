@@ -2169,9 +2169,10 @@ return function (global, window, document, undefined) {
                     if (activeCall) {
                         /* Iterate through the active call's targeted elements. */
                         $.each(activeCall[1], function(k, activeElement) {
-                            var queueName = Type.isString(options) ? options : "";
+                            var queueName = Type.isString(options) ? options : "",
+                                hasQueue  = activeCall[2].queue !== false;
 
-                            if (options !== undefined && activeCall[2].queue !== queueName) {
+                            if (options !== undefined && hasQueue && activeCall[2].queue !== queueName) {
                                 return true;
                             }
 
@@ -2180,7 +2181,7 @@ return function (global, window, document, undefined) {
                                 /* Check that this call was applied to the target element. */
                                 if (element === activeElement) {
                                     /* Optionally clear the remaining queued calls. */
-                                    if (options !== undefined) {
+                                    if (options !== undefined && hasQueue) {
                                         /* Iterate through the items in the element's queue. */
                                         $.each($.queue(element, queueName), function(_, item) {
                                             /* The queue array can contain an "inprogress" string, which we skip. */
@@ -2195,7 +2196,7 @@ return function (global, window, document, undefined) {
                                         $.queue(element, queueName, []);
                                     }
 
-                                    if (Data(element) && queueName === "") {
+                                    if (Data(element) && hasQueue) {
                                         /* Since "reverse" uses cached start values (the previous call's endValues),
                                            these values must be changed to reflect the final value that the elements were actually tweened to. */
                                         $.each(Data(element).tweensContainer, function(m, activeTween) {
