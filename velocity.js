@@ -1577,6 +1577,8 @@ return function (global, window, document, undefined) {
                     return "list-item";
                 } else if (/^(tr)$/i.test(tagName)) {
                     return "table-row";
+                } else if (/^(table)$/i.test(tagName)) {
+                    return "table";
                 /* Default to "block" when no match is found. */
                 } else {
                     return "block";
