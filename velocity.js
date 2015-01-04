@@ -656,7 +656,24 @@ return function (global, window, document, undefined) {
         mock: false,
         version: { major: 1, minor: 1, patch: 0 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
-        debug: false
+        debug: false,
+        /* Pause/Resume members */
+        isPaused: null,
+        pauseTimestamp: null,
+        isResumed: null,
+        pause: function() {
+            if (this.isPaused)
+                return false;
+            this.isPaused = true;
+            this.isResumed = null;
+            this.pauseTimestamp = (new Date).getTime();
+        },
+        resume: function() {
+            if (this.isPaused) {
+                this.isResumed = true;
+                this.isPaused = null;
+            }
+        }
     };
 
     /* Retrieve the appropriate scroll anchor and property name for the browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
@@ -3365,7 +3382,14 @@ return function (global, window, document, undefined) {
                    same style value as the element's current value. */
                 if (!timeStart) {
                     timeStart = Velocity.State.calls[i][3] = timeCurrent - 16;
-                }
+                } else {
+                    if (Velocity.isResumed) {
+                        Velocity.State.calls[i][3] = timeStart = callContainer[3] = timeCurrent - (Velocity.pauseTimestamp - timeStart) - 16;
+                        Velocity.isResumed = Velocity.isPaused = Velocity.pauseTimestamp = null;
+                    } else if (Velocity.isPaused) {
+                        timeStart = timeCurrent - (Velocity.pauseTimestamp - timeStart) - 16;
+                    }
+
 
                 /* The tween's completion percentage is relative to the tween's start time, not the tween's start value
                    (which would result in unpredictable tween durations since JavaScript's timers are not particularly accurate).
