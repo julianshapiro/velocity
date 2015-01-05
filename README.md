@@ -1,8 +1,5 @@
 ##Velocity 1.2.0
 
-**New**  
-I've created a newsletter in which I'll be sharing UI animation advice. I'll also notify you if there's a big update to Velocity. Sign up via the text input on the [VelocityJS.org](http://VelocityJS.org) navigation bar.
-
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
 
