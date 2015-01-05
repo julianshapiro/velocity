@@ -2,7 +2,7 @@
    Velocity UI Pack
 **********************/
 
-/* VelocityJS.org UI Pack (5.0.1). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
+/* VelocityJS.org UI Pack (5.0.2). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
 
 ;(function (factory) {
     /* CommonJS module. */
@@ -734,7 +734,8 @@ return function (global, window, document, undefined) {
                         options = {};
 
                     options[timing] = function() {
-                        var elements = nextCall.elements.nodeType ? [ nextCall.elements ] : nextCall.elements;
+                        var nextCallElements = nextCall.elements || nextCall.e;
+                        var elements = nextCallElements.nodeType ? [ nextCallElements ] : nextCallElements;
 
                         callbackOriginal && callbackOriginal.call(elements, elements);
                         Velocity(currentCall);
