@@ -2,7 +2,7 @@
    Velocity UI Pack
 **********************/
 
-/* VelocityJS.org UI Pack (5.0.0). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
+/* VelocityJS.org UI Pack (5.0.1). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
 
 ;(function (factory) {
     /* CommonJS module. */
@@ -266,7 +266,7 @@ return function (global, window, document, undefined) {
             "callout.pulse": {
                 defaultDuration: 825,
                 calls: [
-                    [ { scaleX: 1.1, scaleY: 1.1 }, 0.50 ],
+                    [ { scaleX: 1.1, scaleY: 1.1 }, 0.50, { easing: "easeInExpo" } ],
                     [ { scaleX: 1, scaleY: 1 }, 0.50 ]
                 ]
             },
@@ -717,7 +717,7 @@ return function (global, window, document, undefined) {
        Sequence Running
     **********************/
 
-    /* Sequence calls must use Velocity's single-object arguments syntax. */
+    /* Note: Sequence calls must use Velocity's single-object arguments syntax. */
     Velocity.RunSequence = function (originalSequence) {
         var sequence = $.extend(true, [], originalSequence);
 
