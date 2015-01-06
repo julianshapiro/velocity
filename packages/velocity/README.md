@@ -6,10 +6,10 @@
 **Quickstart**  
 
 Velocity (CDN):  
-`<script src="//cdn.jsdelivr.net/velocity/1.2.0/velocity.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/velocity/1.2.1/velocity.min.js"></script>`
 
 Velocity UI pack (CDN):  
-`<script src="//cdn.jsdelivr.net/velocity/1.2.0/velocity.ui.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/velocity/1.2.1/velocity.ui.min.js"></script>`
 
 Package managers:  
 `bower install velocity`  
