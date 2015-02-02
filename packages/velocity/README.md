@@ -35,7 +35,7 @@ Package managers:
 - **Velocity** is a fast, feature-rich standalone alternative to jQuery's $.animate().
 
 ###**Users**
-[tumblr.com](http://tumblr.com) [scribd.com](http://scribd.com) [gap.com](http://gap.com) [complex.com](http://complex.com) [orbitz.com](http://orbitz.com) [htc.com](http://htc.com) [eater.com](http://eater.com) [seatgeek.com](http://seatgeek.com) [warbyparker.com](http://warbyparker.com) [oldnavy.com](http://oldnavy.com) [trove.com](http://trove.com) [saucelabs.com](http://saucelabs.com) [diy.org](http://diy.org) [siftscience.com](http://siftscience.com) [dropcam.com](http://dropcam.com) [clinkle.com](http://clinkle.com) [weezer.com](http://weezer.com) [welt.de](http://welt.de) [dyson360eye.com](http://dyson360eye.com)
+[whatsapp.com](http://web.whatsapp.com) [tumblr.com](http://tumblr.com) [scribd.com](http://scribd.com) [gap.com](http://gap.com) [complex.com](http://complex.com) [orbitz.com](http://orbitz.com) [htc.com](http://htc.com) [eater.com](http://eater.com) [seatgeek.com](http://seatgeek.com) [warbyparker.com](http://warbyparker.com) [oldnavy.com](http://oldnavy.com) [trove.com](http://trove.com) [saucelabs.com](http://saucelabs.com) [diy.org](http://diy.org) [siftscience.com](http://siftscience.com) [dropcam.com](http://dropcam.com) [clinkle.com](http://clinkle.com) [weezer.com](http://weezer.com) [welt.de](http://welt.de) [dyson360eye.com](http://dyson360eye.com)
 
 ====
 
