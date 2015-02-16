@@ -1,5 +1,8 @@
 ##Velocity 1.2.1
 
+**News**  
+[Pre-order the fantastic Velocity.js book.](https://twitter.com/Shapiro/status/559572916560343041)
+
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
 
