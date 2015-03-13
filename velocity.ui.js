@@ -2,7 +2,7 @@
    Velocity UI Pack
 **********************/
 
-/* VelocityJS.org UI Pack (5.0.0). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
+/* VelocityJS.org UI Pack (5.0.4). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
 
 ;(function (factory) {
     /* CommonJS module. */
@@ -266,7 +266,7 @@ return function (global, window, document, undefined) {
             "callout.pulse": {
                 defaultDuration: 825,
                 calls: [
-                    [ { scaleX: 1.1, scaleY: 1.1 }, 0.50 ],
+                    [ { scaleX: 1.1, scaleY: 1.1 }, 0.50, { easing: "easeInExpo" } ],
                     [ { scaleX: 1, scaleY: 1 }, 0.50 ]
                 ]
             },
@@ -641,7 +641,8 @@ return function (global, window, document, undefined) {
                 defaultDuration: 800,
                 calls: [
                     [ { opacity: [ 1, 0 ], transformPerspective: [ 800, 800 ], transformOriginX: [ 0, 0 ], transformOriginY: [ "100%", "100%" ], rotateX: [ 0, -180 ] } ]
-                ]
+                ],
+                reset: { transformPerspective: 0, transformOriginX: "50%", transformOriginY: "50%" }
             },
             /* Magic.css */
             /* Support: Loses rotation in IE9/Android 2.3 (fades only). */
@@ -717,7 +718,7 @@ return function (global, window, document, undefined) {
        Sequence Running
     **********************/
 
-    /* Sequence calls must use Velocity's single-object arguments syntax. */
+    /* Note: Sequence calls must use Velocity's single-object arguments syntax. */
     Velocity.RunSequence = function (originalSequence) {
         var sequence = $.extend(true, [], originalSequence);
 
@@ -729,18 +730,26 @@ return function (global, window, document, undefined) {
                     /* Parallel sequence calls (indicated via sequenceQueue:false) are triggered
                        in the previous call's begin callback. Otherwise, chained calls are normally triggered
                        in the previous call's complete callback. */
-                    var timing = (currentCall.options && currentCall.options.sequenceQueue === false) ? "begin" : "complete",
-                        callbackOriginal = nextCall.options && nextCall.options[timing],
+                    var currentCallOptions = currentCall.o || currentCall.options,
+                        nextCallOptions = nextCall.o || nextCall.options;
+
+                    var timing = (currentCallOptions && currentCallOptions.sequenceQueue === false) ? "begin" : "complete",
+                        callbackOriginal = nextCallOptions && nextCallOptions[timing],
                         options = {};
 
                     options[timing] = function() {
-                        var elements = nextCall.elements.nodeType ? [ nextCall.elements ] : nextCall.elements;
+                        var nextCallElements = nextCall.e || nextCall.elements;
+                        var elements = nextCallElements.nodeType ? [ nextCallElements ] : nextCallElements;
 
                         callbackOriginal && callbackOriginal.call(elements, elements);
                         Velocity(currentCall);
                     }
 
-                    nextCall.options = $.extend({}, nextCall.options, options);
+                    if (nextCall.o) {
+                        nextCall.o = $.extend({}, nextCallOptions, options);
+                    } else {
+                        nextCall.options = $.extend({}, nextCallOptions, options);
+                    }
                 }
             });
 

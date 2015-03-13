@@ -1,18 +1,18 @@
-##Mobify Velocity (1.1.2)
+## Mobify Velocity 1.2.2
+
+**News**  
+Pre-order the fantastic [Velocity.js book](https://twitter.com/Shapiro/status/559572916560343041) (in stores nationwide soon).
 
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
 
-**Want to see something amazing?**  
-Announcing [Velocity Motion Designer](https://twitter.com/Shapiro/status/508392482967928833)!
-
 **Quickstart**  
 
-Velocity:  
-`<script src="//cdn.jsdelivr.net/velocity/1.1.0/velocity.min.js"></script>`
+Velocity (CDN):  
+`<script src="//cdn.jsdelivr.net/velocity/1.2.2/velocity.min.js"></script>`
 
-Velocity UI pack:  
-`<script src="//cdn.jsdelivr.net/velocity/1.1.0/velocity.ui.min.js"></script>`
+Velocity UI pack (CDN):  
+`<script src="//cdn.jsdelivr.net/velocity/1.2.2/velocity.ui.min.js"></script>`
 
 Package managers:  
 `bower install velocity`  
@@ -20,6 +20,7 @@ Package managers:
 
 ###**Updates**
 
+- **1.2.0**: [Custom tweens](http://VelocityJS.org/#progress). [Custom easings](http://VelocityJS.org/#easing). ["Finish" command](http://VelocityJS.org/#finish). See [commit log](https://github.com/julianshapiro/velocity/commit/2a28e3812c6fe9262244ed3b6d41d12ae9a107c6) for more.
 - **1.0.0**: File name changed to `velocity.js`. Read [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies). 
 - **0.1.0**: `stop` now stops animations *immediately* (instead of only clearing the remainder of the animation queue). No other backwards-incompatible changes were made.
 
@@ -32,16 +33,14 @@ Package managers:
 
 ###**Comparisons**
 
-- **Famo.us** is a full-fledged app framework built around a physics engine.
 - **CSS transitions** are meant for simple interface flourishes.
 - **jQuery's $.animate()** is slow and poorly-equipped for motion design.
 - **Velocity** is a fast, feature-rich standalone alternative to jQuery's $.animate().
 
-###**Credits**
-
-- <a href="https://stripe.com/blog/stripe-open-source-retreat">Stripe</a> sponsors Velocity's development.
-- <a href="http://browserstack.com">BrowserStack</a> provides Velocity's testing services. 
+###**Users**
+[whatsapp.com](http://web.whatsapp.com) [tumblr.com](http://tumblr.com) [scribd.com](http://scribd.com) [gap.com](http://gap.com) [complex.com](http://complex.com) [orbitz.com](http://orbitz.com) [htc.com](http://htc.com) [eater.com](http://eater.com) [seatgeek.com](http://seatgeek.com) [warbyparker.com](http://warbyparker.com) [oldnavy.com](http://oldnavy.com) [trove.com](http://trove.com) [saucelabs.com](http://saucelabs.com) [diy.org](http://diy.org) [siftscience.com](http://siftscience.com) [dropcam.com](http://dropcam.com) [clinkle.com](http://clinkle.com) [weezer.com](http://weezer.com) [welt.de](http://welt.de) [dyson360eye.com](http://dyson360eye.com)
 
 ====
 
-[MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).
+[MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).  
+[Stripe](https://stripe.com/blog/stripe-open-source-retreat) sponsors Velocity's development. [BrowserStack](browserstack.com) provides testing services.

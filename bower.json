@@ -1,6 +1,6 @@
 {
   "name": "velocity",
-  "version": "1.1.2",
+  "version": "1.2.2",
   "homepage": "http://velocityjs.org",
   "authors": [
     { "name" : "Julian Shapiro",
@@ -8,7 +8,7 @@
     }
   ],
   "description": "Accelerated JavaScript animation.",
-  "main": "./velocity.js",
+  "main": [ "./velocity.js", "./velocity.ui.js"],
   "keywords": [
     "animation",
     "jquery",
@@ -23,6 +23,7 @@
   "license": "MIT",
   "ignore": [
     "*.json",
+    "!/bower.json",
     "LICENSE",
     "*.md"
   ],
