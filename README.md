@@ -1,4 +1,4 @@
-##Velocity 1.2.2
+## Mobify Velocity 1.2.2
 
 **News**  
 Pre-order the fantastic [Velocity.js book](https://twitter.com/Shapiro/status/559572916560343041) (in stores nationwide soon).
