@@ -43,4 +43,4 @@ Package managers:
 ====
 
 [MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).  
-[Stripe](https://stripe.com/blog/stripe-open-source-retreat) sponsors Velocity's development. [BrowserStack](browserstack.com) provides testing services.
+[Stripe](https://stripe.com/blog/stripe-open-source-retreat) sponsors Velocity's development. [BrowserStack](http://www.browserstack.com/) provides testing services.
