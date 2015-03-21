@@ -1,7 +1,7 @@
 ##Velocity 1.2.2
 
 **News**  
-Pre-order the fantastic [Velocity.js book](https://twitter.com/Shapiro/status/559572916560343041) (in stores nationwide soon).
+You can now order the Kindle version of the [Velocity.js book](https://twitter.com/Shapiro/status/559572916560343041)!
 
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
