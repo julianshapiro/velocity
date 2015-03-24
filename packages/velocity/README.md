@@ -1,7 +1,7 @@
 ##Velocity 1.2.2
 
 **News**  
-You can now order the Kindle version of the [Velocity.js book](https://twitter.com/Shapiro/status/579385772962254848)!
+You can now order the Kindle version of the [Velocity.js book](http://amazon.com/Web-Animation-using-JavaScript-Develop/dp/0134096665)!
 
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
