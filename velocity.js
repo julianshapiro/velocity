@@ -400,7 +400,7 @@
 
     /* Globalize Velocity onto the window, and assign its Utilities property. */
     window.Velocity = { Utilities: $ };
-})(window);
+})(this);
 
 /******************
     Velocity.js
@@ -418,7 +418,12 @@
         factory();
     }
 }(function() {
-return function (global, window, document, undefined) {
+return function (global, window, undefined) {
+
+    /* Allow this module to be imported in Node */
+    if (typeof window.document == "undefined") {
+        return;
+    }
 
     /***************
         Summary
@@ -2190,7 +2195,7 @@ return function (global, window, document, undefined) {
                             }
 
                             /* Iterate through the calls targeted by the stop command. */
-                            $.each(elements, function(l, element) {                                
+                            $.each(elements, function(l, element) {
                                 /* Check that this call was applied to the target element. */
                                 if (element === activeElement) {
                                     /* Optionally clear the remaining queued calls. */
@@ -3473,7 +3478,7 @@ return function (global, window, document, undefined) {
                             tween.currentValue = currentValue;
 
                             /* If we're tweening a fake 'tween' property in order to log transition values, update the one-per-call variable so that
-                               it can be passed into the progress callback. */ 
+                               it can be passed into the progress callback. */
                             if (property === "tween") {
                                 tweenDummyValue = currentValue;
                             } else {
@@ -3856,7 +3861,7 @@ return function (global, window, document, undefined) {
     });
 
     return Velocity;
-}((window.jQuery || window.Zepto || window), window, document);
+}((this.jQuery || this.Zepto || this), this);
 }));
 
 /******************
