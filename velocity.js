@@ -418,6 +418,10 @@
         factory();
     }
 }(function() {
+   
+// Return an empty object if in an environment without a document object.
+if (typeof document.createElement === "undefined") { return {}; }
+
 return function (global, window, document, undefined) {
 
     /***************
