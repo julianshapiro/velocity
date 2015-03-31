@@ -3,6 +3,9 @@
 **********************/
 
 /* VelocityJS.org UI Pack (5.0.4). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
+var isClient = typeof window != 'undefined';
+var g = isClient ? window : global;
+var d = isClient ? document : {};
 
 ;(function (factory) {
     /* CommonJS module. */
@@ -758,5 +761,5 @@ return function (global, window, document, undefined) {
 
         Velocity(sequence[0]);
     };
-}((window.jQuery || window.Zepto || window), window, document);
+}((g.jQuery || g.Zepto || g), g, d);
 }));

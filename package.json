@@ -1,5 +1,5 @@
 {
-  "name": "velocity-animate",
+  "name": "velocity-animate-server",
   "version": "1.2.2",
   "description": "Accelerated JavaScript animation.",
   "keywords": [
@@ -24,12 +24,10 @@
     }
   ],
   "main": "velocity.js",
-  "repository": "julianshapiro/velocity",
+  "repository": "blented/velocity",
   "files": [
     "velocity.js",
-    "velocity.min.js",
-    "velocity.ui.js",
-    "velocity.ui.min.js"
+    "velocity.ui.js"
   ],
   "dependencies": {
     "jquery": ">= 1.4.3"
