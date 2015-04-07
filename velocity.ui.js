@@ -7,7 +7,7 @@
 ;(function (factory) {
     /* CommonJS module. */
     if (typeof require === "function" && typeof exports === "object" ) {
-        module.exports = factory();
+        module.exports = function (Velocity) { return factory(Velocity); };
     /* AMD module. */
     } else if (typeof define === "function" && define.amd) {
         define([ "velocity" ], factory);
@@ -15,14 +15,17 @@
     } else {
         factory();
     }
-}(function() {
+}(function(VELOCITY) {
 return function (global, window, document, undefined) {
 
     /*************
         Checks
     *************/
 
-    if (!global.Velocity || !global.Velocity.Utilities) {
+    if (VELOCITY) {
+      var Velocity = VELOCITY,
+          $ = VELOCITY.Utilities;
+    } else if (!global.Velocity || !global.Velocity.Utilities) {
         window.console && console.log("Velocity UI Pack: Velocity must be loaded first. Aborting.");
         return;
     } else {

@@ -30,16 +30,5 @@
     "velocity.min.js",
     "velocity.ui.js",
     "velocity.ui.min.js"
-  ],
-  "dependencies": {
-    "jquery": ">= 1.4.3"
-  },
-  "devDependencies": {
-    "grunt": "^0.4.4",
-    "grunt-contrib-concat": "~0.4.0",
-    "grunt-contrib-jshint": "~0.6.3",
-    "grunt-contrib-nodeunit": "~0.2.0",
-    "grunt-contrib-requirejs": "~0.4.4",
-    "grunt-contrib-uglify": "~0.2.2"
-  }
+  ]
 }
