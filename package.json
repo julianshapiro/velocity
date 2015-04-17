@@ -1,6 +1,6 @@
 {
   "name": "velocity-animate",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "description": "Accelerated JavaScript animation.",
   "keywords": [
     "velocity",
@@ -31,9 +31,6 @@
     "velocity.ui.js",
     "velocity.ui.min.js"
   ],
-  "dependencies": {
-    "jquery": ">= 1.4.3"
-  },
   "devDependencies": {
     "grunt": "^0.4.4",
     "grunt-contrib-concat": "~0.4.0",
