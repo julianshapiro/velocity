@@ -20,6 +20,14 @@ Package managers:
 `bower install velocity`  
 `npm install velocity-animate`  
 
+**Found a Possible Bug**
+
+Report it as an issue on here.
+
+**Questions or Problems?**
+
+Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you add the ```velocity.js``` and ```javascript``` tags).
+
 ###**Updates**
 
 - **1.2.0**: [Custom tweens](http://VelocityJS.org/#progress). [Custom easings](http://VelocityJS.org/#easing). ["Finish" command](http://VelocityJS.org/#finish). See [commit log](https://github.com/julianshapiro/velocity/commit/2a28e3812c6fe9262244ed3b6d41d12ae9a107c6) for more.
