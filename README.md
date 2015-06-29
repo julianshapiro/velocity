@@ -3,7 +3,7 @@
 **News**  
 You can now order the Velocity book on [Amazon](http://amazon.com/Web-Animation-using-JavaScript-Develop/dp/0134096665)!
 
-Also, a big round of Velocity updates are coming late June :)
+Also, a big round of Velocity updates are coming early July :)
 
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
