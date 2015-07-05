@@ -3702,6 +3702,9 @@ return function (global, window, document, undefined) {
                     if (/^rotate/.test(propertyName) && parseFloat(tweenContainer.endValue) === 360) {
                         tweenContainer.endValue = 0;
                         tweenContainer.startValue = 360;
+                    } else if (/^rotate/.test(propertyName) && parseFloat(tweenContainer.endValue) === -360) {
+                        tweenContainer.endValue = 0;
+                        tweenContainer.startValue = -360;
                     }
 
                     if (/^backgroundPosition/.test(propertyName) && parseFloat(tweenContainer.endValue) === 100 && tweenContainer.unitType === "%") {
