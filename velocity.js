@@ -3699,10 +3699,12 @@ return function (global, window, document, undefined) {
                 /* If a rotateX/Y/Z property is being animated to 360 deg with loop:true, swap tween start/end values to enable
                    continuous iterative rotation looping. (Otherise, the element would just rotate back and forth.) */
                 $.each(Data(element).tweensContainer, function(propertyName, tweenContainer) {
-                    if (/^rotate/.test(propertyName) && Math.abs(tweenContainer.endValue) === 360) {
-                      tweenContainer.startValue = tweenContainer.endValue;
-                      tweenContainer.endValue = 0;
+                    if (/^rotate/.test(propertyName) && ((tweenContainer.startValue - tweenContainer.endValue)%360 === 0)) {
+                        var start = tweenContainer.startValue;
+                        tweenContainer.startValue = tweenContainer.endValue;
+                        tweenContainer.endValue = start;
                     }
+
 
                     if (/^backgroundPosition/.test(propertyName) && parseFloat(tweenContainer.endValue) === 100 && tweenContainer.unitType === "%") {
                         tweenContainer.endValue = 0;
