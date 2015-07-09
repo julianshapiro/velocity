@@ -3,6 +3,8 @@
 **News**  
 You can now order the Velocity book on [Amazon](http://amazon.com/Web-Animation-using-JavaScript-Develop/dp/0134096665)!
 
+WhatsApp, Tumblr, Windows, Samsung, Uber, and thousands of other companies rely on Velocity. Visit [Libscore.com](http://libscore.com/#$.Velocity) to see which sites use Velocity on their homepage.
+
 Also, a round of Velocity updates are coming late July :)
 
 **Docs**  
@@ -46,11 +48,6 @@ Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you
 - **CSS transitions** are meant for simple interface flourishes.
 - **jQuery's $.animate()** is slow and poorly-equipped for motion design.
 - **Velocity** is a fast, feature-rich standalone alternative to jQuery's $.animate().
-
-###**Users**
-Below is a partial list of Velocity's notable users. For much more usage data, visit the fantastic [Libscore.com](http://libscore.com/#$.Velocity):
-
-[whatsapp.com](http://web.whatsapp.com) [tumblr.com](http://tumblr.com) [windows.com](http://windows.com) [mazda.com](http://mazda.com) [samsung.com](http://samsung.com) [uber.com](http://uber.com) [mailchimp.com](http://mailchimp.com) [scribd.com](http://scribd.com) [gap.com](http://gap.com) [orbitz.com](http://orbitz.com) [htc.com](http://htc.com) [today.com](http://today.com) [funnyordie.com](http://funnyordie.com) [htc.com](http://htc.com) [thomsonreuters.com](http://thomsonreuters.com) [newbalance.com](http://newbalance.com) [kodak.com](http://kodak.com) [saucelabs.com](http://saucelabs.com)
 
 ====
 
