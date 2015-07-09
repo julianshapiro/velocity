@@ -48,8 +48,9 @@ Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you
 - **Velocity** is a fast, feature-rich standalone alternative to jQuery's $.animate().
 
 ###**Users**
-Below is a partial list of Velocity's notable users. For much more data, visit the fantastic [libscore.com](http://libscore.com/#$.Velocity)
-[whatsapp.com](http://web.whatsapp.com) [tumblr.com](http://tumblr.com) [windows.com](http://windows.com) [mazda.com](http://mazda.com) [samsung.com](http://samsung.com) [uber.com](http://uber.com) [mailchimp.com](http://mailchimp.com) [scribd.com](http://scribd.com) [gap.com](http://gap.com) [complex.com](http://complex.com) [orbitz.com](http://orbitz.com) [htc.com](http://htc.com) [today.com](http://today.com) [funnyordie.com](http://funnyordie.com) [htc.com](http://htc.com) [thomsonreuters.com](http://thomsonreuters.com) [seatgeek.com](http://seatgeek.com) [newbalance.com](http://newbalance.com) [kodak.com](http://kodak.com) [vizio.com](http://vizio.com) [seatgeek.com](http://seatgeek.com) [warbyparker.com](http://warbyparker.com) [hipmunk.com](http://hipmunk.com) [saucelabs.com](http://saucelabs.com) [diy.org](http://diy.org) [siftscience.com](http://siftscience.com) [dropcam.com](http://dropcam.com) [weezer.com](http://weezer.com) [welt.de](http://welt.de) [dyson360eye.com](http://dyson360eye.com) [cachefly.com](http://cachefly.com) [metalab.co](http://metalab.co) [coronausa.com](http://coronausa.com)
+Below is a partial list of Velocity's notable users. For much more usage data, visit the fantastic [Libscore.com](http://libscore.com/#$.Velocity):
+
+[whatsapp.com](http://web.whatsapp.com) [tumblr.com](http://tumblr.com) [windows.com](http://windows.com) [mazda.com](http://mazda.com) [samsung.com](http://samsung.com) [uber.com](http://uber.com) [mailchimp.com](http://mailchimp.com) [scribd.com](http://scribd.com) [gap.com](http://gap.com) [orbitz.com](http://orbitz.com) [htc.com](http://htc.com) [today.com](http://today.com) [funnyordie.com](http://funnyordie.com) [htc.com](http://htc.com) [thomsonreuters.com](http://thomsonreuters.com) [newbalance.com](http://newbalance.com) [kodak.com](http://kodak.com) [saucelabs.com](http://saucelabs.com)
 
 ====
 
