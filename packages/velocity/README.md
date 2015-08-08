@@ -5,7 +5,7 @@ You can now order the Velocity book on [Amazon](http://amazon.com/Web-Animation-
 
 WhatsApp, Tumblr, Windows, Samsung, Uber, and thousands of other companies rely on Velocity. Visit [Libscore.com](http://libscore.com/#$.Velocity) to see which sites use Velocity on their homepage.
 
-Also, a round of Velocity updates are coming late July :)
+Also, a round of Velocity updates are coming shortly, including an official React plugin :)
 
 **Docs**  
 [VelocityJS.org](http://VelocityJS.org)
