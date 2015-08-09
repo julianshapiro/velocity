@@ -1,5 +1,9 @@
 /*! VelocityJS.org (1.2.2). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
-
+var isCommonJS  = (typeof module === "object" && typeof module.exports === "object"),
+    isJquery    = window.jQuery,
+    isLocal     = (isCommonJS && !isJquery),
+    UTIL        = {},
+    GLOBAL      = isLocal ? UTIL : window;
 /*************************
    Velocity jQuery Shim
 *************************/
@@ -400,7 +404,7 @@
 
     /* Globalize Velocity onto the window, and assign its Utilities property. */
     window.Velocity = { Utilities: $ };
-})(window);
+})(GLOBAL);
 
 /******************
     Velocity.js
@@ -552,6 +556,8 @@ return function (global, window, document, undefined) {
     if (global.fn && global.fn.jquery) {
         $ = global;
         isJQuery = true;
+    } else if (isLocal) {
+        $ = UTIL.Velocity.Utilities;
     } else {
         $ = window.Velocity.Utilities;
     }
@@ -2190,7 +2196,7 @@ return function (global, window, document, undefined) {
                             }
 
                             /* Iterate through the calls targeted by the stop command. */
-                            $.each(elements, function(l, element) {                                
+                            $.each(elements, function(l, element) {
                                 /* Check that this call was applied to the target element. */
                                 if (element === activeElement) {
                                     /* Optionally clear the remaining queued calls. */
@@ -3473,7 +3479,7 @@ return function (global, window, document, undefined) {
                             tween.currentValue = currentValue;
 
                             /* If we're tweening a fake 'tween' property in order to log transition values, update the one-per-call variable so that
-                               it can be passed into the progress callback. */ 
+                               it can be passed into the progress callback. */
                             if (property === "tween") {
                                 tweenDummyValue = currentValue;
                             } else {
@@ -3765,10 +3771,17 @@ return function (global, window, document, undefined) {
     global.Velocity = Velocity;
 
     if (global !== window) {
-        /* Assign the element function to Velocity's core animate() method. */
-        global.fn.velocity = animate;
-        /* Assign the object function's defaults to Velocity's global defaults object. */
-        global.fn.velocity.defaults = Velocity.defaults;
+        if (global.fn) {
+          /* Assign the element function to Velocity's core animate() method. */
+          global.fn.velocity = animate;
+          /* Assign the object function's defaults to Velocity's global defaults object. */
+          global.fn.velocity.defaults = Velocity.defaults;
+        } else if (global.Velocity.Utilities.fn) {
+          /* Assign the element function to Velocity's core animate() method. */
+          global.Velocity.Utilities.fn.velocity = animate;
+          /* Assign the object function's defaults to Velocity's global defaults object. */
+          global.Velocity.Utilities.fn.velocity.defaults = Velocity.defaults;
+        }
     }
 
     /***********************
@@ -3856,7 +3869,7 @@ return function (global, window, document, undefined) {
     });
 
     return Velocity;
-}((window.jQuery || window.Zepto || window), window, document);
+}((GLOBAL.jQuery || GLOBAL.Zepto || GLOBAL), window, document);
 }));
 
 /******************
