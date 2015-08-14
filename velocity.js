@@ -10,6 +10,11 @@
 /* These shimmed functions are only used if jQuery isn't present. If both this shim and jQuery are loaded, Velocity defaults to jQuery proper. */
 /* Browser support: Using this shim instead of jQuery proper removes support for IE8. */
 
+// store isClient then get the global object and document accordingly
+var isClient = typeof window != 'undefined';
+var g = isClient ? window : global;
+var d = isClient ? document : {};
+
 ;(function (window) {
     /***************
          Setup
@@ -400,7 +405,7 @@
 
     /* Globalize Velocity onto the window, and assign its Utilities property. */
     window.Velocity = { Utilities: $ };
-})(window);
+})(g);
 
 /******************
     Velocity.js
@@ -441,6 +446,8 @@ return function (global, window, document, undefined) {
 
     /* IE detection. Gist: https://gist.github.com/julianshapiro/9098609 */
     var IE = (function() {
+        if (!isClient)
+            return 9
         if (document.documentMode) {
             return document.documentMode;
         } else {
@@ -581,14 +588,14 @@ return function (global, window, document, undefined) {
         /* Container for page-wide Velocity state data. */
         State: {
             /* Detect mobile devices to determine if mobileHA should be turned on. */
-            isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+            isMobile: !isClient || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
             /* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
-            isAndroid: /Android/i.test(navigator.userAgent),
-            isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
-            isChrome: window.chrome,
-            isFirefox: /Firefox/i.test(navigator.userAgent),
+            isAndroid: !isClient || /Android/i.test(navigator.userAgent),
+            isGingerbread: !isClient || /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
+            isChrome: !isClient || window.chrome,
+            isFirefox: !isClient || /Firefox/i.test(navigator.userAgent),
             /* Create a cached element for re-use when checking for CSS property prefixes. */
-            prefixElement: document.createElement("div"),
+            prefixElement: !isClient || document.createElement("div"),
             /* Cache every prefix match to avoid repeating lookups. */
             prefixMatches: {},
             /* Cache the anchor used for animating window scrolling. */
@@ -662,7 +669,7 @@ return function (global, window, document, undefined) {
         Velocity.State.scrollPropertyLeft = "pageXOffset";
         Velocity.State.scrollPropertyTop = "pageYOffset";
     } else {
-        Velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
+        Velocity.State.scrollAnchor = !isClient || document.documentElement || document.body.parentNode || document.body;
         Velocity.State.scrollPropertyLeft = "scrollLeft";
         Velocity.State.scrollPropertyTop = "scrollTop";
     }
@@ -2190,7 +2197,7 @@ return function (global, window, document, undefined) {
                             }
 
                             /* Iterate through the calls targeted by the stop command. */
-                            $.each(elements, function(l, element) {                                
+                            $.each(elements, function(l, element) {
                                 /* Check that this call was applied to the target element. */
                                 if (element === activeElement) {
                                     /* Optionally clear the remaining queued calls. */
@@ -3473,7 +3480,7 @@ return function (global, window, document, undefined) {
                             tween.currentValue = currentValue;
 
                             /* If we're tweening a fake 'tween' property in order to log transition values, update the one-per-call variable so that
-                               it can be passed into the progress callback. */ 
+                               it can be passed into the progress callback. */
                             if (property === "tween") {
                                 tweenDummyValue = currentValue;
                             } else {
@@ -3856,7 +3863,7 @@ return function (global, window, document, undefined) {
     });
 
     return Velocity;
-}((window.jQuery || window.Zepto || window), window, document);
+}((g.jQuery || g.Zepto || g), g, d);
 }));
 
 /******************
