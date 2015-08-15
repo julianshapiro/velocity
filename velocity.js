@@ -11,6 +11,7 @@
 /* Browser support: Using this shim instead of jQuery proper removes support for IE8. */
 
 ;(function (window) {
+    "use strict";
     /***************
          Setup
     ***************/
@@ -407,6 +408,7 @@
 ******************/
 
 ;(function (factory) {
+    "use strict";
     /* CommonJS module. */
     if (typeof module === "object" && typeof module.exports === "object") {
         module.exports = factory();
@@ -418,6 +420,7 @@
         factory();
     }
 }(function() {
+"use strict";
 return function (global, window, document, undefined) {
 
     /***************
@@ -1636,11 +1639,11 @@ return function (global, window, document, undefined) {
                         CSS.setPropertyValue(element, "display", CSS.Values.getDisplayType(element));
                     }
 
-                    function revertDisplay () {
+                    var revertDisplay = function () {
                         if (toggleDisplay) {
                             CSS.setPropertyValue(element, "display", "none");
                         }
-                    }
+                    };
 
                     if (!forceStyleLookup) {
                         if (property === "height" && CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
@@ -1882,9 +1885,9 @@ return function (global, window, document, undefined) {
             if ((IE || (Velocity.State.isAndroid && !Velocity.State.isChrome)) && Data(element).isSVG) {
                 /* Since transform values are stored in their parentheses-wrapped form, we use a helper function to strip out their numeric values.
                    Further, SVG transform properties only take unitless (representing pixels) values, so it's okay that parseFloat() strips the unit suffixed to the float value. */
-                function getTransformFloat (transformProperty) {
+                var getTransformFloat = function (transformProperty) {
                     return parseFloat(CSS.getPropertyValue(element, transformProperty));
-                }
+                };
 
                 /* Create an object to organize all the transforms that we'll apply to the SVG element. To keep the logic simple,
                    we process *all* transform properties -- even those that may not be explicitly applied (since they default to their zero-values anyway). */
@@ -2688,7 +2691,7 @@ return function (global, window, document, undefined) {
                        or 2) an array in the form of [ endValue, [, easing] [, startValue] ].
                        The optional third parameter is a forcefed startValue to be used instead of querying the DOM for
                        the element's current value. Read Velocity's docmentation to learn more about forcefeeding: VelocityJS.org/#forcefeeding */
-                    function parsePropertyValue (valueData, skipResolvingEasing) {
+                    var parsePropertyValue = function (valueData, skipResolvingEasing) {
                         var endValue = undefined,
                             easing = undefined,
                             startValue = undefined;
@@ -2735,7 +2738,7 @@ return function (global, window, document, undefined) {
 
                         /* Allow startValue to be left as undefined to indicate to the ensuing code that its value was not forcefed. */
                         return [ endValue || 0, easing, startValue ];
-                    }
+                    };
 
                     /* Cycle through each property in the map, looking for shorthand color properties (e.g. "color" as opposed to "colorRed"). Inject the corresponding
                        colorRed, colorGreen, and colorBlue RGB component tweens into the propertiesMap (which Velocity understands) and remove the shorthand property. */
@@ -2859,7 +2862,7 @@ return function (global, window, document, undefined) {
                             operator = false;
 
                         /* Separates a property value into its numeric value and its unit type. */
-                        function separateValue (property, value) {
+                        var separateValue = function (property, value) {
                             var unitType,
                                 numericValue;
 
@@ -2881,7 +2884,7 @@ return function (global, window, document, undefined) {
                             }
 
                             return [ numericValue, unitType ];
-                        }
+                        };
 
                         /* Separate startValue. */
                         separatedValue = separateValue(property, startValue);
@@ -2941,7 +2944,7 @@ return function (global, window, document, undefined) {
                            of batching the SETs and GETs together upfront outweights the potential overhead
                            of layout thrashing caused by re-querying for uncalculated ratios for subsequently-processed properties. */
                         /* Todo: Shift this logic into the calls' first tick instance so that it's synced with RAF. */
-                        function calculateUnitRatios () {
+                        var calculateUnitRatios = function () {
 
                             /************************
                                 Same Ratio Checks
@@ -3036,7 +3039,7 @@ return function (global, window, document, undefined) {
                             if (Velocity.debug >= 1) console.log("Unit ratios: " + JSON.stringify(unitRatios), element);
 
                             return unitRatios;
-                        }
+                        };
 
                         /********************
                            Unit Conversion
