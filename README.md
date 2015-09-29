@@ -1,14 +1,17 @@
 ##Velocity 1.2.3
 
 **News**
-You can now order the Velocity book on [Amazon](http://amazon.com/Web-Animation-using-JavaScript-Develop/dp/0134096665)!
+You can order the Velocity book on [Amazon](http://amazon.com/Web-Animation-using-JavaScript-Develop/dp/0134096665)!
 
 WhatsApp, Tumblr, Windows, Samsung, Uber, and thousands of other companies rely on Velocity. Visit [Libscore.com](http://libscore.com/#$.Velocity) to see which sites use Velocity on their homepage.
 
-Also, a round of Velocity updates are coming shortly, including an official React plugin :)
-
 **Docs**
 [VelocityJS.org](http://VelocityJS.org)
+
+**React Plugin**  
+Announcement: https://fabric.io/blog/introducing-the-velocityreact-library  
+Repo: https://github.com/twitter-fabric/velocity-react  
+NPM: https://www.npmjs.com/package/velocity-react
 
 **Quickstart**
 
@@ -21,10 +24,6 @@ Velocity UI pack (CDN):
 Package managers:
 `bower install velocity`
 `npm install velocity-animate`
-
-**Found a Possible Bug?**
-
-Report it as an issue here.
 
 **Questions or Problems?**
 
