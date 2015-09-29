@@ -13,14 +13,14 @@ Announcement: https://fabric.io/blog/introducing-the-velocityreact-library
 Repo: https://github.com/twitter-fabric/velocity-react  
 NPM: https://www.npmjs.com/package/velocity-react
 
-**Quickstart**
+**Quickstart**  
 Velocity (CDN):
-`<script src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.min.js"></script>`  
 Velocity UI pack (CDN):
-`<script src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.ui.min.js"></script>`
+`<script src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.ui.min.js"></script>`  
 Package managers:
+`npm install velocity-animate` / 
 `bower install velocity`
-`npm install velocity-animate`
 
 **Questions or Problems?**  
 Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you add the ```velocity.js``` and ```javascript``` tags).
