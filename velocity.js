@@ -651,7 +651,7 @@ return function (global, window, document, undefined) {
         hook: null, /* Defined below. */
         /* Velocity-wide animation time remapping for testing purposes. */
         mock: false,
-        version: { major: 1, minor: 2, patch: 2 },
+        version: { major: 1, minor: 2, patch: 3 },
         /* Set to 1 or 2 (most verbose) to output debug info to console. */
         debug: false
     };
