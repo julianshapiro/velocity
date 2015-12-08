@@ -14,10 +14,12 @@ Repo: https://github.com/twitter-fabric/velocity-react
 NPM: https://www.npmjs.com/package/velocity-react
 
 **Quickstart**  
-Velocity (CDN):
+Velocity (CDN, choose one of them):
+`<script src="cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.min.js"></script>`  
 `<script src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.min.js"></script>`  
-Velocity UI pack (CDN):
+Velocity UI pack (CDN, choose one of them):
 `<script src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.ui.min.js"></script>`  
+`<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.ui.min.jss"></script>`  
 Package managers:
 `npm install velocity-animate` / 
 `bower install velocity`
