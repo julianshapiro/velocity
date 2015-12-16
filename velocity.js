@@ -145,10 +145,11 @@
 
     /* Custom */
     $.data = function (node, key, value) {
+       var id, store;
         /* $.getData() */
         if (value === undefined) {
-            var id = node[$.expando],
-                store = id && cache[id];
+            id = node[$.expando];
+            store = id && cache[id];
 
             if (key === undefined) {
                 return store;
@@ -159,7 +160,7 @@
             }
         /* $.setData() */
         } else if (key !== undefined) {
-            var id = node[$.expando] || (node[$.expando] = ++$.uuid);
+            id = node[$.expando] || (node[$.expando] = ++$.uuid);
 
             cache[id] = cache[id] || {};
             cache[id][key] = value;
