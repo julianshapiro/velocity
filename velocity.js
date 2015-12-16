@@ -1637,7 +1637,7 @@ return function (global, window, document, undefined) {
                         CSS.setPropertyValue(element, "display", CSS.Values.getDisplayType(element));
                     }
 
-                    function revertDisplay () {
+                    var revertDisplay = function revertDisplay () {
                         if (toggleDisplay) {
                             CSS.setPropertyValue(element, "display", "none");
                         }
@@ -1883,7 +1883,7 @@ return function (global, window, document, undefined) {
             if ((IE || (Velocity.State.isAndroid && !Velocity.State.isChrome)) && Data(element).isSVG) {
                 /* Since transform values are stored in their parentheses-wrapped form, we use a helper function to strip out their numeric values.
                    Further, SVG transform properties only take unitless (representing pixels) values, so it's okay that parseFloat() strips the unit suffixed to the float value. */
-                function getTransformFloat (transformProperty) {
+                var getTransformFloat = function getTransformFloat (transformProperty) {
                     return parseFloat(CSS.getPropertyValue(element, transformProperty));
                 }
 
@@ -2707,7 +2707,7 @@ return function (global, window, document, undefined) {
                        or 2) an array in the form of [ endValue, [, easing] [, startValue] ].
                        The optional third parameter is a forcefed startValue to be used instead of querying the DOM for
                        the element's current value. Read Velocity's docmentation to learn more about forcefeeding: VelocityJS.org/#forcefeeding */
-                    function parsePropertyValue (valueData, skipResolvingEasing) {
+                    var parsePropertyValue = function parsePropertyValue (valueData, skipResolvingEasing) {
                         var endValue = undefined,
                             easing = undefined,
                             startValue = undefined;
@@ -2878,7 +2878,7 @@ return function (global, window, document, undefined) {
                             operator = false;
 
                         /* Separates a property value into its numeric value and its unit type. */
-                        function separateValue (property, value) {
+                        var separateValue = function separateValue (property, value) {
                             var unitType,
                                 numericValue;
 
@@ -2960,7 +2960,7 @@ return function (global, window, document, undefined) {
                            of batching the SETs and GETs together upfront outweights the potential overhead
                            of layout thrashing caused by re-querying for uncalculated ratios for subsequently-processed properties. */
                         /* Todo: Shift this logic into the calls' first tick instance so that it's synced with RAF. */
-                        function calculateUnitRatios () {
+                        var calculateUnitRatios = function calculateUnitRatios () {
 
                             /************************
                                 Same Ratio Checks
