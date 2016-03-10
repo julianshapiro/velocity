@@ -3811,7 +3811,7 @@ return function (global, window, document, undefined) {
             /* Since redirects are triggered individually for each element in the animated set, avoid repeatedly triggering
                callbacks by firing them only when the final element has been reached. */
             if (elementsIndex !== elementsSize - 1) {
-              complete = null;
+              begin = complete = null;
             }
 
             opts.begin = function() {
