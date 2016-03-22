@@ -117,6 +117,7 @@ return function (global, window, document, undefined) {
                 opts.queue = redirectOptions.queue || "";
                 opts.easing = callOptions.easing || "ease";
                 opts.delay = parseFloat(callOptions.delay) || 0;
+                opts.loop =  callOptions.loop || false;
                 opts._cacheValues = callOptions._cacheValues || true;
 
                 /* Special processing for the first effect call. */
