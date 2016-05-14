@@ -2363,7 +2363,10 @@ return function (global, window, document, undefined) {
            3) Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
         */
 
-        function processElement () {
+        /* `elementArrayIndex` allows passing index of the element in the original array to value functions.
+         * If `elementsIndex` were used instead the index would be determined by the elements' per-element queue.
+        */
+        function processElement (elementArrayIndex) {
 
             /*************************
                Part I: Pre-Queueing
@@ -2744,11 +2747,11 @@ return function (global, window, document, undefined) {
                         /* If functions were passed in as values, pass the function the current element as its context,
                            plus the element's index and the element set's size as arguments. Then, assign the returned value. */
                         if (Type.isFunction(endValue)) {
-                            endValue = endValue.call(element, elementsIndex, elementsLength);
+                            endValue = endValue.call(element, elementArrayIndex, elementsLength);
                         }
 
                         if (Type.isFunction(startValue)) {
-                            startValue = startValue.call(element, elementsIndex, elementsLength);
+                            startValue = startValue.call(element, elementArrayIndex, elementsLength);
                         }
 
                         /* Allow startValue to be left as undefined to indicate to the ensuing code that its value was not forcefed. */
@@ -3266,7 +3269,7 @@ return function (global, window, document, undefined) {
         $.each(elements, function(i, element) {
             /* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
             if (Type.isNode(element)) {
-                processElement.call(element);
+                processElement.call(element, i);
             }
         });
 
