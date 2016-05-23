@@ -95,6 +95,7 @@ return function (global, window, document, undefined) {
 
         /* Register a custom redirect for each effect. */
         Velocity.Redirects[effectName] = function (element, redirectOptions, elementsIndex, elementsSize, elements, promiseData) {
+            var args = arguments;
             var finalElement = (elementsIndex === elementsSize - 1);
 
             if (typeof properties.defaultDuration === "function") {
@@ -117,7 +118,7 @@ return function (global, window, document, undefined) {
                 opts.queue = redirectOptions.queue || "";
                 opts.easing = callOptions.easing || "ease";
                 opts.delay = parseFloat(callOptions.delay) || 0;
-                opts.loop =  callOptions.loop || false;
+                opts.loop =  (callOptions.loop && !properties.loop) || false;
                 opts._cacheValues = callOptions._cacheValues || true;
 
                 /* Special processing for the first effect call. */
@@ -181,7 +182,9 @@ return function (global, window, document, undefined) {
                     }
 
                     opts.complete = function() {
-                        if (properties.reset) {
+                        if (properties.loop === true)  {
+                            Velocity.Redirects[effectName].apply(null, args);
+                        } if (properties.reset) {
                             for (var resetProperty in properties.reset) {
                                 var resetValue = properties.reset[resetProperty];
 
