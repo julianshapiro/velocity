@@ -94,9 +94,11 @@ return function (global, window, document, undefined) {
         }
 
         /* Register a custom redirect for each effect. */
-        Velocity.Redirects[effectName] = function (element, redirectOptions, elementsIndex, elementsSize, elements, promiseData) {
-            var args = arguments;
+        Velocity.Redirects[effectName] = function (element, redirectOptions, elementsIndex, elementsSize, elements, promiseData, loop) {
+            //convert arguments object to array
+            var args = Array.prototype.slice.call(arguments);
             var finalElement = (elementsIndex === elementsSize - 1);
+            loop = loop || properties.loop;
 
             if (typeof properties.defaultDuration === "function") {
                 properties.defaultDuration = properties.defaultDuration.call(elements, elements);
@@ -118,7 +120,7 @@ return function (global, window, document, undefined) {
                 opts.queue = redirectOptions.queue || "";
                 opts.easing = callOptions.easing || "ease";
                 opts.delay = parseFloat(callOptions.delay) || 0;
-                opts.loop =  (callOptions.loop && !properties.loop) || false;
+                opts.loop =  (!properties.loop && callOptions.loop) || false;
                 opts._cacheValues = callOptions._cacheValues || true;
 
                 /* Special processing for the first effect call. */
@@ -182,7 +184,12 @@ return function (global, window, document, undefined) {
                     }
 
                     opts.complete = function() {
-                        if (properties.loop === true)  {
+                        if (loop === true || (typeof loop === 'number' && loop > 1)) {
+                            if (typeof loop === 'number') {
+                                // replace loop argument
+                                args[6] = --loop;
+                            }
+
                             Velocity.Redirects[effectName].apply(null, args);
                         } if (properties.reset) {
                             for (var resetProperty in properties.reset) {
