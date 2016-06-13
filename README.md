@@ -1,7 +1,7 @@
 ##Velocity 1.2.3
 
 **Docs**  
-[http:/VelocityJS.org](http://velocityjs.org)
+[http://VelocityJS.org](http://velocityjs.org)
 
 **News**  
 You can order the Velocity book on [Amazon](http://amazon.com/Web-Animation-using-JavaScript-Develop/dp/0134096665)!
