@@ -80,7 +80,14 @@ return function (global, window, document, undefined) {
 
                 parentNode = element.parentNode;
 
-                $.each([ "height", "paddingTop", "paddingBottom", "marginTop", "marginBottom"], function(i, property) {
+                propertiesToSum = ["height", "paddingTop", "paddingBottom", "marginTop", "marginBottom"]
+
+                /* If box-sizing is border-box, the height already includes padding and margin */
+                if (Velocity.CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box") {
+                    propertiesToSum = ["height"]
+                }
+
+                $.each(propertiesToSum, function(i, property) {
                     totalHeightDelta += parseFloat(Velocity.CSS.getPropertyValue(element, property));
                 });
             });
