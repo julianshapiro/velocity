@@ -3824,6 +3824,12 @@ return function (global, window, document, undefined) {
                 opts.display = (direction === "Down" ? (Velocity.CSS.Values.getDisplayType(element) === "inline" ? "inline-block" : "block") : "none");
             }
 
+            /* Since redirects are triggered individually for each element in the animated set, avoid repeatedly triggering
+               callbacks by firing them only when the final element has been reached. */
+            if (elementsIndex !== elementsSize - 1) {
+              begin = complete = null;
+            }
+
             opts.begin = function() {
                 /* If the user passed in a begin callback, fire it now. */
                 begin && begin.call(elements, elements);
