@@ -1,3 +1,4 @@
+
 /**********************
    Velocity UI Pack
 **********************/
@@ -114,10 +115,16 @@ return function (global, window, document, undefined) {
             for (var callIndex = 0; callIndex < properties.calls.length; callIndex++) {
                 var call = properties.calls[callIndex],
                     propertyMap = call[0],
-                    redirectDuration = (redirectOptions.duration || properties.defaultDuration || 1000),
+                    redirectDuration = 1000,
                     durationPercentage = call[1],
                     callOptions = call[2] || {},
                     opts = {};
+
+                if (typeof redirectOptions.duration !== 'undefined') {
+                    redirectDuration = redirectOptions.duration;
+                } else if (typeof properties.defaultDuration !== 'undefined') {
+                    redirectDuration = properties.defaultDuration;
+                }
 
                 /* Assign the whitelisted per-call options. */
                 opts.duration = redirectDuration * (durationPercentage || 1);
