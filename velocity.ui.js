@@ -2,10 +2,10 @@
  Velocity UI Pack
  **********************/
 
-/* VelocityJS.org UI Pack (5.0.4). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
+/* VelocityJS.org UI Pack (5.1.0). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
 
-;
 (function(factory) {
+	"use strict";
 	/* CommonJS module. */
 	if (typeof require === "function" && typeof exports === "object") {
 		module.exports = factory();
@@ -17,19 +17,21 @@
 		factory();
 	}
 }(function() {
+	"use strict";
 	return function(global, window, document, undefined) {
 
 		/*************
 		 Checks
 		 *************/
+		var Velocity = global.Velocity;
 
-		if (!global.Velocity || !global.Velocity.Utilities) {
-			window.console && console.log("Velocity UI Pack: Velocity must be loaded first. Aborting.");
+		if (!Velocity || !Velocity.Utilities) {
+			if (window.console) {
+				console.log("Velocity UI Pack: Velocity must be loaded first. Aborting.");
+			}
 			return;
-		} else {
-			var Velocity = global.Velocity,
-					$ = Velocity.Utilities;
 		}
+		var $ = Velocity.Utilities;
 
 		var velocityVersion = Velocity.version,
 				requiredVersion = {major: 1, minor: 1, patch: 0};
@@ -122,9 +124,9 @@
 							callOptions = call[2] || {},
 							opts = {};
 
-					if (typeof redirectOptions.duration !== 'undefined') {
+					if (redirectOptions.duration !== undefined) {
 						redirectDuration = redirectOptions.duration;
-					} else if (typeof properties.defaultDuration !== 'undefined') {
+					} else if (properties.defaultDuration !== undefined) {
 						redirectDuration = properties.defaultDuration;
 					}
 
@@ -143,7 +145,9 @@
 						if (elementsIndex === 0) {
 							opts.begin = function() {
 								/* Only trigger a begin callback on the first effect call with the first element in the set. */
-								redirectOptions.begin && redirectOptions.begin.call(elements, elements);
+								if (redirectOptions.begin) {
+									redirectOptions.begin.call(elements, elements);
+								}
 
 								var direction = effectName.match(/(In|Out)$/);
 
@@ -181,19 +185,19 @@
 					/* Special processing for the last effect call. */
 					if (callIndex === properties.calls.length - 1) {
 						/* Append promise resolving onto the user's redirect callback. */
-						function injectFinalCallbacks() {
+						var injectFinalCallbacks = function() {
 							if ((redirectOptions.display === undefined || redirectOptions.display === "none") && /Out$/.test(effectName)) {
 								$.each(elements.nodeType ? [elements] : elements, function(i, element) {
 									Velocity.CSS.setPropertyValue(element, "display", "none");
 								});
 							}
-
-							redirectOptions.complete && redirectOptions.complete.call(elements, elements);
-
+							if (redirectOptions.complete) {
+								redirectOptions.complete.call(elements, elements);
+							}
 							if (promiseData) {
 								promiseData.resolver(elements || element);
 							}
-						}
+						};
 
 						opts.complete = function() {
 							if (properties.reset) {
@@ -757,7 +761,9 @@
 							var nextCallElements = nextCall.e || nextCall.elements;
 							var elements = nextCallElements.nodeType ? [nextCallElements] : nextCallElements;
 
-							callbackOriginal && callbackOriginal.call(elements, elements);
+							if (callbackOriginal) {
+								callbackOriginal.call(elements, elements);
+							}
 							Velocity(currentCall);
 						};
 
