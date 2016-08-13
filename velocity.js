@@ -174,9 +174,15 @@
             store = id && cache[id];
 
         if (store) {
-            $.each(keys, function(_, key) {
-                delete store[key];
-            });
+           // Cleanup the entire store if no keys are provided.
+            if (!keys) {
+                delete cache[id];
+            }
+            else {
+                $.each(keys, function (_, key) {
+                    delete store[key];
+                });
+            }
         }
     };
 
