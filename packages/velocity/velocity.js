@@ -2232,8 +2232,9 @@ return function (global, window, document, undefined) {
                                            changed to reflect the final value that the elements were actually tweened to. */
                                         /* Note: If only queue:false animations are currently running on an element, it won't have a tweensContainer
                                            object. Also, queue:false animations can't be reversed. */
-                                        if (Data(element) && Data(element).tweensContainer && queueName !== false) {
-                                            $.each(Data(element).tweensContainer, function(m, activeTween) {
+                                        var data = Data(element);
+                                        if (data && data.tweensContainer && queueName !== false) {
+                                            $.each(data.tweensContainer, function(m, activeTween) {
                                                 activeTween.endValue = activeTween.currentValue;
                                             });
                                         }
@@ -2600,8 +2601,13 @@ return function (global, window, document, undefined) {
                    there is no harm to reverse being called on a potentially stale data cache since reverse's behavior is simply defined
                    as reverting to the element's values as they were prior to the previous *Velocity* call. */
                 } else if (action === "reverse") {
+                    var data = Data(element);
                     /* Abort if there is no prior animation data to reverse to. */
-                    if (!Data(element).tweensContainer) {
+                    if (!data) {
+                        return;
+                    }
+
+                    if (!data.tweensContainer) {
                         /* Dequeue the element so that this queue entry releases itself immediately, allowing subsequent queue entries to run. */
                         $.dequeue(element, opts.queue);
 
@@ -2613,19 +2619,19 @@ return function (global, window, document, undefined) {
 
                         /* If the element was hidden via the display option in the previous call,
                            revert display to "auto" prior to reversal so that the element is visible again. */
-                        if (Data(element).opts.display === "none") {
-                            Data(element).opts.display = "auto";
+                        if (data.opts.display === "none") {
+                            data.opts.display = "auto";
                         }
 
-                        if (Data(element).opts.visibility === "hidden") {
-                            Data(element).opts.visibility = "visible";
+                        if (data.opts.visibility === "hidden") {
+                            data.opts.visibility = "visible";
                         }
 
                         /* If the loop option was set in the previous call, disable it so that "reverse" calls aren't recursively generated.
                            Further, remove the previous call's callback options; typically, users do not want these to be refired. */
-                        Data(element).opts.loop = false;
-                        Data(element).opts.begin = null;
-                        Data(element).opts.complete = null;
+                        data.opts.loop = false;
+                        data.opts.begin = null;
+                        data.opts.complete = null;
 
                         /* Since we're extending an opts object that has already been extended with the defaults options object,
                            we remove non-explicitly-defined properties that are auto-assigned values. */
@@ -2639,14 +2645,14 @@ return function (global, window, document, undefined) {
 
                         /* The opts object used for reversal is an extension of the options object optionally passed into this
                            reverse call plus the options used in the previous Velocity call. */
-                        opts = $.extend({}, Data(element).opts, opts);
+                        opts = $.extend({}, data.opts, opts);
 
                         /*************************************
                            Tweens Container Reconstruction
                         *************************************/
 
                         /* Create a deepy copy (indicated via the true flag) of the previous call's tweensContainer. */
-                        var lastTweensContainer = $.extend(true, {}, Data(element).tweensContainer);
+                        var lastTweensContainer = $.extend(true, {}, data ?  data.tweensContainer : null);
 
                         /* Manipulate the previous tweensContainer by replacing its end values and currentValues with its start values. */
                         for (var lastTween in lastTweensContainer) {
@@ -2690,11 +2696,13 @@ return function (global, window, document, undefined) {
                     /* Note: Conversely, animation reversal (and looping) *always* perform inter-call value transfers; they never requery the DOM. */
                     var lastTweensContainer;
 
+                    var data = Data(element);
+
                     /* The per-element isAnimating flag is used to indicate whether it's safe (i.e. the data isn't stale)
                        to transfer over end values to use as start values. If it's set to true and there is a previous
                        Velocity call to pull values from, do so. */
-                    if (Data(element).tweensContainer && Data(element).isAnimating === true) {
-                        lastTweensContainer = Data(element).tweensContainer;
+                    if (data && data.tweensContainer && data.isAnimating === true) {
+                        lastTweensContainer = data.tweensContainer;
                     }
 
                     /***************************
@@ -2819,7 +2827,7 @@ return function (global, window, document, undefined) {
                            Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
                         /* Note: Since SVG elements have some of their properties directly applied as HTML attributes,
                            there is no way to check for their explicit browser support, and so we skip skip this check for them. */
-                        if (!Data(element).isSVG && rootProperty !== "tween" && CSS.Names.prefixCheck(rootProperty)[1] === false && CSS.Normalizations.registered[rootProperty] === undefined) {
+                        if (!data.isSVG && rootProperty !== "tween" && CSS.Names.prefixCheck(rootProperty)[1] === false && CSS.Normalizations.registered[rootProperty] === undefined) {
                             if (Velocity.debug) console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
 
                             continue;
@@ -2843,7 +2851,7 @@ return function (global, window, document, undefined) {
                             /* The previous call's rootPropertyValue is extracted from the element's data cache since that's the
                                instance of rootPropertyValue that gets freshly updated by the tweening process, whereas the rootPropertyValue
                                attached to the incoming lastTweensContainer is equal to the root property's value prior to any tweening. */
-                            rootPropertyValue = Data(element).rootPropertyValueCache[rootProperty];
+                            rootPropertyValue = data.rootPropertyValueCache[rootProperty];
                         /* If values were not transferred from a previous Velocity call, query the DOM as needed. */
                         } else {
                             /* Handle hooked properties. */
@@ -2994,7 +3002,7 @@ return function (global, window, document, undefined) {
                                 unitRatios = {};
 
                             if (!sameEmRatio || !samePercentRatio) {
-                                var dummy = Data(element).isSVG ? document.createElementNS("http://www.w3.org/2000/svg", "rect") : document.createElement("div");
+                                var dummy = data.isSVG ? document.createElementNS("http://www.w3.org/2000/svg", "rect") : document.createElement("div");
 
                                 Velocity.init(dummy);
                                 sameRatioIndicators.myParent.appendChild(dummy);
@@ -3178,14 +3186,18 @@ return function (global, window, document, undefined) {
                     /* The call array houses the tweensContainers for each element being animated in the current call. */
                     call.push(tweensContainer);
 
-                    /* Store the tweensContainer and options if we're working on the default effects queue, so that they can be used by the reverse command. */
-                    if (opts.queue === "") {
-                        Data(element).tweensContainer = tweensContainer;
-                        Data(element).opts = opts;
-                    }
+                    var data = Data(element);
+                    if (data) {
+                        /* Store the tweensContainer and options if we're working on the default effects queue, so that they can be used by the reverse command. */
+                        if (opts.queue === "") {
 
-                    /* Switch on the element's animating flag. */
-                    Data(element).isAnimating = true;
+                            data.tweensContainer = tweensContainer;
+                            data.opts = opts;
+                        }
+
+                        /* Switch on the element's animating flag. */
+                        data.isAnimating = true;
+                    }
 
                     /* Once the final element in this call's element set has been processed, push the call array onto
                        Velocity.State.calls for the animation tick to immediately begin processing. */
@@ -3649,30 +3661,31 @@ return function (global, window, document, undefined) {
                an element's CSS values and thereby cause Velocity's cached value data to go stale. To detect if a queue entry was initiated by Velocity,
                we check for the existence of our special Velocity.queueEntryFlag declaration, which minifiers won't rename since the flag
                is assigned to jQuery's global $ object and thus exists out of Velocity's own scope. */
+            var data = Data(element);
             if (opts.loop !== true && ($.queue(element)[1] === undefined || !/\.velocityQueueEntryFlag/i.test($.queue(element)[1]))) {
                 /* The element may have been deleted. Ensure that its data cache still exists before acting on it. */
-                if (Data(element)) {
-                    Data(element).isAnimating = false;
+                if (data) {
+                    data.isAnimating = false;
                     /* Clear the element's rootPropertyValueCache, which will become stale. */
-                    Data(element).rootPropertyValueCache = {};
+                    data.rootPropertyValueCache = {};
 
                     var transformHAPropertyExists = false;
                     /* If any 3D transform subproperty is at its default value (regardless of unit type), remove it. */
                     $.each(CSS.Lists.transforms3D, function(i, transformName) {
                         var defaultValue = /^scale/.test(transformName) ? 1 : 0,
-                            currentValue = Data(element).transformCache[transformName];
+                            currentValue = data.transformCache[transformName];
 
-                        if (Data(element).transformCache[transformName] !== undefined && new RegExp("^\\(" + defaultValue + "[^.]").test(currentValue)) {
+                        if (data.transformCache[transformName] !== undefined && new RegExp("^\\(" + defaultValue + "[^.]").test(currentValue)) {
                             transformHAPropertyExists = true;
 
-                            delete Data(element).transformCache[transformName];
+                            delete data.transformCache[transformName];
                         }
                     });
 
                     /* Mobile devices have hardware acceleration removed at the end of the animation in order to avoid hogging the GPU's memory. */
                     if (opts.mobileHA) {
                         transformHAPropertyExists = true;
-                        delete Data(element).transformCache.translate3d;
+                        delete data.transformCache.translate3d;
                     }
 
                     /* Flush the subproperty removals to the DOM. */
@@ -3713,10 +3726,10 @@ return function (global, window, document, undefined) {
                Option: Loop (Infinite)
             ****************************/
 
-            if (Data(element) && opts.loop === true && !isStopped) {
+            if (data && opts.loop === true && !isStopped) {
                 /* If a rotateX/Y/Z property is being animated to 360 deg with loop:true, swap tween start/end values to enable
                    continuous iterative rotation looping. (Otherise, the element would just rotate back and forth.) */
-                $.each(Data(element).tweensContainer, function(propertyName, tweenContainer) {
+                $.each(data.tweensContainer, function(propertyName, tweenContainer) {
                     if (/^rotate/.test(propertyName) && parseFloat(tweenContainer.endValue) === 360) {
                         tweenContainer.endValue = 0;
                         tweenContainer.startValue = 360;
