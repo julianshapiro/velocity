@@ -2770,7 +2770,7 @@ return function (global, window, document, undefined) {
                        colorRed, colorGreen, and colorBlue RGB component tweens into the propertiesMap (which Velocity understands) and remove the shorthand property. */
                     $.each(propertiesMap, function(property, value) {
                         /* Find shorthand color properties that have been passed a hex string. */
-                        if (RegExp("^" + CSS.Lists.colors.join("$|^") + "$").test(property)) {
+                        if (RegExp("^" + CSS.Lists.colors.join("$|^") + "$").test(CSS.Names.camelCase(property))) {
                             /* Parse the value data for each shorthand. */
                             var valueData = parsePropertyValue(value, true),
                                 endValue = valueData[0],
@@ -2795,7 +2795,7 @@ return function (global, window, document, undefined) {
                                         dataArray.push(startValueRGB[i]);
                                     }
 
-                                    propertiesMap[property + colorComponents[i]] = dataArray;
+                                    propertiesMap[CSS.Names.camelCase(property) + colorComponents[i]] = dataArray;
                                 }
 
                                 /* Remove the intermediary shorthand property entry now that we've processed it. */
