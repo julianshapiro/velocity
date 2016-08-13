@@ -1769,7 +1769,9 @@ return function (global, window, document, undefined) {
             if (!/^[\d-]/.test(propertyValue)) {
                 /* For SVG elements, dimensional properties (which SVGAttribute() detects) are tweened via
                    their HTML attribute values instead of their CSS style values. */
-                if (Data(element) && Data(element).isSVG && CSS.Names.SVGAttribute(property)) {
+				var data = Data(element);
+
+                if (data && data.isSVG && CSS.Names.SVGAttribute(property)) {
                     /* Since the height/width attribute values must be set manually, they don't reflect computed values.
                        Thus, we use use getBBox() to ensure we always get values for elements with undefined height/width attributes. */
                     if (/^(height|width)$/i.test(property)) {
@@ -1856,13 +1858,17 @@ return function (global, window, document, undefined) {
                         } catch (error) { if (Velocity.debug) console.log("Browser does not support [" + propertyValue + "] for [" + propertyName + "]"); }
                     /* SVG elements have their dimensional properties (width, height, x, y, cx, etc.) applied directly as attributes instead of as styles. */
                     /* Note: IE8 does not support SVG elements, so it's okay that we skip it for SVG animation. */
-                    } else if (Data(element) && Data(element).isSVG && CSS.Names.SVGAttribute(property)) {
-                        /* Note: For SVG attributes, vendor-prefixed property names are never used. */
-                        /* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
-                        element.setAttribute(property, propertyValue);
                     } else {
-                        element.style[propertyName] = propertyValue;
-                    }
+						var data = Data(element);
+
+						if (data && data.isSVG && CSS.Names.SVGAttribute(property)) {
+							/* Note: For SVG attributes, vendor-prefixed property names are never used. */
+							/* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
+							element.setAttribute(property, propertyValue);
+						} else {
+							element.style[propertyName] = propertyValue;
+						}
+					}
 
                     if (Velocity.debug >= 2) console.log("Set " + property + " (" + propertyName + "): " + propertyValue);
                 }
@@ -1875,11 +1881,12 @@ return function (global, window, document, undefined) {
         /* To increase performance by batching transform updates into a single SET, transforms are not directly applied to an element until flushTransformCache() is called. */
         /* Note: Velocity applies transform properties in the same order that they are chronogically introduced to the element's CSS styles. */
         flushTransformCache: function(element) {
-            var transformString = "";
+            var transformString = "",
+					data = Data(element);
 
             /* Certain browsers require that SVG transforms be applied as an attribute. However, the SVG transform attribute takes a modified version of CSS's transform string
                (units are dropped and, except for skewX/Y, subproperties are merged into their master property -- e.g. scaleX and scaleY are merged into scale(X Y). */
-            if ((IE || (Velocity.State.isAndroid && !Velocity.State.isChrome)) && Data(element).isSVG) {
+            if ((IE || (Velocity.State.isAndroid && !Velocity.State.isChrome)) && data && data.isSVG) {
                 /* Since transform values are stored in their parentheses-wrapped form, we use a helper function to strip out their numeric values.
                    Further, SVG transform properties only take unitless (representing pixels) values, so it's okay that parseFloat() strips the unit suffixed to the float value. */
                 function getTransformFloat (transformProperty) {
@@ -2827,7 +2834,7 @@ return function (global, window, document, undefined) {
                            Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
                         /* Note: Since SVG elements have some of their properties directly applied as HTML attributes,
                            there is no way to check for their explicit browser support, and so we skip skip this check for them. */
-                        if (!data.isSVG && rootProperty !== "tween" && CSS.Names.prefixCheck(rootProperty)[1] === false && CSS.Normalizations.registered[rootProperty] === undefined) {
+                        if ((!data || !data.isSVG) && rootProperty !== "tween" && CSS.Names.prefixCheck(rootProperty)[1] === false && CSS.Normalizations.registered[rootProperty] === undefined) {
                             if (Velocity.debug) console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
 
                             continue;
@@ -3002,7 +3009,7 @@ return function (global, window, document, undefined) {
                                 unitRatios = {};
 
                             if (!sameEmRatio || !samePercentRatio) {
-                                var dummy = data.isSVG ? document.createElementNS("http://www.w3.org/2000/svg", "rect") : document.createElement("div");
+                                var dummy = data && data.isSVG ? document.createElementNS("http://www.w3.org/2000/svg", "rect") : document.createElement("div");
 
                                 Velocity.init(dummy);
                                 sameRatioIndicators.myParent.appendChild(dummy);
@@ -3187,6 +3194,7 @@ return function (global, window, document, undefined) {
                     call.push(tweensContainer);
 
                     var data = Data(element);
+
                     if (data) {
                         /* Store the tweensContainer and options if we're working on the default effects queue, so that they can be used by the reverse command. */
                         if (opts.queue === "") {
@@ -3662,6 +3670,7 @@ return function (global, window, document, undefined) {
                we check for the existence of our special Velocity.queueEntryFlag declaration, which minifiers won't rename since the flag
                is assigned to jQuery's global $ object and thus exists out of Velocity's own scope. */
             var data = Data(element);
+
             if (opts.loop !== true && ($.queue(element)[1] === undefined || !/\.velocityQueueEntryFlag/i.test($.queue(element)[1]))) {
                 /* The element may have been deleted. Ensure that its data cache still exists before acting on it. */
                 if (data) {
