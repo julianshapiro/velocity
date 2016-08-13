@@ -3399,6 +3399,7 @@ return function (global, window, document, undefined) {
                has been continuous with many elements over a long period of time; whenever all active calls are completed, completeCall() clears Velocity.State.calls. */
             if (callsLength > 10000) {
                 Velocity.State.calls = compactSparseArray(Velocity.State.calls);
+                callsLength = Velocity.State.calls.length;
             }
 
             /* Iterate through each active call. */
