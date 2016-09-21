@@ -2,7 +2,7 @@
  Velocity UI Pack
  **********************/
 
-/* VelocityJS.org UI Pack (5.1.0). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
+/* VelocityJS.org UI Pack (5.1.1). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License. Portions copyright Daniel Eden, Christian Pucci. */
 
 (function(factory) {
 	"use strict";
@@ -60,7 +60,7 @@
 		}
 
 		if (greaterSemver(requiredVersion, velocityVersion)) {
-			var abortError = "Velocity UI Pack: You need to update Velocity (jquery.velocity.js) to a newer version. Visit http://github.com/julianshapiro/velocity.";
+			var abortError = "Velocity UI Pack: You need to update Velocity (velocity.js) to a newer version. Visit http://github.com/julianshapiro/velocity.";
 			alert(abortError);
 			throw new Error(abortError);
 		}

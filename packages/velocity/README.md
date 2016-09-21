@@ -1,4 +1,4 @@
-##Velocity 1.2.3
+##Velocity 1.3.1
 
 **Docs**  
 [http://VelocityJS.org](http://velocityjs.org)
@@ -29,6 +29,7 @@ Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you
 
 ###**Updates**
 
+- **1.3.0**: Code cleanup - no breaking changes known.
 - **1.2.0**: [Custom tweens](http://VelocityJS.org/#progress). [Custom easings](http://VelocityJS.org/#easing). ["Finish" command](http://VelocityJS.org/#finish). See [commit log](https://github.com/julianshapiro/velocity/commit/2a28e3812c6fe9262244ed3b6d41d12ae9a107c6) for more.
 - **1.0.0**: File name changed to `velocity.js`. Read [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies).
 - **0.1.0**: `stop` now stops animations *immediately* (instead of only clearing the remainder of the animation queue). No other backwards-incompatible changes were made.

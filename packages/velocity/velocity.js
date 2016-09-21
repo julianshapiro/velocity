@@ -1,4 +1,4 @@
-/*! VelocityJS.org (1.3.0). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
+/*! VelocityJS.org (1.3.1). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 
 /*************************
  Velocity jQuery Shim
@@ -671,7 +671,7 @@
 			hook: null, /* Defined below. */
 			/* Velocity-wide animation time remapping for testing purposes. */
 			mock: false,
-			version: {major: 1, minor: 3, patch: 0},
+			version: {major: 1, minor: 3, patch: 1},
 			/* Set to 1 or 2 (most verbose) to output debug info to console. */
 			debug: false
 		};
