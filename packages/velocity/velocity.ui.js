@@ -106,9 +106,10 @@
 			}
 
 			/* Register a custom redirect for each effect. */
-			Velocity.Redirects[effectName] = function(element, redirectOptions, elementsIndex, elementsSize, elements, promiseData) {
+			Velocity.Redirects[effectName] = function(element, redirectOptions, elementsIndex, elementsSize, elements, promiseData, loop) {
 				var finalElement = (elementsIndex === elementsSize - 1);
 
+				loop = loop || properties.loop;
 				if (typeof properties.defaultDuration === "function") {
 					properties.defaultDuration = properties.defaultDuration.call(elements, elements);
 				} else {
@@ -135,6 +136,7 @@
 					opts.queue = redirectOptions.queue || "";
 					opts.easing = callOptions.easing || "ease";
 					opts.delay = parseFloat(callOptions.delay) || 0;
+					opts.loop = !properties.loop && callOptions.loop;
 					opts._cacheValues = callOptions._cacheValues || true;
 
 					/* Special processing for the first effect call. */
@@ -200,6 +202,9 @@
 						};
 
 						opts.complete = function() {
+							if (loop) {
+								Velocity.Redirects[effectName](element, redirectOptions, elementsIndex, elementsSize, elements, promiseData, loop === true ? true : Math.max(0, loop - 1));
+							}
 							if (properties.reset) {
 								for (var resetProperty in properties.reset) {
 									if (!properties.reset.hasOwnProperty(resetProperty)) {
