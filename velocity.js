@@ -1506,6 +1506,47 @@
 							};
 						})();
 					}
+
+					/**************
+					 Dimensions
+					 **************/
+					function augmentDimension(name, element, wantInner) {
+						var isBorderBox = CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
+
+						if (isBorderBox === (wantInner || false)) {
+							/* in box-sizing mode, the CSS width / height accessors already give the outerWidth / outerHeight. */
+							var i,
+									value,
+									augment = 0,
+									sides = name === "width" ? ["Left", "Right"] : ["Top", "Bottom"],
+									fields = ["padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width"];
+
+							for (i = 0; i < fields.length; i++) {
+								value = parseFloat(CSS.getPropertyValue(element, fields[i]));
+								if (!isNaN(value)) {
+									augment += value;
+								}
+							}
+							return wantInner ? -augment : augment;
+						}
+						return 0;
+					}
+					function getDimension(name, wantInner) {
+						return function(type, element, propertyValue) {
+							switch (type) {
+								case "name":
+									return name;
+								case "extract":
+									return parseFloat(propertyValue) + augmentDimension(name, element, wantInner);
+								case "inject":
+									return (parseFloat(propertyValue) - augmentDimension(name, element, wantInner)) + "px";
+							}
+						};
+					}
+					CSS.Normalizations.registered.innerWidth = getDimension("width", true);
+					CSS.Normalizations.registered.innerHeight = getDimension("height", true);
+					CSS.Normalizations.registered.outerWidth = getDimension("width");
+					CSS.Normalizations.registered.outerHeight = getDimension("height");
 				}
 			},
 			/************************
@@ -2027,12 +2068,12 @@
 				/* Get property value. If an element set was passed in, only return the value for the first element. */
 				if (arg3 === undefined) {
 					if (value === undefined) {
-						value = Velocity.CSS.getPropertyValue(element, arg2);
+						value = CSS.getPropertyValue(element, arg2);
 					}
 					/* Set property value. */
 				} else {
 					/* sPV returns an array of the normalized propertyName/propertyValue pair used to update the DOM. */
-					var adjustedSet = Velocity.CSS.setPropertyValue(element, arg2, arg3);
+					var adjustedSet = CSS.setPropertyValue(element, arg2, arg3);
 
 					/* Transform properties don't automatically set. They have to be flushed to the DOM. */
 					if (adjustedSet[0] === "transform") {
@@ -3913,7 +3954,7 @@
 
 						/* For slideDown, use forcefeeding to animate all vertical properties from 0. For slideUp,
 						 use forcefeeding to start from computed values and animate down to 0. */
-						var propertyValue = Velocity.CSS.getPropertyValue(element, property);
+						var propertyValue = CSS.getPropertyValue(element, property);
 						computedValues[property] = (direction === "Down") ? [propertyValue, 0] : [0, propertyValue];
 					}
 
