@@ -114,6 +114,9 @@
 				}
 			} else {
 				for (i in obj) {
+					if (!obj.hasOwnProperty(i)) {
+						continue;
+					}
 					value = callback.apply(obj[i], args);
 
 					if (value === false) {
@@ -133,6 +136,9 @@
 				}
 			} else {
 				for (i in obj) {
+					if (!obj.hasOwnProperty(i)) {
+						continue;
+					}
 					value = callback.call(obj[i], i, obj[i]);
 
 					if (value === false) {
@@ -214,6 +220,9 @@
 		for (; i < length; i++) {
 			if ((options = arguments[i])) {
 				for (name in options) {
+					if (!options.hasOwnProperty(name)) {
+						continue;
+					}
 					src = target[name];
 					copy = options[name];
 
@@ -544,7 +553,9 @@
 			},
 			isEmptyObject: function(variable) {
 				for (var name in variable) {
-					return false;
+					if (variable.hasOwnProperty(name)) {
+						return false;
+					}
 				}
 
 				return true;
@@ -1094,6 +1105,9 @@
 					 Thus, we re-arrange the templates accordingly. */
 					if (IE) {
 						for (rootProperty in CSS.Hooks.templates) {
+							if (!CSS.Hooks.templates.hasOwnProperty(rootProperty)) {
+								continue;
+							}
 							hookTemplate = CSS.Hooks.templates[rootProperty];
 							hookNames = hookTemplate[0].split(" ");
 
@@ -1112,10 +1126,16 @@
 
 					/* Hook registration. */
 					for (rootProperty in CSS.Hooks.templates) {
+						if (!CSS.Hooks.templates.hasOwnProperty(rootProperty)) {
+							continue;
+						}
 						hookTemplate = CSS.Hooks.templates[rootProperty];
 						hookNames = hookTemplate[0].split(" ");
 
 						for (var j in hookNames) {
+							if (!hookNames.hasOwnProperty(j)) {
+								continue;
+							}
 							var fullHookName = rootProperty + hookNames[j],
 									hookPosition = j;
 
@@ -2699,7 +2719,7 @@
 							/* Manipulate the previous tweensContainer by replacing its end values and currentValues with its start values. */
 							for (var lastTween in lastTweensContainer) {
 								/* In addition to tween data, tweensContainers contain an element property that we ignore here. */
-								if (lastTween !== "element") {
+								if (lastTweensContainer.hasOwnProperty(lastTween) && lastTween !== "element") {
 									var lastStartValue = lastTweensContainer[lastTween].startValue;
 
 									lastTweensContainer[lastTween].startValue = lastTweensContainer[lastTween].currentValue = lastTweensContainer[lastTween].endValue;
@@ -2845,6 +2865,9 @@
 						/* Create a tween out of each property, and append its associated data to tweensContainer. */
 						for (var property in propertiesMap) {
 
+							if (!propertiesMap.hasOwnProperty(property)) {
+								continue;
+							}
 							/**************************
 							 Start Value Sourcing
 							 **************************/
@@ -3521,7 +3544,7 @@
 						/* For every element, iterate through each property. */
 						for (var property in tweensContainer) {
 							/* Note: In addition to property tween data, tweensContainer contains a reference to its associated element. */
-							if (property !== "element") {
+							if (tweensContainer.hasOwnProperty(property) && property !== "element") {
 								var tween = tweensContainer[property],
 										currentValue,
 										/* Easing can either be a pre-genereated function or a string that references a pre-registered easing
@@ -3883,6 +3906,9 @@
 
 					/* Cache the elements' original vertical dimensional property values so that we can animate back to them. */
 					for (var property in computedValues) {
+						if (!computedValues.hasOwnProperty(property)) {
+							continue;
+						}
 						inlineValues[property] = element.style[property];
 
 						/* For slideDown, use forcefeeding to animate all vertical properties from 0. For slideUp,
@@ -3899,7 +3925,9 @@
 				opts.complete = function() {
 					/* Reset element to its pre-slide inline values once its slide animation is complete. */
 					for (var property in inlineValues) {
-						element.style[property] = inlineValues[property];
+						if (inlineValues.hasOwnProperty(property)) {
+							element.style[property] = inlineValues[property];
+						}
 					}
 
 					/* If the user passed in a complete callback, fire it now. */

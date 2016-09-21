@@ -202,6 +202,9 @@
 						opts.complete = function() {
 							if (properties.reset) {
 								for (var resetProperty in properties.reset) {
+									if (!properties.reset.hasOwnProperty(resetProperty)) {
+										continue;
+									}
 									var resetValue = properties.reset[resetProperty];
 
 									/* Format each non-array value in the reset property map to [ value, value ] so that changes apply
@@ -731,7 +734,9 @@
 
 		/* Register the packaged effects. */
 		for (var effectName in Velocity.RegisterEffect.packagedEffects) {
-			Velocity.RegisterEffect(effectName, Velocity.RegisterEffect.packagedEffects[effectName]);
+			if (Velocity.RegisterEffect.packagedEffects.hasOwnProperty(effectName)) {
+				Velocity.RegisterEffect(effectName, Velocity.RegisterEffect.packagedEffects[effectName]);
+			}
 		}
 
 		/*********************
