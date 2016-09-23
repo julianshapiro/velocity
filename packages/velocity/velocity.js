@@ -2865,11 +2865,28 @@
 							return [endValue || 0, easing, startValue];
 						};
 
+						/* Do a quick check of property data and return if the startValue and endValue are both
+						 functions (ie, don't split red/green/blue) */
+						var startAndEndFunction = function(valueData) {
+							if (Type.isArray(valueData)) {
+								return Type.isFunction(valueData[0]) && (valueData[1] === undefined || Type.isFunction(valueData[1]));
+							}
+							return false;
+						};
+
+						/* Cache RegExp as it's somewhat costly to create - but only for this iteration as it's a public value and might change */
+						var rxCSSListsColors;
+
 						/* Cycle through each property in the map, looking for shorthand color properties (e.g. "color" as opposed to "colorRed"). Inject the corresponding
 						 colorRed, colorGreen, and colorBlue RGB component tweens into the propertiesMap (which Velocity understands) and remove the shorthand property. */
 						$.each(propertiesMap, function(property, value) {
+							if (!rxCSSListsColors) {
+								rxCSSListsColors = RegExp("^" + CSS.Lists.colors.join("$|^") + "$");
+							}
 							/* Find shorthand color properties that have been passed a hex string. */
-							if (RegExp("^" + CSS.Lists.colors.join("$|^") + "$").test(CSS.Names.camelCase(property))) {
+							/* Don't try to fix values if both startValue and endValue are a function */
+							/* Would be quicker to use CSS.Lists.colors.includes() if possible */
+							if (rxCSSListsColors.test(CSS.Names.camelCase(property)) && !startAndEndFunction(value)) {
 								/* Parse the value data for each shorthand. */
 								var valueData = parsePropertyValue(value, true),
 										endValue = valueData[0],
