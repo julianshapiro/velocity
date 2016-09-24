@@ -3948,7 +3948,7 @@
 						begin = opts.begin,
 						complete = opts.complete,
 						inlineValues = {},
-						computedValues = {height: "", marginTop: "", marginBottom: "", paddingTop: "", paddingBottom: "", display: ""};
+						computedValues = {height: "", marginTop: "", marginBottom: "", paddingTop: "", paddingBottom: ""};
 
 				if (opts.display === undefined) {
 					/* Show the element before slideDown begins and hide the element after slideUp completes. */
