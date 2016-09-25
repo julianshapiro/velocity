@@ -644,7 +644,9 @@
 				delay: false,
 				mobileHA: true,
 				/* Advanced: Set to false to prevent property values from being cached between consecutive Velocity-initiated chain calls. */
-				_cacheValues: true
+				_cacheValues: true,
+				/* Advanced: Set to false if the promise should always resolve on empty element lists. */
+				promiseRejectEmpty: true
 			},
 			/* A design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying. Accordingly, each element has a data cache. */
 			init: function(element) {
@@ -2146,10 +2148,28 @@
 				elements = syntacticSugar ? (arguments[0].elements || arguments[0].e) : arguments[0];
 			}
 
-			elements = sanitizeElements(elements);
+			/***************
+			 Promises
+			 ***************/
 
-			if (!elements) {
-				return;
+			var promiseData = {
+				promise: null,
+				resolver: null,
+				rejecter: null
+			};
+
+			/* If this call was made via the utility function (which is the default method of invocation when jQuery/Zepto are not being used), and if
+			 promise support was detected, create a promise object for this call and store references to its resolver and rejecter methods. The resolve
+			 method is used when a call completes naturally or is prematurely stopped by the user. In both cases, completeCall() handles the associated
+			 call cleanup and promise resolving logic. The reject method is used when an invalid set of arguments is passed into a Velocity call. */
+			/* Note: Velocity employs a call-based queueing architecture, which means that stopping an animating element actually stops the full call that
+			 triggered it -- not that one element exclusively. Similarly, there is one promise per call, and all elements targeted by a Velocity call are
+			 grouped together for the purposes of resolving and rejecting a promise. */
+			if (isUtility && Velocity.Promise) {
+				promiseData.promise = new Velocity.Promise(function(resolve, reject) {
+					promiseData.resolver = resolve;
+					promiseData.rejecter = reject;
+				});
 			}
 
 			if (syntacticSugar) {
@@ -2158,6 +2178,19 @@
 			} else {
 				propertiesMap = arguments[argumentIndex];
 				options = arguments[argumentIndex + 1];
+			}
+
+			elements = sanitizeElements(elements);
+
+			if (!elements) {
+				if (promiseData.promise) {
+					if (!propertiesMap || !options || options.promiseRejectEmpty !== false) {
+						promiseData.rejecter();
+					} else {
+						promiseData.resolver();
+					}
+				}
+				return;
 			}
 
 			/* The length of the element set (in the form of a nodeList or an array of elements) is defaulted to 1 in case a
@@ -2193,30 +2226,6 @@
 						options.complete = arguments[i];
 					}
 				}
-			}
-
-			/***************
-			 Promises
-			 ***************/
-
-			var promiseData = {
-				promise: null,
-				resolver: null,
-				rejecter: null
-			};
-
-			/* If this call was made via the utility function (which is the default method of invocation when jQuery/Zepto are not being used), and if
-			 promise support was detected, create a promise object for this call and store references to its resolver and rejecter methods. The resolve
-			 method is used when a call completes naturally or is prematurely stopped by the user. In both cases, completeCall() handles the associated
-			 call cleanup and promise resolving logic. The reject method is used when an invalid set of arguments is passed into a Velocity call. */
-			/* Note: Velocity employs a call-based queueing architecture, which means that stopping an animating element actually stops the full call that
-			 triggered it -- not that one element exclusively. Similarly, there is one promise per call, and all elements targeted by a Velocity call are
-			 grouped together for the purposes of resolving and rejecting a promise. */
-			if (isUtility && Velocity.Promise) {
-				promiseData.promise = new Velocity.Promise(function(resolve, reject) {
-					promiseData.resolver = resolve;
-					promiseData.rejecter = reject;
-				});
 			}
 
 			/*********************
