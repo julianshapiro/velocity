@@ -2823,6 +2823,11 @@
 						var parsePropertyValue = function(valueData, skipResolvingEasing) {
 							var endValue, easing, startValue;
 
+							/* If we have a function as the main argument then resolve it first, in case it returns an array that needs to be split */
+							if (Type.isFunction(valueData)) {
+								valueData = valueData.call(element, elementArrayIndex, elementsLength);
+							}
+
 							/* Handle the array format, which can be structured as one of three potential overloads:
 							 A) [ endValue, easing, startValue ], B) [ endValue, easing ], or C) [ endValue, startValue ] */
 							if (Type.isArray(valueData)) {
