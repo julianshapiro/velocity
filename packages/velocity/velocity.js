@@ -2881,84 +2881,18 @@
 							return [endValue || 0, easing, startValue];
 						};
 
-						/* Do a quick check of property data and return if the startValue and endValue are both
-						 functions (ie, don't split red/green/blue) */
-						var startAndEndFunction = function(valueData) {
-							if (Type.isArray(valueData)) {
-								return Type.isFunction(valueData[0]) && (valueData[1] === undefined || Type.isFunction(valueData[1]));
-							}
-							return false;
-						};
-
-						/* Cache RegExp as it's somewhat costly to create - but only for this iteration as it's a public value and might change */
-						var rxCSSListsColors;
-
-						/* Cycle through each property in the map, looking for shorthand color properties (e.g. "color" as opposed to "colorRed"). Inject the corresponding
-						 colorRed, colorGreen, and colorBlue RGB component tweens into the propertiesMap (which Velocity understands) and remove the shorthand property. */
-						$.each(propertiesMap, function(property, value) {
-							if (!rxCSSListsColors) {
-								rxCSSListsColors = RegExp("^" + CSS.Lists.colors.join("$|^") + "$");
-							}
-							/* Find shorthand color properties that have been passed a hex string. */
-							/* Don't try to fix values if both startValue and endValue are a function */
-							/* Would be quicker to use CSS.Lists.colors.includes() if possible */
-							if (rxCSSListsColors.test(CSS.Names.camelCase(property)) && !startAndEndFunction(value)) {
-								/* Parse the value data for each shorthand. */
-								var valueData = parsePropertyValue(value, true),
-										endValue = valueData[0],
-										easing = valueData[1],
-										startValue = valueData[2];
-
-								if (CSS.RegEx.isHex.test(endValue)) {
-									/* Convert the hex strings into their RGB component arrays. */
-									var colorComponents = ["Red", "Green", "Blue"],
-											endValueRGB = CSS.Values.hexToRgb(endValue),
-											startValueRGB = startValue ? CSS.Values.hexToRgb(startValue) : undefined;
-
-									/* Inject the RGB component tweens into propertiesMap. */
-									for (var i = 0; i < colorComponents.length; i++) {
-										var dataArray = [endValueRGB[i]];
-
-										if (easing) {
-											dataArray.push(easing);
-										}
-
-										if (startValueRGB !== undefined) {
-											dataArray.push(startValueRGB[i]);
-										}
-
-										propertiesMap[CSS.Names.camelCase(property) + colorComponents[i]] = dataArray;
-									}
-
-									/* Remove the intermediary shorthand property entry now that we've processed it. */
-									delete propertiesMap[property];
-								}
-							}
-						});
-
-						/* Create a tween out of each property, and append its associated data to tweensContainer. */
-						for (var property in propertiesMap) {
-
-							if (!propertiesMap.hasOwnProperty(property)) {
-								continue;
-							}
-							/**************************
-							 Start Value Sourcing
-							 **************************/
-
-							/* Parse out endValue, easing, and startValue from the property's data. */
-							var valueData = parsePropertyValue(propertiesMap[property]),
+						var fixPropertyValue = function(property, valueData) {
+							/* In case this property is a hook, there are circumstances where we will intend to work on the hook's root property and not the hooked subproperty. */
+							var rootProperty = CSS.Hooks.getRoot(property),
+									rootPropertyValue = false,
+									/* Parse out endValue, easing, and startValue from the property's data. */
 									endValue = valueData[0],
 									easing = valueData[1],
 									startValue = valueData[2];
 
-							/* Now that the original property name's format has been used for the parsePropertyValue() lookup above,
-							 we force the property to its camelCase styling to normalize it for manipulation. */
-							property = CSS.Names.camelCase(property);
-
-							/* In case this property is a hook, there are circumstances where we will intend to work on the hook's root property and not the hooked subproperty. */
-							var rootProperty = CSS.Hooks.getRoot(property),
-									rootPropertyValue = false;
+							/**************************
+							 Start Value Sourcing
+							 **************************/
 
 							/* Other than for the dummy tween property, properties that are not supported by the browser (and do not have an associated normalization) will
 							 inherently produce no style changes when set, so they are skipped in order to decrease animation tick overhead.
@@ -2969,7 +2903,7 @@
 								if (Velocity.debug) {
 									console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
 								}
-								continue;
+								return;
 							}
 
 							/* If the display option is being set to a non-"none" (e.g. "block") and opacity (filter on IE<=8) is being
@@ -3309,6 +3243,52 @@
 							if (Velocity.debug) {
 								console.log("tweensContainer (" + property + "): " + JSON.stringify(tweensContainer[property]), element);
 							}
+						};
+
+						/* Create a tween out of each property, and append its associated data to tweensContainer. */
+						for (var property in propertiesMap) {
+
+							if (!propertiesMap.hasOwnProperty(property)) {
+								continue;
+							}
+							/* The original property name's format must be used for the parsePropertyValue() lookup,
+							 but we then use its camelCase styling to normalize it for manipulation. */
+							var propertyName = CSS.Names.camelCase(property),
+									valueData = parsePropertyValue(propertiesMap[property]);
+
+							/* Find shorthand color properties that have been passed a hex string. */
+							/* Would be quicker to use CSS.Lists.colors.includes() if possible */
+							if (CSS.Lists.colors.indexOf(propertyName) >= 0) {
+								/* Parse the value data for each shorthand. */
+								var endValue = valueData[0],
+										easing = valueData[1],
+										startValue = valueData[2];
+
+								if (CSS.RegEx.isHex.test(endValue)) {
+									/* Convert the hex strings into their RGB component arrays. */
+									var colorComponents = ["Red", "Green", "Blue"],
+											endValueRGB = CSS.Values.hexToRgb(endValue),
+											startValueRGB = startValue ? CSS.Values.hexToRgb(startValue) : undefined;
+
+									/* Inject the RGB component tweens into propertiesMap. */
+									for (var i = 0; i < colorComponents.length; i++) {
+										var dataArray = [endValueRGB[i]];
+
+										if (easing) {
+											dataArray.push(easing);
+										}
+
+										if (startValueRGB !== undefined) {
+											dataArray.push(startValueRGB[i]);
+										}
+
+										fixPropertyValue(propertyName + colorComponents[i], dataArray);
+									}
+									/* If we have replaced a shortcut color value then don't update the standard property name */
+									continue;
+								}
+							}
+							fixPropertyValue(propertyName, valueData);
 						}
 
 						/* Along with its property data, store a reference to the element itself onto tweensContainer. */
