@@ -18,7 +18,7 @@ NPM: https://www.npmjs.com/package/velocity-react
 **Quickstart**
 Velocity (CDN, choose one of them):  
 ```html
-<script src="cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.min.js"></script>
 <script src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.min.js"></script>
 ```
 
