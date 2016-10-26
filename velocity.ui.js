@@ -790,5 +790,5 @@
 
 			Velocity(sequence[0]);
 		};
-	}((window.jQuery || window.Zepto || window), window, document);
+	}((window.jQuery || window.Zepto || window), window, window.document);
 }));
