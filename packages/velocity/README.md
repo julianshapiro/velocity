@@ -25,7 +25,7 @@ Velocity (CDN, choose one of them):
 Velocity UI pack (CDN, choose one of them):  
 ```html
 <script src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.ui.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.ui.min.jss"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.ui.min.js"></script>
 ```
 
 Package managers:  
