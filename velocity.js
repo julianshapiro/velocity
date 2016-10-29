@@ -3771,7 +3771,7 @@
 									/* Note: To solve an IE<=8 positioning bug, the unit type is dropped when setting a property value of 0. */
 									var adjustedSetData = CSS.setPropertyValue(element, /* SET */
 											property,
-											tween.currentValue + (parseFloat(currentValue) === 0 ? "" : tween.unitType),
+											tween.currentValue + (IE < 9 && parseFloat(currentValue) === 0 ? "" : tween.unitType),
 											tween.rootPropertyValue,
 											tween.scrollData);
 
