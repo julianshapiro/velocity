@@ -85,7 +85,7 @@
 
 					parentNode = element.parentNode;
 
-					propertiesToSum = ["height", "paddingTop", "paddingBottom", "marginTop", "marginBottom"];
+					var propertiesToSum = ["height", "paddingTop", "paddingBottom", "marginTop", "marginBottom"];
 
 					/* If box-sizing is border-box, the height already includes padding and margin */
 					if (Velocity.CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box") {
