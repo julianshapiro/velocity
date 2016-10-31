@@ -546,7 +546,10 @@
 			},
 			/* Determine if variable is a wrapped jQuery or Zepto element. */
 			isWrapped: function(variable) {
-				return variable && (variable.jquery || (window.Zepto && window.Zepto.zepto.isZ(variable)));
+				return variable && (
+					variable.constructor.prototype.jquery ||
+					(window.Zepto && window.Zepto.zepto.isZ(variable))
+				);
 			},
 			isSVG: function(variable) {
 				return window.SVGElement && (variable instanceof window.SVGElement);
