@@ -525,6 +525,9 @@
 		}
 
 		var Type = {
+			isNumber: function(variable) {
+				return (typeof variable === "number");
+			},
 			isString: function(variable) {
 				return (typeof variable === "string");
 			},
@@ -544,9 +547,9 @@
 						variable.length !== undefined &&
 						(variable.length === 0 || (typeof variable[0] === "object" && variable[0].nodeType > 0));
 			},
-			/* Determine if variable is a wrapped jQuery or Zepto element. */
+			/* Determine if variable is an array-like wrapped jQuery, Zepto or similar element. */
 			isWrapped: function(variable) {
-				return variable && (variable.jquery || (window.Zepto && window.Zepto.zepto.isZ(variable)));
+				return variable && (Type.isArray(variable) || (Type.isNumber(variable.length) && !Type.isString(variable) && !Type.isFunction(variable)));
 			},
 			isSVG: function(variable) {
 				return window.SVGElement && (variable instanceof window.SVGElement);
