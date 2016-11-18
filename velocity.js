@@ -362,7 +362,7 @@
 			function offsetParentFn(elem) {
 				var offsetParent = elem.offsetParent || document;
 
-				while (offsetParent && (offsetParent.nodeType.toLowerCase !== "html" && offsetParent.style.position === "static")) {
+				while (offsetParent && (offsetParent.nodeName.toLowerCase !== "html" && offsetParent.style && offsetParent.style.position === "static")) {
 					offsetParent = offsetParent.offsetParent;
 				}
 
