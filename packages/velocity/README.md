@@ -1,4 +1,4 @@
-## Velocity 1.3.1
+﻿## Velocity 1.3.2
 
 **Docs**
 [http://VelocityJS.org](http://velocityjs.org)
