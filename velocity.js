@@ -360,9 +360,9 @@
 		position: function() {
 			/* jQuery */
 			function offsetParentFn(elem) {
-				var offsetParent = elem.offsetParent || document;
+				var offsetParent = elem.offsetParent;
 
-				while (offsetParent && (offsetParent.nodeType.toLowerCase !== "html" && offsetParent.style.position === "static")) {
+				while (offsetParent && offsetParent.nodeName.toLowerCase() !== "html" && offsetParent.style && offsetParent.style.position === "static") {
 					offsetParent = offsetParent.offsetParent;
 				}
 
@@ -680,7 +680,58 @@
 			/* Set to 1 or 2 (most verbose) to output debug info to console. */
 			debug: false,
 			/* Use rAF high resolution timestamp when available */
-			timestamp: true
+			timestamp: true,
+			/* Pause all animations */
+			pauseAll: function(queueName) {
+				var currentTime = (new Date()).getTime();
+
+				$.each(Velocity.State.calls, function(i, activeCall) {
+
+					if (activeCall) {
+
+						/* If we have a queueName and this call is not on that queue, skip */
+						if (queueName !== undefined && ((activeCall[2].queue !== queueName) || (activeCall[2].queue === false))) {
+							return true;
+						}
+
+						/* Set call to paused */
+						activeCall[5] = {
+							resume: false
+						};
+
+						$.each(activeCall[1], function(k, activeElement) {
+
+							pauseDelayOnElement(activeElement, currentTime);
+
+						});
+					}
+				});
+			},
+			/* Resume all animations */
+			resumeAll: function(queueName) {
+				var currentTime = (new Date()).getTime();
+
+				$.each(Velocity.State.calls, function(i, activeCall) {
+
+					if (activeCall) {
+
+						/* If we have a queueName and this call is not on that queue, skip */
+						if (queueName !== undefined && ((activeCall[2].queue !== queueName) || (activeCall[2].queue === false))) {
+							return true;
+						}
+
+						/* Set call to resumed if it was paused */
+						if (activeCall[5]) {
+							activeCall[5].resume = true;
+						}
+
+						$.each(activeCall[1], function(k, activeElement) {
+
+							resumeDelayOnElement(activeElement, currentTime);
+						});
+					}
+				});
+			}
 		};
 
 		/* Retrieve the appropriate scroll anchor and property name for the browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
@@ -702,6 +753,35 @@
 			/* jQuery <=1.4.2 returns null instead of undefined when no match is found. We normalize this behavior. */
 			return response === null ? undefined : response;
 		}
+
+		/**************
+		 Delay Timer
+		 **************/
+
+		function pauseDelayOnElement(element, currentTime) {
+			/* Check for any delay timers, and pause the set timeouts (while preserving time data)
+			 to be resumed when the "resume" command is issued */
+			var data = Data(element);
+
+			if (data && data.delayTimer && !data.delayPaused) {
+				data.delayRemaining = data.delay - currentTime + data.delayBegin;
+				data.delayPaused = true;
+				clearTimeout(data.delayTimer.setTimeout);
+			}
+		}
+
+		function resumeDelayOnElement(element, currentTime) {
+			/* Check for any paused timers and resume */
+			var data = Data(element);
+
+			if (data && data.delayTimer && data.delayPaused) {
+				/* If the element was mid-delay, re initiate the timeout with the remaining delay */
+				data.delayPaused = false;
+				data.delayTimer.setTimeout = setTimeout(data.delayTimer.next, data.delayRemaining);
+			}
+		}
+
+
 
 		/**************
 		 Easing
@@ -2229,8 +2309,8 @@
 
 			/* Support is included for jQuery's argument overloading: $.animate(propertyMap [, duration] [, easing] [, complete]).
 			 Overloading is detected by checking for the absence of an object being passed into options. */
-			/* Note: The stop and finish actions do not accept animation options, and are therefore excluded from this check. */
-			if (!/^(stop|finish|finishAll)$/i.test(propertiesMap) && !$.isPlainObject(options)) {
+			/* Note: The stop/finish/pause/resume actions do not accept animation options, and are therefore excluded from this check. */
+			if (!/^(stop|finish|finishAll|pause|resume)$/i.test(propertiesMap) && !$.isPlainObject(options)) {
 				/* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
 				var startingArgumentPosition = argumentIndex + 1;
 
@@ -2258,8 +2338,9 @@
 			 *********************/
 
 			/* Velocity's behavior is categorized into "actions": Elements can either be specially scrolled into view,
-			 or they can be started, stopped, or reversed. If a literal or referenced properties map is passed in as Velocity's
-			 first argument, the associated action is "start". Alternatively, "scroll", "reverse", or "stop" can be passed in instead of a properties map. */
+			 or they can be started, stopped, paused, resumed, or reversed . If a literal or referenced properties map is passed in as Velocity's
+			 first argument, the associated action is "start". Alternatively, "scroll", "reverse", "pause", "resume" or "stop" can be passed in 
+			 instead of a properties map. */
 			var action;
 
 			switch (propertiesMap) {
@@ -2270,6 +2351,125 @@
 				case "reverse":
 					action = "reverse";
 					break;
+
+				case "pause":
+
+					/*******************
+					 Action: Pause
+					 *******************/
+
+					var currentTime = (new Date()).getTime();
+
+					/* Handle delay timers */
+					$.each(elements, function(i, element) {
+						pauseDelayOnElement(element, currentTime);
+					});
+
+					/* Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a 
+					 single element will cause any calls that containt tweens for that element to be paused/resumed
+					 as well. */
+
+					/* Iterate through all calls and pause any that contain any of our elements */
+					$.each(Velocity.State.calls, function(i, activeCall) {
+
+						var found = false;
+						/* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
+						if (activeCall) {
+							/* Iterate through the active call's targeted elements. */
+							$.each(activeCall[1], function(k, activeElement) {
+								var queueName = (options === undefined) ? "" : options;
+
+								if (queueName !== true && (activeCall[2].queue !== queueName) && !(options === undefined && activeCall[2].queue === false)) {
+									return true;
+								}
+
+								/* Iterate through the calls targeted by the stop command. */
+								$.each(elements, function(l, element) {
+									/* Check that this call was applied to the target element. */
+									if (element === activeElement) {
+
+										/* Set call to paused */
+										activeCall[5] = {
+											resume: false
+										};
+
+										/* Once we match an element, we can bounce out to the next call entirely */
+										found = true;
+										return false;
+									}
+								});
+
+								/* Proceed to check next call if we have already matched */
+								if (found) {
+									return false;
+								}
+							});
+						}
+
+					});
+
+					/* Since pause creates no new tweens, exit out of Velocity. */
+					return getChain();
+
+				case "resume":
+
+					/*******************
+					 Action: Resume
+					 *******************/
+
+					/* Handle delay timers */
+					$.each(elements, function(i, element) {
+						resumeDelayOnElement(element, currentTime);
+					});
+
+					/* Pause and Resume are call-wide (not on a per elemnt basis). Thus, calling pause or resume on a 
+					 single element will cause any calls that containt tweens for that element to be paused/resumed
+					 as well. */
+
+					/* Iterate through all calls and pause any that contain any of our elements */
+					$.each(Velocity.State.calls, function(i, activeCall) {
+						var found = false;
+						/* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
+						if (activeCall) {
+							/* Iterate through the active call's targeted elements. */
+							$.each(activeCall[1], function(k, activeElement) {
+								var queueName = (options === undefined) ? "" : options;
+
+								if (queueName !== true && (activeCall[2].queue !== queueName) && !(options === undefined && activeCall[2].queue === false)) {
+									return true;
+								}
+
+								/* Skip any calls that have never been paused */
+								if (!activeCall[5]) {
+									return true;
+								}
+
+								/* Iterate through the calls targeted by the stop command. */
+								$.each(elements, function(l, element) {
+									/* Check that this call was applied to the target element. */
+									if (element === activeElement) {
+
+										/* Flag a pause object to be resumed, which will occur during the next tick. In
+										 addition, the pause object will at that time be deleted */
+										activeCall[5].resume = true;
+
+										/* Once we match an element, we can bounce out to the next call entirely */
+										found = true;
+										return false;
+									}
+								});
+
+								/* Proceed to check next call if we have already matched */
+								if (found) {
+									return false;
+								}
+							});
+						}
+
+					});
+
+					/* Since resume creates no new tweens, exit out of Velocity. */
+					return getChain();
 
 				case "finish":
 				case "finishAll":
@@ -2536,7 +2736,11 @@
 						Velocity.velocityQueueEntryFlag = true;
 
 						/* The ensuing queue item (which is assigned to the "next" argument that $.queue() automatically passes in) will be triggered after a setTimeout delay.
-						 The setTimeout is stored so that it can be subjected to clearTimeout() if this animation is prematurely stopped via Velocity's "stop" command. */
+						 The setTimeout is stored so that it can be subjected to clearTimeout() if this animation is prematurely stopped via Velocity's "stop" command, and
+						 delayBegin/delayTime is used to ensure we can "pause" and "resume" a tween that is still mid-delay. */
+
+						Data(element).delayBegin = (new Date()).getTime();
+						Data(element).delay = parseFloat(opts.delay);
 						Data(element).delayTimer = {
 							setTimeout: setTimeout(next, parseFloat(opts.delay)),
 							next: next
@@ -3429,7 +3633,7 @@
 						if (elementsIndex === elementsLength - 1) {
 							/* Add the current call plus its associated metadata (the element set and the call's options) onto the global call container.
 							 Anything on this call container is subjected to tick() processing. */
-							Velocity.State.calls.push([call, elements, opts, null, promiseData.resolver]);
+							Velocity.State.calls.push([call, elements, opts, null, promiseData.resolver, null, 0]);
 
 							/* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */
 							if (Velocity.State.isTicking === false) {
@@ -3634,7 +3838,11 @@
 							opts = callContainer[2],
 							timeStart = callContainer[3],
 							firstTick = !!timeStart,
-							tweenDummyValue = null;
+							tweenDummyValue = null,
+							pauseObject = callContainer[5],
+							millisecondsEllapsed = callContainer[6];
+
+
 
 					/* If timeStart is undefined, then this is the first time that this call has been processed by tick().
 					 We assign timeStart now so that its value is as close to the real animation start time as possible.
@@ -3648,10 +3856,25 @@
 						timeStart = Velocity.State.calls[i][3] = timeCurrent - 16;
 					}
 
+					/* If a pause object is present, skip processing unless it has been set to resume */
+					if (pauseObject) {
+						if (pauseObject.resume) {
+							/* Update the time start to accomodate the paused completion amount */
+							timeStart = callContainer[3] = Math.round(timeCurrent - millisecondsEllapsed - 16);
+
+							/* Remove pause object after processing */
+							callContainer[5] = null;
+						} else {
+							continue;
+						}
+					}
+
+					millisecondsEllapsed = callContainer[6] = timeCurrent - timeStart;
+
 					/* The tween's completion percentage is relative to the tween's start time, not the tween's start value
 					 (which would result in unpredictable tween durations since JavaScript's timers are not particularly accurate).
 					 Accordingly, we ensure that percentComplete does not exceed 1. */
-					var percentComplete = Math.min((timeCurrent - timeStart) / opts.duration, 1);
+					var percentComplete = Math.min(millisecondsEllapsed / opts.duration, 1);
 
 					/**********************
 					 Element Iteration
@@ -3663,7 +3886,7 @@
 								element = tweensContainer.element;
 
 						/* Check to see if this element has been deleted midway through the animation by checking for the
-						 continued existence of its data cache. If it's gone, skip animating this element. */
+						 continued existence of its data cache. If it's gone, or the element is currently paused, skip animating this element. */
 						if (!Data(element)) {
 							continue;
 						}
