@@ -121,7 +121,7 @@
 				colorGreen: 200
 			};
 
-		for (var i = 0; i < 100; i++) {
+		for (var i = 0; i < 200; i++) {
 			var div = document.createElement("div");
 
 			div.className = "target";
@@ -983,6 +983,251 @@
 
 				start();
 			}, asyncCheckDuration);
+		});
+
+		/****************************
+		   Command: Pause / Resume
+		*****************************/
+
+		QUnit.asyncTest("Command: Pause / Resume", function() {
+			expect(10);
+
+			var $target1 = getTarget(); 
+			var $target1d = getTarget(); //delayed
+			/* Ensure an error isn't thrown when "pause" is called on a $target that isn't animating. */
+			Velocity($target1, "pause");
+			Velocity($target1d, "pause");
+
+			/* Ensure an error isn't thrown when "pause" is called on a $target that isn't animating. */
+			Velocity($target1, "resume");
+			Velocity($target1d, "resume");
+
+			/* Ensure a paused $target ceases to animate */
+			Velocity($target1, { opacity: 0 }, defaultOptions);
+			notEqual(Data($target1, pluginName).isPaused, true, "Newly active call not paused.");
+			Velocity($target1d, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { delay: 200 }));
+			notEqual(Data($target1d, pluginName).isPaused, true, "New call with delay not paused.");
+			
+			Velocity($target1, "pause");
+			Velocity($target1d, "pause");
+
+			setTimeout(function() {
+				equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "opacity")), 1, "Property value unchanged after pause.");
+			}, completeCheckDuration);
+
+			setTimeout(function() {
+				equal(parseFloat(Velocity.CSS.getPropertyValue($target1d, "opacity")), 1, "Property value unchanged after pause during delay.");
+			}, 201);
+
+			/* Ensure a resumed $target proceeds to animate */
+			var $target2 = getTarget();
+			var $target2d = getTarget();
+			Velocity($target2, { opacity: 0 }, defaultOptions);
+			Velocity($target2d, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { delay: 100 }));
+			
+			Velocity($target2, "pause");
+			
+			setTimeout(function() {
+				Velocity($target2d, "pause");
+			}, 40);
+
+			Velocity($target2, "resume");
+
+			setTimeout(function() {
+				Velocity($target2d, "resume");
+			}, 80);
+
+			setTimeout(function() {
+				equal(parseFloat(Velocity.CSS.getPropertyValue($target2, "opacity")), 0, "Tween completed after pause/resume.");
+			}, completeCheckDuration);
+
+			setTimeout(function() {
+				equal(parseFloat(Velocity.CSS.getPropertyValue($target2d, "opacity")), 1, "Delayed tween did not start early after pause.");
+			}, 130);
+
+			setTimeout(function() {
+				equal(parseFloat(Velocity.CSS.getPropertyValue($target2d, "opacity")), 0, "Delayed tween completed after pause/resume.");
+			}, completeCheckDuration + 200);
+
+			/* Ensure the property values of a pause tween are midway between start and end values */
+			var $target3 = getTarget(),
+				percent = 0,
+				isPaused = false;
+
+			Velocity($target3, { opacity: 0 }, { 
+				duration: 200,
+				easing:"linear",
+				progress: function(elements, _percentComplete, _msRemaining) {
+					if(isPaused) {
+						throw new Error("Progress callback run after pause.");
+					}
+					percent = _percentComplete;
+				}
+			});
+
+			/* Pause element midway through tween */
+			setTimeout(function() {
+				Velocity($target3, "pause");
+				isPaused = true;
+			}, 100);
+
+			setTimeout(function() {
+				Velocity($target3, "resume");
+				isPaused = false;
+			}, 200);
+
+			
+			setTimeout(function() {
+				/* Property value should be linearly proportional to */
+				var val = parseFloat(Velocity.CSS.getPropertyValue($target3, "opacity"));
+
+				/* Prop value and percentage complete should correlate after pause. We need to test this since
+				the timing variables used to calculate and return the percentage complete and msRemaining are
+				modified after pause and resume comamands have been issued on the call */
+				ok(Math.round(1 - val, 4) == Math.round(percent, 4) , "Tween value and percentageComplete correlate correctly after pause.");
+
+			}, 250);
+
+
+			/* Ensure a all elements in a call are paused if any element is paused, likewise for resume */
+			var $targetA = getTarget(), $targetB = getTarget();
+			Velocity([$targetA, $targetB], { opacity: 0 }, {
+				duration:100,
+				progress:function(elements, percent, msRemaining) {
+					throw new Error("Tween does not proceed for any elements");
+				}
+			});
+			
+			Velocity($targetA, "pause");	
+
+			/* Ensure proper behavior with queue:false  */
+			var $target4 = getTarget();
+			Velocity($target4, { opacity: 0 }, { 
+				duration: 200,
+			});
+
+			var isResumed = false;
+
+			setTimeout(function() {
+				Velocity($target4, "pause");
+				Velocity($target4, { left: -20 }, { 
+					duration: 100,
+					easing:"linear",
+					queue: false,
+					begin: function(elements) {
+						ok(true, "Animation with {queue:false} will run regardless of previously paused animations.")
+					}
+				});
+
+				Velocity($target4, { top: 20 }, { 
+					duration: 100,
+					easing:"linear",
+					begin: function(elements) {
+						if(!isResumed) {
+							throw new Error("Queued animation doesn't begin until previous animation was resumed.");
+						} else {
+							ok(true, "Queued animation began after previously paused animation completed");
+						}
+					}
+				});
+			}, 100);
+
+			setTimeout(function() {
+				isResumed = true;
+				Velocity($target4, "resume");
+			}, 200);
+
+			setTimeout(function() {
+				start();
+				/* Clear out any existing test animations to prevent errors from being thrown
+				in another test */
+				try {
+					Velocity([$targetA, $target3, $target4], "stop");
+				} catch (e) {}
+			}, 800);
+
+		});
+
+		/*********************************
+		   Command: PauseAll / ResumeAll
+		**********************************/
+
+		QUnit.asyncTest("Command: Global Pause / Resume", function() {
+			expect(3);
+
+			var $target1 = getTarget(); 
+			var $target2 = getTarget();
+			var $target3 = getTarget();
+			var $target4 = getTarget();
+
+			var isPaused = false;
+			var hasProgressed2 = false;
+			Velocity($target1, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { 
+				delay: 100,
+				queue:false,
+				progress: function(elements, progress, msRemaining) {
+					if(isPaused) {
+						throw new Error("Delayed Tween should not progress when globally paused");
+					}
+				}
+			}));
+			
+			Velocity($target2, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { 
+				progress: function(elements, progress, msRemaining) {
+					if(isPaused) {
+						throw new Error("Tween should not progress when globally paused");
+					} else if(!hasProgressed2) {
+						hasProgressed2 = true;
+						ok (true, "Tween resumes on individual pause after global resume");
+					}
+				}
+			}));
+
+			Velocity.pauseAll();
+			isPaused = true;
+
+			/* Testing with custom queues */
+			var hasProgressed3 = false;
+			Velocity($target3, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { 
+				queue: "queue1",
+				progress: function(elements, progress, msRemaining) {
+					if(!hasProgressed3) {
+						hasProgressed3 = true;
+						ok (true, "Tweens created after global pause begin immediately");
+					}
+				}
+			}));
+
+			var hasProgressed4 = false;
+			Velocity($target4, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { 
+				queue: "queue2",
+				progress: function(elements, progress, msRemaining) {
+					if(isPaused) {
+						throw new Error("Tween on paused queue should not progress");
+					} else if(!hasProgressed4) {
+						hasProgressed4 = true;
+						ok (true, "Paused tweens on a queue resume after a global resumeAll call");
+					}
+				}
+			}));
+
+			/* Begin queued animations */
+			Velocity.Utilities.dequeue($target4, "queue2");
+			Velocity.Utilities.dequeue($target3, "queue1");
+			
+			/* Only $target4 should pause */
+			Velocity.pauseAll("queue2");
+
+			setTimeout(function() {
+				isPaused = false;
+				Velocity.resumeAll();
+			}, 200);
+
+			setTimeout(function() {
+				start();
+				Velocity.resumeAll();
+			}, 400);
+
 		});
 
 		/******************
