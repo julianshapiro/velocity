@@ -495,6 +495,19 @@
 			};
 		})();
 
+		var performance = (function() {
+			var perf = window.performance || {};
+
+			if (!perf.hasOwnProperty("now")) {
+				var nowOffset = perf.timing && perf.timing.domComplete ? perf.timing.domComplete : (new Date()).getTime();
+
+				perf.now = function() {
+					return (new Date()).getTime() - nowOffset;
+				};
+			}
+			return perf;
+		})();
+
 		/* Array compacting. Copyright Lo-Dash. MIT License: https://github.com/lodash/lodash/blob/master/LICENSE.txt */
 		function compactSparseArray(array) {
 			var index = -1,
@@ -3601,8 +3614,9 @@
 			 by the same Velocity call -- are properly batched into the same initial RAF tick and consequently remain in sync thereafter. */
 			if (timestamp) {
 				/* We normally use RAF's high resolution timestamp but as it can be significantly offset when the browser is
-				 under high stress we give the option for choppiness over allowing the browser to drop huge chunks of frames. */
-				var timeCurrent = Velocity.timestamp && timestamp !== true ? timestamp : (new Date()).getTime();
+				 under high stress we give the option for choppiness over allowing the browser to drop huge chunks of frames.
+				 We use performance.now() and shim it if it doesn't exist for when the tab is hidden. */
+				var timeCurrent = Velocity.timestamp && timestamp !== true ? timestamp : performance.now();
 
 				/********************
 				 Call Iteration
