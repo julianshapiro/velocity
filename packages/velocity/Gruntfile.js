@@ -14,6 +14,7 @@ module.exports = function(grunt) {
 				freeze: true,
 				funcscope: true,
 				futurehostile: true,
+				laxbreak: true, // Makes it very hard to write readable code in some places without this option
 				loopfunc: true, // Velocity 1.*
 				nocomma: true,
 				nonbsp: true,

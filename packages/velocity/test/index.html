@@ -400,7 +400,7 @@
 			Velocity($target3, testPropertiesEndNoConvert);
 			assert.equal(Data($target3, pluginName).tweensContainer.paddingLeft.startValue, parseFloat(testStartValues.paddingLeft), "Start value #1 wasn't unit converted.");
 			assert.equal(Data($target3, pluginName).tweensContainer.height.startValue, parseFloat(testStartValues.height), "Start value #2 wasn't unit converted.");
-			assert.equal(Data($target3, pluginName).tweensContainer.paddingRight.startValue, parseFloat(testStartValues.paddingRight), "Start value #3 wasn't unit converted.");
+//			assert.deepEqual(Data($target3, pluginName).tweensContainer.paddingRight.startValue, [Math.floor((parentWidth * parseFloat(testStartValues.paddingRight)) / 100), 0], "Start value #3 was pattern matched.");
 
 			/* Properties that should cause start values to be unit-converted. */
 			var testPropertiesEndConvert = { paddingLeft: "20%", height: "40%", lineHeight: "0.5em", wordSpacing: "2rem", marginLeft: "10vw", marginTop: "5vh", marginBottom: "100px" };
@@ -414,16 +414,18 @@
 			Velocity($target4, testPropertiesEndConvert);
 
 			/* Long decimal results can be returned after unit conversion, and Velocity's code and the code here can differ in precision. So, we round floor values before comparison. */
-			assert.equal(Math.floor(Data($target4, pluginName).tweensContainer.paddingLeft.startValue), Math.floor((parseFloat(testStartValues.paddingLeft) / parentWidth) * 100), "Horizontal property converted to %.");
+//			assert.deepEqual(Data($target4, pluginName).tweensContainer.paddingLeft.startValue, [parseFloat(testStartValues.paddingLeft), 0], "Horizontal property converted to %.");
 			assert.equal(Math.floor(Data($target4, pluginName).tweensContainer.height.startValue), Math.floor((parseFloat(testStartValues.height) / parentHeight) * 100), "Vertical property converted to %.");
-			assert.equal(Math.floor(Data($target4, pluginName).tweensContainer.lineHeight.startValue), Math.floor(parseFloat(testStartValues.lineHeight) / parseFloat(parentFontSize)), "Property converted to em.");
-			assert.equal(Math.floor(Data($target4, pluginName).tweensContainer.wordSpacing.startValue), Math.floor(parseFloat(testStartValues.wordSpacing) / parseFloat(remSize)), "Property converted to rem.");
+//			assert.equal(Data($target4, pluginName).tweensContainer.lineHeight.startValue, Math.floor(parseFloat(testStartValues.lineHeight) / parseFloat(parentFontSize)), "Property converted to em.");
+//			assert.equal(Data($target4, pluginName).tweensContainer.wordSpacing.startValue, Math.floor(parseFloat(testStartValues.wordSpacing) / parseFloat(remSize)), "Property converted to rem.");
 			assert.equal(Math.floor(Data($target4, pluginName).tweensContainer.marginBottom.startValue), parseFloat(testStartValues.marginBottom) / 100 * parseFloat($target4.parentNode.offsetWidth), "Property converted to px.");
 
-			if (!(IE<=8) && !isAndroid) {
-				assert.equal(Math.floor(Data($target4, pluginName).tweensContainer.marginLeft.startValue), Math.floor(parseFloat(testStartValues.marginLeft) / window.innerWidth * 100), "Horizontal property converted to vw.");
-				assert.equal(Math.floor(Data($target4, pluginName).tweensContainer.marginTop.startValue), Math.floor(parseFloat(testStartValues.marginTop) / window.innerHeight * 100), "Vertical property converted to vh.");
-			}
+//			if (!(IE<=8) && !isAndroid) {
+//				assert.equal(Data($target4, pluginName).tweensContainer.marginLeft.startValue, Math.floor(parseFloat(testStartValues.marginLeft) / window.innerWidth * 100), "Horizontal property converted to vw.");
+//				assert.equal(Data($target4, pluginName).tweensContainer.marginTop.startValue, Math.floor(parseFloat(testStartValues.marginTop) / window.innerHeight * 100), "Vertical property converted to vh.");
+//			}
+
+			// TODO: Tests for auto-parameters as the units are no longer converted.
 
   			/* jQuery TRBL deferring. */
 			var testPropertiesTRBL = { left: "1000px" };
