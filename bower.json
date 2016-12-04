@@ -4,6 +4,10 @@
   "authors": [
     { "name" : "Julian Shapiro",
       "homepage" : "http://julian.com/"
+    },
+    {
+      "name": "Ryc O'Chet",
+      "url": "https://github.com/Rycochet"
     }
   ],
   "description": "Accelerated JavaScript animation.",
