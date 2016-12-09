@@ -36,13 +36,13 @@ _bower:_ `bower install velocity`
 Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you add the `[velocity.js]` and `[javascript]` tags).
 
 ## Updates
-- **1.4**: Pause / Resume (per element or global).<br>
+- **[1.4](https://github.com/julianshapiro/velocity/compare/1.3.0...1.4.0)**: Pause / Resume (per element or global).<br>
 Forcefed string animation (just have matching number spaces) including unit conversions and colour names (ie `background:["rgba(red,0.1)", "blue"]`).
 High resolution timers (animations should be slightly smoother).<br>
 Various fixes including ticker (loading Velocity in a background window) and color handling.
-- **1.3**: Code cleanup - no breaking changes known.
-- **1.2**: [Custom tweens](http://VelocityJS.org/#progress). [Custom easings](http://VelocityJS.org/#easing). ["Finish" command](http://VelocityJS.org/#finish). See [commit log](https://github.com/julianshapiro/velocity/commit/2a28e3812c6fe9262244ed3b6d41d12ae9a107c6) for more.
-- **1.0**: File name changed to `velocity.js`. Read [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies).
+- **[1.3](https://github.com/julianshapiro/velocity/compare/1.2.0...1.3.0)**: Code cleanup - no breaking changes known.
+- **[1.2](https://github.com/julianshapiro/velocity/compare/1.1.0...1.2.0)**: [Custom tweens](http://VelocityJS.org/#progress). [Custom easings](http://VelocityJS.org/#easing). ["Finish" command](http://VelocityJS.org/#finish).
+- **[1.0](https://github.com/julianshapiro/velocity/compare/0.1.0...1.0.0)**: File name changed to `velocity.js`. Read [VelocityJS.org/#dependencies](http://VelocityJS.org/#dependencies).
 - **0.1**: `stop` now stops animations *immediately* (instead of only clearing the remainder of the animation queue). No other backwards-incompatible changes were made.
 
 ## Learn
