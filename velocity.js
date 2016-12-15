@@ -3478,15 +3478,15 @@
 											pattern += (inCalc < 5 ? "calc" : "") + "("
 													+ (nStart ? "{" + aStart.length + (inRGB ? "!" : "") + "}" : "0") + uStart
 													+ " + "
-													+ (nEnd ? "{" + (aStart.length + 1) + (inRGB ? "!" : "") + "}" : "0") + uEnd
+													+ (nEnd ? "{" + (aStart.length + (nStart ? 1 : 0)) + (inRGB ? "!" : "") + "}" : "0") + uEnd
 													+ ")";
 											if (nStart) {
-												aStart.push(parseFloat(tStart));
-												aStart.push(parseFloat(0));
+												aStart.push(nStart);
+												aEnd.push(0);
 											}
 											if (nEnd) {
-												aEnd.push(parseFloat(0));
-												aEnd.push(parseFloat(tEnd));
+												aStart.push(0);
+												aEnd.push(nEnd);
 											}
 										}
 									} else if (cStart === cEnd) {
