@@ -480,7 +480,7 @@
 		var rAFShim = (function() {
 			var timeLast = 0;
 
-			return window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || function(callback) {
+			return  window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || function(callback) {
 				var timeCurrent = (new Date()).getTime(),
 						timeDelta;
 
