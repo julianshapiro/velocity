@@ -525,10 +525,34 @@
 			return result;
 		}
 
+		var _slice = (function() {
+			var slice = Array.prototype.slice;
+
+			try {
+				// Can't be used with DOM elements in IE < 9
+				slice.call(document.documentElement);
+			} catch (e) { // Fails in IE < 9
+				// This will work for genuine arrays, array-like objects, 
+				// NamedNodeMap (attributes, entities, notations),
+				// NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
+				// and will not fail on other DOM objects (as do DOM elements in IE < 9)
+				slice = function() {
+					var i = this.length,
+							clone = [];
+
+					while (--i > 0) {
+						clone[i] = this[i];
+					}
+					return cloned;
+				};
+			}
+			return slice;
+		})(); // TODO: IE8, Cache of Array.prototype.slice that works on IE8
+
 		function sanitizeElements(elements) {
 			/* Unwrap jQuery/Zepto objects. */
 			if (Type.isWrapped(elements)) {
-				elements = [].slice.call(elements);
+				elements = _slice.call(elements);
 				/* Wrap a single element in an array so that $.each() can iterate with the element instead of its node's children. */
 			} else if (Type.isNode(elements)) {
 				elements = [elements];
