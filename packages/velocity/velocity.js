@@ -543,7 +543,7 @@
 					while (--i > 0) {
 						clone[i] = this[i];
 					}
-					return cloned;
+					return clone;
 				};
 			}
 			return slice;
