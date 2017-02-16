@@ -18,15 +18,17 @@ NPM: https://www.npmjs.com/package/velocity-react
 ## Quickstart
 ### Velocity (CDN, choose one of them):
 ```html
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.4.0/velocity.min.js"></script>
-<script src="//cdn.jsdelivr.net/velocity/1.4.0/velocity.min.js"></script>
+<script src="//cdn.jsdelivr.net/velocity/1.4/velocity.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.4.3/velocity.min.js"></script>
 ```
 
 ### Velocity UI pack (CDN, choose one of them): 
 ```html
-<script src="//cdn.jsdelivr.net/velocity/1.4.0/velocity.ui.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.4.0/velocity.ui.min.js"></script>
+<script src="//cdn.jsdelivr.net/velocity/1.4/velocity.ui.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.4.3/velocity.ui.min.js"></script>
 ```
+
+> Please note that JSDelivr will automatically supply the latest release, while CloudFlare needs to ask for a specific version.
 
 ### Package managers:
 _npm:_ `npm install velocity-animate`<br>
