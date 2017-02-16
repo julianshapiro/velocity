@@ -3454,7 +3454,7 @@
 									var cStart = startValue[iStart],
 											cEnd = endValue[iEnd];
 
-									if (/[\d\.]/.test(cStart) && /[\d\.]/.test(cEnd)) {
+									if (/[\d\.-]/.test(cStart) && /[\d\.-]/.test(cEnd)) {
 										var tStart = cStart, // temporary character buffer
 												tEnd = cEnd, // temporary character buffer
 												dotStart = ".", // Make sure we can only ever match a single dot in a decimal
