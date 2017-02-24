@@ -581,6 +581,7 @@
 			/* NOTE: HTMLFormElements also have a length. */
 			isWrapped: function(variable) {
 				return variable
+						&& variable !== window
 						&& Type.isNumber(variable.length)
 						&& !Type.isString(variable)
 						&& !Type.isFunction(variable)
