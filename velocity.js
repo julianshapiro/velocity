@@ -498,8 +498,8 @@
 		var performance = (function() {
 			var perf = window.performance || {};
 
-			if (!Object.prototype.hasOwnProperty.call(perf, "now")) {
-				var nowOffset = perf.timing && perf.timing.domComplete ? perf.timing.domComplete : (new Date()).getTime();
+			if (typeof perf.now !== "function") {
+				var nowOffset = perf.timing && perf.timing.navigationStart ? perf.timing.navigationStart : (new Date()).getTime();
 
 				perf.now = function() {
 					return (new Date()).getTime() - nowOffset;
