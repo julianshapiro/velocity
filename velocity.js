@@ -540,7 +540,7 @@
 			try {
 				// Can't be used with DOM elements in IE < 9
 				slice.call(document.documentElement);
-				return Array.prototype.slice;
+				return slice;
 			} catch (e) { // Fails in IE < 9
 
 				// This will work for genuine arrays, array-like objects, 
