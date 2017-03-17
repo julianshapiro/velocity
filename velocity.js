@@ -1488,7 +1488,7 @@
 				getUnit: function(str, start) {
 					var unit = (str.substr(start || 0, 5).match(/^[a-z%]+/) || [])[0] || "";
 
-					if (unit && $.inArray(unit, CSS.Lists.units) >= 0) {
+					if (unit && CSS.Lists.units.indexOf(unit) >= 0) {
 						return unit;
 					}
 					return "";
@@ -3897,7 +3897,7 @@
 
 							/* Find shorthand color properties that have been passed a hex string. */
 							/* Would be quicker to use CSS.Lists.colors.includes() if possible */
-							if ($.inArray(propertyName, CSS.Lists.colors) >= 0) {
+							if (CSS.Lists.colors.indexOf(propertyName) >= 0) {
 								/* Parse the value data for each shorthand. */
 								var endValue = valueData[0],
 										easing = valueData[1],
