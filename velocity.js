@@ -535,23 +535,30 @@
 		 * called on other DOM objects.
 		 */
 		var _slice = (function() {
-			var _fslice = Array.prototype.slice;
+			var slice = Array.prototype.slice;
 
 			try {
 				// Can't be used with DOM elements in IE < 9
-				_fslice.call(document.documentElement);
+				slice.call(document.documentElement);
+				return Array.prototype.slice;
 			} catch (e) { // Fails in IE < 9
+
+				// Quick exit if we've already defined the function.
+				// Just return it now rather than redefining it.
+				if (Array.prototype._vel_slice !== undefined)
+					return Array.prototype._vel_slice;
+
 				// This will work for genuine arrays, array-like objects, 
 				// NamedNodeMap (attributes, entities, notations),
 				// NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
 				// and will not fail on other DOM objects (as do DOM elements in IE < 9)
-				Array.prototype.slice = function(begin, end) {
+				Array.prototype._vel_slice = function(begin, end) {
 					// IE < 9 gets unhappy with an undefined end argument
-					end = (typeof end !== 'undefined') ? end : this.length;
+					end = (end !== undefined) ? end : this.length;
 
 					// For native Array objects, we use the native slice function
-					if (Object.prototype.toString.call(this) === '[object Array]'){
-						return _fslice.call(this, begin, end); 
+					if (this.slice){
+						return slice.call(this, begin, end); 
 					}
 
 					// For array like object we handle it ourselves.
@@ -585,9 +592,9 @@
 
 					return cloned;
 				};
-			}
 
-			return Array.prototype.slice;
+				return Array.prototype._vel_slice;
+			}
 		})();
 
 		function sanitizeElements(elements) {
