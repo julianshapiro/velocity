@@ -543,11 +543,6 @@
 				return Array.prototype.slice;
 			} catch (e) { // Fails in IE < 9
 
-				// Quick exit if we've already defined the function.
-				// Just return it now rather than redefining it.
-				if (Array.prototype._vel_slice !== undefined)
-					return Array.prototype._vel_slice;
-
 				// This will work for genuine arrays, array-like objects, 
 				// NamedNodeMap (attributes, entities, notations),
 				// NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
