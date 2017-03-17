@@ -2868,7 +2868,7 @@
 						if (promiseData.promise) {
 							promiseData.rejecter(new Error(abortError));
 						} else {
-							console.log(abortError);
+							window.console && console.log(abortError);
 						}
 
 						return getChain();
