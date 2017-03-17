@@ -547,7 +547,7 @@
 				// NamedNodeMap (attributes, entities, notations),
 				// NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
 				// and will not fail on other DOM objects (as do DOM elements in IE < 9)
-				Array.prototype._vel_slice = function(begin, end) {
+				return function(begin, end) {
 					// IE < 9 gets unhappy with an undefined end argument
 					end = (end !== undefined) ? end : this.length;
 
@@ -587,8 +587,6 @@
 
 					return cloned;
 				};
-
-				return Array.prototype._vel_slice;
 			}
 		})();
 
