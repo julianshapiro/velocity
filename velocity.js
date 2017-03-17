@@ -548,29 +548,28 @@
 				// NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
 				// and will not fail on other DOM objects (as do DOM elements in IE < 9)
 				return function(begin, end) {
+					var len = this.length;
+
+					if (typeof begin !== "number") {
+						begin = 0;
+					}
 					// IE < 9 gets unhappy with an undefined end argument
-					end = (end !== undefined) ? end : this.length;
-
+					if (typeof end !== "number") {
+						end = len;
+					}
 					// For native Array objects, we use the native slice function
-					if (this.slice){
-						return slice.call(this, begin, end); 
+					if (this.slice) {
+						return slice.call(this, begin, end);
 					}
-
 					// For array like object we handle it ourselves.
-					var i, cloned = [], size, len = this.length;
-
-					// Handle negative value for "begin"
-					var start = begin || 0;
-					start = (start >= 0) ? start : Math.max(0, len + start);
-
-					// Handle negative value for "end"
-					var upTo = (typeof end == 'number') ? Math.min(end, len) : len;
-					if (end < 0) {
-						upTo = len + end;
-					}
-
-					// Actual expected size of the slice
-					size = upTo - start;
+					var i,
+							cloned = [],
+							// Handle negative value for "begin"
+							start = (begin >= 0) ? begin : Math.max(0, len + begin),
+							// Handle negative value for "end"
+							upTo = end < 0 ? len + end : Math.min(end, len),
+							// Actual expected size of the slice
+							size = upTo - start;
 
 					if (size > 0) {
 						cloned = new Array(size);
@@ -584,11 +583,32 @@
 							}
 						}
 					}
-
 					return cloned;
 				};
 			}
 		})();
+
+		/* .indexOf doesn't exist in IE<9 */
+		var _inArray = (function() {
+			if (Array.prototype.includes) {
+				return function(arr, val) {
+					return arr.includes(val);
+				};
+			}
+			if (Array.prototype.indexOf) {
+				return function(arr, val) {
+					return arr.indexOf(val) >= 0;
+				};
+			}
+			return function(arr, val) {
+				for (var i = 0; i < arr.length; i++) {
+					if (arr[i] === val) {
+						return true;
+					}
+				}
+				return false;
+			};
+		});
 
 		function sanitizeElements(elements) {
 			/* Unwrap jQuery/Zepto objects. */
@@ -1488,7 +1508,7 @@
 				getUnit: function(str, start) {
 					var unit = (str.substr(start || 0, 5).match(/^[a-z%]+/) || [])[0] || "";
 
-					if (unit && CSS.Lists.units.indexOf(unit) >= 0) {
+					if (unit && _inArray(CSS.Lists.units, unit)) {
 						return unit;
 					}
 					return "";
@@ -2908,8 +2928,8 @@
 
 						if (promiseData.promise) {
 							promiseData.rejecter(new Error(abortError));
-						} else {
-							window.console && console.log(abortError);
+						} else if (window.console) {
+							console.log(abortError);
 						}
 
 						return getChain();
@@ -3897,7 +3917,7 @@
 
 							/* Find shorthand color properties that have been passed a hex string. */
 							/* Would be quicker to use CSS.Lists.colors.includes() if possible */
-							if (CSS.Lists.colors.indexOf(propertyName) >= 0) {
+							if (_inArray(CSS.Lists.colors, propertyName)) {
 								/* Parse the value data for each shorthand. */
 								var endValue = valueData[0],
 										easing = valueData[1],
