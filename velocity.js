@@ -525,29 +525,70 @@
 			return result;
 		}
 
+		/**
+		 * Shim for "fixing" IE's lack of support (IE < 9) for applying slice
+		 * on host objects like NamedNodeMap, NodeList, and HTMLCollection
+		 * (technically, since host objects have been implementation-dependent,
+		 * at least before ES2015, IE hasn't needed to work this way).
+		 * Also works on strings, fixes IE < 9 to allow an explicit undefined
+		 * for the 2nd argument (as in Firefox), and prevents errors when
+		 * called on other DOM objects.
+		 */
 		var _slice = (function() {
 			var slice = Array.prototype.slice;
 
 			try {
 				// Can't be used with DOM elements in IE < 9
 				slice.call(document.documentElement);
+				return slice;
 			} catch (e) { // Fails in IE < 9
+
 				// This will work for genuine arrays, array-like objects, 
 				// NamedNodeMap (attributes, entities, notations),
 				// NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
 				// and will not fail on other DOM objects (as do DOM elements in IE < 9)
-				slice = function() {
-					var i = this.length,
-							clone = [];
+				return function(begin, end) {
+					// IE < 9 gets unhappy with an undefined end argument
+					end = (end !== undefined) ? end : this.length;
 
-					while (--i > 0) {
-						clone[i] = this[i];
+					// For native Array objects, we use the native slice function
+					if (this.slice){
+						return slice.call(this, begin, end); 
 					}
-					return clone;
+
+					// For array like object we handle it ourselves.
+					var i, cloned = [], size, len = this.length;
+
+					// Handle negative value for "begin"
+					var start = begin || 0;
+					start = (start >= 0) ? start : Math.max(0, len + start);
+
+					// Handle negative value for "end"
+					var upTo = (typeof end == 'number') ? Math.min(end, len) : len;
+					if (end < 0) {
+						upTo = len + end;
+					}
+
+					// Actual expected size of the slice
+					size = upTo - start;
+
+					if (size > 0) {
+						cloned = new Array(size);
+						if (this.charAt) {
+							for (i = 0; i < size; i++) {
+								cloned[i] = this.charAt(start + i);
+							}
+						} else {
+							for (i = 0; i < size; i++) {
+								cloned[i] = this[start + i];
+							}
+						}
+					}
+
+					return cloned;
 				};
 			}
-			return slice;
-		})(); // TODO: IE8, Cache of Array.prototype.slice that works on IE8
+		})();
 
 		function sanitizeElements(elements) {
 			/* Unwrap jQuery/Zepto objects. */
