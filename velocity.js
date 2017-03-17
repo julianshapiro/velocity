@@ -525,29 +525,70 @@
 			return result;
 		}
 
+		/**
+		 * Shim for "fixing" IE's lack of support (IE < 9) for applying slice
+		 * on host objects like NamedNodeMap, NodeList, and HTMLCollection
+		 * (technically, since host objects have been implementation-dependent,
+		 * at least before ES2015, IE hasn't needed to work this way).
+		 * Also works on strings, fixes IE < 9 to allow an explicit undefined
+		 * for the 2nd argument (as in Firefox), and prevents errors when
+		 * called on other DOM objects.
+		 */
 		var _slice = (function() {
-			var slice = Array.prototype.slice;
+			var _fslice = Array.prototype.slice;
 
 			try {
 				// Can't be used with DOM elements in IE < 9
-				slice.call(document.documentElement);
+				_fslice.call(document.documentElement);
 			} catch (e) { // Fails in IE < 9
 				// This will work for genuine arrays, array-like objects, 
 				// NamedNodeMap (attributes, entities, notations),
 				// NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
 				// and will not fail on other DOM objects (as do DOM elements in IE < 9)
-				slice = function() {
-					var i = this.length,
-							clone = [];
+				Array.prototype.slice = function(begin, end) {
+					// IE < 9 gets unhappy with an undefined end argument
+					end = (typeof end !== 'undefined') ? end : this.length;
 
-					while (--i > 0) {
-						clone[i] = this[i];
+					// For native Array objects, we use the native slice function
+					if (Object.prototype.toString.call(this) === '[object Array]'){
+						return _fslice.call(this, begin, end); 
 					}
-					return clone;
+
+					// For array like object we handle it ourselves.
+					var i, cloned = [], size, len = this.length;
+
+					// Handle negative value for "begin"
+					var start = begin || 0;
+					start = (start >= 0) ? start : Math.max(0, len + start);
+
+					// Handle negative value for "end"
+					var upTo = (typeof end == 'number') ? Math.min(end, len) : len;
+					if (end < 0) {
+						upTo = len + end;
+					}
+
+					// Actual expected size of the slice
+					size = upTo - start;
+
+					if (size > 0) {
+						cloned = new Array(size);
+						if (this.charAt) {
+							for (i = 0; i < size; i++) {
+								cloned[i] = this.charAt(start + i);
+							}
+						} else {
+							for (i = 0; i < size; i++) {
+								cloned[i] = this[start + i];
+							}
+						}
+					}
+
+					return cloned;
 				};
 			}
-			return slice;
-		})(); // TODO: IE8, Cache of Array.prototype.slice that works on IE8
+
+			return Array.prototype.slice;
+		})();
 
 		function sanitizeElements(elements) {
 			/* Unwrap jQuery/Zepto objects. */
@@ -1447,7 +1488,7 @@
 				getUnit: function(str, start) {
 					var unit = (str.substr(start || 0, 5).match(/^[a-z%]+/) || [])[0] || "";
 
-					if (unit && CSS.Lists.units.indexOf(unit) >= 0) {
+					if (unit && $.inArray(unit, CSS.Lists.units) >= 0) {
 						return unit;
 					}
 					return "";
@@ -3856,7 +3897,7 @@
 
 							/* Find shorthand color properties that have been passed a hex string. */
 							/* Would be quicker to use CSS.Lists.colors.includes() if possible */
-							if (CSS.Lists.colors.indexOf(propertyName) >= 0) {
+							if ($.inArray(propertyName, CSS.Lists.colors) >= 0) {
 								/* Parse the value data for each shorthand. */
 								var endValue = valueData[0],
 										easing = valueData[1],
