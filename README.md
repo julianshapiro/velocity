@@ -1,4 +1,4 @@
-﻿# Velocity 1.4.3
+﻿# Velocity 1.5.0
 
 ## Docs
 [http://VelocityJS.org](http://velocityjs.org)
@@ -18,14 +18,14 @@ NPM: https://www.npmjs.com/package/velocity-react
 ## Quickstart
 ### Velocity (CDN, choose one of them):
 ```html
-<script src="//cdn.jsdelivr.net/velocity/1.4/velocity.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.4.3/velocity.min.js"></script>
+<script src="//cdn.jsdelivr.net/velocity/1.5/velocity.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.0/velocity.min.js"></script>
 ```
 
 ### Velocity UI pack (CDN, choose one of them): 
 ```html
-<script src="//cdn.jsdelivr.net/velocity/1.4/velocity.ui.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.4.3/velocity.ui.min.js"></script>
+<script src="//cdn.jsdelivr.net/velocity/1.5/velocity.ui.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.0/velocity.ui.min.js"></script>
 ```
 
 > Please note that JSDelivr will automatically supply the latest release, while CloudFlare needs to ask for a specific version.
@@ -38,6 +38,7 @@ _bower:_ `bower install velocity`
 Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you add the `[velocity.js]` and `[javascript]` tags).
 
 ## Updates
+- **[1.5](https://github.com/julianshapiro/velocity/compare/1.4.0...1.5.0)**: Bugfixes, IE9 compatibility fixes.
 - **[1.4](https://github.com/julianshapiro/velocity/compare/1.3.0...1.4.0)**: Pause / Resume (per element or global).<br>
 Forcefed string animation (just have matching number spaces) including unit conversions and colour names (ie `background:["rgba(red,0.1)", "blue"]`).
 High resolution timers (animations should be slightly smoother).<br>
