@@ -11,7 +11,7 @@
 		module.exports = factory();
 		/* AMD module. */
 	} else if (typeof define === "function" && define.amd) {
-		define(["velocity"], factory);
+		define(["velocity-animate"], factory);
 		/* Browser globals. */
 	} else {
 		factory();
