@@ -800,5 +800,41 @@
 
 			Velocity(sequence[0]);
 		};
+		
+		/**
+         * RunSequence utility function to wrap the standard
+         * Velocity RunSequence so that a promise can be returned that
+         * resolves when all animations have completed.
+         *
+         * @param Array sequence The sequence of animations
+         * @return Promise a promise that completes when all animations have completed
+         * @uses Velicity.RunSequence
+         *
+         */
+        Velocity.RunSequencePromise = function( sequence ){
+            var deferred = $.Deferred();
+            var total = 0;
+            var done = 0;
+            
+            $.each( sequence, function( i, animation ){
+                total++;
+                if( !animation.o ) animation.o = {};
+                var old = animation.o.complete;
+                animation.o.complete = function(){
+                    
+                    if( old && old instanceof Function ){
+                        old.apply( this, arguments );
+                    }
+                    
+                    if( ++done === total ){
+                        deferred.resolve();
+                    }
+                };
+            });
+            
+            Velocity.RunSequence( sequence );
+            return deferred.promise();
+        };
+		
 	}((window.jQuery || window.Zepto || window), window, (window ? window.document : undefined));
 }));
