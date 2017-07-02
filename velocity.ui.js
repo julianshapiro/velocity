@@ -18,12 +18,11 @@
 	}
 }(function() {
 	"use strict";
-	return function(global, window, document, undefined) {
+	return function(window, document, undefined) {
 
 		/*************
 		 Checks
 		 *************/
-		var Velocity = global.Velocity;
 
 		if (!Velocity || !Velocity.Utilities) {
 			if (window.console) {
@@ -800,5 +799,5 @@
 
 			Velocity(sequence[0]);
 		};
-	}((window.jQuery || window.Zepto || window), window, (window ? window.document : undefined));
+	}(window, (window ? window.document : undefined));
 }));

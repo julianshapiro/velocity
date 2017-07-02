@@ -1,7 +1,10 @@
 module.exports = {
 	main: {
 		options: {
-			sourceMap: true,
+			sourceMap: {
+				root: "src/",
+				includeSources: true
+			},
 			sourceMapIn: "build/velocity.js.map",
 			compress: false,
 			mangle: false,

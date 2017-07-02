@@ -52,11 +52,6 @@ interface Window {
 	};
 
 	/* jQuery */
-	$.isArray = Array.isArray || function(obj) {
-		return $.type(obj) === "array";
-	};
-
-	/* jQuery */
 	function isArraylike(obj) {
 		var length = obj.length,
 			type = $.type(obj);
@@ -234,10 +229,10 @@ interface Window {
 						continue;
 					}
 
-					if (deep && copy && ($.isPlainObject(copy) || (copyIsArray = $.isArray(copy)))) {
+					if (deep && copy && ($.isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
 						if (copyIsArray) {
 							copyIsArray = false;
-							clone = src && $.isArray(src) ? src : [];
+							clone = src && Array.isArray(src) ? src : [];
 
 						} else {
 							clone = src && $.isPlainObject(src) ? src : {};
@@ -302,7 +297,7 @@ interface Window {
 			return q || [];
 		}
 
-		if (!q || $.isArray(data)) {
+		if (!q || Array.isArray(data)) {
 			q = $.data(elem, type, $makeArray(data));
 		} else {
 			q.push(data);
