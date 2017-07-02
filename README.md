@@ -1,14 +1,12 @@
-﻿# Velocity 1.5.0
+﻿# Velocity 2.0.0
+
+# This is a dev branch - files are *not* available on CDN
 
 ## Docs
 [http://VelocityJS.org](http://velocityjs.org)
 
 ## News
 WhatsApp, Tumblr, Windows, Samsung, Uber, and thousands of other companies rely on Velocity. Visit [Libscore.com](http://libscore.com/#$.Velocity) to see which sites use Velocity on their homepage.
-
-> Hi folks, I have some exciting news to share. Julian has graciously offered and I have accepted to become the lead maintainer for Velocity. I'm really excited to be working closely with and learning from him in order to transition this project onto my plate. I remember when Julian started working on Velocity (locked away in his apartment — a few blocks away from me). Then later when he first announced it publicly. And finally when it exploded in growth from 0 to what it is today. I hope to bring that same enthusiasm, energy, and skill to it. I am honored to be taking it on. Looking forward to working on it along with the rest of the contributors.
->
->  — **Message from [@kvirani](https://github.com/kvirani) [August 22, 2016]**
 
 ## React Plugin
 Announcement: https://fabric.io/blog/introducing-the-velocityreact-library<br>
@@ -18,17 +16,17 @@ NPM: https://www.npmjs.com/package/velocity-react
 ## Quickstart
 ### Velocity (CDN, choose one of them):
 ```html
-<script src="//cdn.jsdelivr.net/velocity/1.5/velocity.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.0/velocity.min.js"></script>
+<script src="//cdn.jsdelivr.net/velocity/2.0/velocity.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.0/velocity.min.js"></script>
 ```
 
 ### Velocity UI pack (CDN, choose one of them): 
 ```html
-<script src="//cdn.jsdelivr.net/velocity/1.5/velocity.ui.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.0/velocity.ui.min.js"></script>
+<script src="//cdn.jsdelivr.net/velocity/2.0/velocity.ui.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.0/velocity.ui.min.js"></script>
 ```
 
-> Please note that JSDelivr will automatically supply the latest release, while CloudFlare needs to ask for a specific version.
+> Please note that JSDelivr can automatically supply the latest release, while CloudFlare needs to ask for a specific version.
 
 ### Package managers:
 _npm:_ `npm install velocity-animate`<br>
@@ -38,6 +36,7 @@ _bower:_ `bower install velocity`
 Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you add the `[velocity.js]` and `[javascript]` tags).
 
 ## Updates
+- **[2.0](https://github.com/julianshapiro/velocity/compare/1.5.0...2.0.0)**: Typescript update and complete refactoring.
 - **[1.5](https://github.com/julianshapiro/velocity/compare/1.4.0...1.5.0)**: Bugfixes, IE9 compatibility fixes.
 - **[1.4](https://github.com/julianshapiro/velocity/compare/1.3.0...1.4.0)**: Pause / Resume (per element or global).<br>
 Forcefed string animation (just have matching number spaces) including unit conversions and colour names (ie `background:["rgba(red,0.1)", "blue"]`).
@@ -61,6 +60,4 @@ Various fixes including ticker (loading Velocity in a background window) and col
 
 ====
 
-[MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).<br>
-[Stripe](https://stripe.com/blog/stripe-open-source-retreat) sponsors Velocity's development.<br>
-[BrowserStack](http://www.browserstack.com/) provides testing services.
+[MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).
