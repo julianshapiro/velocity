@@ -325,18 +325,6 @@
 				assert.equal(CSS.Hooks.injectValue(testHook, testHookValueInject, testHookRootValue).indexOf(testHookRootValueInjected) !== -1, true, "Hooks.extractValue() returned value #2.");
 			}
 
-			/* Varied start color formats. Ensure that all variations of red output contain the same color copmonents when Normalized: "255 0 0". */
-			var redVariations = [
-				"rgb(255, 0, 0)",
-				"rgba(255,0,0,0.5)",
-				"#ff0000",
-				"red"
-			];
-
-			Velocity.Utilities.each(redVariations, function(i, redVariation) {
-				assert.equal(/255 0 0/.test(CSS.Normalizations.registered["color"]("extract", null, redVariation)), true, "Normalizations.extractValue() returned red color variation #" + i + ".");
-			});
-
 			var testPropertyFake = "fakeProperty";
 
 			/* Property name functions. */

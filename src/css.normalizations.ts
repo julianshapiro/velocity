@@ -1,7 +1,48 @@
 namespace vNormalizations {
+
+	/**************
+	 Dimensions
+	 **************/
+	function augmentDimension(name, element, wantInner) {
+		var isBorderBox = vCSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
+
+		if (isBorderBox === (wantInner || false)) {
+			/* in box-sizing mode, the CSS width / height accessors already give the outerWidth / outerHeight. */
+			var i: number,
+				value: number,
+				augment = 0,
+				sides = name === "width" ? ["Left", "Right"] : ["Top", "Bottom"],
+				fields = ["padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width"];
+
+			for (i = 0; i < fields.length; i++) {
+				value = parseFloat(vCSS.getPropertyValue(element, fields[i]));
+				if (!isNaN(value)) {
+					augment += value;
+				}
+			}
+			return wantInner ? -augment : augment;
+		}
+		return 0;
+	}
+
+	function getDimension(name, wantInner?: boolean) {
+		return function(type, element, propertyValue) {
+			switch (type) {
+				case "name":
+					return name;
+
+				case "extract":
+					return parseFloat(propertyValue) + augmentDimension(name, element, wantInner);
+
+				case "inject":
+					return (parseFloat(propertyValue) - augmentDimension(name, element, wantInner)) + "px";
+			}
+		};
+	}
+
 	/* Normalizations are passed a normalization target (either the property's name, its extracted value, or its injected value),
 	 the targeted element (which may need to be queried), and the targeted property value. */
-	export var registered: {[key: string]: ((type, element?, propertyValue?) => any)} = {
+	export var registered: {[key: string]: ((type: "name" | "extract" | "inject", element?: HTMLElement | SVGElement, propertyValue?) => any)} = {
 		clip: function(type, element, propertyValue) {
 			switch (type) {
 				case "name":
@@ -80,7 +121,7 @@ namespace vNormalizations {
 						return propertyValue;
 					case "inject":
 						/* Opacified elements are required to have their zoom property set to a non-zero value. */
-						element.style.zoom = 1;
+						element.style.zoom = "1";
 
 						/* Setting the filter property on elements with certain font property combinations can result in a
 						 highly unappealing ultra-bolding effect. There's no way to remedy this throughout a tween, but dropping the
@@ -103,7 +144,12 @@ namespace vNormalizations {
 						return propertyValue;
 				}
 			}
-		}
+		},
+
+		innerWidth: getDimension("width", true),
+		innerHeight: getDimension("height", true),
+		outerWidth: getDimension("width"),
+		outerHeight: getDimension("height")
 	};
 
 	/*****************************
@@ -196,132 +242,5 @@ namespace vNormalizations {
 				};
 			})();
 		}
-
-		/*************
-		 Colors
-		 *************/
-
-		/* Since Velocity only animates a single numeric value per property, color animation is achieved by hooking the individual RGBA components of CSS color properties.
-		 Accordingly, color values must be normalized (e.g. "#ff0000", "red", and "rgb(255, 0, 0)" ==> "255 0 0 1") so that their components can be injected/extracted by vCSS.Hooks logic. */
-		for (var j = 0; j < vCSS.Lists.colors.length; j++) {
-			/* Wrap the dynamically generated normalization function in a new scope so that colorName's value is paired with its respective function.
-			 (Otherwise, all functions would take the final for loop's colorName.) */
-			(function() {
-				var colorName = vCSS.Lists.colors[j];
-
-				/* Note: In IE<=8, which support rgb but not rgba, color properties are reverted to rgb by stripping off the alpha component. */
-				vCSS.Normalizations.registered[colorName] = function(type, element, propertyValue) {
-					switch (type) {
-						case "name":
-							return colorName;
-						/* Convert all color values into the rgb format. (Old IE can return hex values and color names instead of rgb/rgba.) */
-						case "extract":
-							var extracted;
-
-							/* If the color is already in its hookable form (e.g. "255 255 255 1") due to having been previously extracted, skip extraction. */
-							if (vCSS.RegEx.wrappedValueAlreadyExtracted.test(propertyValue)) {
-								extracted = propertyValue;
-							} else {
-								var converted,
-									colorNames = {
-										black: "rgb(0, 0, 0)",
-										blue: "rgb(0, 0, 255)",
-										gray: "rgb(128, 128, 128)",
-										green: "rgb(0, 128, 0)",
-										red: "rgb(255, 0, 0)",
-										white: "rgb(255, 255, 255)"
-									};
-
-								/* Convert color names to rgb. */
-								if (/^[A-z]+$/i.test(propertyValue)) {
-									if (colorNames[propertyValue] !== undefined) {
-										converted = colorNames[propertyValue];
-									} else {
-										/* If an unmatched color name is provided, default to black. */
-										converted = colorNames.black;
-									}
-									/* Convert hex values to rgb. */
-								} else if (vCSS.RegEx.isHex.test(propertyValue)) {
-									converted = "rgb(" + vCSS.Values.hexToRgb(propertyValue).join(" ") + ")";
-									/* If the provided color doesn't match any of the accepted color formats, default to black. */
-								} else if (!(/^rgba?\(/i.test(propertyValue))) {
-									converted = colorNames.black;
-								}
-
-								/* Remove the surrounding "rgb/rgba()" string then replace commas with spaces and strip
-								 repeated spaces (in case the value included spaces to begin with). */
-								extracted = (converted || propertyValue).toString().match(vCSS.RegEx.valueUnwrap)[1].replace(/,(\s+)?/g, " ");
-							}
-
-							/* So long as this isn't <=IE8, add a fourth (alpha) component if it's missing and default it to 1 (visible). */
-							if ((!IE || IE > 8) && extracted.split(" ").length === 3) {
-								extracted += " 1";
-							}
-
-							return extracted;
-						case "inject":
-							/* If we have a pattern then it might already have the right values */
-							if (/^rgb/.test(propertyValue)) {
-								return propertyValue;
-							}
-
-							/* If this is IE<=8 and an alpha component exists, strip it off. */
-							if (IE <= 8) {
-								if (propertyValue.split(" ").length === 4) {
-									propertyValue = propertyValue.split(/\s+/).slice(0, 3).join(" ");
-								}
-								/* Otherwise, add a fourth (alpha) component if it's missing and default it to 1 (visible). */
-							} else if (propertyValue.split(" ").length === 3) {
-								propertyValue += " 1";
-							}
-
-							/* Re-insert the browser-appropriate wrapper("rgb/rgba()"), insert commas, and strip off decimal units
-							 on all values but the fourth (R, G, and B only accept whole numbers). */
-							return (IE <= 8 ? "rgb" : "rgba") + "(" + propertyValue.replace(/\s+/g, ",").replace(/\.(\d)+(?=,)/g, "") + ")";
-					}
-				};
-			})();
-		}
-
-		/**************
-		 Dimensions
-		 **************/
-		function augmentDimension(name, element, wantInner) {
-			var isBorderBox = vCSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
-
-			if (isBorderBox === (wantInner || false)) {
-				/* in box-sizing mode, the CSS width / height accessors already give the outerWidth / outerHeight. */
-				var i,
-					value,
-					augment = 0,
-					sides = name === "width" ? ["Left", "Right"] : ["Top", "Bottom"],
-					fields = ["padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width"];
-
-				for (i = 0; i < fields.length; i++) {
-					value = parseFloat(vCSS.getPropertyValue(element, fields[i]));
-					if (!isNaN(value)) {
-						augment += value;
-					}
-				}
-				return wantInner ? -augment : augment;
-			}
-			return 0;
-		}
-		function getDimension(name, wantInner?: boolean) {
-			return function(type, element, propertyValue) {
-				switch (type) {
-					case "name":
-						return name;
-					case "extract":
-						return parseFloat(propertyValue) + augmentDimension(name, element, wantInner);
-					case "inject":
-						return (parseFloat(propertyValue) - augmentDimension(name, element, wantInner)) + "px";
-				}
-			};
-		}
-		vCSS.Normalizations.registered.innerWidth = getDimension("width", true);
-		vCSS.Normalizations.registered.innerHeight = getDimension("height", true);
-		vCSS.Normalizations.registered.outerWidth = getDimension("width");
-		vCSS.Normalizations.registered.outerHeight = getDimension("height");
 	}
 }

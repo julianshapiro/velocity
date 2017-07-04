@@ -431,6 +431,34 @@ var vHooks;
 var vNormalizations;
 
 (function(vNormalizations) {
+    function augmentDimension(name, element, wantInner) {
+        var isBorderBox = vCSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
+        if (isBorderBox === (wantInner || false)) {
+            var i, value, augment = 0, sides = name === "width" ? [ "Left", "Right" ] : [ "Top", "Bottom" ], fields = [ "padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width" ];
+            for (i = 0; i < fields.length; i++) {
+                value = parseFloat(vCSS.getPropertyValue(element, fields[i]));
+                if (!isNaN(value)) {
+                    augment += value;
+                }
+            }
+            return wantInner ? -augment : augment;
+        }
+        return 0;
+    }
+    function getDimension(name, wantInner) {
+        return function(type, element, propertyValue) {
+            switch (type) {
+              case "name":
+                return name;
+
+              case "extract":
+                return parseFloat(propertyValue) + augmentDimension(name, element, wantInner);
+
+              case "inject":
+                return parseFloat(propertyValue) - augmentDimension(name, element, wantInner) + "px";
+            }
+        };
+    }
     vNormalizations.registered = {
         clip: function(type, element, propertyValue) {
             switch (type) {
@@ -492,7 +520,7 @@ var vNormalizations;
                     return propertyValue;
 
                   case "inject":
-                    element.style.zoom = 1;
+                    element.style.zoom = "1";
                     if (parseFloat(propertyValue) >= 1) {
                         return "";
                     } else {
@@ -511,7 +539,11 @@ var vNormalizations;
                     return propertyValue;
                 }
             }
-        }
+        },
+        innerWidth: getDimension("width", true),
+        innerHeight: getDimension("height", true),
+        outerWidth: getDimension("width"),
+        outerHeight: getDimension("height")
     };
     function register() {
         if ((!IE || IE > 9) && !Velocity.State.isGingerbread) {
@@ -562,93 +594,6 @@ var vNormalizations;
                 };
             })();
         }
-        for (var j = 0; j < vCSS.Lists.colors.length; j++) {
-            (function() {
-                var colorName = vCSS.Lists.colors[j];
-                vCSS.Normalizations.registered[colorName] = function(type, element, propertyValue) {
-                    switch (type) {
-                      case "name":
-                        return colorName;
-
-                      case "extract":
-                        var extracted;
-                        if (vCSS.RegEx.wrappedValueAlreadyExtracted.test(propertyValue)) {
-                            extracted = propertyValue;
-                        } else {
-                            var converted, colorNames = {
-                                black: "rgb(0, 0, 0)",
-                                blue: "rgb(0, 0, 255)",
-                                gray: "rgb(128, 128, 128)",
-                                green: "rgb(0, 128, 0)",
-                                red: "rgb(255, 0, 0)",
-                                white: "rgb(255, 255, 255)"
-                            };
-                            if (/^[A-z]+$/i.test(propertyValue)) {
-                                if (colorNames[propertyValue] !== undefined) {
-                                    converted = colorNames[propertyValue];
-                                } else {
-                                    converted = colorNames.black;
-                                }
-                            } else if (vCSS.RegEx.isHex.test(propertyValue)) {
-                                converted = "rgb(" + vCSS.Values.hexToRgb(propertyValue).join(" ") + ")";
-                            } else if (!/^rgba?\(/i.test(propertyValue)) {
-                                converted = colorNames.black;
-                            }
-                            extracted = (converted || propertyValue).toString().match(vCSS.RegEx.valueUnwrap)[1].replace(/,(\s+)?/g, " ");
-                        }
-                        if ((!IE || IE > 8) && extracted.split(" ").length === 3) {
-                            extracted += " 1";
-                        }
-                        return extracted;
-
-                      case "inject":
-                        if (/^rgb/.test(propertyValue)) {
-                            return propertyValue;
-                        }
-                        if (IE <= 8) {
-                            if (propertyValue.split(" ").length === 4) {
-                                propertyValue = propertyValue.split(/\s+/).slice(0, 3).join(" ");
-                            }
-                        } else if (propertyValue.split(" ").length === 3) {
-                            propertyValue += " 1";
-                        }
-                        return (IE <= 8 ? "rgb" : "rgba") + "(" + propertyValue.replace(/\s+/g, ",").replace(/\.(\d)+(?=,)/g, "") + ")";
-                    }
-                };
-            })();
-        }
-        function augmentDimension(name, element, wantInner) {
-            var isBorderBox = vCSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
-            if (isBorderBox === (wantInner || false)) {
-                var i, value, augment = 0, sides = name === "width" ? [ "Left", "Right" ] : [ "Top", "Bottom" ], fields = [ "padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width" ];
-                for (i = 0; i < fields.length; i++) {
-                    value = parseFloat(vCSS.getPropertyValue(element, fields[i]));
-                    if (!isNaN(value)) {
-                        augment += value;
-                    }
-                }
-                return wantInner ? -augment : augment;
-            }
-            return 0;
-        }
-        function getDimension(name, wantInner) {
-            return function(type, element, propertyValue) {
-                switch (type) {
-                  case "name":
-                    return name;
-
-                  case "extract":
-                    return parseFloat(propertyValue) + augmentDimension(name, element, wantInner);
-
-                  case "inject":
-                    return parseFloat(propertyValue) - augmentDimension(name, element, wantInner) + "px";
-                }
-            };
-        }
-        vCSS.Normalizations.registered.innerWidth = getDimension("width", true);
-        vCSS.Normalizations.registered.innerHeight = getDimension("height", true);
-        vCSS.Normalizations.registered.outerWidth = getDimension("width");
-        vCSS.Normalizations.registered.outerHeight = getDimension("height");
     }
     vNormalizations.register = register;
 })(vNormalizations || (vNormalizations = {}));
