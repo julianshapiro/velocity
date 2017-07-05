@@ -1882,7 +1882,7 @@ var IE = function() {
     } else {
         for (var i = 7; i > 4; i--) {
             var div = document.createElement("div");
-            div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
+            div.innerHTML = "\x3c!--[if IE " + i + "]><span></span><![endif]--\x3e";
             if (div.getElementsByTagName("span").length) {
                 div = null;
                 return i;
@@ -2009,23 +2009,19 @@ if (IE <= 8 && !isJQuery) {
 
 (function(Velocity) {
     Velocity.animate = Velocity;
-    Velocity.State = {
-        isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-        isAndroid: /Android/i.test(navigator.userAgent),
-        isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
-        isChrome: window.chrome,
-        isFirefox: /Firefox/i.test(navigator.userAgent),
-        prefixElement: document.createElement("div"),
-        prefixMatches: {},
-        scrollAnchor: null,
-        scrollPropertyLeft: null,
-        scrollPropertyTop: null,
-        isTicking: false,
-        calls: [],
-        delayedElements: {
+    var State;
+    (function(State) {
+        State.isClient = window && window instanceof Window, State.isMobile = State.isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), 
+        State.isAndroid = State.isClient && /Android/i.test(navigator.userAgent), State.isGingerbread = State.isClient && /Android 2\.3\.[3-7]/i.test(navigator.userAgent), 
+        State.isChrome = State.isClient && window.chrome, State.isFirefox = State.isClient && /Firefox/i.test(navigator.userAgent), 
+        State.prefixElement = State.isClient && document.createElement("div"), State.prefixMatches = {}, 
+        State.windowScrollAnchor = State.isClient && window.pageYOffset !== undefined, State.scrollAnchor = State.windowScrollAnchor ? window : !State.isClient || document.documentElement || document.body.parentNode || document.body, 
+        State.scrollPropertyLeft = State.windowScrollAnchor ? "pageXOffset" : "scrollLeft", 
+        State.scrollPropertyTop = State.windowScrollAnchor ? "pageYOffset" : "scrollTop", 
+        State.isTicking = false, State.calls = [], State.delayedElements = {
             count: 0
-        }
-    };
+        };
+    })(State = Velocity.State || (Velocity.State = {}));
     Velocity.CSS = vCSS;
     Velocity.Utilities = $;
     Velocity.Redirects = {};
@@ -2236,16 +2232,6 @@ if (IE <= 8 && !isJQuery) {
     }
     Velocity.resumeAll = resumeAll;
 })(Velocity || (Velocity = {}));
-
-if (window.pageYOffset !== undefined) {
-    Velocity.State.scrollAnchor = window;
-    Velocity.State.scrollPropertyLeft = "pageXOffset";
-    Velocity.State.scrollPropertyTop = "pageYOffset";
-} else {
-    Velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
-    Velocity.State.scrollPropertyLeft = "scrollLeft";
-    Velocity.State.scrollPropertyTop = "scrollTop";
-}
 
 function Data(element) {
     var response = $.data(element, "velocity");

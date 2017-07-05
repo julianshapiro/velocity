@@ -1884,30 +1884,34 @@ namespace Velocity {
 	export var animate = Velocity;
 
 	/* Container for page-wide Velocity state data. */
-	export var State = {
-		/* Detect mobile devices to determine if mobileHA should be turned on. */
-		isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-		/* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
-		isAndroid: /Android/i.test(navigator.userAgent),
-		isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
-		isChrome: (window as any).chrome,
-		isFirefox: /Firefox/i.test(navigator.userAgent),
-		/* Create a cached element for re-use when checking for CSS property prefixes. */
-		prefixElement: document.createElement("div"),
-		/* Cache every prefix match to avoid repeating lookups. */
-		prefixMatches: {},
-		/* Cache the anchor used for animating window scrolling. */
-		scrollAnchor: null,
-		/* Cache the browser-specific property names associated with the scroll anchor. */
-		scrollPropertyLeft: null,
-		scrollPropertyTop: null,
-		/* Keep track of whether our RAF tick is running. */
-		isTicking: false,
-		/* Container for every in-progress call to Velocity. */
-		calls: [],
-		delayedElements: {
-			count: 0
-		}
+	export namespace State {
+		export var
+			isClient = window && window instanceof Window,
+			/* Detect mobile devices to determine if mobileHA should be turned on. */
+			isMobile = isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+			/* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
+			isAndroid = isClient && /Android/i.test(navigator.userAgent),
+			isGingerbread = isClient && /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
+			isChrome = isClient && (window as any).chrome,
+			isFirefox = isClient && /Firefox/i.test(navigator.userAgent),
+			/* Create a cached element for re-use when checking for CSS property prefixes. */
+			prefixElement = isClient && document.createElement("div"),
+			/* Cache every prefix match to avoid repeating lookups. */
+			prefixMatches = {},
+			/* Retrieve the appropriate scroll anchor and property name for the browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
+			windowScrollAnchor = isClient && window.pageYOffset !== undefined,
+			/* Cache the anchor used for animating window scrolling. */
+			scrollAnchor = windowScrollAnchor ? window : (!isClient || document.documentElement || document.body.parentNode || document.body),
+			/* Cache the browser-specific property names associated with the scroll anchor. */
+			scrollPropertyLeft = windowScrollAnchor ? "pageXOffset" : "scrollLeft",
+			scrollPropertyTop = windowScrollAnchor ? "pageYOffset" : "scrollTop",
+			/* Keep track of whether our RAF tick is running. */
+			isTicking = false,
+			/* Container for every in-progress call to Velocity. */
+			calls = [],
+			delayedElements = {
+				count: 0
+			}
 	};
 
 	/* Velocity's custom CSS stack. Made global for unit testing. */
@@ -2209,17 +2213,6 @@ namespace Velocity {
 		});
 	}
 };
-
-/* Retrieve the appropriate scroll anchor and property name for the browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
-if (window.pageYOffset !== undefined) {
-	Velocity.State.scrollAnchor = window;
-	Velocity.State.scrollPropertyLeft = "pageXOffset";
-	Velocity.State.scrollPropertyTop = "pageYOffset";
-} else {
-	Velocity.State.scrollAnchor = document.documentElement || document.body.parentNode || document.body;
-	Velocity.State.scrollPropertyLeft = "scrollLeft";
-	Velocity.State.scrollPropertyTop = "scrollTop";
-}
 
 /* Shorthand alias for jQuery's $.data() utility. */
 function Data(element) {
