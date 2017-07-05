@@ -295,7 +295,7 @@ namespace vCSS {
 		},
 		/* HTML elements default to an associated display type when they're not set to display:none. */
 		/* Note: This function is used for correctly setting the non-"none" display value in certain Velocity redirects, such as fadeIn/Out. */
-		getDisplayType: function(element: HTMLElement): string {
+		getDisplayType: function(element: HTMLElement | SVGElement): string {
 			var tagName = element && element.tagName.toString().toLowerCase();
 
 			if (/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(tagName)) {
@@ -314,7 +314,7 @@ namespace vCSS {
 			}
 		},
 		/* The class add/remove functions are used to temporarily apply a "velocity-animating" class to elements while they're animating. */
-		addClass: function(element: HTMLElement, className: string): void {
+		addClass: function(element: HTMLElement | SVGElement, className: string): void {
 			if (element) {
 				if (element.classList) {
 					element.classList.add(className);

@@ -178,7 +178,7 @@ function Velocity(...args: any[]) {
 			 as well. */
 
 			/* Iterate through all calls and pause any that contain any of our elements */
-			$.each(Velocity.State.calls, function(i, activeCall) {
+			Velocity.State.calls.forEach(function(activeCall) {
 
 				var found = false;
 				/* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
@@ -235,7 +235,7 @@ function Velocity(...args: any[]) {
 			 as well. */
 
 			/* Iterate through all calls and pause any that contain any of our elements */
-			$.each(Velocity.State.calls, function(i, activeCall) {
+			Velocity.State.calls.forEach(function(activeCall) {
 				var found = false;
 				/* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
 				if (activeCall) {
@@ -328,7 +328,7 @@ function Velocity(...args: any[]) {
 			 regardless of the element's current queue state. */
 
 			/* Iterate through every active call. */
-			$.each(Velocity.State.calls, function(i, activeCall) {
+			Velocity.State.calls.forEach(function(activeCall, callIndex) {
 				/* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
 				if (activeCall) {
 					/* Iterate through the active call's targeted elements. */
@@ -379,7 +379,7 @@ function Velocity(...args: any[]) {
 										});
 									}
 
-									callsToStop.push(i);
+									callsToStop.push(callIndex);
 								} else if (propertiesMap === "finish" || propertiesMap === "finishAll") {
 									/* To get active tweens to finish immediately, we forcefully shorten their durations to 1ms so that
 									 they finish upon the next rAf tick then proceed with normal call completion logic. */
@@ -506,7 +506,7 @@ function Velocity(...args: any[]) {
 	 `elementArrayIndex` allows passing index of the element in the original array to value functions.
 	 If `elementsIndex` were used instead the index would be determined by the elements' per-element queue.
 	 */
-	function processElement(element, elementArrayIndex) {
+	function processElement(element: HTMLElement | SVGElement, elementArrayIndex) {
 
 		/*************************
 		 Part I: Pre-Queueing
@@ -1737,23 +1737,6 @@ var performance = (function() {
 	return perf;
 })();
 
-/* Array compacting. Copyright Lo-Dash. MIT License: https://github.com/lodash/lodash/blob/master/LICENSE.txt */
-function compactSparseArray(array) {
-	var index = -1,
-		length = array ? array.length : 0,
-		result = [];
-
-	while (++index < length) {
-		var value = array[index];
-
-		if (value) {
-			result.push(value);
-		}
-	}
-
-	return result;
-}
-
 /**
  * Shim for "fixing" IE's lack of support (IE < 9) for applying slice
  * on host objects like NamedNodeMap, NodeList, and HTMLCollection
@@ -1930,12 +1913,18 @@ namespace Velocity {
 
 	/* slideUp, slideDown */
 	["Down", "Up"].forEach(function(direction) {
-		Redirects["slide" + direction] = function(element, options, elementsIndex, elementsSize, elements, promiseData) {
-			var opts = $.extend({}, options),
+		Redirects["slide" + direction] = function(element: HTMLElement | SVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: (HTMLElement | SVGElement)[], promiseData) {
+			var opts: ElementData = $.extend({}, options),
 				begin = opts.begin,
 				complete = opts.complete,
 				inlineValues = {},
-				computedValues = {height: "", marginTop: "", marginBottom: "", paddingTop: "", paddingBottom: ""};
+				computedValues = {
+					height: "",
+					marginTop: "",
+					marginBottom: "",
+					paddingTop: "",
+					paddingBottom: ""
+				};
 
 			if (opts.display === undefined) {
 				/* Show the element before slideDown begins and hide the element after slideUp completes. */
@@ -1992,10 +1981,12 @@ namespace Velocity {
 
 	/* fadeIn, fadeOut */
 	["In", "Out"].forEach(function(direction) {
-		Redirects["fade" + direction] = function(element, options, elementsIndex, elementsSize, elements, promiseData) {
-			var opts = $.extend({}, options),
+		Redirects["fade" + direction] = function(element: HTMLElement | SVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: (HTMLElement | SVGElement)[], promiseData) {
+			var opts: ElementData = $.extend({}, options),
 				complete = opts.complete,
-				propertiesMap = {opacity: (direction === "In") ? 1 : 0};
+				propertiesMap = {
+					opacity: (direction === "In") ? 1 : 0
+				};
 
 			/* Since redirects are triggered individually for each element in the animated set, avoid repeatedly triggering
 			 callbacks by firing them only when the final element has been reached. */
@@ -2160,7 +2151,7 @@ namespace Velocity {
 	export function pauseAll(queueName) {
 		var currentTime = (new Date()).getTime();
 
-		$.each(Velocity.State.calls, function(i, activeCall) {
+		Velocity.State.calls.forEach(function(activeCall) {
 
 			if (activeCall) {
 
@@ -2189,8 +2180,7 @@ namespace Velocity {
 	export function resumeAll(queueName) {
 		var currentTime = (new Date()).getTime();
 
-		$.each(Velocity.State.calls, function(i, activeCall) {
-
+		Velocity.State.calls.forEach(function(activeCall) {
 			if (activeCall) {
 
 				/* If we have a queueName and this call is not on that queue, skip */
@@ -2215,7 +2205,7 @@ namespace Velocity {
 };
 
 /* Shorthand alias for jQuery's $.data() utility. */
-function Data(element) {
+function Data(element): ElementData {
 	/* Hardcode a reference to the plugin name. */
 	var response = $.data(element, "velocity");
 
@@ -2227,7 +2217,7 @@ function Data(element) {
  Delay Timer
  **************/
 
-function pauseDelayOnElement(element, currentTime) {
+function pauseDelayOnElement(element: HTMLElement | SVGElement, currentTime: number) {
 	/* Check for any delay timers, and pause the set timeouts (while preserving time data)
 	 to be resumed when the "resume" command is issued */
 	var data = Data(element);
@@ -2238,7 +2228,7 @@ function pauseDelayOnElement(element, currentTime) {
 	}
 }
 
-function resumeDelayOnElement(element, currentTime) {
+function resumeDelayOnElement(element: HTMLElement | SVGElement, currentTime: number) {
 	/* Check for any paused timers and resume */
 	var data = Data(element);
 	if (data && data.delayTimer && data.delayPaused) {
@@ -2616,7 +2606,7 @@ function tick(timestamp?: number | boolean) {
 		 when its length has ballooned to a point that can impact tick performance. This only becomes necessary when animation
 		 has been continuous with many elements over a long period of time; whenever all active calls are completed, completeCall() clears Velocity.State.calls. */
 		if (callsLength > 10000) {
-			Velocity.State.calls = compactSparseArray(Velocity.State.calls);
+			Velocity.State.calls = Velocity.State.calls.filter(value => value);
 			callsLength = Velocity.State.calls.length;
 		}
 
@@ -2639,8 +2629,6 @@ function tick(timestamp?: number | boolean) {
 				tweenDummyValue = null,
 				pauseObject = callContainer[5],
 				millisecondsEllapsed = callContainer[6];
-
-
 
 			/* If timeStart is undefined, then this is the first time that this call has been processed by tick().
 			 We assign timeStart now so that its value is as close to the real animation start time as possible.
@@ -2894,12 +2882,12 @@ function completeCall(callIndex: number, isStopped?: boolean) {
 	}
 
 	/* Pull the metadata from the call. */
-	var call = Velocity.State.calls[callIndex][0],
-		elements = Velocity.State.calls[callIndex][1],
-		opts = Velocity.State.calls[callIndex][2],
-		resolver = Velocity.State.calls[callIndex][4];
-
-	var remainingCallsExist = false;
+	var currentCall = Velocity.State.calls[callIndex],
+		call = currentCall[0],
+		elements = currentCall[1],
+		opts = currentCall[2],
+		resolver = currentCall[4],
+		remainingCallsExist = false;
 
 	/*************************
 	 Element Finalization

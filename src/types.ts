@@ -11,7 +11,7 @@ function isFunction(variable): variable is Function {
 	return Object.prototype.toString.call(variable) === "[object Function]";
 }
 
-function isNode(variable): variable is Element {
+function isNode(variable): variable is HTMLElement | SVGElement {
 	return variable && variable.nodeType;
 }
 

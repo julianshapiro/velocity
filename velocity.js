@@ -1145,7 +1145,7 @@ function Velocity() {
         $.each(elements, function(i, element) {
             pauseDelayOnElement(element, currentTime);
         });
-        $.each(Velocity.State.calls, function(i, activeCall) {
+        Velocity.State.calls.forEach(function(activeCall) {
             var found = false;
             if (activeCall) {
                 $.each(activeCall[1], function(k, activeElement) {
@@ -1174,7 +1174,7 @@ function Velocity() {
         $.each(elements, function(i, element) {
             resumeDelayOnElement(element, currentTime);
         });
-        $.each(Velocity.State.calls, function(i, activeCall) {
+        Velocity.State.calls.forEach(function(activeCall) {
             var found = false;
             if (activeCall) {
                 $.each(activeCall[1], function(k, activeElement) {
@@ -1221,7 +1221,7 @@ function Velocity() {
             }
         });
         var callsToStop = [];
-        $.each(Velocity.State.calls, function(i, activeCall) {
+        Velocity.State.calls.forEach(function(activeCall, callIndex) {
             if (activeCall) {
                 $.each(activeCall[1], function(k, activeElement) {
                     var queueName = options === undefined ? "" : options;
@@ -1245,7 +1245,7 @@ function Velocity() {
                                         activeTween.endValue = activeTween.currentValue;
                                     });
                                 }
-                                callsToStop.push(i);
+                                callsToStop.push(callIndex);
                             } else if (propertiesMap === "finish" || propertiesMap === "finishAll") {
                                 activeCall[2].duration = 1;
                             }
@@ -1915,17 +1915,6 @@ var performance = function() {
     return perf;
 }();
 
-function compactSparseArray(array) {
-    var index = -1, length = array ? array.length : 0, result = [];
-    while (++index < length) {
-        var value = array[index];
-        if (value) {
-            result.push(value);
-        }
-    }
-    return result;
-}
-
 var _slice = function() {
     var slice = Array.prototype.slice;
     try {
@@ -2193,7 +2182,7 @@ if (IE <= 8 && !isJQuery) {
     Velocity.timestamp = true;
     function pauseAll(queueName) {
         var currentTime = new Date().getTime();
-        $.each(Velocity.State.calls, function(i, activeCall) {
+        Velocity.State.calls.forEach(function(activeCall) {
             if (activeCall) {
                 if (queueName !== undefined && (activeCall[2].queue !== queueName || activeCall[2].queue === false)) {
                     return true;
@@ -2213,7 +2202,7 @@ if (IE <= 8 && !isJQuery) {
     Velocity.pauseAll = pauseAll;
     function resumeAll(queueName) {
         var currentTime = new Date().getTime();
-        $.each(Velocity.State.calls, function(i, activeCall) {
+        Velocity.State.calls.forEach(function(activeCall) {
             if (activeCall) {
                 if (queueName !== undefined && (activeCall[2].queue !== queueName || activeCall[2].queue === false)) {
                     return true;
@@ -2488,7 +2477,9 @@ function tick(timestamp) {
         var timeCurrent = Velocity.timestamp && timestamp !== true ? timestamp : performance.now();
         var callsLength = Velocity.State.calls.length;
         if (callsLength > 1e4) {
-            Velocity.State.calls = compactSparseArray(Velocity.State.calls);
+            Velocity.State.calls = Velocity.State.calls.filter(function(value) {
+                return value;
+            });
             callsLength = Velocity.State.calls.length;
         }
         for (var i = 0; i < callsLength; i++) {
@@ -2607,8 +2598,7 @@ function completeCall(callIndex, isStopped) {
     if (!Velocity.State.calls[callIndex]) {
         return false;
     }
-    var call = Velocity.State.calls[callIndex][0], elements = Velocity.State.calls[callIndex][1], opts = Velocity.State.calls[callIndex][2], resolver = Velocity.State.calls[callIndex][4];
-    var remainingCallsExist = false;
+    var currentCall = Velocity.State.calls[callIndex], call = currentCall[0], elements = currentCall[1], opts = currentCall[2], resolver = currentCall[4], remainingCallsExist = false;
     for (var i = 0, callLength = call.length; i < callLength; i++) {
         var element = call[i].element;
         if (!isStopped && !opts.loop) {
