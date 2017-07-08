@@ -1145,65 +1145,45 @@ function Velocity() {
         $.each(elements, function(i, element) {
             pauseDelayOnElement(element, currentTime);
         });
-        Velocity.State.calls.forEach(function(activeCall) {
-            var found = false;
-            if (activeCall) {
-                $.each(activeCall[1], function(k, activeElement) {
-                    var queueName = options === undefined ? "" : options;
-                    if (queueName !== true && activeCall[2].queue !== queueName && !(options === undefined && activeCall[2].queue === false)) {
+        var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first;
+        for (;activeCall; activeCall = activeCall.next) {
+            if (activeCall.paused !== true) {
+                activeCall.elements.some(function(activeElement) {
+                    if (queueName !== true && activeCall.options.queue !== queueName && !(options === undefined && activeCall.options.queue === false)) {
                         return true;
                     }
-                    $.each(elements, function(l, element) {
-                        if (element === activeElement) {
-                            activeCall[5] = {
-                                resume: false
-                            };
-                            found = true;
-                            return false;
-                        }
-                    });
-                    if (found) {
-                        return false;
+                    if (elements.indexOf(activeElement) >= 0) {
+                        return activeCall.paused = true;
                     }
                 });
             }
-        });
+        }
         return getChain();
 
       case "resume":
         $.each(elements, function(i, element) {
             resumeDelayOnElement(element, currentTime);
         });
-        Velocity.State.calls.forEach(function(activeCall) {
-            var found = false;
-            if (activeCall) {
-                $.each(activeCall[1], function(k, activeElement) {
-                    var queueName = options === undefined ? "" : options;
-                    if (queueName !== true && activeCall[2].queue !== queueName && !(options === undefined && activeCall[2].queue === false)) {
+        var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first;
+        for (;activeCall; activeCall = activeCall.next) {
+            if (activeCall.paused !== false) {
+                activeCall.elements.some(function(activeElement) {
+                    if (queueName !== true && activeCall.options.queue !== queueName && !(options === undefined && activeCall.options.queue === false)) {
                         return true;
                     }
-                    if (!activeCall[5]) {
+                    if (elements.indexOf(activeElement) >= 0) {
+                        activeCall.paused = false;
                         return true;
-                    }
-                    $.each(elements, function(l, element) {
-                        if (element === activeElement) {
-                            activeCall[5].resume = true;
-                            found = true;
-                            return false;
-                        }
-                    });
-                    if (found) {
-                        return false;
                     }
                 });
             }
-        });
+        }
         return getChain();
 
       case "finish":
       case "finishAll":
       case "stop":
-        $.each(elements, function(i, element) {
+        elements.forEach(function(element) {
             if (Data(element) && Data(element).delayTimer) {
                 clearTimeout(Data(element).delayTimer.setTimeout);
                 if (Data(element).delayTimer.next) {
@@ -1221,42 +1201,41 @@ function Velocity() {
             }
         });
         var callsToStop = [];
-        Velocity.State.calls.forEach(function(activeCall, callIndex) {
-            if (activeCall) {
-                $.each(activeCall[1], function(k, activeElement) {
-                    var queueName = options === undefined ? "" : options;
-                    if (queueName !== true && activeCall[2].queue !== queueName && !(options === undefined && activeCall[2].queue === false)) {
-                        return true;
-                    }
-                    $.each(elements, function(l, element) {
-                        if (element === activeElement) {
-                            if (options === true || isString(options)) {
-                                $.each($.queue(element, isString(options) ? options : ""), function(_, item) {
-                                    if (isFunction(item)) {
-                                        item(null, true);
-                                    }
-                                });
-                                $.queue(element, isString(options) ? options : "", []);
-                            }
-                            if (propertiesMap === "stop") {
-                                var data = Data(element);
-                                if (data && data.tweensContainer && queueName !== false) {
-                                    $.each(data.tweensContainer, function(m, activeTween) {
-                                        activeTween.endValue = activeTween.currentValue;
-                                    });
+        var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first;
+        for (;activeCall; activeCall = activeCall.next) {
+            activeCall.elements.forEach(function(activeElement) {
+                var queueName = options === undefined ? "" : options;
+                if (queueName !== true && activeCall.options.queue !== queueName && !(options === undefined && activeCall.options.queue === false)) {
+                    return true;
+                }
+                elements.forEach(function(element) {
+                    if (element === activeElement) {
+                        if (options === true || isString(options)) {
+                            $.each($.queue(element, isString(options) ? options : ""), function(_, item) {
+                                if (isFunction(item)) {
+                                    item(null, true);
                                 }
-                                callsToStop.push(callIndex);
-                            } else if (propertiesMap === "finish" || propertiesMap === "finishAll") {
-                                activeCall[2].duration = 1;
-                            }
+                            });
+                            $.queue(element, isString(options) ? options : "", []);
                         }
-                    });
+                        if (propertiesMap === "stop") {
+                            var data = Data(element);
+                            if (data && data.tweensContainer && queueName !== false) {
+                                $.each(data.tweensContainer, function(m, activeTween) {
+                                    activeTween.endValue = activeTween.currentValue;
+                                });
+                            }
+                            callsToStop.push(activeCall);
+                        } else if (propertiesMap === "finish" || propertiesMap === "finishAll") {
+                            activeCall.options.duration = 1;
+                        }
+                    }
                 });
-            }
-        });
+            });
+        }
         if (propertiesMap === "stop") {
-            $.each(callsToStop, function(i, j) {
-                completeCall(j, true);
+            callsToStop.forEach(function(activeCall) {
+                completeCall(activeCall, true);
             });
             if (promiseData.promise) {
                 promiseData.resolver(elements);
@@ -1353,7 +1332,7 @@ function Velocity() {
                 opts.duration = opts.delay = 1;
             } else {
                 opts.duration *= parseFloat(Velocity.mock) || 1;
-                opts.delay *= parseFloat(Velocity.mock) || 1;
+                opts.delay = parseFloat(opts.delay) * parseFloat(Velocity.mock) || 1;
             }
         }
         opts.easing = getEasing(opts.easing, opts.duration);
@@ -1806,7 +1785,19 @@ function Velocity() {
                     data.isAnimating = true;
                 }
                 if (elementsIndex === elementsLength - 1) {
-                    Velocity.State.calls.push([ call, elements, opts, null, promiseData.resolver, null, 0 ]);
+                    var last = Velocity.State.last, next = Velocity.State.last = {
+                        next: undefined,
+                        prev: Velocity.State.last,
+                        call: call,
+                        elements: elements,
+                        options: opts,
+                        resolver: promiseData.resolver
+                    };
+                    if (last) {
+                        last.next = next;
+                    } else {
+                        Velocity.State.first = next;
+                    }
                     if (Velocity.State.isTicking === false) {
                         Velocity.State.isTicking = true;
                         tick();
@@ -1882,7 +1873,7 @@ var IE = function() {
     } else {
         for (var i = 7; i > 4; i--) {
             var div = document.createElement("div");
-            div.innerHTML = "\x3c!--[if IE " + i + "]><span></span><![endif]--\x3e";
+            div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
             if (div.getElementsByTagName("span").length) {
                 div = null;
                 return i;
@@ -2007,7 +1998,7 @@ if (IE <= 8 && !isJQuery) {
         State.windowScrollAnchor = State.isClient && window.pageYOffset !== undefined, State.scrollAnchor = State.windowScrollAnchor ? window : !State.isClient || document.documentElement || document.body.parentNode || document.body, 
         State.scrollPropertyLeft = State.windowScrollAnchor ? "pageXOffset" : "scrollLeft", 
         State.scrollPropertyTop = State.windowScrollAnchor ? "pageYOffset" : "scrollTop", 
-        State.isTicking = false, State.calls = [], State.delayedElements = {
+        State.isTicking = false, State.delayedElements = {
             count: 0
         };
     })(State = Velocity.State || (Velocity.State = {}));
@@ -2181,17 +2172,13 @@ if (IE <= 8 && !isJQuery) {
     Velocity.debug = false;
     Velocity.timestamp = true;
     function pauseAll(queueName) {
-        var currentTime = new Date().getTime();
-        Velocity.State.calls.forEach(function(activeCall) {
-            if (activeCall) {
-                if (queueName !== undefined && (activeCall[2].queue !== queueName || activeCall[2].queue === false)) {
-                    return true;
-                }
-                activeCall[5] = {
-                    resume: false
-                };
+        var currentTime = new Date().getTime(), activeCall = Velocity.State.first;
+        for (;activeCall; activeCall = activeCall.next) {
+            if (queueName !== undefined && (activeCall.options.queue !== queueName || activeCall.options.queue === false)) {
+                continue;
             }
-        });
+            activeCall.paused = true;
+        }
         $.each(Velocity.State.delayedElements, function(k, element) {
             if (!element) {
                 return;
@@ -2201,17 +2188,15 @@ if (IE <= 8 && !isJQuery) {
     }
     Velocity.pauseAll = pauseAll;
     function resumeAll(queueName) {
-        var currentTime = new Date().getTime();
-        Velocity.State.calls.forEach(function(activeCall) {
-            if (activeCall) {
-                if (queueName !== undefined && (activeCall[2].queue !== queueName || activeCall[2].queue === false)) {
-                    return true;
-                }
-                if (activeCall[5]) {
-                    activeCall[5].resume = true;
-                }
+        var currentTime = new Date().getTime(), activeCall = Velocity.State.first;
+        for (;activeCall; activeCall = activeCall.next) {
+            if (queueName !== undefined && (activeCall.options.queue !== queueName || activeCall.options.queue === false)) {
+                continue;
             }
-        });
+            if (activeCall.paused === true) {
+                activeCall.paused = false;
+            }
+        }
         $.each(Velocity.State.delayedElements, function(k, element) {
             if (!element) {
                 return;
@@ -2474,32 +2459,19 @@ if (!Velocity.State.isMobile && document.hidden !== undefined) {
 
 function tick(timestamp) {
     if (timestamp) {
-        var timeCurrent = Velocity.timestamp && timestamp !== true ? timestamp : performance.now();
-        var callsLength = Velocity.State.calls.length;
-        if (callsLength > 1e4) {
-            Velocity.State.calls = Velocity.State.calls.filter(function(value) {
-                return value;
-            });
-            callsLength = Velocity.State.calls.length;
-        }
-        for (var i = 0; i < callsLength; i++) {
-            if (!Velocity.State.calls[i]) {
-                continue;
-            }
-            var callContainer = Velocity.State.calls[i], call = callContainer[0], opts = callContainer[2], timeStart = callContainer[3], firstTick = !!timeStart, tweenDummyValue = null, pauseObject = callContainer[5], millisecondsEllapsed = callContainer[6];
+        var timeCurrent = Velocity.timestamp && timestamp !== true ? timestamp : performance.now(), activeCall = Velocity.State.first;
+        for (;activeCall; activeCall = activeCall.next) {
+            var call = activeCall.call, opts = activeCall.options, timeStart = activeCall.timeStart, firstTick = !!timeStart, tweenDummyValue = null;
             if (!timeStart) {
-                timeStart = Velocity.State.calls[i][3] = timeCurrent - 16;
+                timeStart = activeCall.timeStart = timeCurrent - 16;
             }
-            if (pauseObject) {
-                if (pauseObject.resume === true) {
-                    timeStart = callContainer[3] = Math.round(timeCurrent - millisecondsEllapsed - 16);
-                    callContainer[5] = null;
-                } else {
-                    continue;
-                }
+            if (activeCall.paused === true) {
+                continue;
+            } else if (activeCall.paused === false) {
+                timeStart = activeCall.timeStart = Math.round(timeCurrent - activeCall.ellapsedTime - 16);
+                activeCall.paused = undefined;
             }
-            millisecondsEllapsed = callContainer[6] = timeCurrent - timeStart;
-            var percentComplete = Math.min(millisecondsEllapsed / opts.duration, 1);
+            var millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, percentComplete = Math.min(millisecondsEllapsed / opts.duration, 1);
             for (var j = 0, callLength = call.length; j < callLength; j++) {
                 var tweensContainer = call[j], element = tweensContainer.element;
                 if (!Data(element)) {
@@ -2576,16 +2548,16 @@ function tick(timestamp) {
                 }
             }
             if (opts.display !== undefined && opts.display !== "none") {
-                Velocity.State.calls[i][2].display = false;
+                opts.display = false;
             }
             if (opts.visibility !== undefined && opts.visibility !== "hidden") {
-                Velocity.State.calls[i][2].visibility = false;
+                opts.visibility = false;
             }
             if (opts.progress) {
-                opts.progress.call(callContainer[1], callContainer[1], percentComplete, Math.max(0, timeStart + opts.duration - timeCurrent), timeStart, tweenDummyValue);
+                opts.progress.call(activeCall.elements, activeCall.elements, percentComplete, Math.max(0, timeStart + opts.duration - timeCurrent), timeStart, tweenDummyValue);
             }
             if (percentComplete === 1) {
-                completeCall(i);
+                completeCall(activeCall);
             }
         }
     }
@@ -2594,11 +2566,8 @@ function tick(timestamp) {
     }
 }
 
-function completeCall(callIndex, isStopped) {
-    if (!Velocity.State.calls[callIndex]) {
-        return false;
-    }
-    var currentCall = Velocity.State.calls[callIndex], call = currentCall[0], elements = currentCall[1], opts = currentCall[2], resolver = currentCall[4], remainingCallsExist = false;
+function completeCall(activeCall, isStopped) {
+    var call = activeCall.call, elements = activeCall.elements, opts = activeCall.options, resolver = activeCall.resolver;
     for (var i = 0, callLength = call.length; i < callLength; i++) {
         var element = call[i].element;
         if (!isStopped && !opts.loop) {
@@ -2610,7 +2579,7 @@ function completeCall(callIndex, isStopped) {
             }
         }
         var data = Data(element);
-        if (opts.loop !== true && ($.queue(element)[1] === undefined || !/\.velocityQueueEntryFlag/i.test($.queue(element)[1]))) {
+        if ((opts.loop !== true || isStopped) && ($.queue(element)[1] === undefined || !/\.velocityQueueEntryFlag/i.test($.queue(element)[1]))) {
             if (data) {
                 data.isAnimating = false;
                 data.rootPropertyValueCache = {};
@@ -2665,18 +2634,18 @@ function completeCall(callIndex, isStopped) {
             $.dequeue(element, opts.queue);
         }
     }
-    Velocity.State.calls[callIndex] = false;
-    for (var j = 0, callsLength = Velocity.State.calls.length; j < callsLength; j++) {
-        if (Velocity.State.calls[j] !== false) {
-            remainingCallsExist = true;
-            break;
-        }
+    if (Velocity.State.first === activeCall) {
+        Velocity.State.first = activeCall.next;
+    } else if (activeCall.prev) {
+        activeCall.prev.next = activeCall.next;
     }
-    if (remainingCallsExist === false) {
-        Velocity.State.isTicking = false;
-        delete Velocity.State.calls;
-        Velocity.State.calls = [];
+    if (Velocity.State.last === activeCall) {
+        Velocity.State.last = activeCall.prev;
+    } else if (activeCall.next) {
+        activeCall.next.prev = activeCall.prev;
     }
+    activeCall.next = activeCall.prev = undefined;
+    Velocity.State.isTicking = !!Velocity.State.first;
 }
 
 global.Velocity = Velocity;

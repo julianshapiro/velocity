@@ -23,7 +23,7 @@
 		</style>
 	</head>
 	<body>
-		<ul id="details">	
+		<ul id="details">
 			<li>
 				Unit tests: <i><b>current document</b>.</i>
 			</li>
@@ -50,7 +50,7 @@
 		*********************/
 
 		/* IE detection: https://gist.github.com/julianshapiro/9098609 */
-		var IE = (function() { 
+		var IE = (function() {
 		    if (document.documentMode) {
 		        return document.documentMode;
 		    } else {
@@ -95,7 +95,7 @@
 
   		var $ = (window.jQuery || window.Zepto);
 
-  		Data = function(element) { 
+  		Data = function(element) {
   			return Velocity.Utilities.data(element, "velocity");
   		};
 
@@ -156,7 +156,7 @@
 				height: defaultStyles.height * 2,
 				colorGreen: defaultStyles.colorGreen / 2
 			},
-			defaultOptions = { 
+			defaultOptions = {
 				queue: "",
 			    duration: 300,
 			    easing: "swing",
@@ -173,6 +173,15 @@
 			completeCheckDuration = defaultOptions.duration * 2;
 
 		Velocity.defaults = defaultOptions;
+
+		/****************
+		    Cleanup
+		****************/
+
+		QUnit.done(function( details ) {
+			$(".velocity-animating").velocity("stop");
+			console.log( "Total: ", details.total, " Failed: ", details.failed, " Passed: ", details.passed, " Runtime: ", details.runtime );
+		});
 
 		/****************
 		    Arguments
@@ -472,7 +481,7 @@
 		QUnit.asyncTest("End Value Setting (Note: Browser Tab Must Have Focus Due to rAF)", function(assert) {
 			/* Transforms and the properties that are hooked by Velocity aren't supported below IE9. */
 			if (!(IE < 9)) {
-				var testHooks = { 
+				var testHooks = {
 					boxShadowBlur: "10px", // "black 0px 0px 10px 0px"
 					boxShadowSpread: "20px", // "black 0px 0px 0px 20px"
 					textShadowBlur: "30px" // "black 0px 0px 30px"
@@ -491,7 +500,7 @@
 				}, completeCheckDuration);
 
 				if (!(IE < 10) && !Velocity.State.isGingerbread) {
-					var testTransforms = { 
+					var testTransforms = {
 							translateY: "10em", // Should stay the same
 							translateX: "20px", // Should stay the same
 							scaleX: "1.50", // Should remain unitless
@@ -669,7 +678,7 @@
 		// $div2.dequeue("test")
 
 		/******************
-		   Option: Delay   
+		   Option: Delay
 		******************/
 
 		QUnit.asyncTest("Option: Delay (Note: Browser Tab Must Have Focus Due to rAF)", function(assert) {
@@ -692,7 +701,7 @@
 		});
 
 		/********************
-		   Option: Easing   
+		   Option: Easing
 		********************/
 
 		QUnit.asyncTest("Option: Easing", function(assert) {
@@ -746,7 +755,7 @@
 		});
 
 		/********************
-		   Option: Display   
+		   Option: Display
 		********************/
 
 		QUnit.asyncTest("Option: Display", function(assert) {
@@ -774,13 +783,13 @@
 			Velocity($target3, defaultProperties, { display: testDisplayBlank });
 			setTimeout(function() {
 				assert.equal(Velocity.CSS.getPropertyValue($target3, "display"), "block", "Display:'' was set immediately.");
-				
+
 				start();
 			}, completeCheckDuration);
 		});
 
 		/***********************
-		   Option: Visibility   
+		   Option: Visibility
 		***********************/
 
 		QUnit.asyncTest("Option: Visibility", function(assert) {
@@ -808,7 +817,7 @@
 			Velocity($target3, defaultProperties, { display: testVisibilityBlank });
 			setTimeout(function() {
 				assert.equal(/visible|inherit/.test(Velocity.CSS.getPropertyValue($target3, "visibility")), true, "visibility:'' was set immediately.");
-				
+
 				start();
 			}, completeCheckDuration);
 		});
@@ -851,7 +860,7 @@
 			expect(1);
 
 			var $targetSet = [ getTarget(), getTarget() ];
-			Velocity($targetSet, defaultProperties, { 
+			Velocity($targetSet, defaultProperties, {
 				duration: asyncCheckDuration,
 				begin: function() {
 					assert.deepEqual(this, $targetSet, "Elements passed into callback.");
@@ -867,9 +876,9 @@
 
 		QUnit.asyncTest("Option: Complete", function(assert) {
 			expect(1);
-			
+
 			var $targetSet = [ getTarget(), getTarget() ];
-			Velocity($targetSet, defaultProperties, { 
+			Velocity($targetSet, defaultProperties, {
 				duration: asyncCheckDuration,
 				complete: function() {
 					assert.deepEqual(this, $targetSet, "Elements passed into callback.");
@@ -889,7 +898,7 @@
 			var alreadyCalled = false;
 
 			var $target = getTarget();
-			Velocity($target, defaultProperties, { 
+			Velocity($target, defaultProperties, {
 				duration: asyncCheckDuration,
 				progress: function(elements, percentComplete, msRemaining) {
 					if (!alreadyCalled) {
@@ -982,7 +991,7 @@
 		QUnit.asyncTest("Command: Pause / Resume", function() {
 			expect(10);
 
-			var $target1 = getTarget(); 
+			var $target1 = getTarget();
 			var $target1d = getTarget(); //delayed
 			/* Ensure an error isn't thrown when "pause" is called on a $target that isn't animating. */
 			Velocity($target1, "pause");
@@ -997,7 +1006,7 @@
 			notEqual(Data($target1, pluginName).isPaused, true, "Newly active call not paused.");
 			Velocity($target1d, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { delay: 200 }));
 			notEqual(Data($target1d, pluginName).isPaused, true, "New call with delay not paused.");
-			
+
 			Velocity($target1, "pause");
 			Velocity($target1d, "pause");
 
@@ -1014,9 +1023,9 @@
 			var $target2d = getTarget();
 			Velocity($target2, { opacity: 0 }, defaultOptions);
 			Velocity($target2d, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { delay: 100 }));
-			
+
 			Velocity($target2, "pause");
-			
+
 			setTimeout(function() {
 				Velocity($target2d, "pause");
 			}, 40);
@@ -1044,7 +1053,7 @@
 				percent = 0,
 				isPaused = false;
 
-			Velocity($target3, { opacity: 0 }, { 
+			Velocity($target3, { opacity: 0 }, {
 				duration: 200,
 				easing:"linear",
 				progress: function(elements, _percentComplete, _msRemaining) {
@@ -1066,7 +1075,7 @@
 				isPaused = false;
 			}, 200);
 
-			
+
 			setTimeout(function() {
 				/* Property value should be linearly proportional to */
 				var val = parseFloat(Velocity.CSS.getPropertyValue($target3, "opacity"));
@@ -1087,12 +1096,12 @@
 					throw new Error("Tween does not proceed for any elements");
 				}
 			});
-			
-			Velocity($targetA, "pause");	
+
+			Velocity($targetA, "pause");
 
 			/* Ensure proper behavior with queue:false  */
 			var $target4 = getTarget();
-			Velocity($target4, { opacity: 0 }, { 
+			Velocity($target4, { opacity: 0 }, {
 				duration: 200,
 			});
 
@@ -1100,7 +1109,7 @@
 
 			setTimeout(function() {
 				Velocity($target4, "pause");
-				Velocity($target4, { left: -20 }, { 
+				Velocity($target4, { left: -20 }, {
 					duration: 100,
 					easing:"linear",
 					queue: false,
@@ -1109,7 +1118,7 @@
 					}
 				});
 
-				Velocity($target4, { top: 20 }, { 
+				Velocity($target4, { top: 20 }, {
 					duration: 100,
 					easing:"linear",
 					begin: function(elements) {
@@ -1145,14 +1154,14 @@
 		QUnit.asyncTest("Command: Global Pause / Resume", function() {
 			expect(3);
 
-			var $target1 = getTarget(); 
+			var $target1 = getTarget();
 			var $target2 = getTarget();
 			var $target3 = getTarget();
 			var $target4 = getTarget();
 
 			var isPaused = false;
 			var hasProgressed2 = false;
-			Velocity($target1, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { 
+			Velocity($target1, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, {
 				delay: 100,
 				queue:false,
 				progress: function(elements, progress, msRemaining) {
@@ -1161,8 +1170,8 @@
 					}
 				}
 			}));
-			
-			Velocity($target2, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { 
+
+			Velocity($target2, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, {
 				progress: function(elements, progress, msRemaining) {
 					if(isPaused) {
 						throw new Error("Tween should not progress when globally paused");
@@ -1178,7 +1187,7 @@
 
 			/* Testing with custom queues */
 			var hasProgressed3 = false;
-			Velocity($target3, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { 
+			Velocity($target3, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, {
 				queue: "queue1",
 				progress: function(elements, progress, msRemaining) {
 					if(!hasProgressed3) {
@@ -1189,7 +1198,7 @@
 			}));
 
 			var hasProgressed4 = false;
-			Velocity($target4, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { 
+			Velocity($target4, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, {
 				queue: "queue2",
 				progress: function(elements, progress, msRemaining) {
 					if(isPaused) {
@@ -1204,7 +1213,7 @@
 			/* Begin queued animations */
 			Velocity.Utilities.dequeue($target4, "queue2");
 			Velocity.Utilities.dequeue($target3, "queue1");
-			
+
 			/* Only $target4 should pause */
 			Velocity.pauseAll("queue2");
 
@@ -1311,14 +1320,14 @@
 		QUnit.asyncTest("Feature: 'velocity-animating' Class", function(assert) {
 			var $target1 = getTarget();
 
-			Velocity($target1, defaultProperties, function(element) { 
+			Velocity($target1, defaultProperties, function(element) {
 					assert.equal(/velocity-animating/.test($target1.className), false, "Class removed.");
 					start();
 				}
 			);
 
 			setTimeout(function() {
-				assert.equal(/velocity-animating/.test($target1.className), true, "Class added."); 
+				assert.equal(/velocity-animating/.test($target1.className), true, "Class added.");
 			}, asyncCheckDuration);
 		});
 
@@ -1341,7 +1350,7 @@
 
 			Velocity($target1, "stop", true).then(function(elements) {
 				assert.deepEqual(elements, [ $target1 ], "Stop call fulfilled.");
-			});	
+			});
 
 			var $target2 = getTarget(),
 				$target3 = getTarget();
@@ -1354,11 +1363,11 @@
 				assert.deepEqual(elements, [ $target2, $target3 ], "Elements passed back into resolved promise.");
 
 				start();
-			});		
+			});
 		});
 
 		/*****************************
-		   Feature: Value Functions    
+		   Feature: Value Functions
 		*****************************/
 
 		QUnit.test("Feature: Value Functions", function(assert) {
@@ -1373,7 +1382,7 @@
 		});
 
 		/***************************
-		   Feature: Forcefeeding    
+		   Feature: Forcefeeding
 		***************************/
 
 		QUnit.test("Feature: Forcefeeding", function(assert) {
@@ -1390,7 +1399,7 @@
 		});
 
 		/*********************************
-		   Feature: Colors (Shorthands)   
+		   Feature: Colors (Shorthands)
 		*********************************/
 
 		QUnit.test("Feature: Colors (Shorthands)", function(assert) {
@@ -1425,8 +1434,8 @@
 			$target1.style.display = initialStyles.display;
 			$target1.style.paddingTop = initialStyles.paddingTop;
 
-			Velocity($target1, "slideDown", 
-				{ 
+			Velocity($target1, "slideDown",
+				{
 					begin: function(elements) {
 						assert.deepEqual(elements, [ $target1 ], "slideDown: Begin callback returned.");
 					},
@@ -1441,8 +1450,8 @@
 				assert.deepEqual(elements, [ $target1 ], "slideDown: Promise fulfilled.");
 			});
 
-			Velocity($target2, "slideUp", 
-				{ 
+			Velocity($target2, "slideUp",
+				{
 					begin: function(elements) {
 						assert.deepEqual(elements, [ $target2 ], "slideUp: Begin callback returned.");
 					},
@@ -1469,8 +1478,8 @@
 
 			var $targets = [ getTarget(), getTarget() ];
 
-			Velocity($targets, "transition.bounceIn", 
-				{ 
+			Velocity($targets, "transition.bounceIn",
+				{
 					begin: function(elements) {
 						assert.deepEqual(elements, $targets, "Begin callback returned.");
 					},
@@ -1584,7 +1593,7 @@
 			var effectDefaultDuration = 800;
 			Velocity.RegisterUI("callout.twirl", {
 			    defaultDuration: effectDefaultDuration,
-			    calls: [ 
+			    calls: [
 					[ { rotateZ: 1080 }, 0.50 ],
 					[ { scaleX: 0.5 }, 0.25, { easing: "spring" } ],
 					[ { scaleX: 1 }, 0.25, { easing: "spring" } ]
@@ -1616,7 +1625,7 @@
 			var mySequence = [
 					{ elements: $target1, properties: { opacity: defaultProperties.opacity } },
 					{ elements: $target2, properties: { height: defaultProperties.height } },
-					{ elements: $target3, properties: { width: defaultProperties.width }, options: { 
+					{ elements: $target3, properties: { width: defaultProperties.width }, options: {
 							delay: 100,
 							sequenceQueue: false,
 							complete: function() {

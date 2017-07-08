@@ -329,7 +329,7 @@ namespace vCSS {
 				}
 			}
 		},
-		removeClass: function(element: HTMLElement, className: string): void {
+		removeClass: function(element: HTMLElement | SVGElement, className: string): void {
 			if (element) {
 				if (element.classList) {
 					element.classList.remove(className);
@@ -549,7 +549,7 @@ namespace vCSS {
 	}
 
 	/* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
-	export function setPropertyValue(element: HTMLElement | SVGElement, property: string, propertyValue: any, rootPropertyValue?, scrollData?) {
+	export function setPropertyValue(element: HTMLElement | SVGElement, property: string, propertyValue: any, rootPropertyValue?, scrollData?: ScrollData) {
 		var propertyName = property;
 
 		/* In order to be subjected to call options and element queueing, scroll animation is routed through Velocity as if it were a standard CSS property. */
