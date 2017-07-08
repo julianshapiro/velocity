@@ -42,7 +42,7 @@ namespace vNormalizations {
 
 	/* Normalizations are passed a normalization target (either the property's name, its extracted value, or its injected value),
 	 the targeted element (which may need to be queried), and the targeted property value. */
-	export var registered: {[key: string]: ((type: "name" | "extract" | "inject", element?: HTMLElement | SVGElement, propertyValue?) => any)} = {
+	export var registered: {[key: string]: ((type: "name" | "extract" | "inject", element?: HTMLorSVGElement, propertyValue?) => any)} = {
 		clip: function(type, element, propertyValue) {
 			switch (type) {
 				case "name":

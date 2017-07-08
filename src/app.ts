@@ -6,11 +6,13 @@
 ///<reference path="css.ts" />
 ///<reference path="core.ts" />
 
+type HTMLorSVGElement = HTMLElement | SVGElement;
+
 interface VelocityOptions {
 	duration?: string | number;
-	begin?: (elements?: NodeListOf<HTMLElement>) => void;
-	complete?: (elements?: NodeListOf<HTMLElement>) => void;
-	progress?: (elements?: NodeListOf<HTMLElement>, percentComplete?: number, remaining?: number, start?: number, tweenValue?: number) => void;
+	begin?: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>) => void;
+	complete?: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>) => void;
+	progress?: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>, percentComplete?: number, remaining?: number, start?: number, tweenValue?: number) => void;
 	display?: string | boolean;
 	delay?: string | number | boolean;
 	mobileHA?: boolean;
@@ -20,7 +22,14 @@ interface VelocityOptions {
 	visibility?: boolean | string;
 	loop?: boolean | number;
 	easing?: string;
-	container?: string | HTMLElement | SVGElement
+	container?: string | HTMLorSVGElement;
+	backwards?: boolean;
+	stagger?: string | number;
+	drag?: boolean;
+
+	/* private */
+	_cacheValues?: boolean;
+	promiseRejectEmpty?: boolean;
 }
 
 interface ElementData extends VelocityOptions {
@@ -36,7 +45,7 @@ interface ElementData extends VelocityOptions {
 	delayBegin?: number;
 	delayRemaining?: number;
 	delayPaused?: boolean;
-	tweensContainer?: (HTMLElement | SVGElement)[];
+	tweensContainer?: HTMLorSVGElement[];
 	rootPropertyValueCache?: {};
 	rootPropertyValue?: {};
 	isAnimating?: boolean;
@@ -50,7 +59,7 @@ interface ScrollData {
 
 interface TweensContainer {
 	queue?: boolean;
-	element?: HTMLElement | SVGElement;
+	element?: HTMLorSVGElement;
 	scroll?: {
 		rootPropertyValue: boolean;
 		startValue: number;
@@ -66,7 +75,7 @@ interface AnimationCall {
 	next?: AnimationCall;
 	prev?: AnimationCall;
 	call: TweensContainer[]; // 0
-	elements: (HTMLElement | SVGElement)[]; // 1
+	elements: HTMLorSVGElement[]; // 1
 	options: VelocityOptions; // 2
 	timeStart?: number; // 3
 	resolver: (value?: {} | PromiseLike<{}>) => void; // 4

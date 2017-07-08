@@ -11,6 +11,7 @@
 
 interface Window {
 	jQuery: any;
+	Zepto: any;
 	Velocity: any;
 }
 

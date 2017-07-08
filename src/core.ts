@@ -9,7 +9,7 @@ interface Document {
 }
 
 function Velocity(...args: any[]) {
-	var opts;
+	var opts: VelocityOptions;
 
 	/******************
 	 Call Chain
@@ -42,9 +42,9 @@ function Velocity(...args: any[]) {
 		elementsWrapped,
 		argumentIndex;
 
-	var elements: (HTMLElement | SVGElement)[],
+	var elements: HTMLorSVGElement[],
 		propertiesMap: string | {[property: string]: any},
-		options;
+		options: VelocityOptions;
 
 	/* Detect jQuery/Zepto elements being animated via the $.fn method. */
 	if (isWrapped(this)) {
@@ -169,7 +169,7 @@ function Velocity(...args: any[]) {
 			var currentTime = (new Date()).getTime();
 
 			/* Handle delay timers */
-			$.each(elements, function(i, element) {
+			elements.forEach(function(element) {
 				pauseDelayOnElement(element, currentTime);
 			});
 
@@ -202,7 +202,7 @@ function Velocity(...args: any[]) {
 			 *******************/
 
 			/* Handle delay timers */
-			$.each(elements, function(i, element) {
+			elements.forEach(function(element) {
 				resumeDelayOnElement(element, currentTime);
 			});
 
@@ -375,8 +375,8 @@ function Velocity(...args: any[]) {
 			} else if (isString(propertiesMap) && Velocity.Redirects[propertiesMap]) {
 				opts = $.extend({}, options);
 
-				var durationOriginal = opts.duration,
-					delayOriginal = opts.delay || 0;
+				var durationOriginal = parseFloat(opts.duration as string),
+					delayOriginal = parseFloat(opts.delay as string) || 0;
 
 				/* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first. */
 				if (opts.backwards === true) {
@@ -384,10 +384,10 @@ function Velocity(...args: any[]) {
 				}
 
 				/* Individually trigger the redirect for each element in the set to prevent users from having to handle iteration logic in their redirect. */
-				$.each(elements, function(elementIndex, element) {
+				elements.forEach(function(element, elementIndex) {
 					/* If the stagger option was passed in, successively delay each element by the stagger value (in ms). Retain the original delay value. */
-					if (parseFloat(opts.stagger)) {
-						opts.delay = delayOriginal + (parseFloat(opts.stagger) * elementIndex);
+					if (parseFloat(opts.stagger as string)) {
+						opts.delay = delayOriginal + (parseFloat(opts.stagger as string) * elementIndex);
 					} else if (isFunction(opts.stagger)) {
 						opts.delay = delayOriginal + opts.stagger.call(element, elementIndex, elementsLength);
 					}
@@ -396,7 +396,7 @@ function Velocity(...args: any[]) {
 					 the duration of each element's animation, using floors to prevent producing very short durations. */
 					if (opts.drag) {
 						/* Default the duration of UI pack effects (callouts and transitions) to 1000ms instead of the usual default duration of 400ms. */
-						opts.duration = parseFloat(durationOriginal) || (/^(callout|transition)/.test(propertiesMap as string) ? 1000 : DURATION_DEFAULT);
+						opts.duration = durationOriginal || (/^(callout|transition)/.test(propertiesMap as string) ? 1000 : DURATION_DEFAULT);
 
 						/* For each element, take the greater duration of: A) animation completion percentage relative to the original duration,
 						 B) 75% of the original duration, or C) a 200ms fallback (in case duration is already set to a low value).
@@ -461,7 +461,7 @@ function Velocity(...args: any[]) {
 	 `elementArrayIndex` allows passing index of the element in the original array to value functions.
 	 If `elementsIndex` were used instead the index would be determined by the elements' per-element queue.
 	 */
-	function processElement(element: HTMLElement | SVGElement, elementArrayIndex) {
+	function processElement(element: HTMLorSVGElement, elementArrayIndex) {
 
 		/*************************
 		 Part I: Pre-Queueing
@@ -773,7 +773,7 @@ function Velocity(...args: any[]) {
 					 Tweens Container Reconstruction
 					 *************************************/
 
-					/* Create a deepy copy (indicated via the true flag) of the previous call's tweensContainer. */
+					/* Create a deep copy (indicated via the true flag) of the previous call's tweensContainer. */
 					lastTweensContainer = $.extend(true, {}, data ? data.tweensContainer : null);
 
 					/* Manipulate the previous tweensContainer by replacing its end values and currentValues with its start values. */
@@ -1580,10 +1580,10 @@ function Velocity(...args: any[]) {
 
 	/* If the "nodeType" property exists on the elements variable, we're animating a single element.
 	 Place it in an array so that $.each() can iterate over it. */
-	$.each(elements, function(i, element) {
+	elements.forEach(function(element, index) {
 		/* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
 		if (isNode(element)) {
-			processElement(element, i);
+			processElement(element, index);
 		}
 	});
 
@@ -1596,32 +1596,26 @@ function Velocity(...args: any[]) {
 	/* Note: The loop option's logic is performed here -- after element processing -- because the current call needs
 	 to undergo its queue insertion prior to the loop option generating its series of constituent "reverse" calls,
 	 which chain after the current call. Two reverse calls (two "alternations") constitute one loop. */
-	opts = $.extend({}, Velocity.defaults, options);
-	opts.loop = parseInt(opts.loop, 10);
-	var reverseCallsCount = (opts.loop * 2) - 1;
+	var loop = isBoolean(options.loop) ? 0 : Math.floor(options.loop) || 0;
 
-	if (opts.loop) {
-		/* Double the loop count to convert it into its appropriate number of "reverse" calls.
-		 Subtract 1 from the resulting value since the current call is included in the total alternation count. */
-		for (var x = 0; x < reverseCallsCount; x++) {
-			/* Since the logic for the reverse action occurs inside Queueing and therefore this call's options object
-			 isn't parsed until then as well, the current call's delay option must be explicitly passed into the reverse
-			 call so that the delay logic that occurs inside *Pre-Queueing* can process it. */
-			var reverseOptions: {[key: string]: any} = {
-				delay: opts.delay,
-				progress: opts.progress
-			};
+	if (loop > 0) {
+		/* Since the logic for the reverse action occurs inside Queueing and therefore this call's options object
+		 isn't parsed until then as well, the current call's delay option must be explicitly passed into the reverse
+		 call so that the delay logic that occurs inside *Pre-Queueing* can process it. */
+		var reverseOptions: VelocityOptions = {
+			delay: options.delay || Velocity.defaults.delay,
+			progress: options.progress
+		};
 
-			/* If a complete callback was passed into this call, transfer it to the loop redirect's final "reverse" call
-			 so that it's triggered when the entire redirect is complete (and not when the very first animation is complete). */
-			if (x === reverseCallsCount - 1) {
-				reverseOptions.display = opts.display;
-				reverseOptions.visibility = opts.visibility;
-				reverseOptions.complete = opts.complete;
-			}
-
+		while (--loop) {
+			Velocity(elements, "reverse", reverseOptions);
 			Velocity(elements, "reverse", reverseOptions);
 		}
+
+		reverseOptions.display = options.display;
+		reverseOptions.visibility = options.visibility;
+		reverseOptions.complete = options.complete;
+		Velocity(elements, "reverse", reverseOptions);
 	}
 
 	/***************
@@ -1714,7 +1708,7 @@ var performance = (function() {
  * for the 2nd argument (as in Firefox), and prevents errors when
  * called on other DOM objects.
  */
-var _slice = (function() {
+var _slice: (this: HTMLorSVGElement[], begin?: number, end?: number) => Element[] = (function() {
 	var slice = Array.prototype.slice;
 
 	try {
@@ -1727,43 +1721,36 @@ var _slice = (function() {
 		// NamedNodeMap (attributes, entities, notations),
 		// NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
 		// and will not fail on other DOM objects (as do DOM elements in IE < 9)
-		return function(begin, end) {
-			var len = this.length;
+		return function(this: HTMLorSVGElement[], begin, end) {
+			var length = this.length;
 
-			if (typeof begin !== "number") {
+			if (!isNumber(begin)) {
 				begin = 0;
 			}
-			// IE < 9 gets unhappy with an undefined end argument
-			if (typeof end !== "number") {
-				end = len;
+			if (!isNumber(end)) {
+				end = length;
 			}
 			// For native Array objects, we use the native slice function
 			if (this.slice) {
 				return slice.call(this, begin, end);
 			}
 			// For array like object we handle it ourselves.
-			var i,
-				cloned = [],
+			var i: number,
+				cloned: any[],
 				// Handle negative value for "begin"
-				start = (begin >= 0) ? begin : Math.max(0, len + begin),
+				start = (begin >= 0) ? begin : Math.max(0, length + begin),
 				// Handle negative value for "end"
-				upTo = end < 0 ? len + end : Math.min(end, len),
+				upTo = end < 0 ? length + end : Math.min(end, length),
 				// Actual expected size of the slice
 				size = upTo - start;
 
 			if (size > 0) {
 				cloned = new Array(size);
-				if (this.charAt) {
-					for (i = 0; i < size; i++) {
-						cloned[i] = this.charAt(start + i);
-					}
-				} else {
-					for (i = 0; i < size; i++) {
-						cloned[i] = this[start + i];
-					}
+				for (i = 0; i < size; i++) {
+					cloned[i] = this[start + i];
 				}
 			}
-			return cloned;
+			return cloned || [];
 		};
 	}
 })();
@@ -1882,7 +1869,7 @@ namespace Velocity {
 
 	/* slideUp, slideDown */
 	["Down", "Up"].forEach(function(direction) {
-		Redirects["slide" + direction] = function(element: HTMLElement | SVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: (HTMLElement | SVGElement)[], promiseData) {
+		Redirects["slide" + direction] = function(element: HTMLorSVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: HTMLorSVGElement[], promiseData) {
 			var opts: ElementData = $.extend({}, options),
 				begin = opts.begin,
 				complete = opts.complete,
@@ -1950,7 +1937,7 @@ namespace Velocity {
 
 	/* fadeIn, fadeOut */
 	["In", "Out"].forEach(function(direction) {
-		Redirects["fade" + direction] = function(element: HTMLElement | SVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: (HTMLElement | SVGElement)[], promiseData) {
+		Redirects["fade" + direction] = function(element: HTMLorSVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: HTMLorSVGElement[], promiseData) {
 			var opts: ElementData = $.extend({}, options),
 				complete = opts.complete,
 				propertiesMap = {
@@ -2031,15 +2018,10 @@ namespace Velocity {
 	};
 
 	/* Velocity option defaults, which can be overriden by the user. */
-	export var defaults = {
+	export var defaults: VelocityOptions = {
 		queue: "",
 		duration: DURATION_DEFAULT,
 		easing: EASING_DEFAULT,
-		begin: undefined,
-		complete: undefined,
-		progress: undefined,
-		display: undefined,
-		visibility: undefined,
 		loop: false,
 		delay: false,
 		mobileHA: true,
@@ -2072,12 +2054,12 @@ namespace Velocity {
 	}
 
 	/* A parallel to jQuery's $.css(), used for getting/setting Velocity's hooked CSS properties. */
-	export function hook(elements: (HTMLElement | SVGElement)[], arg2, arg3) {
+	export function hook(elements: HTMLorSVGElement[], arg2, arg3) {
 		var value;
 
 		elements = sanitizeElements(elements);
 
-		$.each(elements, function(i, element) {
+		elements.forEach(function(element) {
 			/* Initialize Velocity's per-element data cache if this element hasn't previously been animated. */
 			if (Data(element) === undefined) {
 				Velocity.init(element);
@@ -2177,7 +2159,7 @@ function Data(element): ElementData {
  Delay Timer
  **************/
 
-function pauseDelayOnElement(element: HTMLElement | SVGElement, currentTime: number) {
+function pauseDelayOnElement(element: HTMLorSVGElement, currentTime: number) {
 	/* Check for any delay timers, and pause the set timeouts (while preserving time data)
 	 to be resumed when the "resume" command is issued */
 	var data = Data(element);
@@ -2189,7 +2171,7 @@ function pauseDelayOnElement(element: HTMLElement | SVGElement, currentTime: num
 	}
 }
 
-function resumeDelayOnElement(element: HTMLElement | SVGElement, currentTime: number) {
+function resumeDelayOnElement(element: HTMLorSVGElement, currentTime: number) {
 	/* Check for any paused timers and resume */
 	var data = Data(element);
 
@@ -2975,15 +2957,44 @@ function completeCall(activeCall: AnimationCall, isStopped?: boolean) {
  Frameworks
  ******************/
 
-/* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls.
- If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method.  Velocity
- also registers itself onto a global container (window.jQuery || window.Zepto || window) so that certain features are
- accessible beyond just a per-element scope. This master object contains an .animate() method, which is later assigned to $.fn
- (if jQuery or Zepto are present). Accordingly, Velocity can both act on wrapped DOM elements and stand alone for targeting raw DOM elements. */
+// Global call
 global.Velocity = Velocity;
 
-if (window.jQuery) {
-	window.jQuery.Velocity = window.jQuery.fn.velocity = Velocity;
+if (window === global) {
+	/**
+	 * The <strong><code>defineProperty()</code></strong> function provides a
+	 * shortcut to defining a property that cannot be accidentally iterated across.
+	 */
+	function defineProperty(proto: any, name: string, value: Function | any) {
+		if (!proto[name]) {
+			Object.defineProperty(proto, name, {
+				"value": value
+			});
+		}
+	}
+
+	/* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls.
+	 If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method.  Velocity
+	 also registers itself onto a global container (window.jQuery || window.Zepto || window) so that certain features are
+	 accessible beyond just a per-element scope. Accordingly, Velocity can both act on wrapped DOM elements and stand alone
+	 for targeting raw DOM elements. */
+	if (window.jQuery) {
+		defineProperty(window.jQuery, "Velocity", Velocity);
+		defineProperty(window.jQuery.fn, "velocity", Velocity);
+	}
+	if (window.Zepto) {
+		defineProperty(window.Zepto, "Velocity", Velocity);
+		defineProperty(window.Zepto.fn, "velocity", Velocity);
+	}
+	if (Element) {
+		defineProperty(Element.prototype, "velocity", Velocity);
+	}
+	if (NodeList) {
+		defineProperty(NodeList.prototype, "velocity", Velocity);
+	}
+	if (HTMLCollection) {
+		defineProperty(HTMLCollection.prototype, "velocity", Velocity);
+	}
 }
 
 /******************

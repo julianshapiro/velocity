@@ -116,6 +116,10 @@ namespace vHooks {
 		return "";
 	}
 
+	/**
+	 * Replace any css colour name with its rgba() value. It is possible to use
+	 * the name within an "rgba(blue, 0.4)" string this way.
+	 */
 	export function fixColors(str) {
 		return str.replace(/(rgba?\(\s*)?(\b[a-z]+\b)/g, function($0, $1, $2) {
 			if (vCSS.Lists.colorNames.hasOwnProperty($2)) {

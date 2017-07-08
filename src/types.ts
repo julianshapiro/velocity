@@ -1,4 +1,8 @@
 
+function isBoolean(variable): variable is boolean {
+	return variable === true || variable === false;
+}
+
 function isNumber(variable): variable is number {
 	return typeof variable === "number";
 }
@@ -11,13 +15,13 @@ function isFunction(variable): variable is Function {
 	return Object.prototype.toString.call(variable) === "[object Function]";
 }
 
-function isNode(variable): variable is HTMLElement | SVGElement {
+function isNode(variable): variable is HTMLorSVGElement {
 	return variable && variable.nodeType;
 }
 
 /* Determine if variable is an array-like wrapped jQuery, Zepto or similar element, or even a NodeList etc. */
 /* NOTE: HTMLFormElements also have a length. */
-function isWrapped(variable): variable is (HTMLElement | SVGElement)[] {
+function isWrapped(variable): variable is HTMLorSVGElement[] {
 	return variable
 		&& variable !== window
 		&& isNumber(variable.length)

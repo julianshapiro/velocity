@@ -283,6 +283,10 @@ var DURATION_DEFAULT = 400;
 
 var EASING_DEFAULT = "swing";
 
+function isBoolean(variable) {
+    return variable === true || variable === false;
+}
+
 function isNumber(variable) {
     return typeof variable === "number";
 }
@@ -1142,7 +1146,7 @@ function Velocity() {
 
       case "pause":
         var currentTime = new Date().getTime();
-        $.each(elements, function(i, element) {
+        elements.forEach(function(element) {
             pauseDelayOnElement(element, currentTime);
         });
         var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first;
@@ -1161,7 +1165,7 @@ function Velocity() {
         return getChain();
 
       case "resume":
-        $.each(elements, function(i, element) {
+        elements.forEach(function(element) {
             resumeDelayOnElement(element, currentTime);
         });
         var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first;
@@ -1248,18 +1252,18 @@ function Velocity() {
             action = "start";
         } else if (isString(propertiesMap) && Velocity.Redirects[propertiesMap]) {
             opts = $.extend({}, options);
-            var durationOriginal = opts.duration, delayOriginal = opts.delay || 0;
+            var durationOriginal = parseFloat(opts.duration), delayOriginal = parseFloat(opts.delay) || 0;
             if (opts.backwards === true) {
                 elements = $.extend(true, [], elements).reverse();
             }
-            $.each(elements, function(elementIndex, element) {
+            elements.forEach(function(element, elementIndex) {
                 if (parseFloat(opts.stagger)) {
                     opts.delay = delayOriginal + parseFloat(opts.stagger) * elementIndex;
                 } else if (isFunction(opts.stagger)) {
                     opts.delay = delayOriginal + opts.stagger.call(element, elementIndex, elementsLength);
                 }
                 if (opts.drag) {
-                    opts.duration = parseFloat(durationOriginal) || (/^(callout|transition)/.test(propertiesMap) ? 1e3 : DURATION_DEFAULT);
+                    opts.duration = durationOriginal || (/^(callout|transition)/.test(propertiesMap) ? 1e3 : DURATION_DEFAULT);
                     opts.duration = Math.max(opts.duration * (opts.backwards ? 1 - elementIndex / elementsLength : (elementIndex + 1) / elementsLength), opts.duration * .75, 200);
                 }
                 Velocity.Redirects[propertiesMap].call(element, element, opts || {}, elementIndex, elementsLength, elements, promiseData.promise ? promiseData : undefined);
@@ -1842,27 +1846,25 @@ function Velocity() {
             $.dequeue(element);
         }
     }
-    $.each(elements, function(i, element) {
+    elements.forEach(function(element, index) {
         if (isNode(element)) {
-            processElement(element, i);
+            processElement(element, index);
         }
     });
-    opts = $.extend({}, Velocity.defaults, options);
-    opts.loop = parseInt(opts.loop, 10);
-    var reverseCallsCount = opts.loop * 2 - 1;
-    if (opts.loop) {
-        for (var x = 0; x < reverseCallsCount; x++) {
-            var reverseOptions = {
-                delay: opts.delay,
-                progress: opts.progress
-            };
-            if (x === reverseCallsCount - 1) {
-                reverseOptions.display = opts.display;
-                reverseOptions.visibility = opts.visibility;
-                reverseOptions.complete = opts.complete;
-            }
+    var loop = isBoolean(options.loop) ? 0 : Math.floor(options.loop) || 0;
+    if (loop > 0) {
+        var reverseOptions = {
+            delay: options.delay || Velocity.defaults.delay,
+            progress: options.progress
+        };
+        while (--loop) {
+            Velocity(elements, "reverse", reverseOptions);
             Velocity(elements, "reverse", reverseOptions);
         }
+        reverseOptions.display = options.display;
+        reverseOptions.visibility = options.visibility;
+        reverseOptions.complete = options.complete;
+        Velocity(elements, "reverse", reverseOptions);
     }
     return getChain();
 }
@@ -1913,30 +1915,24 @@ var _slice = function() {
         return slice;
     } catch (e) {
         return function(begin, end) {
-            var len = this.length;
-            if (typeof begin !== "number") {
+            var length = this.length;
+            if (!isNumber(begin)) {
                 begin = 0;
             }
-            if (typeof end !== "number") {
-                end = len;
+            if (!isNumber(end)) {
+                end = length;
             }
             if (this.slice) {
                 return slice.call(this, begin, end);
             }
-            var i, cloned = [], start = begin >= 0 ? begin : Math.max(0, len + begin), upTo = end < 0 ? len + end : Math.min(end, len), size = upTo - start;
+            var i, cloned, start = begin >= 0 ? begin : Math.max(0, length + begin), upTo = end < 0 ? length + end : Math.min(end, length), size = upTo - start;
             if (size > 0) {
                 cloned = new Array(size);
-                if (this.charAt) {
-                    for (i = 0; i < size; i++) {
-                        cloned[i] = this.charAt(start + i);
-                    }
-                } else {
-                    for (i = 0; i < size; i++) {
-                        cloned[i] = this[start + i];
-                    }
+                for (i = 0; i < size; i++) {
+                    cloned[i] = this[start + i];
                 }
             }
-            return cloned;
+            return cloned || [];
         };
     }
 }();
@@ -2119,11 +2115,6 @@ if (IE <= 8 && !isJQuery) {
         queue: "",
         duration: DURATION_DEFAULT,
         easing: EASING_DEFAULT,
-        begin: undefined,
-        complete: undefined,
-        progress: undefined,
-        display: undefined,
-        visibility: undefined,
         loop: false,
         delay: false,
         mobileHA: true,
@@ -2144,7 +2135,7 @@ if (IE <= 8 && !isJQuery) {
     function hook(elements, arg2, arg3) {
         var value;
         elements = sanitizeElements(elements);
-        $.each(elements, function(i, element) {
+        elements.forEach(function(element) {
             if (Data(element) === undefined) {
                 Velocity.init(element);
             }
@@ -2650,8 +2641,31 @@ function completeCall(activeCall, isStopped) {
 
 global.Velocity = Velocity;
 
-if (window.jQuery) {
-    window.jQuery.Velocity = window.jQuery.fn.velocity = Velocity;
+if (window === global) {
+    function defineProperty(proto, name, value) {
+        if (!proto[name]) {
+            Object.defineProperty(proto, name, {
+                value: value
+            });
+        }
+    }
+    if (window.jQuery) {
+        defineProperty(window.jQuery, "Velocity", Velocity);
+        defineProperty(window.jQuery.fn, "velocity", Velocity);
+    }
+    if (window.Zepto) {
+        defineProperty(window.Zepto, "Velocity", Velocity);
+        defineProperty(window.Zepto.fn, "velocity", Velocity);
+    }
+    if (Element) {
+        defineProperty(Element.prototype, "velocity", Velocity);
+    }
+    if (NodeList) {
+        defineProperty(NodeList.prototype, "velocity", Velocity);
+    }
+    if (HTMLCollection) {
+        defineProperty(HTMLCollection.prototype, "velocity", Velocity);
+    }
 }
 //# sourceMappingURL=velocity.js.map
 	return Velocity;

@@ -295,7 +295,7 @@ namespace vCSS {
 		},
 		/* HTML elements default to an associated display type when they're not set to display:none. */
 		/* Note: This function is used for correctly setting the non-"none" display value in certain Velocity redirects, such as fadeIn/Out. */
-		getDisplayType: function(element: HTMLElement | SVGElement): string {
+		getDisplayType: function(element: HTMLorSVGElement): string {
 			var tagName = element && element.tagName.toString().toLowerCase();
 
 			if (/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(tagName)) {
@@ -314,7 +314,7 @@ namespace vCSS {
 			}
 		},
 		/* The class add/remove functions are used to temporarily apply a "velocity-animating" class to elements while they're animating. */
-		addClass: function(element: HTMLElement | SVGElement, className: string): void {
+		addClass: function(element: HTMLorSVGElement, className: string): void {
 			if (element) {
 				if (element.classList) {
 					element.classList.add(className);
@@ -329,7 +329,7 @@ namespace vCSS {
 				}
 			}
 		},
-		removeClass: function(element: HTMLElement | SVGElement, className: string): void {
+		removeClass: function(element: HTMLorSVGElement, className: string): void {
 			if (element) {
 				if (element.classList) {
 					element.classList.remove(className);
@@ -351,7 +351,7 @@ namespace vCSS {
 	 ****************************/
 
 	/* The singular getPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
-	export function getPropertyValue(element: HTMLElement | SVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean) {
+	export function getPropertyValue(element: HTMLorSVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean) {
 		/* Get an element's computed property value. */
 		/* Note: Retrieving the value of a CSS property cannot simply be performed by checking an element's
 		 style attribute (which only reflects user-defined values). Instead, the browser must be queried for a property's
@@ -549,7 +549,7 @@ namespace vCSS {
 	}
 
 	/* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
-	export function setPropertyValue(element: HTMLElement | SVGElement, property: string, propertyValue: any, rootPropertyValue?, scrollData?: ScrollData) {
+	export function setPropertyValue(element: HTMLorSVGElement, property: string, propertyValue: any, rootPropertyValue?, scrollData?: ScrollData) {
 		var propertyName = property;
 
 		/* In order to be subjected to call options and element queueing, scroll animation is routed through Velocity as if it were a standard CSS property. */
@@ -633,7 +633,7 @@ namespace vCSS {
 
 	/* To increase performance by batching transform updates into a single SET, transforms are not directly applied to an element until flushTransformCache() is called. */
 	/* Note: Velocity applies transform properties in the same order that they are chronogically introduced to the element's CSS styles. */
-	export function flushTransformCache(element: HTMLElement | SVGElement) {
+	export function flushTransformCache(element: HTMLorSVGElement) {
 		var transformString = "",
 			data = Data(element);
 
