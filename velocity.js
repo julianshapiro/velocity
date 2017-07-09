@@ -1073,30 +1073,33 @@ function Velocity() {
     }
     var opts;
     function getChain() {
-        if (isUtility) {
-            return promiseData.promise || null;
-        } else {
+        var promise = promiseData.promise;
+        if (elementsWrapped) {
+            var lastProto, proto = elementsWrapped, promiseProto = promise.__proto__;
+            while (proto && proto !== Object.prototype && (!proto.__proto__ || proto.__proto__ !== promiseProto)) {
+                lastProto = proto;
+                proto = proto.__proto__;
+            }
+            Object.setPrototypeOf(lastProto, promise);
             return elementsWrapped;
+        } else {
+            return promise || null;
         }
     }
-    var syntacticSugar = arguments[0] && (arguments[0].p || ($.isPlainObject(arguments[0].properties) && !arguments[0].properties.names || isString(arguments[0].properties))), isUtility, elementsWrapped, argumentIndex;
-    var elements, propertiesMap, options;
-    if (isWrapped(this)) {
-        isUtility = false;
-        argumentIndex = 0;
-        elements = this;
-        elementsWrapped = this;
-    } else {
-        isUtility = true;
-        argumentIndex = 1;
-        elements = syntacticSugar ? arguments[0].elements || arguments[0].e : arguments[0];
-    }
-    var promiseData = {
+    var syntacticSugar = arguments[0] && (arguments[0].p || ($.isPlainObject(arguments[0].properties) && !arguments[0].properties.names || isString(arguments[0].properties))), isUtility = !isWrapped(this), elementsWrapped, argumentIndex, elements, propertiesMap, options, promiseData = {
         promise: null,
         resolver: null,
         rejecter: null
     };
-    if (isUtility && Promise) {
+    if (isUtility) {
+        argumentIndex = 1;
+        elements = syntacticSugar ? arguments[0].elements || arguments[0].e : arguments[0];
+    } else {
+        argumentIndex = 0;
+        elements = this;
+        elementsWrapped = this;
+    }
+    if (Promise) {
         promiseData.promise = new Promise(function(resolve, reject) {
             promiseData.resolver = resolve;
             promiseData.rejecter = reject;
@@ -1118,7 +1121,7 @@ function Velocity() {
                 promiseData.resolver();
             }
         }
-        return;
+        return getChain();
     }
     var elementsLength = elements.length, elementsIndex = 0;
     if (!/^(stop|finish|finishAll|pause|resume)$/i.test(propertiesMap) && !$.isPlainObject(options)) {

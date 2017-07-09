@@ -302,7 +302,8 @@
 				assert.equal(Data($target19, pluginName).opts.complete, testComplete, "$.fn.: Utility function variation #2c.");
 
 				var $target20 = getTarget();
-				assert.deepEqual($($target20), $($target20).velocity(defaultProperties, testDuration, testEasing, testComplete).velocity(defaultProperties, testDuration, testEasing, testComplete), "$.fn.: Elements passed back to the call stack.");
+				assert.equal($($target20).length, $($target20).velocity(defaultProperties, testDuration, testEasing, testComplete).velocity(defaultProperties, testDuration, testEasing, testComplete).length, "$.fn.: Elements passed back to the call stack.");
+				// TODO: Should check in a better way - but the prototype chain is now extended with a Promise so a standard (non-length) comparison *will* fail
 			}
 		});
 

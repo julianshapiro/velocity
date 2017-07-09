@@ -17,13 +17,29 @@ function Velocity(...args: any[]) {
 
 	/* Logic for determining what to return to the call stack when exiting out of Velocity. */
 	function getChain() {
+		var promise = promiseData.promise;
+
 		/* If we are using the utility function, attempt to return this call's promise. If no promise library was detected,
 		 default to null instead of returning the targeted elements so that utility function's return value is standardized. */
-		if (isUtility) {
-			return promiseData.promise || null;
-			/* Otherwise, if we're using $.fn, return the jQuery-/Zepto-wrapped element set. */
-		} else {
+		if (elementsWrapped) {
+			interface objectPrototype {
+				__proto__: objectPrototype;
+			}
+			var lastProto: objectPrototype,
+				proto = elementsWrapped as any as objectPrototype,
+				promiseProto = promise.__proto__;
+
+			while (proto
+				&& proto !== Object.prototype
+				&& (!proto.__proto__ || proto.__proto__ !== promiseProto)) {
+				lastProto = proto;
+				proto = proto.__proto__;
+			}
+			Object.setPrototypeOf(lastProto, promise);
 			return elementsWrapped;
+		} else {
+			return promise || null;
+			/* Otherwise, if we're using $.fn, return the jQuery-/Zepto-wrapped element set. */
 		}
 	}
 
@@ -36,40 +52,34 @@ function Velocity(...args: any[]) {
 	/* Note: Some browsers automatically populate arguments with a "properties" object. We detect it by checking for its default "names" property. */
 	var syntacticSugar = (arguments[0] && (arguments[0].p || (($.isPlainObject(arguments[0].properties) && !arguments[0].properties.names) || isString(arguments[0].properties)))),
 		/* Whether Velocity was called via the utility function (as opposed to on a jQuery/Zepto object). */
-		isUtility: boolean,
+		isUtility: boolean = !isWrapped(this),
 		/* When Velocity is called via the utility function ($.Velocity()/Velocity()), elements are explicitly
 		 passed in as the first parameter. Thus, argument positioning varies. We normalize them here. */
-		elementsWrapped,
-		argumentIndex;
-
-	var elements: HTMLorSVGElement[],
+		elementsWrapped: HTMLorSVGElement[],
+		argumentIndex: number,
+		elements: HTMLorSVGElement[],
 		propertiesMap: string | {[property: string]: any},
-		options: VelocityOptions;
+		options: VelocityOptions,
+		promiseData = {
+			promise: null,
+			resolver: null,
+			rejecter: null
+		};
 
-	/* Detect jQuery/Zepto elements being animated via the $.fn method. */
-	if (isWrapped(this)) {
-		isUtility = false;
-
+	if (isUtility) {
+		/* Raw elements are being animated via the utility function. */
+		argumentIndex = 1;
+		elements = syntacticSugar ? (arguments[0].elements || arguments[0].e) : arguments[0];
+	} else {
+		/* Detect jQuery/Zepto/Native elements being animated via .velocity() method. */
 		argumentIndex = 0;
 		elements = this;
 		elementsWrapped = this;
-		/* Otherwise, raw elements are being animated via the utility function. */
-	} else {
-		isUtility = true;
-
-		argumentIndex = 1;
-		elements = syntacticSugar ? (arguments[0].elements || arguments[0].e) : arguments[0];
 	}
 
 	/***************
 	 Promises
 	 ***************/
-
-	var promiseData = {
-		promise: null,
-		resolver: null,
-		rejecter: null
-	};
 
 	/* If this call was made via the utility function (which is the default method of invocation when jQuery/Zepto are not being used), and if
 	 promise support was detected, create a promise object for this call and store references to its resolver and rejecter methods. The resolve
@@ -78,7 +88,7 @@ function Velocity(...args: any[]) {
 	/* Note: Velocity employs a call-based queueing architecture, which means that stopping an animating element actually stops the full call that
 	 triggered it -- not that one element exclusively. Similarly, there is one promise per call, and all elements targeted by a Velocity call are
 	 grouped together for the purposes of resolving and rejecting a promise. */
-	if (isUtility && Promise) {
+	if (Promise) {
 		promiseData.promise = new Promise(function(resolve, reject) {
 			promiseData.resolver = resolve;
 			promiseData.rejecter = reject;
@@ -103,7 +113,7 @@ function Velocity(...args: any[]) {
 				promiseData.resolver();
 			}
 		}
-		return;
+		return getChain();
 	}
 
 	/* The length of the element set (in the form of a nodeList or an array of elements) is defaulted to 1 in case a
