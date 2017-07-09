@@ -8,6 +8,21 @@ interface Document {
 	documentMode: any; // IE
 }
 
+/**
+ * The <strong><code>defineProperty()</code></strong> function provides a
+ * shortcut to defining a property that cannot be accidentally iterated across.
+ */
+function defineProperty(proto: any, name: string, value: Function | any, force?: boolean) {
+	if (proto && (force || !proto[name])) {
+		Object.defineProperty(proto, name, {
+			configurable: true,
+			writable: true,
+			value: value
+		});
+	}
+}
+
+
 function Velocity(...args: any[]) {
 	var opts: VelocityOptions;
 
@@ -17,29 +32,20 @@ function Velocity(...args: any[]) {
 
 	/* Logic for determining what to return to the call stack when exiting out of Velocity. */
 	function getChain() {
-		var promise = promiseData.promise;
+		var promise = promiseData.promise,
+			output = elementsWrapped; // || elements;
 
 		/* If we are using the utility function, attempt to return this call's promise. If no promise library was detected,
 		 default to null instead of returning the targeted elements so that utility function's return value is standardized. */
-		if (elementsWrapped) {
-			interface objectPrototype {
-				__proto__: objectPrototype;
+		if (output) {
+			defineProperty(output, "velocity", Velocity.bind(output));
+			if (promise) {
+				defineProperty(output, "then", promise.then.bind(promise), true);
+				defineProperty(output, "catch", promise.catch.bind(promise), true);
 			}
-			var lastProto: objectPrototype,
-				proto = elementsWrapped as any as objectPrototype,
-				promiseProto = promise.__proto__;
-
-			while (proto
-				&& proto !== Object.prototype
-				&& (!proto.__proto__ || proto.__proto__ !== promiseProto)) {
-				lastProto = proto;
-				proto = proto.__proto__;
-			}
-			Object.setPrototypeOf(lastProto, promise);
-			return elementsWrapped;
+			return output;
 		} else {
 			return promise || null;
-			/* Otherwise, if we're using $.fn, return the jQuery-/Zepto-wrapped element set. */
 		}
 	}
 
@@ -61,7 +67,7 @@ function Velocity(...args: any[]) {
 		propertiesMap: string | {[property: string]: any},
 		options: VelocityOptions,
 		promiseData = {
-			promise: null,
+			promise: null as Promise<any>,
 			resolver: null,
 			rejecter: null
 		};
@@ -102,7 +108,6 @@ function Velocity(...args: any[]) {
 		propertiesMap = arguments[argumentIndex];
 		options = arguments[argumentIndex + 1];
 	}
-
 	elements = sanitizeElements(elements);
 
 	if (!elements) {
@@ -2971,40 +2976,19 @@ function completeCall(activeCall: AnimationCall, isStopped?: boolean) {
 global.Velocity = Velocity;
 
 if (window === global) {
-	/**
-	 * The <strong><code>defineProperty()</code></strong> function provides a
-	 * shortcut to defining a property that cannot be accidentally iterated across.
-	 */
-	function defineProperty(proto: any, name: string, value: Function | any) {
-		if (!proto[name]) {
-			Object.defineProperty(proto, name, {
-				"value": value
-			});
-		}
-	}
-
 	/* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls.
 	 If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method.  Velocity
 	 also registers itself onto a global container (window.jQuery || window.Zepto || window) so that certain features are
 	 accessible beyond just a per-element scope. Accordingly, Velocity can both act on wrapped DOM elements and stand alone
 	 for targeting raw DOM elements. */
-	if (window.jQuery) {
-		defineProperty(window.jQuery, "Velocity", Velocity);
-		defineProperty(window.jQuery.fn, "velocity", Velocity);
-	}
-	if (window.Zepto) {
-		defineProperty(window.Zepto, "Velocity", Velocity);
-		defineProperty(window.Zepto.fn, "velocity", Velocity);
-	}
-	if (Element) {
-		defineProperty(Element.prototype, "velocity", Velocity);
-	}
-	if (NodeList) {
-		defineProperty(NodeList.prototype, "velocity", Velocity);
-	}
-	if (HTMLCollection) {
-		defineProperty(HTMLCollection.prototype, "velocity", Velocity);
-	}
+	defineProperty(window.jQuery, "Velocity", Velocity);
+	defineProperty(window.jQuery && window.jQuery.fn, "velocity", Velocity);
+	defineProperty(window.Zepto, "Velocity", Velocity);
+	defineProperty(window.Zepto && window.Zepto.fn, "velocity", Velocity);
+
+	defineProperty(Element && Element.prototype, "velocity", Velocity);
+	defineProperty(NodeList && NodeList.prototype, "velocity", Velocity);
+	defineProperty(HTMLCollection && HTMLCollection.prototype, "velocity", Velocity);
 }
 
 /******************

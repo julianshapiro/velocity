@@ -1066,6 +1066,16 @@ var vCSS;
     vCSS.flushTransformCache = flushTransformCache;
 })(vCSS || (vCSS = {}));
 
+function defineProperty(proto, name, value, force) {
+    if (proto && (force || !proto[name])) {
+        Object.defineProperty(proto, name, {
+            configurable: true,
+            writable: true,
+            value: value
+        });
+    }
+}
+
 function Velocity() {
     var args = [];
     for (var _i = 0; _i < arguments.length; _i++) {
@@ -1073,15 +1083,14 @@ function Velocity() {
     }
     var opts;
     function getChain() {
-        var promise = promiseData.promise;
-        if (elementsWrapped) {
-            var lastProto, proto = elementsWrapped, promiseProto = promise.__proto__;
-            while (proto && proto !== Object.prototype && (!proto.__proto__ || proto.__proto__ !== promiseProto)) {
-                lastProto = proto;
-                proto = proto.__proto__;
+        var promise = promiseData.promise, output = elementsWrapped;
+        if (output) {
+            defineProperty(output, "velocity", Velocity.bind(output));
+            if (promise) {
+                defineProperty(output, "then", promise.then.bind(promise), true);
+                defineProperty(output, "catch", promise.catch.bind(promise), true);
             }
-            Object.setPrototypeOf(lastProto, promise);
-            return elementsWrapped;
+            return output;
         } else {
             return promise || null;
         }
@@ -2645,30 +2654,13 @@ function completeCall(activeCall, isStopped) {
 global.Velocity = Velocity;
 
 if (window === global) {
-    function defineProperty(proto, name, value) {
-        if (!proto[name]) {
-            Object.defineProperty(proto, name, {
-                value: value
-            });
-        }
-    }
-    if (window.jQuery) {
-        defineProperty(window.jQuery, "Velocity", Velocity);
-        defineProperty(window.jQuery.fn, "velocity", Velocity);
-    }
-    if (window.Zepto) {
-        defineProperty(window.Zepto, "Velocity", Velocity);
-        defineProperty(window.Zepto.fn, "velocity", Velocity);
-    }
-    if (Element) {
-        defineProperty(Element.prototype, "velocity", Velocity);
-    }
-    if (NodeList) {
-        defineProperty(NodeList.prototype, "velocity", Velocity);
-    }
-    if (HTMLCollection) {
-        defineProperty(HTMLCollection.prototype, "velocity", Velocity);
-    }
+    defineProperty(window.jQuery, "Velocity", Velocity);
+    defineProperty(window.jQuery && window.jQuery.fn, "velocity", Velocity);
+    defineProperty(window.Zepto, "Velocity", Velocity);
+    defineProperty(window.Zepto && window.Zepto.fn, "velocity", Velocity);
+    defineProperty(Element && Element.prototype, "velocity", Velocity);
+    defineProperty(NodeList && NodeList.prototype, "velocity", Velocity);
+    defineProperty(HTMLCollection && HTMLCollection.prototype, "velocity", Velocity);
 }
 //# sourceMappingURL=velocity.js.map
 	return Velocity;
