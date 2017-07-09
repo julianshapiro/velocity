@@ -1,9 +1,7 @@
 ///<reference path="jquery.ts" />
 ///<reference path="constants.ts" />
 ///<reference path="types.ts" />
-///<reference path="css.hooks.ts" />
-///<reference path="css.normalizations.ts" />
-///<reference path="css.ts" />
+///<reference path="css/_all.d.ts" />
 ///<reference path="core.ts" />
 
 type HTMLorSVGElement = HTMLElement | SVGElement;
