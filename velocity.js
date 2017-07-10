@@ -328,6 +328,124 @@ function isEmptyObject(variable) {
     return true;
 }
 
+function defineProperty(proto, name, value, force) {
+    if (proto && (force || !proto[name])) {
+        Object.defineProperty(proto, name, {
+            configurable: true,
+            writable: true,
+            value: value
+        });
+    }
+}
+
+var _slice = function() {
+    var slice = Array.prototype.slice;
+    try {
+        slice.call(document.documentElement);
+        return slice;
+    } catch (e) {
+        return function(begin, end) {
+            var length = this.length;
+            if (!isNumber(begin)) {
+                begin = 0;
+            }
+            if (!isNumber(end)) {
+                end = length;
+            }
+            if (this.slice) {
+                return slice.call(this, begin, end);
+            }
+            var i, cloned, start = begin >= 0 ? begin : Math.max(0, length + begin), upTo = end < 0 ? length + end : Math.min(end, length), size = upTo - start;
+            if (size > 0) {
+                cloned = new Array(size);
+                for (i = 0; i < size; i++) {
+                    cloned[i] = this[start + i];
+                }
+            }
+            return cloned || [];
+        };
+    }
+}();
+
+var _assign = function() {
+    if (typeof Object.assign === "function") {
+        return Object.assign.bind(Object);
+    }
+    return function(target) {
+        var sources = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            sources[_i - 1] = arguments[_i];
+        }
+        if (target == null) {
+            throw new TypeError("Cannot convert undefined or null to object");
+        }
+        var to = Object(target), source, hasOwnProperty = Object.prototype.hasOwnProperty;
+        while (source = sources.shift()) {
+            if (source != null) {
+                for (var key in source) {
+                    if (hasOwnProperty.call(source, key)) {
+                        to[key] = source[key];
+                    }
+                }
+            }
+        }
+        return to;
+    };
+}();
+
+var _inArray = function() {
+    if (Array.prototype.includes) {
+        return function(arr, val) {
+            return arr.includes(val);
+        };
+    }
+    if (Array.prototype.indexOf) {
+        return function(arr, val) {
+            return arr.indexOf(val) >= 0;
+        };
+    }
+    return function(arr, val) {
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i] === val) {
+                return true;
+            }
+        }
+        return false;
+    };
+};
+
+var performance = function() {
+    var perf = window.performance || {};
+    if (typeof perf.now !== "function") {
+        var nowOffset = perf.timing && perf.timing.navigationStart ? perf.timing.navigationStart : new Date().getTime();
+        perf.now = function() {
+            return new Date().getTime() - nowOffset;
+        };
+    }
+    return perf;
+}();
+
+function sanitizeElements(elements) {
+    if (isWrapped(elements)) {
+        elements = _slice.call(elements);
+    } else if (isNode(elements)) {
+        elements = [ elements ];
+    }
+    return elements;
+}
+
+var rAFShim = function() {
+    var timeLast = 0;
+    return window.requestAnimationFrame || function(callback) {
+        var timeCurrent = new Date().getTime(), timeDelta;
+        timeDelta = Math.max(0, 16 - (timeCurrent - timeLast));
+        timeLast = timeCurrent + timeDelta;
+        return setTimeout(function() {
+            callback(timeCurrent + timeDelta);
+        }, timeDelta);
+    };
+}();
+
 var vHooks;
 
 (function(vHooks) {
@@ -1074,14 +1192,209 @@ var vCSS;
     vCSS.flushTransformCache = flushTransformCache;
 })(vCSS || (vCSS = {}));
 
-function defineProperty(proto, name, value, force) {
-    if (proto && (force || !proto[name])) {
-        Object.defineProperty(proto, name, {
-            configurable: true,
-            writable: true,
-            value: value
-        });
+function generateStep(steps) {
+    return function(p) {
+        return Math.round(p * steps) * (1 / steps);
+    };
+}
+
+function generateBezier(mX1, mY1, mX2, mY2) {
+    var NEWTON_ITERATIONS = 4, NEWTON_MIN_SLOPE = .001, SUBDIVISION_PRECISION = 1e-7, SUBDIVISION_MAX_ITERATIONS = 10, kSplineTableSize = 11, kSampleStepSize = 1 / (kSplineTableSize - 1), float32ArraySupported = "Float32Array" in window;
+    if (arguments.length !== 4) {
+        return false;
     }
+    for (var i = 0; i < 4; ++i) {
+        if (typeof arguments[i] !== "number" || isNaN(arguments[i]) || !isFinite(arguments[i])) {
+            return false;
+        }
+    }
+    mX1 = Math.min(mX1, 1);
+    mX2 = Math.min(mX2, 1);
+    mX1 = Math.max(mX1, 0);
+    mX2 = Math.max(mX2, 0);
+    var mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
+    function A(aA1, aA2) {
+        return 1 - 3 * aA2 + 3 * aA1;
+    }
+    function B(aA1, aA2) {
+        return 3 * aA2 - 6 * aA1;
+    }
+    function C(aA1) {
+        return 3 * aA1;
+    }
+    function calcBezier(aT, aA1, aA2) {
+        return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT;
+    }
+    function getSlope(aT, aA1, aA2) {
+        return 3 * A(aA1, aA2) * aT * aT + 2 * B(aA1, aA2) * aT + C(aA1);
+    }
+    function newtonRaphsonIterate(aX, aGuessT) {
+        for (var i = 0; i < NEWTON_ITERATIONS; ++i) {
+            var currentSlope = getSlope(aGuessT, mX1, mX2);
+            if (currentSlope === 0) {
+                return aGuessT;
+            }
+            var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
+            aGuessT -= currentX / currentSlope;
+        }
+        return aGuessT;
+    }
+    function calcSampleValues() {
+        for (var i = 0; i < kSplineTableSize; ++i) {
+            mSampleValues[i] = calcBezier(i * kSampleStepSize, mX1, mX2);
+        }
+    }
+    function binarySubdivide(aX, aA, aB) {
+        var currentX, currentT, i = 0;
+        do {
+            currentT = aA + (aB - aA) / 2;
+            currentX = calcBezier(currentT, mX1, mX2) - aX;
+            if (currentX > 0) {
+                aB = currentT;
+            } else {
+                aA = currentT;
+            }
+        } while (Math.abs(currentX) > SUBDIVISION_PRECISION && ++i < SUBDIVISION_MAX_ITERATIONS);
+        return currentT;
+    }
+    function getTForX(aX) {
+        var intervalStart = 0, currentSample = 1, lastSample = kSplineTableSize - 1;
+        for (;currentSample !== lastSample && mSampleValues[currentSample] <= aX; ++currentSample) {
+            intervalStart += kSampleStepSize;
+        }
+        --currentSample;
+        var dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]), guessForT = intervalStart + dist * kSampleStepSize, initialSlope = getSlope(guessForT, mX1, mX2);
+        if (initialSlope >= NEWTON_MIN_SLOPE) {
+            return newtonRaphsonIterate(aX, guessForT);
+        } else if (initialSlope === 0) {
+            return guessForT;
+        } else {
+            return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize);
+        }
+    }
+    var _precomputed = false;
+    function precompute() {
+        _precomputed = true;
+        if (mX1 !== mY1 || mX2 !== mY2) {
+            calcSampleValues();
+        }
+    }
+    var f = function(aX) {
+        if (!_precomputed) {
+            precompute();
+        }
+        if (mX1 === mY1 && mX2 === mY2) {
+            return aX;
+        }
+        if (aX === 0) {
+            return 0;
+        }
+        if (aX === 1) {
+            return 1;
+        }
+        return calcBezier(getTForX(aX), mY1, mY2);
+    };
+    f.getControlPoints = function() {
+        return [ {
+            x: mX1,
+            y: mY1
+        }, {
+            x: mX2,
+            y: mY2
+        } ];
+    };
+    var str = "generateBezier(" + [ mX1, mY1, mX2, mY2 ] + ")";
+    f.toString = function() {
+        return str;
+    };
+    return f;
+}
+
+var generateSpringRK4 = function() {
+    function springAccelerationForState(state) {
+        return -state.tension * state.x - state.friction * state.v;
+    }
+    function springEvaluateStateWithDerivative(initialState, dt, derivative) {
+        var state = {
+            x: initialState.x + derivative.dx * dt,
+            v: initialState.v + derivative.dv * dt,
+            tension: initialState.tension,
+            friction: initialState.friction
+        };
+        return {
+            dx: state.v,
+            dv: springAccelerationForState(state)
+        };
+    }
+    function springIntegrateState(state, dt) {
+        var a = {
+            dx: state.v,
+            dv: springAccelerationForState(state)
+        }, b = springEvaluateStateWithDerivative(state, dt * .5, a), c = springEvaluateStateWithDerivative(state, dt * .5, b), d = springEvaluateStateWithDerivative(state, dt, c), dxdt = 1 / 6 * (a.dx + 2 * (b.dx + c.dx) + d.dx), dvdt = 1 / 6 * (a.dv + 2 * (b.dv + c.dv) + d.dv);
+        state.x = state.x + dxdt * dt;
+        state.v = state.v + dvdt * dt;
+        return state;
+    }
+    return function springRK4Factory(tension, friction, duration) {
+        var initState = {
+            x: -1,
+            v: 0,
+            tension: null,
+            friction: null
+        }, path = [ 0 ], time_lapsed = 0, tolerance = 1 / 1e4, DT = 16 / 1e3, have_duration, dt, last_state;
+        tension = parseFloat(tension) || 500;
+        friction = parseFloat(friction) || 20;
+        duration = duration || null;
+        initState.tension = tension;
+        initState.friction = friction;
+        have_duration = duration !== null;
+        if (have_duration) {
+            time_lapsed = springRK4Factory(tension, friction);
+            dt = time_lapsed / duration * DT;
+        } else {
+            dt = DT;
+        }
+        while (true) {
+            last_state = springIntegrateState(last_state || initState, dt);
+            path.push(1 + last_state.x);
+            time_lapsed += 16;
+            if (!(Math.abs(last_state.x) > tolerance && Math.abs(last_state.v) > tolerance)) {
+                break;
+            }
+        }
+        return !have_duration ? time_lapsed : function(percentComplete) {
+            return path[percentComplete * (path.length - 1) | 0];
+        };
+    };
+}();
+
+function getEasing(value, duration) {
+    var easing = value;
+    if (isString(value)) {
+        if (!Velocity.Easings[value]) {
+            easing = false;
+        }
+    } else if (Array.isArray(value)) {
+        if (value.length === 1) {
+            easing = generateStep.apply(null, value);
+        } else if (value.length === 2) {
+            easing = generateSpringRK4.apply(null, value.concat([ duration ]));
+        } else if (value.length === 4) {
+            easing = generateBezier.apply(null, value);
+        } else {
+            easing = false;
+        }
+    } else {
+        easing = false;
+    }
+    if (easing === false) {
+        if (Velocity.Easings[Velocity.defaults.easing]) {
+            easing = Velocity.defaults.easing;
+        } else {
+            easing = EASING_DEFAULT;
+        }
+    }
+    return easing;
 }
 
 function Velocity() {
@@ -1895,7 +2208,7 @@ var IE = function() {
     } else {
         for (var i = 7; i > 4; i--) {
             var div = document.createElement("div");
-            div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
+            div.innerHTML = "\x3c!--[if IE " + i + "]><span></span><![endif]--\x3e";
             if (div.getElementsByTagName("span").length) {
                 div = null;
                 return i;
@@ -1905,114 +2218,6 @@ var IE = function() {
     return undefined;
 }();
 
-var rAFShim = function() {
-    var timeLast = 0;
-    return window.requestAnimationFrame || function(callback) {
-        var timeCurrent = new Date().getTime(), timeDelta;
-        timeDelta = Math.max(0, 16 - (timeCurrent - timeLast));
-        timeLast = timeCurrent + timeDelta;
-        return setTimeout(function() {
-            callback(timeCurrent + timeDelta);
-        }, timeDelta);
-    };
-}();
-
-var performance = function() {
-    var perf = window.performance || {};
-    if (typeof perf.now !== "function") {
-        var nowOffset = perf.timing && perf.timing.navigationStart ? perf.timing.navigationStart : new Date().getTime();
-        perf.now = function() {
-            return new Date().getTime() - nowOffset;
-        };
-    }
-    return perf;
-}();
-
-var _slice = function() {
-    var slice = Array.prototype.slice;
-    try {
-        slice.call(document.documentElement);
-        return slice;
-    } catch (e) {
-        return function(begin, end) {
-            var length = this.length;
-            if (!isNumber(begin)) {
-                begin = 0;
-            }
-            if (!isNumber(end)) {
-                end = length;
-            }
-            if (this.slice) {
-                return slice.call(this, begin, end);
-            }
-            var i, cloned, start = begin >= 0 ? begin : Math.max(0, length + begin), upTo = end < 0 ? length + end : Math.min(end, length), size = upTo - start;
-            if (size > 0) {
-                cloned = new Array(size);
-                for (i = 0; i < size; i++) {
-                    cloned[i] = this[start + i];
-                }
-            }
-            return cloned || [];
-        };
-    }
-}();
-
-var _assign = function() {
-    if (typeof Object.assign === "function") {
-        return Object.assign.bind(Object);
-    }
-    return function(target) {
-        var args = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            args[_i - 1] = arguments[_i];
-        }
-        if (target == null) {
-            throw new TypeError("Cannot convert undefined or null to object");
-        }
-        var to = Object(target), source, hasOwnProperty = Object.prototype.hasOwnProperty;
-        while (source = args.shift()) {
-            if (source != null) {
-                for (var nextKey in source) {
-                    if (hasOwnProperty.call(source, nextKey)) {
-                        to[nextKey] = source[nextKey];
-                    }
-                }
-            }
-        }
-        return to;
-    };
-}();
-
-var _inArray = function() {
-    if (Array.prototype.includes) {
-        return function(arr, val) {
-            return arr.includes(val);
-        };
-    }
-    if (Array.prototype.indexOf) {
-        return function(arr, val) {
-            return arr.indexOf(val) >= 0;
-        };
-    }
-    return function(arr, val) {
-        for (var i = 0; i < arr.length; i++) {
-            if (arr[i] === val) {
-                return true;
-            }
-        }
-        return false;
-    };
-};
-
-function sanitizeElements(elements) {
-    if (isWrapped(elements)) {
-        elements = _slice.call(elements);
-    } else if (isNode(elements)) {
-        elements = [ elements ];
-    }
-    return elements;
-}
-
 var $ = jQuery, global = this, isJQuery = false;
 
 if (global.fn && global.fn.jquery) {
@@ -2020,13 +2225,6 @@ if (global.fn && global.fn.jquery) {
     isJQuery = true;
 } else {
     $ = jQuery;
-}
-
-if (IE <= 8 && !isJQuery) {
-    throw new Error("Velocity: IE8 and below require jQuery to be loaded before Velocity.");
-} else if (IE <= 7) {
-    jQuery.fn.velocity = jQuery.fn.animate;
-    throw new Error("VelocityJS cannot run on Internet Explorer 7 or earlier");
 }
 
 (function(Velocity) {
@@ -2266,211 +2464,6 @@ function resumeDelayOnElement(element, currentTime) {
     }
 }
 
-function generateStep(steps) {
-    return function(p) {
-        return Math.round(p * steps) * (1 / steps);
-    };
-}
-
-function generateBezier(mX1, mY1, mX2, mY2) {
-    var NEWTON_ITERATIONS = 4, NEWTON_MIN_SLOPE = .001, SUBDIVISION_PRECISION = 1e-7, SUBDIVISION_MAX_ITERATIONS = 10, kSplineTableSize = 11, kSampleStepSize = 1 / (kSplineTableSize - 1), float32ArraySupported = "Float32Array" in window;
-    if (arguments.length !== 4) {
-        return false;
-    }
-    for (var i = 0; i < 4; ++i) {
-        if (typeof arguments[i] !== "number" || isNaN(arguments[i]) || !isFinite(arguments[i])) {
-            return false;
-        }
-    }
-    mX1 = Math.min(mX1, 1);
-    mX2 = Math.min(mX2, 1);
-    mX1 = Math.max(mX1, 0);
-    mX2 = Math.max(mX2, 0);
-    var mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
-    function A(aA1, aA2) {
-        return 1 - 3 * aA2 + 3 * aA1;
-    }
-    function B(aA1, aA2) {
-        return 3 * aA2 - 6 * aA1;
-    }
-    function C(aA1) {
-        return 3 * aA1;
-    }
-    function calcBezier(aT, aA1, aA2) {
-        return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT;
-    }
-    function getSlope(aT, aA1, aA2) {
-        return 3 * A(aA1, aA2) * aT * aT + 2 * B(aA1, aA2) * aT + C(aA1);
-    }
-    function newtonRaphsonIterate(aX, aGuessT) {
-        for (var i = 0; i < NEWTON_ITERATIONS; ++i) {
-            var currentSlope = getSlope(aGuessT, mX1, mX2);
-            if (currentSlope === 0) {
-                return aGuessT;
-            }
-            var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
-            aGuessT -= currentX / currentSlope;
-        }
-        return aGuessT;
-    }
-    function calcSampleValues() {
-        for (var i = 0; i < kSplineTableSize; ++i) {
-            mSampleValues[i] = calcBezier(i * kSampleStepSize, mX1, mX2);
-        }
-    }
-    function binarySubdivide(aX, aA, aB) {
-        var currentX, currentT, i = 0;
-        do {
-            currentT = aA + (aB - aA) / 2;
-            currentX = calcBezier(currentT, mX1, mX2) - aX;
-            if (currentX > 0) {
-                aB = currentT;
-            } else {
-                aA = currentT;
-            }
-        } while (Math.abs(currentX) > SUBDIVISION_PRECISION && ++i < SUBDIVISION_MAX_ITERATIONS);
-        return currentT;
-    }
-    function getTForX(aX) {
-        var intervalStart = 0, currentSample = 1, lastSample = kSplineTableSize - 1;
-        for (;currentSample !== lastSample && mSampleValues[currentSample] <= aX; ++currentSample) {
-            intervalStart += kSampleStepSize;
-        }
-        --currentSample;
-        var dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]), guessForT = intervalStart + dist * kSampleStepSize, initialSlope = getSlope(guessForT, mX1, mX2);
-        if (initialSlope >= NEWTON_MIN_SLOPE) {
-            return newtonRaphsonIterate(aX, guessForT);
-        } else if (initialSlope === 0) {
-            return guessForT;
-        } else {
-            return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize);
-        }
-    }
-    var _precomputed = false;
-    function precompute() {
-        _precomputed = true;
-        if (mX1 !== mY1 || mX2 !== mY2) {
-            calcSampleValues();
-        }
-    }
-    var f = function(aX) {
-        if (!_precomputed) {
-            precompute();
-        }
-        if (mX1 === mY1 && mX2 === mY2) {
-            return aX;
-        }
-        if (aX === 0) {
-            return 0;
-        }
-        if (aX === 1) {
-            return 1;
-        }
-        return calcBezier(getTForX(aX), mY1, mY2);
-    };
-    f.getControlPoints = function() {
-        return [ {
-            x: mX1,
-            y: mY1
-        }, {
-            x: mX2,
-            y: mY2
-        } ];
-    };
-    var str = "generateBezier(" + [ mX1, mY1, mX2, mY2 ] + ")";
-    f.toString = function() {
-        return str;
-    };
-    return f;
-}
-
-var generateSpringRK4 = function() {
-    function springAccelerationForState(state) {
-        return -state.tension * state.x - state.friction * state.v;
-    }
-    function springEvaluateStateWithDerivative(initialState, dt, derivative) {
-        var state = {
-            x: initialState.x + derivative.dx * dt,
-            v: initialState.v + derivative.dv * dt,
-            tension: initialState.tension,
-            friction: initialState.friction
-        };
-        return {
-            dx: state.v,
-            dv: springAccelerationForState(state)
-        };
-    }
-    function springIntegrateState(state, dt) {
-        var a = {
-            dx: state.v,
-            dv: springAccelerationForState(state)
-        }, b = springEvaluateStateWithDerivative(state, dt * .5, a), c = springEvaluateStateWithDerivative(state, dt * .5, b), d = springEvaluateStateWithDerivative(state, dt, c), dxdt = 1 / 6 * (a.dx + 2 * (b.dx + c.dx) + d.dx), dvdt = 1 / 6 * (a.dv + 2 * (b.dv + c.dv) + d.dv);
-        state.x = state.x + dxdt * dt;
-        state.v = state.v + dvdt * dt;
-        return state;
-    }
-    return function springRK4Factory(tension, friction, duration) {
-        var initState = {
-            x: -1,
-            v: 0,
-            tension: null,
-            friction: null
-        }, path = [ 0 ], time_lapsed = 0, tolerance = 1 / 1e4, DT = 16 / 1e3, have_duration, dt, last_state;
-        tension = parseFloat(tension) || 500;
-        friction = parseFloat(friction) || 20;
-        duration = duration || null;
-        initState.tension = tension;
-        initState.friction = friction;
-        have_duration = duration !== null;
-        if (have_duration) {
-            time_lapsed = springRK4Factory(tension, friction);
-            dt = time_lapsed / duration * DT;
-        } else {
-            dt = DT;
-        }
-        while (true) {
-            last_state = springIntegrateState(last_state || initState, dt);
-            path.push(1 + last_state.x);
-            time_lapsed += 16;
-            if (!(Math.abs(last_state.x) > tolerance && Math.abs(last_state.v) > tolerance)) {
-                break;
-            }
-        }
-        return !have_duration ? time_lapsed : function(percentComplete) {
-            return path[percentComplete * (path.length - 1) | 0];
-        };
-    };
-}();
-
-function getEasing(value, duration) {
-    var easing = value;
-    if (isString(value)) {
-        if (!Velocity.Easings[value]) {
-            easing = false;
-        }
-    } else if (Array.isArray(value)) {
-        if (value.length === 1) {
-            easing = generateStep.apply(null, value);
-        } else if (value.length === 2) {
-            easing = generateSpringRK4.apply(null, value.concat([ duration ]));
-        } else if (value.length === 4) {
-            easing = generateBezier.apply(null, value);
-        } else {
-            easing = false;
-        }
-    } else {
-        easing = false;
-    }
-    if (easing === false) {
-        if (Velocity.Easings[Velocity.defaults.easing]) {
-            easing = Velocity.defaults.easing;
-        } else {
-            easing = EASING_DEFAULT;
-        }
-    }
-    return easing;
-}
-
 vCSS.Hooks.register();
 
 vCSS.Normalizations.register();
@@ -2695,6 +2688,10 @@ if (window === global) {
     defineProperty(Element && Element.prototype, "velocity", Velocity);
     defineProperty(NodeList && NodeList.prototype, "velocity", Velocity);
     defineProperty(HTMLCollection && HTMLCollection.prototype, "velocity", Velocity);
+}
+
+if (IE <= 8) {
+    throw new Error("VelocityJS cannot run on Internet Explorer 8 or earlier");
 }
 //# sourceMappingURL=velocity.js.map
 	return Velocity;
