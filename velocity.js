@@ -311,6 +311,14 @@ function isSVG(variable) {
     return window.SVGElement && variable instanceof window.SVGElement;
 }
 
+function isPlainObject(variable) {
+    if (!variable || String(variable) !== "[object Object]") {
+        return false;
+    }
+    var proto = Object.getPrototypeOf(variable);
+    return !proto || proto.hasOwnProperty("constructor") && proto.constructor === Object;
+}
+
 function isEmptyObject(variable) {
     for (var name in variable) {
         if (variable.hasOwnProperty(name)) {
@@ -1095,7 +1103,7 @@ function Velocity() {
             return promise || null;
         }
     }
-    var syntacticSugar = arguments[0] && (arguments[0].p || ($.isPlainObject(arguments[0].properties) && !arguments[0].properties.names || isString(arguments[0].properties))), isUtility = !isWrapped(this), elementsWrapped, argumentIndex, elements, propertiesMap, options, promiseData = {
+    var syntacticSugar = arguments[0] && (arguments[0].p || (isPlainObject(arguments[0].properties) && !arguments[0].properties.names || isString(arguments[0].properties))), isUtility = !isWrapped(this), elementsWrapped, argumentIndex, elements, propertiesMap, options, promiseData = {
         promise: null,
         resolver: null,
         rejecter: null
@@ -1133,7 +1141,7 @@ function Velocity() {
         return getChain();
     }
     var elementsLength = elements.length, elementsIndex = 0;
-    if (!/^(stop|finish|finishAll|pause|resume)$/i.test(propertiesMap) && !$.isPlainObject(options)) {
+    if (!/^(stop|finish|finishAll|pause|resume)$/i.test(propertiesMap) && !isPlainObject(options)) {
         var startingArgumentPosition = argumentIndex + 1;
         options = {};
         for (var i = startingArgumentPosition; i < arguments.length; i++) {
@@ -1260,7 +1268,7 @@ function Velocity() {
         return getChain();
 
       default:
-        if ($.isPlainObject(propertiesMap) && !isEmptyObject(propertiesMap)) {
+        if (isPlainObject(propertiesMap) && !isEmptyObject(propertiesMap)) {
             action = "start";
         } else if (isString(propertiesMap) && Velocity.Redirects[propertiesMap]) {
             opts = $.extend({}, options);

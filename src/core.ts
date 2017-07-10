@@ -56,7 +56,7 @@ function Velocity(...args: any[]) {
 	/* To allow for expressive CoffeeScript code, Velocity supports an alternative syntax in which "elements" (or "e"), "properties" (or "p"), and "options" (or "o")
 	 objects are defined on a container object that's passed in as Velocity's sole argument. */
 	/* Note: Some browsers automatically populate arguments with a "properties" object. We detect it by checking for its default "names" property. */
-	var syntacticSugar = (arguments[0] && (arguments[0].p || (($.isPlainObject(arguments[0].properties) && !arguments[0].properties.names) || isString(arguments[0].properties)))),
+	var syntacticSugar = (arguments[0] && (arguments[0].p || ((isPlainObject(arguments[0].properties) && !arguments[0].properties.names) || isString(arguments[0].properties)))),
 		/* Whether Velocity was called via the utility function (as opposed to on a jQuery/Zepto object). */
 		isUtility: boolean = !isWrapped(this),
 		/* When Velocity is called via the utility function ($.Velocity()/Velocity()), elements are explicitly
@@ -133,7 +133,7 @@ function Velocity(...args: any[]) {
 	/* Support is included for jQuery's argument overloading: $.animate(propertyMap [, duration] [, easing] [, complete]).
 	 Overloading is detected by checking for the absence of an object being passed into options. */
 	/* Note: The stop/finish/pause/resume actions do not accept animation options, and are therefore excluded from this check. */
-	if (!/^(stop|finish|finishAll|pause|resume)$/i.test(propertiesMap as string) && !$.isPlainObject(options)) {
+	if (!/^(stop|finish|finishAll|pause|resume)$/i.test(propertiesMap as string) && !isPlainObject(options)) {
 		/* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
 		var startingArgumentPosition = argumentIndex + 1;
 
@@ -379,7 +379,7 @@ function Velocity(...args: any[]) {
 
 		default:
 			/* Treat a non-empty plain object as a literal properties map. */
-			if ($.isPlainObject(propertiesMap) && !isEmptyObject(propertiesMap)) {
+			if (isPlainObject(propertiesMap) && !isEmptyObject(propertiesMap)) {
 				action = "start";
 
 				/****************

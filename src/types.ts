@@ -35,6 +35,15 @@ function isSVG(variable): variable is SVGElement {
 	return (window as any).SVGElement && (variable instanceof (window as any).SVGElement);
 }
 
+function isPlainObject(variable): variable is {} {
+	if (!variable || String(variable) !== "[object Object]") {
+		return false;
+	}
+	var proto = Object.getPrototypeOf(variable) as Object;
+
+	return !proto || (proto.hasOwnProperty("constructor") && proto.constructor === Object);
+}
+
 function isEmptyObject(variable): variable is {} {
 	for (var name in variable) {
 		if (variable.hasOwnProperty(name)) {
