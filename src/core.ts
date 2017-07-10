@@ -1690,6 +1690,8 @@ namespace Velocity {
 	/* For legacy support, also expose the literal animate method. */
 	export var animate = Velocity;
 
+	export var data = new WeakMap<HTMLorSVGElement, ElementData>();
+
 	/* Container for page-wide Velocity state data. */
 	export namespace State {
 		export var
@@ -1902,7 +1904,7 @@ namespace Velocity {
 
 	/* A design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying. Accordingly, each element has a data cache. */
 	export function init(element) {
-		$.data(element, "velocity", {
+		data.set(element, {
 			/* Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements. */
 			isSVG: isSVG(element),
 			/* Keep track of whether the element is currently being animated by Velocity.
@@ -2015,13 +2017,8 @@ namespace Velocity {
 	}
 };
 
-/* Shorthand alias for jQuery's $.data() utility. */
 function Data(element): ElementData {
-	/* Hardcode a reference to the plugin name. */
-	var response = $.data(element, "velocity");
-
-	/* jQuery <=1.4.2 returns null instead of undefined when no match is found. We normalize this behavior. */
-	return response === null ? undefined : response;
+	return Velocity.data.get(element) || undefined;
 }
 
 /**************

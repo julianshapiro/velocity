@@ -1192,12 +1192,6 @@ var vCSS;
     vCSS.flushTransformCache = flushTransformCache;
 })(vCSS || (vCSS = {}));
 
-function generateStep(steps) {
-    return function(p) {
-        return Math.round(p * steps) * (1 / steps);
-    };
-}
-
 function generateBezier(mX1, mY1, mX2, mY2) {
     var NEWTON_ITERATIONS = 4, NEWTON_MIN_SLOPE = .001, SUBDIVISION_PRECISION = 1e-7, SUBDIVISION_MAX_ITERATIONS = 10, kSplineTableSize = 11, kSampleStepSize = 1 / (kSplineTableSize - 1), float32ArraySupported = "Float32Array" in window;
     if (arguments.length !== 4) {
@@ -1368,6 +1362,12 @@ var generateSpringRK4 = function() {
     };
 }();
 
+function generateStep(steps) {
+    return function(p) {
+        return Math.round(p * steps) * (1 / steps);
+    };
+}
+
 function getEasing(value, duration) {
     var easing = value;
     if (isString(value)) {
@@ -1376,7 +1376,7 @@ function getEasing(value, duration) {
         }
     } else if (Array.isArray(value)) {
         if (value.length === 1) {
-            easing = generateStep.apply(null, value);
+            easing = generateStep(value[0]);
         } else if (value.length === 2) {
             easing = generateSpringRK4.apply(null, value.concat([ duration ]));
         } else if (value.length === 4) {
@@ -2229,6 +2229,7 @@ if (global.fn && global.fn.jquery) {
 
 (function(Velocity) {
     Velocity.animate = Velocity;
+    Velocity.data = new WeakMap();
     var State;
     (function(State) {
         State.isClient = window && window instanceof Window, State.isMobile = State.isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), 
@@ -2366,7 +2367,7 @@ if (global.fn && global.fn.jquery) {
         promiseRejectEmpty: true
     };
     function init(element) {
-        $.data(element, "velocity", {
+        Velocity.data.set(element, {
             isSVG: isSVG(element),
             isAnimating: false,
             computedStyle: null,
@@ -2443,8 +2444,7 @@ if (global.fn && global.fn.jquery) {
 })(Velocity || (Velocity = {}));
 
 function Data(element) {
-    var response = $.data(element, "velocity");
-    return response === null ? undefined : response;
+    return Velocity.data.get(element) || undefined;
 }
 
 function pauseDelayOnElement(element, currentTime) {

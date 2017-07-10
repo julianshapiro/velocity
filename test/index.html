@@ -96,7 +96,7 @@
   		var $ = (window.jQuery || window.Zepto);
 
   		Data = function(element) {
-  			return Velocity.Utilities.data(element, "velocity");
+  			return Velocity.data.get(element);
   		};
 
   		if ($ && $.Velocity) {
