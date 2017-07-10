@@ -965,12 +965,12 @@
 			}, 1);
 
 			var $target2 = getTarget();
-			Velocity($target2, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { delay: 1000 }));
+			Velocity($target2, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 1000 }));
 			Velocity($target2, { width: 0 }, defaultOptions);
 			Velocity($target2, "stop");
 
 			var $target3 = getTarget();
-			Velocity($target3, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { delay: 1000 }));
+			Velocity($target3, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 1000 }));
 			Velocity($target3, { width: 0 }, defaultOptions);
 			Velocity($target3, { width: 100 }, defaultOptions);
 			Velocity($target3, "stop", true);
@@ -1005,7 +1005,7 @@
 			/* Ensure a paused $target ceases to animate */
 			Velocity($target1, { opacity: 0 }, defaultOptions);
 			notEqual(Data($target1, pluginName).isPaused, true, "Newly active call not paused.");
-			Velocity($target1d, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { delay: 200 }));
+			Velocity($target1d, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 200 }));
 			notEqual(Data($target1d, pluginName).isPaused, true, "New call with delay not paused.");
 
 			Velocity($target1, "pause");
@@ -1023,7 +1023,7 @@
 			var $target2 = getTarget();
 			var $target2d = getTarget();
 			Velocity($target2, { opacity: 0 }, defaultOptions);
-			Velocity($target2d, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { delay: 100 }));
+			Velocity($target2d, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 100 }));
 
 			Velocity($target2, "pause");
 
@@ -1162,7 +1162,7 @@
 
 			var isPaused = false;
 			var hasProgressed2 = false;
-			Velocity($target1, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, {
+			Velocity($target1, { opacity: 0 }, Object.assign({}, defaultOptions, {
 				delay: 100,
 				queue:false,
 				progress: function(elements, progress, msRemaining) {
@@ -1172,7 +1172,7 @@
 				}
 			}));
 
-			Velocity($target2, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, {
+			Velocity($target2, { opacity: 0 }, Object.assign({}, defaultOptions, {
 				progress: function(elements, progress, msRemaining) {
 					if(isPaused) {
 						throw new Error("Tween should not progress when globally paused");
@@ -1188,7 +1188,7 @@
 
 			/* Testing with custom queues */
 			var hasProgressed3 = false;
-			Velocity($target3, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, {
+			Velocity($target3, { opacity: 0 }, Object.assign({}, defaultOptions, {
 				queue: "queue1",
 				progress: function(elements, progress, msRemaining) {
 					if(!hasProgressed3) {
@@ -1199,7 +1199,7 @@
 			}));
 
 			var hasProgressed4 = false;
-			Velocity($target4, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, {
+			Velocity($target4, { opacity: 0 }, Object.assign({}, defaultOptions, {
 				queue: "queue2",
 				progress: function(elements, progress, msRemaining) {
 					if(isPaused) {
@@ -1242,7 +1242,7 @@
 			Velocity($target1, "finish");
 
 			/* Animate to defaultProperties, and then "finish" to jump to the end of it. */
-			Velocity($target1, defaultProperties, Velocity.Utilities.extend({}, defaultOptions, { delay: 1000}));
+			Velocity($target1, defaultProperties, Object.assign({}, defaultOptions, { delay: 1000}));
 			Velocity($target1, "finish");
 
 			setTimeout(function() {
@@ -1256,18 +1256,18 @@
 			}, asyncCheckDuration);
 
 			var $target2 = getTarget();
-			Velocity($target2, { opacity: 0 }, Velocity.Utilities.extend({}, defaultOptions, { delay: 1000 }));
+			Velocity($target2, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 1000 }));
 			Velocity($target2, { width: 0 }, defaultOptions);
 			Velocity($target2, "finish");
 
 			var $target3 = getTarget();
-			Velocity($target3, { opacity: 0, width: 50 }, Velocity.Utilities.extend({}, defaultOptions, { delay: 1000 }));
+			Velocity($target3, { opacity: 0, width: 50 }, Object.assign({}, defaultOptions, { delay: 1000 }));
 			Velocity($target3, { width: 0 }, defaultOptions);
 			Velocity($target3, { width: 100 }, defaultOptions);
 			Velocity($target3, "finish", true);
 
 			var $target4 = getTarget();
-			Velocity($target4, { opacity: 0, width: 50 }, Velocity.Utilities.extend({}, defaultOptions, { delay: 1000 }));
+			Velocity($target4, { opacity: 0, width: 50 }, Object.assign({}, defaultOptions, { delay: 1000 }));
 			Velocity($target4, { width: 0 }, defaultOptions);
 			Velocity($target4, { width: 100 }, defaultOptions);
 			Velocity($target4, "finishAll", true);
