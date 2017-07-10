@@ -388,14 +388,14 @@ function Velocity(...args: any[]) {
 
 				/* Check if a string matches a registered redirect (see Redirects above). */
 			} else if (isString(propertiesMap) && Velocity.Redirects[propertiesMap]) {
-				opts = $.extend({}, options);
+				opts = _assign({}, options);
 
 				var durationOriginal = parseFloat(opts.duration as string),
 					delayOriginal = parseFloat(opts.delay as string) || 0;
 
 				/* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first. */
 				if (opts.backwards === true) {
-					elements = $.extend(true, [], elements).reverse();
+					elements = elements.reverse();
 				}
 
 				/* Individually trigger the redirect for each element in the set to prevent users from having to handle iteration logic in their redirect. */
@@ -487,7 +487,7 @@ function Velocity(...args: any[]) {
 		 ***************************/
 
 		var /* The runtime opts object is the extension of the current call's options and Velocity's page-wide option defaults. */
-			opts: VelocityOptions = $.extend({}, Velocity.defaults, options),
+			opts: VelocityOptions = _assign({}, Velocity.defaults, options),
 			/* A container for the processed data associated with each property in the propertyMap.
 			 (Each property in the map produces its own "tween".) */
 			tweensContainer: TweensContainer = {},
@@ -782,7 +782,7 @@ function Velocity(...args: any[]) {
 
 					/* The opts object used for reversal is an extension of the options object optionally passed into this
 					 reverse call plus the options used in the previous Velocity call. */
-					opts = $.extend({}, data.opts, opts);
+					opts = _assign({}, data.opts, opts);
 
 					/*************************************
 					 Tweens Container Reconstruction
@@ -1770,6 +1770,38 @@ var _slice: (this: HTMLorSVGElement[], begin?: number, end?: number) => Element[
 	}
 })();
 
+/**
+ * Copy the values of all of the enumerable own properties from one or more source objects to a
+ * target object. Returns the target object.
+ * @param target The target object to copy to.
+ * @param source1 The first source object from which to copy properties.
+ * @param source2 The second source object from which to copy properties.
+ */
+var _assign = (function() {
+	if (typeof Object.assign === "function") {
+		return Object.assign.bind(Object);
+	}
+	return function <T, U>(target: T, ...args: U[]): T & U { // .length of function is 2
+		if (target == null) { // TypeError if undefined or null
+			throw new TypeError('Cannot convert undefined or null to object');
+		}
+		var to = Object(target),
+			source: any,
+			hasOwnProperty = Object.prototype.hasOwnProperty;
+
+		while ((source = args.shift())) {
+			if (source != null) {
+				for (var nextKey in source) {
+					if (hasOwnProperty.call(source, nextKey)) {
+						to[nextKey] = source[nextKey];
+					}
+				}
+			}
+		}
+		return to;
+	}
+})();
+
 /* .indexOf doesn't exist in IE<9 */
 var _inArray = (function() {
 	if ((Array.prototype as any).includes) { // ES6
@@ -1885,7 +1917,7 @@ namespace Velocity {
 	/* slideUp, slideDown */
 	["Down", "Up"].forEach(function(direction) {
 		Redirects["slide" + direction] = function(element: HTMLorSVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: HTMLorSVGElement[], promiseData) {
-			var opts: ElementData = $.extend({}, options),
+			var opts: ElementData = _assign({}, options) as ElementData,
 				begin = opts.begin,
 				complete = opts.complete,
 				inlineValues = {},
@@ -1953,7 +1985,7 @@ namespace Velocity {
 	/* fadeIn, fadeOut */
 	["In", "Out"].forEach(function(direction) {
 		Redirects["fade" + direction] = function(element: HTMLorSVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: HTMLorSVGElement[], promiseData) {
-			var opts: ElementData = $.extend({}, options),
+			var opts: ElementData = _assign({}, options) as ElementData,
 				complete = opts.complete,
 				propertiesMap = {
 					opacity: (direction === "In") ? 1 : 0

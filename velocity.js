@@ -1271,10 +1271,10 @@ function Velocity() {
         if (isPlainObject(propertiesMap) && !isEmptyObject(propertiesMap)) {
             action = "start";
         } else if (isString(propertiesMap) && Velocity.Redirects[propertiesMap]) {
-            opts = $.extend({}, options);
+            opts = _assign({}, options);
             var durationOriginal = parseFloat(opts.duration), delayOriginal = parseFloat(opts.delay) || 0;
             if (opts.backwards === true) {
-                elements = $.extend(true, [], elements).reverse();
+                elements = elements.reverse();
             }
             elements.forEach(function(element, elementIndex) {
                 if (parseFloat(opts.stagger)) {
@@ -1312,7 +1312,7 @@ function Velocity() {
     };
     var call = [];
     function processElement(element, elementArrayIndex) {
-        var opts = $.extend({}, Velocity.defaults, options), tweensContainer = {}, elementUnitConversionData;
+        var opts = _assign({}, Velocity.defaults, options), tweensContainer = {}, elementUnitConversionData;
         if (Data(element) === undefined) {
             Velocity.init(element);
         }
@@ -1448,7 +1448,7 @@ function Velocity() {
                     if (!options.duration) {
                         delete opts.duration;
                     }
-                    opts = $.extend({}, data.opts, opts);
+                    opts = _assign({}, data.opts, opts);
                     lastTweensContainer = $.extend(true, {}, data ? data.tweensContainer : null);
                     for (var lastTween in lastTweensContainer) {
                         if (lastTweensContainer.hasOwnProperty(lastTween) && lastTween !== "element") {
@@ -1957,6 +1957,32 @@ var _slice = function() {
     }
 }();
 
+var _assign = function() {
+    if (typeof Object.assign === "function") {
+        return Object.assign.bind(Object);
+    }
+    return function(target) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        if (target == null) {
+            throw new TypeError("Cannot convert undefined or null to object");
+        }
+        var to = Object(target), source, hasOwnProperty = Object.prototype.hasOwnProperty;
+        while (source = args.shift()) {
+            if (source != null) {
+                for (var nextKey in source) {
+                    if (hasOwnProperty.call(source, nextKey)) {
+                        to[nextKey] = source[nextKey];
+                    }
+                }
+            }
+        }
+        return to;
+    };
+}();
+
 var _inArray = function() {
     if (Array.prototype.includes) {
         return function(arr, val) {
@@ -2023,7 +2049,7 @@ if (IE <= 8 && !isJQuery) {
     Velocity.Redirects = {};
     [ "Down", "Up" ].forEach(function(direction) {
         Velocity.Redirects["slide" + direction] = function(element, options, elementsIndex, elementsSize, elements, promiseData) {
-            var opts = $.extend({}, options), begin = opts.begin, complete = opts.complete, inlineValues = {}, computedValues = {
+            var opts = _assign({}, options), begin = opts.begin, complete = opts.complete, inlineValues = {}, computedValues = {
                 height: "",
                 marginTop: "",
                 marginBottom: "",
@@ -2068,7 +2094,7 @@ if (IE <= 8 && !isJQuery) {
     });
     [ "In", "Out" ].forEach(function(direction) {
         Velocity.Redirects["fade" + direction] = function(element, options, elementsIndex, elementsSize, elements, promiseData) {
-            var opts = $.extend({}, options), complete = opts.complete, propertiesMap = {
+            var opts = _assign({}, options), complete = opts.complete, propertiesMap = {
                 opacity: direction === "In" ? 1 : 0
             };
             if (elementsIndex !== 0) {
