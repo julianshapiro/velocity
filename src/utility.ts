@@ -147,7 +147,6 @@ function sanitizeElements(elements: HTMLorSVGElement | HTMLorSVGElement[]): HTML
 	/* Unwrap jQuery/Zepto objects. */
 	if (isWrapped(elements)) {
 		elements = _slice.call(elements);
-		/* Wrap a single element in an array so that $.each() can iterate with the element instead of its node's children. */
 	} else if (isNode(elements)) {
 		elements = [elements];
 	}

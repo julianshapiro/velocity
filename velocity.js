@@ -38,21 +38,6 @@
         }
         return type === "array" || length === 0 || typeof length === "number" && length > 0 && length - 1 in obj;
     }
-    $.isPlainObject = function(obj) {
-        var key;
-        if (!obj || $.type(obj) !== "object" || obj.nodeType || $.isWindow(obj)) {
-            return false;
-        }
-        try {
-            if (obj.constructor && !hasOwn.call(obj, "constructor") && !hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
-                return false;
-            }
-        } catch (e) {
-            return false;
-        }
-        for (key in obj) {}
-        return key === undefined || hasOwn.call(obj, key);
-    };
     $.each = function(obj, callback, args) {
         var value, i = 0, length = obj.length, isArray = isArraylike(obj);
         if (args) {
@@ -113,18 +98,6 @@
             return value;
         }
     };
-    $.removeData = function(node, keys) {
-        var id = node[$.expando], store = id && cache[id];
-        if (store) {
-            if (!keys) {
-                delete cache[id];
-            } else {
-                $.each(keys, function(_, key) {
-                    delete store[key];
-                });
-            }
-        }
-    };
     $.extend = function() {
         var src, copyIsArray, copy, name, options, clone, target = arguments[0] || {}, i = 1, length = arguments.length, deep = false;
         if (typeof target === "boolean") {
@@ -150,12 +123,12 @@
                     if (target === copy) {
                         continue;
                     }
-                    if (deep && copy && ($.isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
+                    if (deep && copy && (isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
                         if (copyIsArray) {
                             copyIsArray = false;
                             clone = src && Array.isArray(src) ? src : [];
                         } else {
-                            clone = src && $.isPlainObject(src) ? src : {};
+                            clone = src && isPlainObject(src) ? src : {};
                         }
                         target[name] = $.extend(deep, clone, copy);
                     } else if (copy !== undefined) {

@@ -72,30 +72,6 @@ interface Window {
 	 $ Methods
 	 ***************/
 
-	/* jQuery: Support removed for IE<9. */
-	$.isPlainObject = function(obj) {
-		var key;
-
-		if (!obj || $.type(obj) !== "object" || obj.nodeType || $.isWindow(obj)) {
-			return false;
-		}
-
-		try {
-			if (obj.constructor &&
-				!hasOwn.call(obj, "constructor") &&
-				!hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
-				return false;
-			}
-		} catch (e) {
-			return false;
-		}
-
-		for (key in obj) {
-		}
-
-		return key === undefined || hasOwn.call(obj, key);
-	};
-
 	/* jQuery */
 	$.each = function(obj, callback, args) {
 		var value,
@@ -176,23 +152,6 @@ interface Window {
 		}
 	};
 
-	/* Custom */
-	$.removeData = function(node, keys) {
-		var id = node[$.expando],
-			store = id && cache[id];
-
-		if (store) {
-			// Cleanup the entire store if no keys are provided.
-			if (!keys) {
-				delete cache[id];
-			} else {
-				$.each(keys, function(_, key) {
-					delete store[key];
-				});
-			}
-		}
-	};
-
 	/* jQuery */
 	$.extend = function() {
 		var src, copyIsArray, copy, name, options, clone,
@@ -230,13 +189,13 @@ interface Window {
 						continue;
 					}
 
-					if (deep && copy && ($.isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
+					if (deep && copy && (isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
 						if (copyIsArray) {
 							copyIsArray = false;
 							clone = src && Array.isArray(src) ? src : [];
 
 						} else {
-							clone = src && $.isPlainObject(src) ? src : {};
+							clone = src && isPlainObject(src) ? src : {};
 						}
 
 						target[name] = $.extend(deep, clone, copy);
