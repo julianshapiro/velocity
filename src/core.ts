@@ -1904,7 +1904,7 @@ namespace Velocity {
 
 	/* A design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying. Accordingly, each element has a data cache. */
 	export function init(element) {
-		data.set(element, {
+		Data(element, {
 			/* Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements. */
 			isSVG: isSVG(element),
 			/* Keep track of whether the element is currently being animated by Velocity.
@@ -2016,10 +2016,6 @@ namespace Velocity {
 		});
 	}
 };
-
-function Data(element): ElementData {
-	return Velocity.data.get(element) || undefined;
-}
 
 /**************
  Delay Timer

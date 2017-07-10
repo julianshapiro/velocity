@@ -446,6 +446,14 @@ var rAFShim = function() {
     };
 }();
 
+function Data(element, value) {
+    if (value) {
+        Velocity.data.set(element, value);
+    } else {
+        return Velocity.data.get(element);
+    }
+}
+
 var vHooks;
 
 (function(vHooks) {
@@ -2367,7 +2375,7 @@ if (global.fn && global.fn.jquery) {
         promiseRejectEmpty: true
     };
     function init(element) {
-        Velocity.data.set(element, {
+        Data(element, {
             isSVG: isSVG(element),
             isAnimating: false,
             computedStyle: null,
@@ -2442,10 +2450,6 @@ if (global.fn && global.fn.jquery) {
     }
     Velocity.resumeAll = resumeAll;
 })(Velocity || (Velocity = {}));
-
-function Data(element) {
-    return Velocity.data.get(element) || undefined;
-}
 
 function pauseDelayOnElement(element, currentTime) {
     var data = Data(element);
