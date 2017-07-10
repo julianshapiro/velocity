@@ -1502,12 +1502,13 @@ function Velocity() {
       case "finishAll":
       case "stop":
         elements.forEach(function(element) {
-            if (Data(element) && Data(element).delayTimer) {
-                clearTimeout(Data(element).delayTimer.setTimeout);
-                if (Data(element).delayTimer.next) {
-                    Data(element).delayTimer.next();
+            var data = Data(element);
+            if (data && data.delayTimer) {
+                clearTimeout(data.delayTimer.setTimeout);
+                if (data.delayTimer.next) {
+                    data.delayTimer.next();
                 }
-                delete Data(element).delayTimer;
+                delete data.delayTimer;
             }
             if (propertiesMap === "finishAll" && (options === true || isString(options))) {
                 $.each($.queue(element, isString(options) ? options : ""), function(_, item) {

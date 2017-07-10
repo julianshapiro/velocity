@@ -241,16 +241,18 @@ function Velocity(...args: any[]) {
 
 			/* Clear the currently-active delay on each targeted element. */
 			elements.forEach(function(element) {
-				if (Data(element) && Data(element).delayTimer) {
+				var data = Data(element);
+				
+				if (data && data.delayTimer) {
 					/* Stop the timer from triggering its cached next() function. */
-					clearTimeout(Data(element).delayTimer.setTimeout);
+					clearTimeout(data.delayTimer.setTimeout);
 
 					/* Manually call the next() function so that the subsequent queue items can progress. */
-					if (Data(element).delayTimer.next) {
-						Data(element).delayTimer.next();
+					if (data.delayTimer.next) {
+						data.delayTimer.next();
 					}
 
-					delete Data(element).delayTimer;
+					delete data.delayTimer;
 				}
 
 				/* If we want to finish everything in the queue, we have to iterate through it

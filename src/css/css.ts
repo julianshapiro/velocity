@@ -401,18 +401,19 @@ namespace vCSS {
 					}
 				}
 
-				var computedStyle;
+				var computedStyle: CSSStyleDeclaration,
+					data = Data(element);
 
 				/* For elements that Velocity hasn't been called on directly (e.g. when Velocity queries the DOM on behalf
 				 of a parent of an element its animating), perform a direct getComputedStyle lookup since the object isn't cached. */
-				if (Data(element) === undefined) {
+				if (!data) {
 					computedStyle = window.getComputedStyle(element, null); /* GET */
 					/* If the computedStyle object has yet to be cached, do so now. */
-				} else if (!Data(element).computedStyle) {
-					computedStyle = Data(element).computedStyle = window.getComputedStyle(element, null); /* GET */
+				} else if (!data.computedStyle) {
+					computedStyle = data.computedStyle = window.getComputedStyle(element, null); /* GET */
 					/* If computedStyle is cached, use it. */
 				} else {
-					computedStyle = Data(element).computedStyle;
+					computedStyle = data.computedStyle;
 				}
 
 				/* IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
