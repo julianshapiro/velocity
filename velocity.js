@@ -1462,8 +1462,9 @@ function Velocity() {
         elements.forEach(function(element) {
             pauseDelayOnElement(element, currentTime);
         });
-        var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first;
-        for (;activeCall; activeCall = activeCall.next) {
+        var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first, nextCall;
+        for (;activeCall; activeCall = nextCall) {
+            nextCall = activeCall.next;
             if (activeCall.paused !== true) {
                 activeCall.elements.some(function(activeElement) {
                     if (queueName !== true && activeCall.options.queue !== queueName && !(options === undefined && activeCall.options.queue === false)) {
@@ -1481,8 +1482,9 @@ function Velocity() {
         elements.forEach(function(element) {
             resumeDelayOnElement(element, currentTime);
         });
-        var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first;
-        for (;activeCall; activeCall = activeCall.next) {
+        var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first, nextCall;
+        for (;activeCall; activeCall = nextCall) {
+            nextCall = activeCall.next;
             if (activeCall.paused !== false) {
                 activeCall.elements.some(function(activeElement) {
                     if (queueName !== true && activeCall.options.queue !== queueName && !(options === undefined && activeCall.options.queue === false)) {
@@ -1519,8 +1521,9 @@ function Velocity() {
             }
         });
         var callsToStop = [];
-        var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first;
-        for (;activeCall; activeCall = activeCall.next) {
+        var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first, nextCall;
+        for (;activeCall; activeCall = nextCall) {
+            nextCall = activeCall.next;
             activeCall.elements.forEach(function(activeElement) {
                 var queueName = options === undefined ? "" : options;
                 if (queueName !== true && activeCall.options.queue !== queueName && !(options === undefined && activeCall.options.queue === false)) {
@@ -2103,14 +2106,21 @@ function Velocity() {
                     data.isAnimating = true;
                 }
                 if (elementsIndex === elementsLength - 1) {
-                    var last = Velocity.State.last, next = Velocity.State.last = {
-                        next: undefined,
-                        prev: Velocity.State.last,
-                        call: call,
-                        elements: elements,
-                        options: opts,
-                        resolver: promiseData.resolver
-                    };
+                    var last = Velocity.State.last, next;
+                    if (Velocity.State.cache) {
+                        next = Velocity.State.cache;
+                        Velocity.State.cache = next.next;
+                        next.next = undefined;
+                    } else {
+                        next = Object.create(null);
+                    }
+                    next.next = undefined;
+                    next.prev = last;
+                    next.call = call;
+                    next.elements = elements;
+                    next.options = opts;
+                    next.resolver = promiseData.resolver;
+                    Velocity.State.last = next;
                     if (last) {
                         last.next = next;
                     } else {
@@ -2386,8 +2396,9 @@ if (global.fn && global.fn.jquery) {
     Velocity.debug = false;
     Velocity.timestamp = true;
     function pauseAll(queueName) {
-        var currentTime = new Date().getTime(), activeCall = Velocity.State.first;
-        for (;activeCall; activeCall = activeCall.next) {
+        var currentTime = new Date().getTime(), activeCall = Velocity.State.first, nextCall;
+        for (;activeCall; activeCall = nextCall) {
+            nextCall = activeCall.next;
             if (queueName !== undefined && (activeCall.options.queue !== queueName || activeCall.options.queue === false)) {
                 continue;
             }
@@ -2402,8 +2413,9 @@ if (global.fn && global.fn.jquery) {
     }
     Velocity.pauseAll = pauseAll;
     function resumeAll(queueName) {
-        var currentTime = new Date().getTime(), activeCall = Velocity.State.first;
-        for (;activeCall; activeCall = activeCall.next) {
+        var currentTime = new Date().getTime(), activeCall = Velocity.State.first, nextCall;
+        for (;activeCall; activeCall = nextCall) {
+            nextCall = activeCall.next;
             if (queueName !== undefined && (activeCall.options.queue !== queueName || activeCall.options.queue === false)) {
                 continue;
             }
@@ -2463,8 +2475,9 @@ if (!Velocity.State.isMobile && document.hidden !== undefined) {
 
 function tick(timestamp) {
     if (timestamp) {
-        var timeCurrent = Velocity.timestamp && timestamp !== true ? timestamp : performance.now(), activeCall = Velocity.State.first;
-        for (;activeCall; activeCall = activeCall.next) {
+        var timeCurrent = Velocity.timestamp && timestamp !== true ? timestamp : performance.now(), activeCall = Velocity.State.first, nextCall;
+        for (;activeCall; activeCall = nextCall) {
+            nextCall = activeCall.next;
             var call = activeCall.call, opts = activeCall.options, timeStart = activeCall.timeStart, firstTick = !!timeStart, tweenDummyValue = null;
             if (!timeStart) {
                 timeStart = activeCall.timeStart = timeCurrent - 16;
@@ -2648,8 +2661,16 @@ function completeCall(activeCall, isStopped) {
     } else if (activeCall.next) {
         activeCall.next.prev = activeCall.prev;
     }
-    activeCall.next = activeCall.prev = undefined;
-    Velocity.State.isTicking = !!Velocity.State.first;
+    if (!Velocity.State.first) {
+        Velocity.State.isTicking = false;
+        Velocity.State.cache = undefined;
+    } else {
+        for (var key in activeCall) {
+            activeCall[key] = undefined;
+        }
+        activeCall.next = Velocity.State.cache;
+        Velocity.State.cache = activeCall;
+    }
 }
 
 global.Velocity = Velocity;

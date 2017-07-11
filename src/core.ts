@@ -177,10 +177,12 @@ function Velocity(...args: any[]) {
 			 single element will cause any calls that contain tweens for that element to be paused/resumed
 			 as well. */
 			var queueName = options === undefined ? "" : options,
-				activeCall = Velocity.State.first;
+				activeCall = Velocity.State.first,
+				nextCall: AnimationCall;
 
 			/* Iterate through all calls and pause any that contain any of our elements */
-			for (; activeCall; activeCall = activeCall.next) {
+			for (; activeCall; activeCall = nextCall) {
+				nextCall = activeCall.next;
 				if (activeCall.paused !== true) {
 					/* Iterate through the active call's targeted elements. */
 					activeCall.elements.some(function(activeElement) {
@@ -212,10 +214,12 @@ function Velocity(...args: any[]) {
 
 			/* Iterate through all calls and pause any that contain any of our elements */
 			var queueName = options === undefined ? "" : options,
-				activeCall = Velocity.State.first;
+				activeCall = Velocity.State.first,
+				nextCall: AnimationCall;
 
 			/* Iterate through all calls and pause any that contain any of our elements */
-			for (; activeCall; activeCall = activeCall.next) {
+			for (; activeCall; activeCall = nextCall) {
+				nextCall = activeCall.next;
 				if (activeCall.paused !== false) {
 					/* Iterate through the active call's targeted elements. */
 					activeCall.elements.some(function(activeElement) {
@@ -284,10 +288,12 @@ function Velocity(...args: any[]) {
 
 			/* Iterate through every active call. */
 			var queueName = (options === undefined) ? "" : options,
-				activeCall = Velocity.State.first
+				activeCall = Velocity.State.first,
+				nextCall: AnimationCall;
 
 			/* Iterate through all calls and pause any that contain any of our elements */
-			for (; activeCall; activeCall = activeCall.next) {
+			for (; activeCall; activeCall = nextCall) {
+				nextCall = activeCall.next;
 				/* Iterate through the active call's targeted elements. */
 				activeCall.elements.forEach(function(activeElement) {
 					/* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
@@ -1478,15 +1484,22 @@ function Velocity(...args: any[]) {
 					/* Add the current call plus its associated metadata (the element set and the call's options) onto the global call container.
 					 Anything on this call container is subjected to tick() processing. */
 					var last = Velocity.State.last,
-						next: AnimationCall = Velocity.State.last = {
-							next: undefined, // Setting here as we know it'll be needed
-							prev: Velocity.State.last,
-							call: call,
-							elements: elements,
-							options: opts,
-							resolver: promiseData.resolver
-						};
+						next: AnimationCall;
 
+					if (Velocity.State.cache) {
+						next = Velocity.State.cache;
+						Velocity.State.cache = next.next;
+						next.next = undefined;
+					} else {
+						next = Object.create(null); // Create a prototype-less object as we don't want to extend it
+					}
+					next.next = undefined; // Setting here as we know it'll be needed
+					next.prev = last;
+					next.call = call;
+					next.elements = elements;
+					next.options = opts;
+					next.resolver = promiseData.resolver;
+					Velocity.State.last = next;
 					if (last) {
 						last.next = next;
 					} else {
@@ -1717,6 +1730,8 @@ namespace Velocity {
 			/* Container for every in-progress call to Velocity. */
 			first: AnimationCall,
 			last: AnimationCall,
+			/* Store unused AnimationCall objects, LIFO style, clear when no animations left - used to prevent GC thrashing */
+			cache: AnimationCall,
 			delayedElements = {
 				count: 0
 			}
@@ -1970,9 +1985,11 @@ namespace Velocity {
 	/* Pause all animations */
 	export function pauseAll(queueName) {
 		var currentTime = (new Date()).getTime(),
-			activeCall = Velocity.State.first;
+			activeCall = Velocity.State.first,
+			nextCall: AnimationCall;
 
-		for (; activeCall; activeCall = activeCall.next) {
+		for (; activeCall; activeCall = nextCall) {
+			nextCall = activeCall.next;
 			/* If we have a queueName and this call is not on that queue, skip */
 			if (queueName !== undefined && ((activeCall.options.queue !== queueName) || (activeCall.options.queue === false))) {
 				continue;
@@ -1992,9 +2009,11 @@ namespace Velocity {
 	/* Resume all animations */
 	export function resumeAll(queueName) {
 		var currentTime = (new Date()).getTime(),
-			activeCall = Velocity.State.first;
+			activeCall = Velocity.State.first,
+			nextCall: AnimationCall;
 
-		for (; activeCall; activeCall = activeCall.next) {
+		for (; activeCall; activeCall = nextCall) {
+			nextCall = activeCall.next;
 			/* If we have a queueName and this call is not on that queue, skip */
 			if (queueName !== undefined && ((activeCall.options.queue !== queueName) || (activeCall.options.queue === false))) {
 				continue;
@@ -2108,14 +2127,16 @@ function tick(timestamp?: number | boolean) {
 		 under high stress we give the option for choppiness over allowing the browser to drop huge chunks of frames.
 		 We use performance.now() and shim it if it doesn't exist for when the tab is hidden. */
 		var timeCurrent = Velocity.timestamp && timestamp !== true ? timestamp : performance.now(),
-			activeCall = Velocity.State.first
+			activeCall = Velocity.State.first,
+			nextCall: AnimationCall;
 
 		/********************
 		 Call Iteration
 		 ********************/
 
 		/* Iterate through each active call. */
-		for (; activeCall; activeCall = activeCall.next) {
+		for (; activeCall; activeCall = nextCall) {
+			nextCall = activeCall.next;
 			/************************
 			 Call-Wide Variables
 			 ************************/
@@ -2517,9 +2538,17 @@ function completeCall(activeCall: AnimationCall, isStopped?: boolean) {
 	} else if (activeCall.next) {
 		activeCall.next.prev = activeCall.prev;
 	}
-	activeCall.next = activeCall.prev = undefined;
 
-	Velocity.State.isTicking = !!Velocity.State.first;
+	if (!Velocity.State.first) {
+		Velocity.State.isTicking = false;
+		Velocity.State.cache = undefined;
+	} else {
+		for (var key in activeCall) {
+			(activeCall as any)[key] = undefined;
+		}
+		activeCall.next = Velocity.State.cache;
+		Velocity.State.cache = activeCall;
+	}
 }
 
 /******************
