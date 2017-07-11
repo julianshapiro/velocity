@@ -247,9 +247,7 @@
         class2type["[object " + types[i] + "]"] = types[i].toLowerCase();
     }
     $.fn.init.prototype = $.fn;
-    window.Velocity = {
-        Utilities: $
-    };
+    window.jQuery = $;
 })(window);
 
 var DURATION_DEFAULT = 400;
@@ -899,7 +897,8 @@ var vCSS;
                             return match.toUpperCase();
                         });
                     }
-                    if (isString(Velocity.State.prefixElement.style[propertyPrefixed])) {
+                    var prefixElement = Velocity.State.prefixElement;
+                    if (prefixElement && isString(prefixElement.style[propertyPrefixed])) {
                         Velocity.State.prefixMatches[property] = propertyPrefixed;
                         return [ propertyPrefixed, true ];
                     }
@@ -997,13 +996,13 @@ var vCSS;
                         return contentBoxWidth;
                     }
                 }
-                var computedStyle;
-                if (Data(element) === undefined) {
+                var computedStyle, data = Data(element);
+                if (!data) {
                     computedStyle = window.getComputedStyle(element, null);
-                } else if (!Data(element).computedStyle) {
-                    computedStyle = Data(element).computedStyle = window.getComputedStyle(element, null);
+                } else if (!data.computedStyle) {
+                    computedStyle = data.computedStyle = window.getComputedStyle(element, null);
                 } else {
-                    computedStyle = Data(element).computedStyle;
+                    computedStyle = data.computedStyle;
                 }
                 if (property === "borderColor") {
                     property = "borderTopColor";
@@ -1397,7 +1396,7 @@ function Velocity() {
             return promise || null;
         }
     }
-    var syntacticSugar = arguments[0] && (arguments[0].p || (isPlainObject(arguments[0].properties) && !arguments[0].properties.names || isString(arguments[0].properties))), isUtility = !isWrapped(this), elementsWrapped, argumentIndex, elements, propertiesMap, options, promiseData = {
+    var syntacticSugar = arguments[0] && (arguments[0].p || (isPlainObject(arguments[0].properties) && !arguments[0].properties.names || isString(arguments[0].properties))), isUtility = !isNode(this) && !isWrapped(this), elementsWrapped, argumentIndex, elements, propertiesMap, options, promiseData = {
         promise: null,
         resolver: null,
         rejecter: null
@@ -1407,8 +1406,8 @@ function Velocity() {
         elements = syntacticSugar ? arguments[0].elements || arguments[0].e : arguments[0];
     } else {
         argumentIndex = 0;
-        elements = this;
-        elementsWrapped = this;
+        elements = isNode(this) ? [ this ] : this;
+        elementsWrapped = elements;
     }
     if (Promise) {
         promiseData.promise = new Promise(function(resolve, reject) {
@@ -2190,7 +2189,7 @@ var IE = function() {
     } else {
         for (var i = 7; i > 4; i--) {
             var div = document.createElement("div");
-            div.innerHTML = "\x3c!--[if IE " + i + "]><span></span><![endif]--\x3e";
+            div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
             if (div.getElementsByTagName("span").length) {
                 div = null;
                 return i;
@@ -2200,13 +2199,10 @@ var IE = function() {
     return undefined;
 }();
 
-var $ = jQuery, global = this, isJQuery = false;
+var $ = window.jQuery, global = this;
 
 if (global.fn && global.fn.jquery) {
     $ = global;
-    isJQuery = true;
-} else {
-    $ = jQuery;
 }
 
 (function(Velocity) {
@@ -2214,7 +2210,7 @@ if (global.fn && global.fn.jquery) {
     Velocity.data = new WeakMap();
     var State;
     (function(State) {
-        State.isClient = window && window instanceof Window, State.isMobile = State.isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), 
+        State.isClient = window && window === window.window, State.isMobile = State.isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), 
         State.isAndroid = State.isClient && /Android/i.test(navigator.userAgent), State.isGingerbread = State.isClient && /Android 2\.3\.[3-7]/i.test(navigator.userAgent), 
         State.isChrome = State.isClient && window.chrome, State.isFirefox = State.isClient && /Firefox/i.test(navigator.userAgent), 
         State.prefixElement = State.isClient && document.createElement("div"), State.prefixMatches = {}, 

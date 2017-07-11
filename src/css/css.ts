@@ -241,7 +241,9 @@ namespace vCSS {
 					}
 
 					/* Check if the browser supports this property as prefixed. */
-					if (isString(Velocity.State.prefixElement.style[propertyPrefixed])) {
+					var prefixElement = Velocity.State.prefixElement;
+
+					if (prefixElement && isString(prefixElement.style[propertyPrefixed])) {
 						/* Cache the match. */
 						Velocity.State.prefixMatches[property] = propertyPrefixed;
 

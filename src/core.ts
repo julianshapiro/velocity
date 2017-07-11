@@ -43,7 +43,7 @@ function Velocity(...args: any[]) {
 	/* Note: Some browsers automatically populate arguments with a "properties" object. We detect it by checking for its default "names" property. */
 	var syntacticSugar = (arguments[0] && (arguments[0].p || ((isPlainObject(arguments[0].properties) && !arguments[0].properties.names) || isString(arguments[0].properties)))),
 		/* Whether Velocity was called via the utility function (as opposed to on a jQuery/Zepto object). */
-		isUtility: boolean = !isWrapped(this),
+		isUtility: boolean = !isNode(this) && !isWrapped(this),
 		/* When Velocity is called via the utility function ($.Velocity()/Velocity()), elements are explicitly
 		 passed in as the first parameter. Thus, argument positioning varies. We normalize them here. */
 		elementsWrapped: HTMLorSVGElement[],
@@ -64,8 +64,8 @@ function Velocity(...args: any[]) {
 	} else {
 		/* Detect jQuery/Zepto/Native elements being animated via .velocity() method. */
 		argumentIndex = 0;
-		elements = this;
-		elementsWrapped = this;
+		elements = isNode(this) ? [this] : this;
+		elementsWrapped = elements;
 	}
 
 	/***************
@@ -242,7 +242,7 @@ function Velocity(...args: any[]) {
 			/* Clear the currently-active delay on each targeted element. */
 			elements.forEach(function(element) {
 				var data = Data(element);
-				
+
 				if (data && data.delayTimer) {
 					/* Stop the timer from triggering its cached next() function. */
 					clearTimeout(data.delayTimer.setTimeout);
@@ -1673,15 +1673,11 @@ var IE = (function() {
  Dependencies
  *****************/
 
-var $ = jQuery,
-	global: any = this as Window,
-	isJQuery = false;
+var $ = window.jQuery,
+	global: any = this as Window;
 
 if (global.fn && global.fn.jquery) {
 	$ = global;
-	isJQuery = true;
-} else {
-	$ = jQuery;
 }
 
 /*************
@@ -1697,7 +1693,7 @@ namespace Velocity {
 	/* Container for page-wide Velocity state data. */
 	export namespace State {
 		export var
-			isClient = window && window instanceof Window,
+			isClient = window && window === window.window,
 			/* Detect mobile devices to determine if mobileHA should be turned on. */
 			isMobile = isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
 			/* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */

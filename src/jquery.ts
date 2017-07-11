@@ -372,7 +372,7 @@ interface Window {
 	$.fn.init.prototype = $.fn;
 
 	/* Globalize Velocity onto the window, and assign its Utilities property. */
-	window.Velocity = {Utilities: $};
+	window.jQuery = $;
 })(window);
 
 declare var jQuery;
