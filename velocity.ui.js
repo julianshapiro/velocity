@@ -42,7 +42,7 @@
 				return false;
 			}
 
-			$.each([primary, secondary], function(i, versionObject) {
+			[primary, secondary].forEach(function(versionObject) {
 				var versionIntsComponents = [];
 
 				$.each(versionObject, function(component, value) {
@@ -76,7 +76,7 @@
 						parentNode;
 
 				/* Sum the total height (including padding and margin) of all targeted elements. */
-				$.each(elements.nodeType ? [elements] : elements, function(i, element) {
+				(elements.nodeType ? [elements] : elements).forEach(function(element, i) {
 					if (stagger) {
 						/* Increase the totalDuration by the successive delay amounts produced by the stagger option. */
 						totalDuration += i * stagger;
@@ -165,7 +165,7 @@
 								/* Make "in" transitioning elements invisible immediately so that there's no FOUC between now
 								 and the first RAF tick. */
 								if ((direction && direction[0] === "In") && propertyMap.opacity !== undefined) {
-									$.each(elements.nodeType ? [elements] : elements, function(i, element) {
+									(elements.nodeType ? [elements] : elements).forEach(function(element) {
 										Velocity.CSS.setPropertyValue(element, "opacity", 0);
 									});
 								}
@@ -198,7 +198,7 @@
 						/* Append promise resolving onto the user's redirect callback. */
 						var injectFinalCallbacks = function() {
 							if ((redirectOptions.display === undefined || redirectOptions.display === "none") && /Out$/.test(effectName)) {
-								$.each(elements.nodeType ? [elements] : elements, function(i, element) {
+								(elements.nodeType ? [elements] : elements).forEach(function(element) {
 									Velocity.CSS.setPropertyValue(element, "display", "none");
 								});
 							}

@@ -1,0 +1,9 @@
+///<reference path="flushTransformCache.ts" />
+///<reference path="getPropertyValue.ts" />
+///<reference path="hooks.ts" />
+///<reference path="lists.ts" />
+///<reference path="names.ts" />
+///<reference path="normalizations.ts" />
+///<reference path="regex.ts" />
+///<reference path="setPropertyValue.ts" />
+///<reference path="values.ts" />

@@ -1,0 +1,16 @@
+///<reference path="complete.ts" />
+///<reference path="css/_all.d.ts" />
+///<reference path="data.ts" />
+///<reference path="debug.ts" />
+///<reference path="defaults.ts" />
+///<reference path="easings.ts" />
+///<reference path="hook.ts" />
+///<reference path="init.ts" />
+///<reference path="mock.ts" />
+///<reference path="pauseAll.ts" />
+///<reference path="redirects.ts" />
+///<reference path="resumeAll.ts" />
+///<reference path="state.ts" />
+///<reference path="tick.ts" />
+///<reference path="timestamp.ts" />
+///<reference path="version.ts" />

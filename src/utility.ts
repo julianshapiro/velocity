@@ -12,7 +12,6 @@ function defineProperty(proto: any, name: string, value: Function | any, force?:
 	}
 }
 
-
 /**
  * Shim for "fixing" IE's lack of support (IE < 9) for applying slice
  * on host objects like NamedNodeMap, NodeList, and HTMLCollection
@@ -125,22 +124,6 @@ var _inArray = (function() {
 }) as any as ((arr: any[], val: any) => boolean);
 
 /**
- * Shim for window.performance in case it doesn't exist
- */
-var performance = (function() {
-	var perf = window.performance || {} as Performance;
-
-	if (typeof perf.now !== "function") {
-		var nowOffset = perf.timing && perf.timing.navigationStart ? perf.timing.navigationStart : (new Date()).getTime();
-
-		perf.now = function() {
-			return (new Date()).getTime() - nowOffset;
-		};
-	}
-	return perf;
-})();
-
-/**
  * Convert an element or array-like element list into an actual array
  */
 function sanitizeElements(elements: HTMLorSVGElement | HTMLorSVGElement[]): HTMLorSVGElement[] {
@@ -151,36 +134,4 @@ function sanitizeElements(elements: HTMLorSVGElement | HTMLorSVGElement[]): HTML
 		elements = [elements];
 	}
 	return elements as HTMLorSVGElement[];
-}
-
-/* rAF shim. Gist: https://gist.github.com/julianshapiro/9497513 */
-var rAFShim = (function() {
-	var timeLast = 0;
-
-	return window.requestAnimationFrame || function(callback) {
-		var timeCurrent = (new Date()).getTime(),
-			timeDelta;
-
-		/* Dynamically set delay on a per-tick basis to match 60fps. */
-		/* Technique by Erik Moller. MIT license: https://gist.github.com/paulirish/1579671 */
-		timeDelta = Math.max(0, 16 - (timeCurrent - timeLast));
-		timeLast = timeCurrent + timeDelta;
-
-		return setTimeout(function() {
-			callback(timeCurrent + timeDelta);
-		}, timeDelta);
-	};
-})();
-
-/**
- * Set or get internal data for an element
- */
-function Data(element: HTMLorSVGElement): ElementData;
-function Data(element: HTMLorSVGElement, value: ElementData): void;
-function Data(element: HTMLorSVGElement, value?: ElementData): ElementData {
-	if (value) {
-		Velocity.data.set(element, value);
-	} else {
-		return Velocity.data.get(element);
-	}
 }

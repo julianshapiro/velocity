@@ -14,7 +14,7 @@ function getEasing(value, duration) {
 	 or it can be a two-/four-item array of integers to be converted into a bezier/spring function. */
 	if (isString(value)) {
 		/* Ensure that the easing has been assigned to jQuery's Velocity.Easings object. */
-		if (!Velocity.Easings[value]) {
+		if (!VelocityStatic.Easings[value]) {
 			easing = false;
 		}
 	} else if (Array.isArray(value)) {
@@ -38,8 +38,8 @@ function getEasing(value, duration) {
 	/* Revert to the Velocity-wide default easing type, or fall back to "swing" (which is also jQuery's default)
 	 if the Velocity-wide default has been incorrectly modified. */
 	if (easing === false) {
-		if (Velocity.Easings[Velocity.defaults.easing]) {
-			easing = Velocity.defaults.easing;
+		if (VelocityStatic.Easings[VelocityStatic.defaults.easing]) {
+			easing = VelocityStatic.defaults.easing;
 		} else {
 			easing = EASING_DEFAULT;
 		}
