@@ -250,7 +250,17 @@
     window.jQuery = $;
 })(window);
 
+var MAJOR = 2;
+
+var MINOR = 0;
+
+var PATCH = 0;
+
+var DURATION_FAST = 200;
+
 var DURATION_DEFAULT = 400;
+
+var DURATION_SLOW = 600;
 
 var EASING_DEFAULT = "swing";
 
@@ -1458,10 +1468,6 @@ function Velocity() {
         break;
 
       case "pause":
-        var currentTime = new Date().getTime();
-        elements.forEach(function(element) {
-            pauseDelayOnElement(element, currentTime);
-        });
         var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first, nextCall;
         for (;activeCall; activeCall = nextCall) {
             nextCall = activeCall.next;
@@ -1479,9 +1485,6 @@ function Velocity() {
         return getChain();
 
       case "resume":
-        elements.forEach(function(element) {
-            resumeDelayOnElement(element, currentTime);
-        });
         var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first, nextCall;
         for (;activeCall; activeCall = nextCall) {
             nextCall = activeCall.next;
@@ -1503,14 +1506,6 @@ function Velocity() {
       case "finishAll":
       case "stop":
         elements.forEach(function(element) {
-            var data = Data(element);
-            if (data && data.delayTimer) {
-                clearTimeout(data.delayTimer.setTimeout);
-                if (data.delayTimer.next) {
-                    data.delayTimer.next();
-                }
-                delete data.delayTimer;
-            }
             if (propertiesMap === "finishAll" && (options === true || isString(options))) {
                 $.each($.queue(element, isString(options) ? options : ""), function(_, item) {
                     if (isFunction(item)) {
@@ -1524,6 +1519,7 @@ function Velocity() {
         var queueName = options === undefined ? "" : options, activeCall = Velocity.State.first, nextCall;
         for (;activeCall; activeCall = nextCall) {
             nextCall = activeCall.next;
+            activeCall.delay = 0;
             activeCall.elements.forEach(function(activeElement) {
                 var queueName = options === undefined ? "" : options;
                 if (queueName !== true && activeCall.options.queue !== queueName && !(options === undefined && activeCall.options.queue === false)) {
@@ -1613,28 +1609,9 @@ function Velocity() {
         if (Data(element) === undefined) {
             Velocity.init(element);
         }
-        if (parseFloat(opts.delay) && opts.queue !== false) {
-            $.queue(element, opts.queue, function(next) {
-                Velocity.velocityQueueEntryFlag = true;
-                var callIndex = Velocity.State.delayedElements.count++;
-                Velocity.State.delayedElements[callIndex] = element;
-                var delayComplete = function(index) {
-                    return function() {
-                        Velocity.State.delayedElements[index] = false;
-                        next();
-                    };
-                }(callIndex);
-                Data(element).delayBegin = new Date().getTime();
-                Data(element).delay = parseFloat(opts.delay);
-                Data(element).delayTimer = {
-                    setTimeout: setTimeout(next, parseFloat(opts.delay)),
-                    next: delayComplete
-                };
-            });
-        }
         switch (opts.duration.toString().toLowerCase()) {
           case "fast":
-            opts.duration = 200;
+            opts.duration = DURATION_FAST;
             break;
 
           case "normal":
@@ -1642,7 +1619,7 @@ function Velocity() {
             break;
 
           case "slow":
-            opts.duration = 600;
+            opts.duration = DURATION_SLOW;
             break;
 
           default:
@@ -2118,6 +2095,7 @@ function Velocity() {
                     next.prev = last;
                     next.call = call;
                     next.elements = elements;
+                    next.delay = parseInt(opts.delay, 10) || 0;
                     next.options = opts;
                     next.resolver = promiseData.resolver;
                     Velocity.State.last = next;
@@ -2136,24 +2114,7 @@ function Velocity() {
             }
         }
         if (opts.queue === false) {
-            if (opts.delay) {
-                var callIndex = Velocity.State.delayedElements.count++;
-                Velocity.State.delayedElements[callIndex] = element;
-                var delayComplete = function(index) {
-                    return function() {
-                        Velocity.State.delayedElements[index] = false;
-                        buildQueue();
-                    };
-                }(callIndex);
-                Data(element).delayBegin = new Date().getTime();
-                Data(element).delay = parseFloat(opts.delay);
-                Data(element).delayTimer = {
-                    setTimeout: setTimeout(buildQueue, parseFloat(opts.delay)),
-                    next: delayComplete
-                };
-            } else {
-                buildQueue();
-            }
+            buildQueue();
         } else {
             $.queue(element, opts.queue, function(next, clearQueue) {
                 if (clearQueue === true) {
@@ -2227,9 +2188,7 @@ if (global.fn && global.fn.jquery) {
         State.windowScrollAnchor = State.isClient && window.pageYOffset !== undefined, State.scrollAnchor = State.windowScrollAnchor ? window : !State.isClient || document.documentElement || document.body.parentNode || document.body, 
         State.scrollPropertyLeft = State.windowScrollAnchor ? "pageXOffset" : "scrollLeft", 
         State.scrollPropertyTop = State.windowScrollAnchor ? "pageYOffset" : "scrollTop", 
-        State.isTicking = false, State.delayedElements = {
-            count: 0
-        };
+        State.isTicking = false;
     })(State = Velocity.State || (Velocity.State = {}));
     Velocity.CSS = vCSS;
     Velocity.Utilities = $;
@@ -2389,14 +2348,14 @@ if (global.fn && global.fn.jquery) {
     Velocity.hook = hook;
     Velocity.mock = false;
     Velocity.version = {
-        major: 1,
-        minor: 5,
-        patch: 0
+        major: MAJOR,
+        minor: MINOR,
+        patch: PATCH
     };
     Velocity.debug = false;
     Velocity.timestamp = true;
     function pauseAll(queueName) {
-        var currentTime = new Date().getTime(), activeCall = Velocity.State.first, nextCall;
+        var activeCall = Velocity.State.first, nextCall;
         for (;activeCall; activeCall = nextCall) {
             nextCall = activeCall.next;
             if (queueName !== undefined && (activeCall.options.queue !== queueName || activeCall.options.queue === false)) {
@@ -2404,16 +2363,10 @@ if (global.fn && global.fn.jquery) {
             }
             activeCall.paused = true;
         }
-        $.each(Velocity.State.delayedElements, function(k, element) {
-            if (!element) {
-                return;
-            }
-            pauseDelayOnElement(element, currentTime);
-        });
     }
     Velocity.pauseAll = pauseAll;
     function resumeAll(queueName) {
-        var currentTime = new Date().getTime(), activeCall = Velocity.State.first, nextCall;
+        var activeCall = Velocity.State.first, nextCall;
         for (;activeCall; activeCall = nextCall) {
             nextCall = activeCall.next;
             if (queueName !== undefined && (activeCall.options.queue !== queueName || activeCall.options.queue === false)) {
@@ -2423,32 +2376,9 @@ if (global.fn && global.fn.jquery) {
                 activeCall.paused = false;
             }
         }
-        $.each(Velocity.State.delayedElements, function(k, element) {
-            if (!element) {
-                return;
-            }
-            resumeDelayOnElement(element, currentTime);
-        });
     }
     Velocity.resumeAll = resumeAll;
 })(Velocity || (Velocity = {}));
-
-function pauseDelayOnElement(element, currentTime) {
-    var data = Data(element);
-    if (data && data.delayTimer && !data.delayPaused) {
-        data.delayRemaining = data.delay - currentTime + data.delayBegin;
-        data.delayPaused = true;
-        clearTimeout(data.delayTimer.setTimeout);
-    }
-}
-
-function resumeDelayOnElement(element, currentTime) {
-    var data = Data(element);
-    if (data && data.delayTimer && data.delayPaused) {
-        data.delayPaused = false;
-        data.delayTimer.setTimeout = setTimeout(data.delayTimer.next, data.delayRemaining);
-    }
-}
 
 vCSS.Hooks.register();
 
@@ -2478,7 +2408,7 @@ function tick(timestamp) {
         var timeCurrent = Velocity.timestamp && timestamp !== true ? timestamp : performance.now(), activeCall = Velocity.State.first, nextCall;
         for (;activeCall; activeCall = nextCall) {
             nextCall = activeCall.next;
-            var call = activeCall.call, opts = activeCall.options, timeStart = activeCall.timeStart, firstTick = !!timeStart, tweenDummyValue = null;
+            var call = activeCall.call, opts = activeCall.options, timeStart = activeCall.timeStart, delay = activeCall.delay, firstTick = !!timeStart, tweenDummyValue = null;
             if (!timeStart) {
                 timeStart = activeCall.timeStart = timeCurrent - 16;
             }
@@ -2487,6 +2417,13 @@ function tick(timestamp) {
             } else if (activeCall.paused === false) {
                 timeStart = activeCall.timeStart = Math.round(timeCurrent - activeCall.ellapsedTime - 16);
                 activeCall.paused = undefined;
+            } else if (delay) {
+                if (timeStart + delay > timeCurrent) {
+                    continue;
+                }
+                timeStart -= delay;
+                activeCall.delay = 0;
+                activeCall.timeStart = timeStart;
             }
             var millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, percentComplete = Math.min(millisecondsEllapsed / opts.duration, 1);
             for (var j = 0, callLength = call.length; j < callLength; j++) {

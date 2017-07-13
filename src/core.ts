@@ -166,13 +166,6 @@ function Velocity(...args: any[]) {
 			 Action: Pause
 			 *******************/
 
-			var currentTime = (new Date()).getTime();
-
-			/* Handle delay timers */
-			elements.forEach(function(element) {
-				pauseDelayOnElement(element, currentTime);
-			});
-
 			/* Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a 
 			 single element will cause any calls that contain tweens for that element to be paused/resumed
 			 as well. */
@@ -203,12 +196,7 @@ function Velocity(...args: any[]) {
 			 Action: Resume
 			 *******************/
 
-			/* Handle delay timers */
-			elements.forEach(function(element) {
-				resumeDelayOnElement(element, currentTime);
-			});
-
-			/* Pause and Resume are call-wide (not on a per elemnt basis). Thus, calling pause or resume on a 
+			/* Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a 
 			 single element will cause any calls that containt tweens for that element to be paused/resumed
 			 as well. */
 
@@ -245,20 +233,6 @@ function Velocity(...args: any[]) {
 
 			/* Clear the currently-active delay on each targeted element. */
 			elements.forEach(function(element) {
-				var data = Data(element);
-
-				if (data && data.delayTimer) {
-					/* Stop the timer from triggering its cached next() function. */
-					clearTimeout(data.delayTimer.setTimeout);
-
-					/* Manually call the next() function so that the subsequent queue items can progress. */
-					if (data.delayTimer.next) {
-						data.delayTimer.next();
-					}
-
-					delete data.delayTimer;
-				}
-
 				/* If we want to finish everything in the queue, we have to iterate through it
 				 and call each function. This will make them active calls below, which will
 				 cause them to be applied via the duration setting. */
@@ -271,7 +245,7 @@ function Velocity(...args: any[]) {
 						}
 					});
 
-					/* Clearing the $.queue() array is achieved by resetting it to []. */
+					/* Clearing the queue array is achieved by resetting it to []. */
 					$.queue(element, isString(options) ? options : "", []);
 				}
 			});
@@ -294,6 +268,7 @@ function Velocity(...args: any[]) {
 			/* Iterate through all calls and pause any that contain any of our elements */
 			for (; activeCall; activeCall = nextCall) {
 				nextCall = activeCall.next;
+				activeCall.delay = 0;
 				/* Iterate through the active call's targeted elements. */
 				activeCall.elements.forEach(function(activeElement) {
 					/* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
@@ -326,7 +301,7 @@ function Velocity(...args: any[]) {
 									}
 								});
 
-								/* Clearing the $.queue() array is achieved by resetting it to []. */
+								/* Clearing the queue array is achieved by resetting it to []. */
 								$.queue(element, isString(options) ? options : "", []);
 							}
 
@@ -464,7 +439,7 @@ function Velocity(...args: any[]) {
 
 	/* Element processing consists of three parts -- data processing that cannot go stale and data processing that *can* go stale (i.e. third-party style modifications):
 	 1) Pre-Queueing: Element-wide variables, including the element's data storage, are instantiated. Call options are prepared. If triggered, the Stop action is executed.
-	 2) Queueing: The logic that runs once this call has reached its point of execution in the element's $.queue() stack. Most logic is placed here to avoid risking it becoming stale.
+	 2) Queueing: The logic that runs once this call has reached its point of execution in the element's queue stack. Most logic is placed here to avoid risking it becoming stale.
 	 3) Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
 	 `elementArrayIndex` allows passing index of the element in the original array to value functions.
 	 If `elementsIndex` were used instead the index would be determined by the elements' per-element queue.
@@ -498,41 +473,6 @@ function Velocity(...args: any[]) {
 		 Option: Delay
 		 ******************/
 
-		/* Since queue:false doesn't respect the item's existing queue, we avoid injecting its delay here (it's set later on). */
-		/* Note: Velocity rolls its own delay function since jQuery doesn't have a utility alias for $.fn.delay()
-		 (and thus requires jQuery element creation, which we avoid since its overhead includes DOM querying). */
-		if (parseFloat(opts.delay as string) && opts.queue !== false) {
-			$.queue(element, opts.queue, function(next) {
-				/* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
-				(Velocity as any).velocityQueueEntryFlag = true;
-
-				/* The ensuing queue item (which is assigned to the "next" argument that $.queue() automatically passes in) will be triggered after a setTimeout delay.
-				 The setTimeout is stored so that it can be subjected to clearTimeout() if this animation is prematurely stopped via Velocity's "stop" command, and
-				 delayBegin/delayTime is used to ensure we can "pause" and "resume" a tween that is still mid-delay. */
-
-				/* Temporarily store delayed elements to facilite access for global pause/resume */
-				var callIndex = Velocity.State.delayedElements.count++;
-				Velocity.State.delayedElements[callIndex] = element;
-
-				var delayComplete = (function(index) {
-					return function() {
-						/* Clear the temporary element */
-						Velocity.State.delayedElements[index] = false;
-
-						/* Finally, issue the call */
-						next();
-					};
-				})(callIndex);
-
-
-				Data(element).delayBegin = (new Date()).getTime();
-				Data(element).delay = parseFloat(opts.delay as string);
-				Data(element).delayTimer = {
-					setTimeout: setTimeout(next, parseFloat(opts.delay as string)),
-					next: delayComplete
-				};
-			});
-		}
 
 		/*********************
 		 Option: Duration
@@ -541,7 +481,7 @@ function Velocity(...args: any[]) {
 		/* Support for jQuery's named durations. */
 		switch (opts.duration.toString().toLowerCase()) {
 			case "fast":
-				opts.duration = 200;
+				opts.duration = DURATION_FAST;
 				break;
 
 			case "normal":
@@ -549,7 +489,7 @@ function Velocity(...args: any[]) {
 				break;
 
 			case "slow":
-				opts.duration = 600;
+				opts.duration = DURATION_SLOW;
 				break;
 
 			default:
@@ -1497,6 +1437,7 @@ function Velocity(...args: any[]) {
 					next.prev = last;
 					next.call = call;
 					next.elements = elements;
+					next.delay = parseInt(opts.delay as string, 10) || 0;
 					next.options = opts;
 					next.resolver = promiseData.resolver;
 					Velocity.State.last = next;
@@ -1521,35 +1462,7 @@ function Velocity(...args: any[]) {
 
 		/* When the queue option is set to false, the call skips the element's queue and fires immediately. */
 		if (opts.queue === false) {
-			/* Since this buildQueue call doesn't respect the element's existing queue (which is where a delay option would have been appended),
-			 we manually inject the delay property here with an explicit setTimeout. */
-			if (opts.delay) {
-
-				/* Temporarily store delayed elements to facilitate access for global pause/resume */
-				var callIndex = Velocity.State.delayedElements.count++;
-				Velocity.State.delayedElements[callIndex] = element;
-
-				var delayComplete = (function(index) {
-					return function() {
-						/* Clear the temporary element */
-						Velocity.State.delayedElements[index] = false;
-
-						/* Finally, issue the call */
-						buildQueue();
-					};
-				})(callIndex);
-
-				Data(element).delayBegin = (new Date()).getTime();
-				Data(element).delay = parseFloat(opts.delay as string);
-				Data(element).delayTimer = {
-					setTimeout: setTimeout(buildQueue, parseFloat(opts.delay as string)),
-					next: delayComplete
-				};
-			} else {
-				buildQueue();
-			}
-			/* Otherwise, the call undergoes element queueing as normal. */
-			/* Note: To interoperate with jQuery, Velocity uses jQuery's own $.queue() stack for queuing logic. */
+			buildQueue();
 		} else {
 			$.queue(element, opts.queue, function(next, clearQueue) {
 				/* If the clearQueue flag was passed in by the stop command, resolve this call's promise. (Promises can only be resolved once,
@@ -1575,14 +1488,14 @@ function Velocity(...args: any[]) {
 		 Auto-Dequeuing
 		 *********************/
 
-		/* As per jQuery's $.queue() behavior, to fire the first non-custom-queue entry on an element, the element
+		/* As per jQuery's queue behavior, to fire the first non-custom-queue entry on an element, the element
 		 must be dequeued if its queue stack consists *solely* of the current call. (This can be determined by checking
 		 for the "inprogress" item that jQuery prepends to active queue stack arrays.) Regardless, whenever the element's
 		 queue is further appended with additional items -- including $.delay()'s or even $.animate() calls, the queue's
 		 first entry is automatically fired. This behavior contrasts that of custom queues, which never auto-fire. */
 		/* Note: When an element set is being subjected to a non-parallel Velocity call, the animation will not begin until
 		 each one of the elements in the set has reached the end of its individually pre-existing queue chain. */
-		/* Note: Unfortunately, most people don't fully grasp jQuery's powerful, yet quirky, $.queue() function.
+		/* Note: Unfortunately, most people don't fully grasp jQuery's powerful, yet quirky, queue() function.
 		 Lean more here: http://stackoverflow.com/questions/1058158/can-somebody-explain-jquery-queue-to-me */
 		if ((opts.queue === "" || opts.queue === "fx") && $.queue(element)[0] !== "inprogress") {
 			$.dequeue(element);
@@ -1650,7 +1563,7 @@ function Velocity(...args: any[]) {
  - CSS: CSS stack that works independently from the rest of Velocity.
  - animate(): Core animation method that iterates over the targeted elements and queues the incoming call onto each element individually.
  - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options.
- - Queueing: The logic that runs once the call has reached its point of execution in the element's $.queue() stack.
+ - Queueing: The logic that runs once the call has reached its point of execution in the element's queue stack.
  Most logic is placed here to avoid risking it becoming stale (if the element's properties have changed).
  - Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
  - tick(): The single requestAnimationFrame loop responsible for tweening all in-progress calls.
@@ -1731,10 +1644,7 @@ namespace Velocity {
 			first: AnimationCall,
 			last: AnimationCall,
 			/* Store unused AnimationCall objects, LIFO style, clear when no animations left - used to prevent GC thrashing */
-			cache: AnimationCall,
-			delayedElements = {
-				count: 0
-			}
+			cache: AnimationCall
 	};
 
 	/* Velocity's custom CSS stack. Made global for unit testing. */
@@ -1974,7 +1884,7 @@ namespace Velocity {
 	/* Velocity-wide animation time remapping for testing purposes. */
 	export var mock = false;
 
-	export var version = {major: 1, minor: 5, patch: 0};
+	export var version = {major: MAJOR, minor: MINOR, patch: PATCH};
 
 	/* Set to 1 or 2 (most verbose) to output debug info to console. */
 	export var debug = false as boolean | number;
@@ -1984,8 +1894,7 @@ namespace Velocity {
 
 	/* Pause all animations */
 	export function pauseAll(queueName) {
-		var currentTime = (new Date()).getTime(),
-			activeCall = Velocity.State.first,
+		var activeCall = Velocity.State.first,
 			nextCall: AnimationCall;
 
 		for (; activeCall; activeCall = nextCall) {
@@ -1997,19 +1906,11 @@ namespace Velocity {
 			/* Set call to paused */
 			activeCall.paused = true;
 		}
-		/* Pause timers on any currently delayed calls */
-		$.each(Velocity.State.delayedElements, function(k, element) {
-			if (!element) {
-				return;
-			}
-			pauseDelayOnElement(element, currentTime);
-		});
 	};
 
 	/* Resume all animations */
 	export function resumeAll(queueName) {
-		var currentTime = (new Date()).getTime(),
-			activeCall = Velocity.State.first,
+		var activeCall = Velocity.State.first,
 			nextCall: AnimationCall;
 
 		for (; activeCall; activeCall = nextCall) {
@@ -2024,42 +1925,8 @@ namespace Velocity {
 				activeCall.paused = false;
 			}
 		}
-		/* Resume timers on any currently delayed calls */
-		$.each(Velocity.State.delayedElements, function(k, element) {
-			if (!element) {
-				return;
-			}
-			resumeDelayOnElement(element, currentTime);
-		});
 	}
 };
-
-/**************
- Delay Timer
- **************/
-
-function pauseDelayOnElement(element: HTMLorSVGElement, currentTime: number) {
-	/* Check for any delay timers, and pause the set timeouts (while preserving time data)
-	 to be resumed when the "resume" command is issued */
-	var data = Data(element);
-
-	if (data && data.delayTimer && !data.delayPaused) {
-		data.delayRemaining = data.delay - currentTime + data.delayBegin;
-		data.delayPaused = true;
-		clearTimeout(data.delayTimer.setTimeout);
-	}
-}
-
-function resumeDelayOnElement(element: HTMLorSVGElement, currentTime: number) {
-	/* Check for any paused timers and resume */
-	var data = Data(element);
-
-	if (data && data.delayTimer && data.delayPaused) {
-		/* If the element was mid-delay, re initiate the timeout with the remaining delay */
-		data.delayPaused = false;
-		data.delayTimer.setTimeout = setTimeout(data.delayTimer.next, data.delayRemaining);
-	}
-}
 
 /*****************
  CSS Stack
@@ -2143,6 +2010,7 @@ function tick(timestamp?: number | boolean) {
 			var call = activeCall.call,
 				opts = activeCall.options,
 				timeStart = activeCall.timeStart,
+				delay = activeCall.delay,
 				firstTick = !!timeStart,
 				tweenDummyValue = null;
 
@@ -2167,6 +2035,14 @@ function tick(timestamp?: number | boolean) {
 
 				/* Remove pause key after processing */
 				activeCall.paused = undefined;
+			} else if (delay) {
+				// Make sure anything we've delayed doesn't start animating yet
+				if (timeStart + delay > timeCurrent) {
+					continue;
+				}
+				timeStart -= delay;
+				activeCall.delay = 0;
+				activeCall.timeStart = timeStart;
 			}
 
 			/* The tween's completion percentage is relative to the tween's start time, not the tween's start value
@@ -2516,7 +2392,7 @@ function completeCall(activeCall: AnimationCall, isStopped?: boolean) {
 
 		/* Fire the next call in the queue so long as this call's queue wasn't set to false (to trigger a parallel animation),
 		 which would have already caused the next call to fire. Note: Even if the end of the animation queue has been reached,
-		 $.dequeue() must still be called in order to completely clear jQuery's animation queue. */
+		 dequeue() must still be called in order to completely clear jQuery's animation queue. */
 		if (opts.queue !== false) {
 			$.dequeue(element, opts.queue);
 		}

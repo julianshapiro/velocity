@@ -36,15 +36,7 @@ interface ElementData extends VelocityOptions {
 	isSVG?: boolean;
 	transformCache?: any;
 	computedStyle?: CSSStyleDeclaration;
-	delay?: number;
-	delayTimer?: {
-		setTimeout?: number;
-		next?: any;
-	};
 	opts?: VelocityOptions;
-	delayBegin?: number;
-	delayRemaining?: number;
-	delayPaused?: boolean;
 	tweensContainer?: HTMLorSVGElement[];
 	rootPropertyValueCache?: {};
 	rootPropertyValue?: {};
@@ -75,12 +67,12 @@ interface AnimationCall {
 	/**
 	 * Used to store the next AnimationCell in this list.
 	 */
-	next?: AnimationCall;
+	next: AnimationCall;
 	/**
 	 * Used to store the previous AnimationCell in this list. Used to make
 	 * removing items from the list significantly easier.
 	 */
-	prev?: AnimationCall;
+	prev: AnimationCall;
 
 	call: TweensContainer[];
 	/**
@@ -95,7 +87,11 @@ interface AnimationCall {
 	 * The time this animation started according to whichever clock we are
 	 * using.
 	 */
-	timeStart?: number;
+	timeStart: number;
+	/**
+	 * The amount of delay before this animation can start doing anything.
+	 */
+	delay: number;
 	/**
 	 * This method is called at most once to signify that the animation has
 	 * completed. Currently a loop:true animation will never complete. This
@@ -106,12 +102,12 @@ interface AnimationCall {
 	 * The pause state of this animation. If true it is paused, if false it was
 	 * paused and needs to be resumed, and if undefined / null then not either.
 	 */
-	paused?: boolean;
+	paused: boolean;
 	/**
 	 * The time (in ms) that this animation has already run. Used with the
 	 * duration and easing to provide the exact tween needed.
 	 */
-	ellapsedTime?: number;
+	ellapsedTime: number;
 	/**
 	 * Added to make sure this is never accessed without having an entry in the
 	 * interface without throwing an error. The reason for this is to ensure
