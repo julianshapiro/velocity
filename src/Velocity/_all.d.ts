@@ -9,7 +9,9 @@
 ///<reference path="mock.ts" />
 ///<reference path="pauseAll.ts" />
 ///<reference path="redirects.ts" />
+///<reference path="registereffect.ts" />
 ///<reference path="resumeAll.ts" />
+///<reference path="runsequence.ts" />
 ///<reference path="state.ts" />
 ///<reference path="tick.ts" />
 ///<reference path="timestamp.ts" />

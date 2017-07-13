@@ -1737,6 +1737,143 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
+    function animateParentHeight(elements, direction, totalDuration, stagger) {
+        var totalHeightDelta = 0, parentNode;
+        (elements.nodeType ? [ elements ] : elements).forEach(function(element, i) {
+            if (stagger) {
+                totalDuration += i * stagger;
+            }
+            parentNode = element.parentNode;
+            var propertiesToSum = [ "height", "paddingTop", "paddingBottom", "marginTop", "marginBottom" ];
+            if (VelocityStatic.CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box") {
+                propertiesToSum = [ "height" ];
+            }
+            $.each(propertiesToSum, function(i, property) {
+                totalHeightDelta += parseFloat(VelocityStatic.CSS.getPropertyValue(element, property));
+            });
+        });
+        Velocity(parentNode, {
+            height: (direction === "In" ? "+" : "-") + "=" + totalHeightDelta
+        }, {
+            queue: false,
+            easing: "ease-in-out",
+            duration: totalDuration * (direction === "In" ? .6 : 1)
+        });
+    }
+    function RegisterEffect(effectName, properties) {
+        VelocityStatic.Redirects[effectName] = function(element, redirectOptions, elementsIndex, elementsSize, elements, promiseData, loop) {
+            var finalElement = elementsIndex === elementsSize - 1, totalDuration = 0;
+            loop = loop || properties.loop;
+            if (typeof properties.defaultDuration === "function") {
+                properties.defaultDuration = properties.defaultDuration.call(elements, elements);
+            } else {
+                properties.defaultDuration = parseFloat(properties.defaultDuration);
+            }
+            for (var callIndex = 0; callIndex < properties.calls.length; callIndex++) {
+                durationPercentage = properties.calls[callIndex][1];
+                if (typeof durationPercentage === "number") {
+                    totalDuration += durationPercentage;
+                }
+            }
+            var shareDuration = totalDuration >= 1 ? 0 : properties.calls.length ? (1 - totalDuration) / properties.calls.length : 1;
+            for (callIndex = 0; callIndex < properties.calls.length; callIndex++) {
+                var call = properties.calls[callIndex], propertyMap = call[0], redirectDuration = 1e3, durationPercentage = call[1], callOptions = call[2] || {}, opts = {};
+                if (redirectOptions.duration !== undefined) {
+                    redirectDuration = redirectOptions.duration;
+                } else if (properties.defaultDuration !== undefined) {
+                    redirectDuration = properties.defaultDuration;
+                }
+                opts.duration = redirectDuration * (typeof durationPercentage === "number" ? durationPercentage : shareDuration);
+                opts.queue = redirectOptions.queue || "";
+                opts.easing = callOptions.easing || "ease";
+                opts.delay = parseFloat(callOptions.delay) || 0;
+                opts.loop = !properties.loop && callOptions.loop;
+                opts._cacheValues = callOptions._cacheValues || true;
+                if (callIndex === 0) {
+                    opts.delay += parseFloat(redirectOptions.delay) || 0;
+                    if (elementsIndex === 0) {
+                        opts.begin = function() {
+                            if (redirectOptions.begin) {
+                                redirectOptions.begin.call(elements, elements);
+                            }
+                            var direction = effectName.match(/(In|Out)$/);
+                            if (direction && direction[0] === "In" && propertyMap.opacity !== undefined) {
+                                (elements.nodeType ? [ elements ] : elements).forEach(function(element) {
+                                    VelocityStatic.CSS.setPropertyValue(element, "opacity", 0);
+                                });
+                            }
+                            if (redirectOptions.animateParentHeight && direction) {
+                                animateParentHeight(elements, direction[0], redirectDuration + opts.delay, redirectOptions.stagger);
+                            }
+                        };
+                    }
+                    if (redirectOptions.display !== null) {
+                        if (redirectOptions.display !== undefined && redirectOptions.display !== "none") {
+                            opts.display = redirectOptions.display;
+                        } else if (/In$/.test(effectName)) {
+                            var defaultDisplay = VelocityStatic.CSS.Values.getDisplayType(element);
+                            opts.display = defaultDisplay === "inline" ? "inline-block" : defaultDisplay;
+                        }
+                    }
+                    if (redirectOptions.visibility && redirectOptions.visibility !== "hidden") {
+                        opts.visibility = redirectOptions.visibility;
+                    }
+                }
+                if (callIndex === properties.calls.length - 1) {
+                    var injectFinalCallbacks = function() {
+                        if ((redirectOptions.display === undefined || redirectOptions.display === "none") && /Out$/.test(effectName)) {
+                            (elements.nodeType ? [ elements ] : elements).forEach(function(element) {
+                                VelocityStatic.CSS.setPropertyValue(element, "display", "none");
+                            });
+                        }
+                        if (redirectOptions.complete) {
+                            redirectOptions.complete.call(elements, elements);
+                        }
+                        if (promiseData) {
+                            promiseData.resolver(elements || element);
+                        }
+                    };
+                    opts.complete = function() {
+                        if (loop) {
+                            VelocityStatic.Redirects[effectName](element, redirectOptions, elementsIndex, elementsSize, elements, promiseData, loop === true ? true : Math.max(0, loop - 1));
+                        }
+                        if (properties.reset) {
+                            for (var resetProperty in properties.reset) {
+                                if (!properties.reset.hasOwnProperty(resetProperty)) {
+                                    continue;
+                                }
+                                var resetValue = properties.reset[resetProperty];
+                                if (VelocityStatic.CSS.Hooks.registered[resetProperty] === undefined && (typeof resetValue === "string" || typeof resetValue === "number")) {
+                                    properties.reset[resetProperty] = [ properties.reset[resetProperty], properties.reset[resetProperty] ];
+                                }
+                            }
+                            var resetOptions = {
+                                duration: 0,
+                                queue: false
+                            };
+                            if (finalElement) {
+                                resetOptions.complete = injectFinalCallbacks;
+                            }
+                            Velocity(element, properties.reset, resetOptions);
+                        } else if (finalElement) {
+                            injectFinalCallbacks();
+                        }
+                    };
+                    if (redirectOptions.visibility === "hidden") {
+                        opts.visibility = redirectOptions.visibility;
+                    }
+                }
+                Velocity(element, propertyMap, opts);
+            }
+        };
+        return Velocity;
+    }
+    VelocityStatic.RegisterEffect = RegisterEffect;
+})(VelocityStatic || (VelocityStatic = {}));
+
+var VelocityStatic;
+
+(function(VelocityStatic) {
     function resumeAll(queueName) {
         for (var activeCall = VelocityStatic.State.first; activeCall; activeCall = activeCall.next) {
             if (queueName !== undefined && (activeCall.options.queue !== queueName || activeCall.options.queue === false)) {
@@ -1748,6 +1885,39 @@ var VelocityStatic;
         }
     }
     VelocityStatic.resumeAll = resumeAll;
+})(VelocityStatic || (VelocityStatic = {}));
+
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    function RunSequence(originalSequence) {
+        var sequence = $.extend(true, [], originalSequence);
+        if (sequence.length > 1) {
+            $.each(sequence.reverse(), function(i, currentCall) {
+                var nextCall = sequence[i + 1];
+                if (nextCall) {
+                    var currentCallOptions = currentCall.o || currentCall.options, nextCallOptions = nextCall.o || nextCall.options;
+                    var timing = currentCallOptions && currentCallOptions.sequenceQueue === false ? "begin" : "complete", callbackOriginal = nextCallOptions && nextCallOptions[timing], options = {};
+                    options[timing] = function() {
+                        var nextCallElements = nextCall.e || nextCall.elements;
+                        var elements = nextCallElements.nodeType ? [ nextCallElements ] : nextCallElements;
+                        if (callbackOriginal) {
+                            callbackOriginal.call(elements, elements);
+                        }
+                        Velocity(currentCall);
+                    };
+                    if (nextCall.o) {
+                        nextCall.o = $.extend({}, nextCallOptions, options);
+                    } else {
+                        nextCall.options = $.extend({}, nextCallOptions, options);
+                    }
+                }
+            });
+            sequence.reverse();
+        }
+        Velocity(sequence[0]);
+    }
+    VelocityStatic.RunSequence = RunSequence;
 })(VelocityStatic || (VelocityStatic = {}));
 
 var VelocityStatic;
@@ -2714,7 +2884,7 @@ var IE = function() {
     } else {
         for (var i = 7; i > 4; i--) {
             var div = document.createElement("div");
-            div.innerHTML = "\x3c!--[if IE " + i + "]><span></span><![endif]--\x3e";
+            div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
             if (div.getElementsByTagName("span").length) {
                 div = null;
                 return i;
