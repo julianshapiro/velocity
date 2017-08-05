@@ -1,11 +1,3 @@
-
-/* Step easing generator. */
-function generateStep(steps) {
-	return function(p) {
-		return Math.round(p * steps) * (1 / steps);
-	};
-}
-
 /* Determine the appropriate easing type given an easing input. */
 function getEasing(value, duration) {
 	var easing = value;

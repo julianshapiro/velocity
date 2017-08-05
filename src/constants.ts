@@ -2,8 +2,6 @@
  Constants
  *****************/
 
-// Version
-
 const MAJOR = 2;
 const MINOR = 0;
 const PATCH = 0;

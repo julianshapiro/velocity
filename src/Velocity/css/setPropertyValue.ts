@@ -6,11 +6,25 @@ namespace VelocityStatic {
 		 ****************************/
 
 		/* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
-		export function setPropertyValue(element: HTMLorSVGElement, property: string, propertyValue: any, rootPropertyValue?, scrollData?: ScrollData) {
+		export function setPropertyValue(element: HTMLorSVGElement, property: string, propertyValue: any, percentComplete: number, rootPropertyValue?, scrollData?: ScrollData) {
 			var propertyName = property;
 
-			/* In order to be subjected to call options and element queueing, scroll animation is routed through Velocity as if it were a standard CSS property. */
+			//			if (property === "display") {
+			//				if (propertyValue === "none") {
+			//					if (percentComplete !== 1) {
+			//						element.style[propertyName] = propertyValue;
+			//					}
+			//					if (propertyValue === "flex") {
+			//						var flexValues = ["-webkit-box", "-moz-box", "-ms-flexbox", "-webkit-flex"];
+			//
+			//						flexValues.forEach(function(flexValue) {
+			//							CSS.setPropertyValue(element, "display", flexValue, percentComplete);
+			//						});
+			//					}
+			//				}
+			//			} else
 			if (property === "scroll") {
+				/* In order to be subjected to call options and element queueing, scroll animation is routed through Velocity as if it were a standard CSS property. */
 				/* If a container option is present, scroll the container instead of the browser window. */
 				if (scrollData.container) {
 					scrollData.container["scroll" + scrollData.direction] = propertyValue;

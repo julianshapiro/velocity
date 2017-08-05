@@ -4,7 +4,7 @@ namespace VelocityStatic {
 	export function resumeAll(queueName) {
 		for (var activeCall = VelocityStatic.State.first; activeCall; activeCall = activeCall.next) {
 			/* If we have a queueName and this call is not on that queue, skip */
-			if (queueName !== undefined && ((activeCall.options.queue !== queueName) || (activeCall.options.queue === false))) {
+			if (queueName !== undefined && ((activeCall.queue !== queueName) || (activeCall.queue === false))) {
 				continue;
 			}
 

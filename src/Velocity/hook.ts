@@ -1,10 +1,4 @@
 namespace VelocityStatic {
-	/* For legacy support, also expose the literal animate method. */
-	export var animate = Velocity;
-
-	/* A shim of the jQuery utility functions used by Velocity -- provided by Velocity's optional jQuery shim. */
-	export var Utilities = $;
-
 	/* A parallel to jQuery's $.css(), used for getting/setting Velocity's hooked CSS properties. */
 	export function hook(elements: HTMLorSVGElement[], arg2, arg3) {
 		var value;
@@ -25,7 +19,7 @@ namespace VelocityStatic {
 				/* Set property value. */
 			} else {
 				/* sPV returns an array of the normalized propertyName/propertyValue pair used to update the DOM. */
-				var adjustedSet = VelocityStatic.CSS.setPropertyValue(element, arg2, arg3);
+				var adjustedSet = VelocityStatic.CSS.setPropertyValue(element, arg2, arg3, 1);
 
 				/* Transform properties don't automatically set. They have to be flushed to the DOM. */
 				if (adjustedSet[0] === "transform") {

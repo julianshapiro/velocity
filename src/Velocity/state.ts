@@ -27,7 +27,7 @@ namespace VelocityStatic {
 			/* Container for every in-progress call to Velocity. */
 			first: AnimationCall,
 			last: AnimationCall,
-			/* Store unused AnimationCall objects, LIFO style, clear when no animations left - used to prevent GC thrashing */
-			cache: AnimationCall
+			/* First new animation - to shortcut starting them all up and push any css reads to the start of the tick */
+			firstNew: AnimationCall
 	};
 };

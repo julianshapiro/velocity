@@ -3,6 +3,7 @@
 ///<reference path="constants.ts" />
 ///<reference path="types.ts" />
 ///<reference path="utility.ts" />
+///<reference path="cache.ts" />
 ///<reference path="Velocity/_all.d.ts" />
 ///<reference path="core.ts" />
 

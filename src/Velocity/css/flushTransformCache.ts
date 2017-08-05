@@ -31,7 +31,7 @@ namespace VelocityStatic {
 
 				/* Iterate through the transform properties in the user-defined property map order.
 				 (This mimics the behavior of non-SVG transform animation.) */
-				$.each(Data(element).transformCache, function(transformName) {
+				for (var transformName in Data(element).transformCache) {
 					/* Except for with skewX/Y, revert the axis-specific transform subproperties to their axis-free master
 					 properties so that they match up with SVG's accepted transform properties. */
 					if (/^translate/i.test(transformName)) {
@@ -51,13 +51,13 @@ namespace VelocityStatic {
 						 re-insert the same master property if we encounter another one of its axis-specific properties. */
 						delete SVGTransforms[transformName];
 					}
-				});
+				}
 			} else {
 				var transformValue,
 					perspective;
 
 				/* Transform properties are stored as members of the transformCache object. Concatenate all the members into a string. */
-				$.each(Data(element).transformCache, function(transformName) {
+				for (var transformName in Data(element).transformCache) {
 					transformValue = Data(element).transformCache[transformName];
 
 					/* Transform's perspective subproperty must be set first in order to take effect. Store it temporarily. */
@@ -72,7 +72,7 @@ namespace VelocityStatic {
 					}
 
 					transformString += transformName + transformValue + " ";
-				});
+				}
 
 				/* If present, set the perspective subproperty first. */
 				if (perspective) {
@@ -80,7 +80,7 @@ namespace VelocityStatic {
 				}
 			}
 
-			setPropertyValue(element, "transform", transformString);
+			setPropertyValue(element, "transform", transformString, 1);
 		}
 	};
 };

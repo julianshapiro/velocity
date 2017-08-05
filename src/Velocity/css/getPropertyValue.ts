@@ -18,82 +18,67 @@ namespace VelocityStatic {
 				 We subtract border and padding to get the sum of interior + scrollbar. */
 				var computedValue: string | number = 0;
 
-				/* IE<=8 doesn't support window.getComputedStyle, thus we defer to jQuery, which has an extensive array
-				 of hacks to accurately retrieve IE8 property values. Re-implementing that logic here is not worth bloating the
-				 codebase for a dying browser. The performance repercussions of using jQuery here are minimal since
-				 Velocity is optimized to rarely (and sometimes never) query the DOM. Further, the $.css() codepath isn't that slow. */
-				if (IE <= 8) {
-					computedValue = $.css(element, property); /* GET */
-					/* All other browsers support getComputedStyle. The returned live object reference is cached onto its
-					 associated element so that it does not need to be refetched upon every GET. */
-				} else {
-					/* Browsers do not return height and width values for elements that are set to display:"none". Thus, we temporarily
-					 toggle display to the element type's default value. */
-					var toggleDisplay = false;
+				/* Browsers do not return height and width values for elements that are set to display:"none". Thus, we temporarily
+				 toggle display to the element type's default value. */
+				var toggleDisplay = false;
 
-					if (/^(width|height)$/.test(property) && getPropertyValue(element, "display") === 0) {
-						toggleDisplay = true;
-						setPropertyValue(element, "display", Values.getDisplayType(element));
-					}
-
-					var revertDisplay = function() {
-						if (toggleDisplay) {
-							setPropertyValue(element, "display", "none");
-						}
-					};
-
-					if (!forceStyleLookup) {
-						if (property === "height" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-							var contentBoxHeight = element.offsetHeight - (parseFloat(getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(getPropertyValue(element, "paddingBottom")) || 0);
-							revertDisplay();
-
-							return contentBoxHeight;
-						} else if (property === "width" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-							var contentBoxWidth = element.offsetWidth - (parseFloat(getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(getPropertyValue(element, "paddingRight")) || 0);
-							revertDisplay();
-
-							return contentBoxWidth;
-						}
-					}
-
-					var computedStyle: CSSStyleDeclaration,
-						data = Data(element);
-
-					/* For elements that Velocity hasn't been called on directly (e.g. when Velocity queries the DOM on behalf
-					 of a parent of an element its animating), perform a direct getComputedStyle lookup since the object isn't cached. */
-					if (!data) {
-						computedStyle = window.getComputedStyle(element, null); /* GET */
-						/* If the computedStyle object has yet to be cached, do so now. */
-					} else if (!data.computedStyle) {
-						computedStyle = data.computedStyle = window.getComputedStyle(element, null); /* GET */
-						/* If computedStyle is cached, use it. */
-					} else {
-						computedStyle = data.computedStyle;
-					}
-
-					/* IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
-					 Also, in all browsers, when border colors aren't all the same, a compound value is returned that Velocity isn't setup to parse.
-					 So, as a polyfill for querying individual border side colors, we just return the top border's color and animate all borders from that value. */
-					if (property === "borderColor") {
-						property = "borderTopColor";
-					}
-
-					/* IE9 has a bug in which the "filter" property must be accessed from computedStyle using the getPropertyValue method
-					 instead of a direct property lookup. The getPropertyValue method is slower than a direct lookup, which is why we avoid it by default. */
-					if (IE === 9 && property === "filter") {
-						computedValue = computedStyle.getPropertyValue(property); /* GET */
-					} else {
-						computedValue = computedStyle[property];
-					}
-
-					/* Fall back to the property's style value (if defined) when computedValue returns nothing,
-					 which can happen when the element hasn't been painted. */
-					if (computedValue === "" || computedValue === null) {
-						computedValue = element.style[property];
-					}
-
-					revertDisplay();
+				if (/^(width|height)$/.test(property) && getPropertyValue(element, "display") === 0) {
+					toggleDisplay = true;
+					setPropertyValue(element, "display", Values.getDisplayType(element), 1);
 				}
+
+				var revertDisplay = function() {
+					if (toggleDisplay) {
+						setPropertyValue(element, "display", "none", 1);
+					}
+				};
+
+				if (!forceStyleLookup) {
+					if (property === "height" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
+						var contentBoxHeight = element.offsetHeight - (parseFloat(getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(getPropertyValue(element, "paddingBottom")) || 0);
+						revertDisplay();
+
+						return contentBoxHeight;
+					} else if (property === "width" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
+						var contentBoxWidth = element.offsetWidth - (parseFloat(getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(getPropertyValue(element, "paddingRight")) || 0);
+						revertDisplay();
+
+						return contentBoxWidth;
+					}
+				}
+
+				var data = Data(element),
+					computedStyle: CSSStyleDeclaration = data && data.computedStyle ? data.computedStyle : window.getComputedStyle(element, null);
+
+				/* For elements that Velocity hasn't been called on directly (e.g. when Velocity queries the DOM on behalf
+				 of a parent of an element its animating), perform a direct getComputedStyle lookup since the object isn't cached. */
+				if (data && !data.computedStyle) {
+					data.computedStyle = computedStyle;
+					/* If computedStyle is cached, use it. */
+				}
+
+				/* IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
+				 Also, in all browsers, when border colors aren't all the same, a compound value is returned that Velocity isn't setup to parse.
+				 So, as a polyfill for querying individual border side colors, we just return the top border's color and animate all borders from that value. */
+				if (property === "borderColor") {
+					property = "borderTopColor";
+				}
+
+				/* IE9 has a bug in which the "filter" property must be accessed from computedStyle using the getPropertyValue method
+				 instead of a direct property lookup. The getPropertyValue method is slower than a direct lookup, which is why we avoid it by default. */
+				if (IE === 9 && property === "filter") {
+					computedValue = computedStyle.getPropertyValue(property); /* GET */
+				} else {
+					computedValue = computedStyle[property];
+				}
+
+				/* Fall back to the property's style value (if defined) when computedValue returns nothing,
+				 which can happen when the element hasn't been painted. */
+				if (computedValue === "" || computedValue === null) {
+					computedValue = element.style[property];
+				}
+
+				revertDisplay();
 
 				/* For top, right, bottom, and left (TRBL) values that are set to "auto" on elements of "fixed" or "absolute" position,
 				 defer to jQuery for converting "auto" to a numeric value. (For elements with a "static" or "relative" position, "auto" has the same
@@ -104,13 +89,9 @@ namespace VelocityStatic {
 				if (computedValue === "auto" && /^(top|right|bottom|left)$/i.test(property)) {
 					var position = computePropertyValue(element, "position"); /* GET */
 
-					/* For absolute positioning, jQuery's $.position() only returns values for top and left;
-					 right and bottom will have their "auto" value reverted to 0. */
-					/* Note: A jQuery object must be created here since jQuery doesn't have a low-level alias for $.position().
-					 Not a big deal since we're currently in a GET batch anyway. */
 					if (position === "fixed" || (position === "absolute" && /top|left/i.test(property))) {
-						/* Note: jQuery strips the pixel unit from its returned values; we re-add it here to conform with computePropertyValue's behavior. */
-						computedValue = $(element).position()[property] + "px"; /* GET */
+						/* Note: this has no pixel unit on its returned values; we re-add it here to conform with computePropertyValue's behavior. */
+						computedValue = _position(element)[property] + "px"; /* GET */
 					}
 				}
 

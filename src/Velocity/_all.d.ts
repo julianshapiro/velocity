@@ -8,6 +8,7 @@
 ///<reference path="init.ts" />
 ///<reference path="mock.ts" />
 ///<reference path="pauseAll.ts" />
+///<reference path="queue.ts" />
 ///<reference path="redirects.ts" />
 ///<reference path="registereffect.ts" />
 ///<reference path="resumeAll.ts" />
@@ -15,4 +16,5 @@
 ///<reference path="state.ts" />
 ///<reference path="tick.ts" />
 ///<reference path="timestamp.ts" />
+///<reference path="tweens.ts" />
 ///<reference path="version.ts" />

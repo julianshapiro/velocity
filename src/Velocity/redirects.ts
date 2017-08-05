@@ -10,7 +10,7 @@ namespace VelocityStatic {
 	/* slideUp, slideDown */
 	["Down", "Up"].forEach(function(direction) {
 		Redirects["slide" + direction] = function(element: HTMLorSVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: HTMLorSVGElement[], promiseData) {
-			var opts: ElementData = _assign({}, options) as ElementData,
+			var opts = {...options},
 				begin = opts.begin,
 				complete = opts.complete,
 				inlineValues = {},
@@ -78,7 +78,7 @@ namespace VelocityStatic {
 	/* fadeIn, fadeOut */
 	["In", "Out"].forEach(function(direction) {
 		Redirects["fade" + direction] = function(element: HTMLorSVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: HTMLorSVGElement[], promiseData) {
-			var opts: ElementData = _assign({}, options) as ElementData,
+			var opts = {...options},
 				complete = opts.complete,
 				propertiesMap = {
 					opacity: (direction === "In") ? 1 : 0

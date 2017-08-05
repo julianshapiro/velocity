@@ -27,11 +27,10 @@ namespace VelocityStatic {
 
 			/* A "registered" hook is one that has been converted from its template form into a live,
 			 tweenable property. It contains data to associate it with its root property. */
-			export var registered = {
-				/* Note: A registered hook looks like this ==> textShadowBlur: [ "textShadow", 3 ],
-				 which consists of the subproperty's name, the associated root property's name,
-				 and the subproperty's position in the root's value. */
-			}
+			/* Note: A registered hook looks like this ==> textShadowBlur: [ "textShadow", 3 ],
+			 which consists of the subproperty's name, the associated root property's name,
+			 and the subproperty's position in the root's value. */
+			export var registered = Object.create(null);
 
 			/* Convert the templates into individual hooks then append them to the registered object above. */
 			export function register() {
@@ -42,21 +41,21 @@ namespace VelocityStatic {
 				for (var i = 0; i < CSS.Lists.colors.length; i++) {
 					var rgbComponents = (CSS.Lists.colors[i] === "color") ? "0 0 0 1" : "255 255 255 1";
 
-					CSS.Hooks.templates[CSS.Lists.colors[i]] = ["Red Green Blue Alpha", rgbComponents];
+					templates[CSS.Lists.colors[i]] = ["Red Green Blue Alpha", rgbComponents];
 				}
 
-				var rootProperty,
-					hookTemplate,
-					hookNames;
+				var rootProperty: string,
+					hookTemplate: string[],
+					hookNames: string[];
 
 				/* In IE, color values inside compound-value properties are positioned at the end the value instead of at the beginning.
 				 Thus, we re-arrange the templates accordingly. */
 				if (IE) {
-					for (rootProperty in CSS.Hooks.templates) {
-						if (!CSS.Hooks.templates.hasOwnProperty(rootProperty)) {
+					for (rootProperty in templates) {
+						if (!templates.hasOwnProperty(rootProperty)) {
 							continue;
 						}
-						hookTemplate = CSS.Hooks.templates[rootProperty];
+						hookTemplate = templates[rootProperty];
 						hookNames = hookTemplate[0].split(" ");
 
 						var defaultValues = hookTemplate[1].match(CSS.RegEx.valueSplit);
@@ -67,17 +66,17 @@ namespace VelocityStatic {
 							defaultValues.push(defaultValues.shift());
 
 							/* Replace the existing template for the hook's root property. */
-							CSS.Hooks.templates[rootProperty] = [hookNames.join(" "), defaultValues.join(" ")];
+							templates[rootProperty] = [hookNames.join(" "), defaultValues.join(" ")];
 						}
 					}
 				}
 
 				/* Hook registration. */
-				for (rootProperty in CSS.Hooks.templates) {
-					if (!CSS.Hooks.templates.hasOwnProperty(rootProperty)) {
+				for (rootProperty in templates) {
+					if (!templates.hasOwnProperty(rootProperty)) {
 						continue;
 					}
-					hookTemplate = CSS.Hooks.templates[rootProperty];
+					hookTemplate = templates[rootProperty];
 					hookNames = hookTemplate[0].split(" ");
 
 					for (var j in hookNames) {
@@ -89,7 +88,7 @@ namespace VelocityStatic {
 
 						/* For each hook, register its full name (e.g. textShadowBlur) with its root property (e.g. textShadow)
 						 and the hook's position in its template's default value string. */
-						CSS.Hooks.registered[fullHookName] = [rootProperty, hookPosition];
+						registered[fullHookName] = [rootProperty, hookPosition];
 					}
 				}
 			}
@@ -100,7 +99,7 @@ namespace VelocityStatic {
 			/* Look up the root property associated with the hook (e.g. return "textShadow" for "textShadowBlur"). */
 			/* Since a hook cannot be set directly (the browser won't recognize it), style updating for hooks is routed through the hook's root property. */
 			export function getRoot(property) {
-				var hookData = CSS.Hooks.registered[property];
+				var hookData = registered[property];
 
 				if (hookData) {
 					return hookData[0];
@@ -141,11 +140,11 @@ namespace VelocityStatic {
 				}
 
 				/* If rootPropertyValue is a CSS null-value (from which there's inherently no hook value to extract),
-				 default to the root's default value as defined in vCSS.Hooks.templates. */
+				 default to the root's default value as defined in vtemplates. */
 				/* Note: CSS null-values include "none", "auto", and "transparent". They must be converted into their
 				 zero-values (e.g. textShadow: "none" ==> textShadow: "0px 0px 0px black") for hook manipulation to proceed. */
 				if (CSS.Values.isCSSNullValue(rootPropertyValue)) {
-					rootPropertyValue = CSS.Hooks.templates[rootProperty][1];
+					rootPropertyValue = templates[rootProperty][1];
 				}
 
 				return rootPropertyValue;
@@ -153,13 +152,13 @@ namespace VelocityStatic {
 
 			/* Extracted the hook's value from its root property's value. This is used to get the starting value of an animating hook. */
 			export function extractValue(fullHookName, rootPropertyValue) {
-				var hookData = CSS.Hooks.registered[fullHookName];
+				var hookData = registered[fullHookName];
 
 				if (hookData) {
 					var hookRoot = hookData[0],
 						hookPosition = hookData[1];
 
-					rootPropertyValue = CSS.Hooks.cleanRootPropertyValue(hookRoot, rootPropertyValue);
+					rootPropertyValue = cleanRootPropertyValue(hookRoot, rootPropertyValue);
 
 					/* Split rootPropertyValue into its constituent hook values then grab the desired hook at its standard position. */
 					return rootPropertyValue.toString().match(CSS.RegEx.valueSplit)[hookPosition];
@@ -172,7 +171,7 @@ namespace VelocityStatic {
 			/* Inject the hook's value into its root property's value. This is used to piece back together the root property
 			 once Velocity has updated one of its individually hooked values through tweening. */
 			export function injectValue(fullHookName, hookValue, rootPropertyValue) {
-				var hookData = CSS.Hooks.registered[fullHookName];
+				var hookData = registered[fullHookName];
 
 				if (hookData) {
 					var hookRoot = hookData[0],
@@ -180,7 +179,7 @@ namespace VelocityStatic {
 						rootPropertyValueParts,
 						rootPropertyValueUpdated;
 
-					rootPropertyValue = CSS.Hooks.cleanRootPropertyValue(hookRoot, rootPropertyValue);
+					rootPropertyValue = cleanRootPropertyValue(hookRoot, rootPropertyValue);
 
 					/* Split rootPropertyValue into its individual hook values, replace the targeted value with hookValue,
 					 then reconstruct the rootPropertyValue string. */

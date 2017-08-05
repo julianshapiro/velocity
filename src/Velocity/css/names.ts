@@ -27,7 +27,7 @@ namespace VelocityStatic {
 			/* Determine whether a property should be set with a vendor prefix. */
 			/* If a prefixed version of the property exists, return it. Otherwise, return the original property name.
 			 If the property is not at all supported by the browser, return a false flag. */
-			prefixCheck: function(property) {
+			prefixCheck: function(property: string): [string, boolean] {
 				/* If this property has already been checked, return the cached value. */
 				if (State.prefixMatches[property]) {
 					return [State.prefixMatches[property], true];

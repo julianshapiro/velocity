@@ -24,7 +24,7 @@ namespace VelocityStatic {
 				propertiesToSum = ["height"];
 			}
 
-			$.each(propertiesToSum, function(i, property) {
+			propertiesToSum.forEach(function(property) {
 				totalHeightDelta += parseFloat(CSS.getPropertyValue(element, property));
 			});
 		});
@@ -82,7 +82,7 @@ namespace VelocityStatic {
 				opts.easing = callOptions.easing || "ease";
 				opts.delay = parseFloat(callOptions.delay) || 0;
 				opts.loop = !properties.loop && callOptions.loop;
-				opts._cacheValues = callOptions._cacheValues || true;
+				opts.cache = callOptions.cache || true;
 
 				/* Special processing for the first effect call. */
 				if (callIndex === 0) {
@@ -102,7 +102,7 @@ namespace VelocityStatic {
 							 and the first RAF tick. */
 							if ((direction && direction[0] === "In") && propertyMap.opacity !== undefined) {
 								(elements.nodeType ? [elements] : elements).forEach(function(element) {
-									CSS.setPropertyValue(element, "opacity", 0);
+									CSS.setPropertyValue(element, "opacity", 0, 1);
 								});
 							}
 
@@ -135,7 +135,7 @@ namespace VelocityStatic {
 					var injectFinalCallbacks = function() {
 						if ((redirectOptions.display === undefined || redirectOptions.display === "none") && /Out$/.test(effectName)) {
 							(elements.nodeType ? [elements] : elements).forEach(function(element) {
-								CSS.setPropertyValue(element, "display", "none");
+								CSS.setPropertyValue(element, "display", "none", 1);
 							});
 						}
 						if (redirectOptions.complete) {

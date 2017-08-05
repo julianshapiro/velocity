@@ -3,7 +3,7 @@
 namespace VelocityStatic {
 
 	export var Easings: {[name: string]: any} = {
-		/* jQuery easings. */
+		/* Basic (same as jQuery) easings. */
 		linear: function(p) {
 			return p;
 		},

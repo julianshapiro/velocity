@@ -5,10 +5,10 @@ namespace VelocityStatic {
 
 	/* Note: Sequence calls must use Velocity's single-object arguments syntax. */
 	export function RunSequence(originalSequence) {
-		var sequence = $.extend(true, [], originalSequence);
+		var sequence = _deepCopyObject([], originalSequence);
 
 		if (sequence.length > 1) {
-			$.each(sequence.reverse(), function(i, currentCall) {
+			sequence.reverse().forEach(function(currentCall, i) {
 				var nextCall = sequence[i + 1];
 
 				if (nextCall) {
@@ -33,9 +33,9 @@ namespace VelocityStatic {
 					};
 
 					if (nextCall.o) {
-						nextCall.o = $.extend({}, nextCallOptions, options);
+						nextCall.o = {...nextCallOptions, ...options};
 					} else {
-						nextCall.options = $.extend({}, nextCallOptions, options);
+						nextCall.options = {...nextCallOptions, ...options};
 					}
 				}
 			});
