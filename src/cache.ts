@@ -30,8 +30,7 @@ namespace VelocityStatic {
 	 * same order and with the same content.
 	 */
 	const emptyAnimation: {[key in keyof AnimationCall]: PropertyDescriptor} = {
-		begin: defaultUndefinedDescriptor,
-		complete: defaultUndefinedDescriptor,
+		callbacks: defaultUndefinedDescriptor,
 		delay: defaultNumberDescriptor,
 		duration: defaultNumberDescriptor,
 		easing: defaultUndefinedDescriptor,
@@ -44,11 +43,10 @@ namespace VelocityStatic {
 		paused: defaultUndefinedDescriptor,
 		percentComplete: defaultNumberDescriptor,
 		prev: defaultUndefinedDescriptor,
-		progress: defaultUndefinedDescriptor,
 		properties: defaultUndefinedDescriptor,
 		queue: defaultUndefinedDescriptor,
 		repeat: defaultUndefinedDescriptor,
-		resolver: defaultUndefinedDescriptor,
+		repeatAgain: defaultUndefinedDescriptor,
 		timeStart: defaultNumberDescriptor,
 		tweens: defaultUndefinedDescriptor,
 		display: defaultUndefinedDescriptor,

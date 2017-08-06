@@ -13,21 +13,27 @@ function expandTweens() {
 		let elements = activeCall.elements,
 			elementsLength = elements.length,
 			element = activeCall.element,
-			elementArrayIndex = elements.indexOf(element);
+			elementArrayIndex = elements.indexOf(element),
+			callbacks = activeCall.callbacks;
 
 		/*******************
 		 Option: Begin
 		 *******************/
 
 		/* The begin callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
-		if (activeCall.begin) {
-			/* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
-			try {
-				activeCall.begin.call(elements, elements);
-			} catch (error) {
-				setTimeout(function() {
-					throw error;
-				}, 1);
+		if (callbacks && callbacks.started++ === 0) {
+			callbacks.first === activeCall;
+			if (callbacks.begin) {
+				/* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
+				try {
+					callbacks.begin.call(elements, elements);
+				} catch (error) {
+					setTimeout(function() {
+						throw error;
+					}, 1);
+				}
+				// Only called once, even if reversed or repeated
+				callbacks.begin = undefined;
 			}
 		}
 
@@ -787,49 +793,52 @@ function expandTweens() {
 			};
 
 			/* Create a tween out of each property, and append its associated data to tweensContainer. */
-			for (var property in propertiesMap) {
+			if (propertiesMap) {
+				for (let property in propertiesMap) {
 
-				if (!propertiesMap.hasOwnProperty(property)) {
-					continue;
+					if (!propertiesMap.hasOwnProperty(property)) {
+						continue;
+					}
+					/* The original property name's format must be used for the parsePropertyValue() lookup,
+					 but we then use its camelCase styling to normalize it for manipulation. */
+					var propertyName = VelocityStatic.CSS.Names.camelCase(property),
+						valueData = parsePropertyValue(propertiesMap[property]);
+
+					/* Find shorthand color properties that have been passed a hex string. */
+					/* Would be quicker to use vVelocityStatic.CSS.Lists.colors.includes() if possible */
+					//				if (_inArray(VelocityStatic.CSS.Lists.colors, propertyName)) {
+					//					/* Parse the value data for each shorthand. */
+					//					var endValue = valueData[0],
+					//						easing = valueData[1],
+					//						startValue = valueData[2];
+					//
+					//					if (VelocityStatic.CSS.RegEx.isHex.test(endValue)) {
+					//						/* Convert the hex strings into their RGB component arrays. */
+					//						var colorComponents = ["Red", "Green", "Blue"],
+					//							endValueRGB = VelocityStatic.CSS.Values.hexToRgb(endValue),
+					//							startValueRGB = startValue ? VelocityStatic.CSS.Values.hexToRgb(startValue) : undefined;
+					//
+					//						/* Inject the RGB component tweens into propertiesMap. */
+					//						for (var i = 0; i < colorComponents.length; i++) {
+					//							var dataArray = [endValueRGB[i]];
+					//
+					//							if (easing) {
+					//								dataArray.push(easing);
+					//							}
+					//
+					//							if (startValueRGB !== undefined) {
+					//								dataArray.push(startValueRGB[i]);
+					//							}
+					//
+					//							fixPropertyValue(propertyName + colorComponents[i], dataArray);
+					//						}
+					//						/* If we have replaced a shortcut color value then don't update the standard property name */
+					//						continue;
+					//					}
+					//				}
+					fixPropertyValue(propertyName, valueData);
 				}
-				/* The original property name's format must be used for the parsePropertyValue() lookup,
-				 but we then use its camelCase styling to normalize it for manipulation. */
-				var propertyName = VelocityStatic.CSS.Names.camelCase(property),
-					valueData = parsePropertyValue(propertiesMap[property]);
-
-				/* Find shorthand color properties that have been passed a hex string. */
-				/* Would be quicker to use vVelocityStatic.CSS.Lists.colors.includes() if possible */
-				//				if (_inArray(VelocityStatic.CSS.Lists.colors, propertyName)) {
-				//					/* Parse the value data for each shorthand. */
-				//					var endValue = valueData[0],
-				//						easing = valueData[1],
-				//						startValue = valueData[2];
-				//
-				//					if (VelocityStatic.CSS.RegEx.isHex.test(endValue)) {
-				//						/* Convert the hex strings into their RGB component arrays. */
-				//						var colorComponents = ["Red", "Green", "Blue"],
-				//							endValueRGB = VelocityStatic.CSS.Values.hexToRgb(endValue),
-				//							startValueRGB = startValue ? VelocityStatic.CSS.Values.hexToRgb(startValue) : undefined;
-				//
-				//						/* Inject the RGB component tweens into propertiesMap. */
-				//						for (var i = 0; i < colorComponents.length; i++) {
-				//							var dataArray = [endValueRGB[i]];
-				//
-				//							if (easing) {
-				//								dataArray.push(easing);
-				//							}
-				//
-				//							if (startValueRGB !== undefined) {
-				//								dataArray.push(startValueRGB[i]);
-				//							}
-				//
-				//							fixPropertyValue(propertyName + colorComponents[i], dataArray);
-				//						}
-				//						/* If we have replaced a shortcut color value then don't update the standard property name */
-				//						continue;
-				//					}
-				//				}
-				fixPropertyValue(propertyName, valueData);
+				activeCall.properties = undefined;
 			}
 			//		}
 

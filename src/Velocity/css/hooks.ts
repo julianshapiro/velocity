@@ -7,8 +7,6 @@ namespace VelocityStatic {
 
 		/* Hooks allow a subproperty (e.g. "boxShadowBlur") of a compound-value CSS property
 		 (e.g. "boxShadow: X Y Blur Spread Color") to be animated as if it were a discrete property. */
-		/* Note: Beyond enabling fine-grained property animation, hooking is necessary since Velocity only
-		 tweens properties with single numeric values; unlike CSS transitions, Velocity does not interpolate compound-values. */
 		export namespace Hooks {
 			/********************
 			 Registration

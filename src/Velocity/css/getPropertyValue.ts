@@ -16,39 +16,37 @@ namespace VelocityStatic {
 				 element's scrollbars are visible (which expands the element's dimensions). Thus, we defer to the more accurate
 				 offsetHeight/Width property, which includes the total dimensions for interior, border, padding, and scrollbar.
 				 We subtract border and padding to get the sum of interior + scrollbar. */
-				var computedValue: string | number = 0;
+				var computedValue: string | number = 0,
+					/* Browsers do not return height and width values for elements that are set to display:"none". Thus, we temporarily
+					 toggle display to the element type's default value. */
+					data = Data(element),
+					computedStyle = data && data.computedStyle ? data.computedStyle : window.getComputedStyle(element, null),
+					toggleDisplay: boolean,
+					revertDisplay = function() {
+						if (toggleDisplay) {
+							setPropertyValue(element, "display", "none", 1);
+						}
+					};
 
-				/* Browsers do not return height and width values for elements that are set to display:"none". Thus, we temporarily
-				 toggle display to the element type's default value. */
-				var toggleDisplay = false;
 
 				if (/^(width|height)$/.test(property) && getPropertyValue(element, "display") === 0) {
 					toggleDisplay = true;
 					setPropertyValue(element, "display", Values.getDisplayType(element), 1);
 				}
 
-				var revertDisplay = function() {
-					if (toggleDisplay) {
-						setPropertyValue(element, "display", "none", 1);
-					}
-				};
-
 				if (!forceStyleLookup) {
 					if (property === "height" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-						var contentBoxHeight = element.offsetHeight - (parseFloat(getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(getPropertyValue(element, "paddingBottom")) || 0);
+						let contentBoxHeight = element.offsetHeight - (parseFloat(getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(getPropertyValue(element, "paddingBottom")) || 0);
 						revertDisplay();
 
 						return contentBoxHeight;
 					} else if (property === "width" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-						var contentBoxWidth = element.offsetWidth - (parseFloat(getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(getPropertyValue(element, "paddingRight")) || 0);
+						let contentBoxWidth = element.offsetWidth - (parseFloat(getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(getPropertyValue(element, "paddingRight")) || 0);
 						revertDisplay();
 
 						return contentBoxWidth;
 					}
 				}
-
-				var data = Data(element),
-					computedStyle: CSSStyleDeclaration = data && data.computedStyle ? data.computedStyle : window.getComputedStyle(element, null);
 
 				/* For elements that Velocity hasn't been called on directly (e.g. when Velocity queries the DOM on behalf
 				 of a parent of an element its animating), perform a direct getComputedStyle lookup since the object isn't cached. */
@@ -60,12 +58,14 @@ namespace VelocityStatic {
 				/* IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
 				 Also, in all browsers, when border colors aren't all the same, a compound value is returned that Velocity isn't setup to parse.
 				 So, as a polyfill for querying individual border side colors, we just return the top border's color and animate all borders from that value. */
+				/* TODO: add polyfill */
 				if (property === "borderColor") {
 					property = "borderTopColor";
 				}
 
 				/* IE9 has a bug in which the "filter" property must be accessed from computedStyle using the getPropertyValue method
 				 instead of a direct property lookup. The getPropertyValue method is slower than a direct lookup, which is why we avoid it by default. */
+				/* TODO: add polyfill */
 				if (IE === 9 && property === "filter") {
 					computedValue = computedStyle.getPropertyValue(property); /* GET */
 				} else {

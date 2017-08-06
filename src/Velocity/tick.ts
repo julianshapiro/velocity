@@ -95,15 +95,18 @@ namespace VelocityStatic {
 				easing: any,
 				hasProgress: boolean,
 				hasComplete: boolean,
+				getEasing = function(tweenDelta: number) {
+					return tweenDelta * (tween.reverse
+						? 1 - easing(1 - percentComplete, activeCall, tweenDelta)
+						: easing(percentComplete, activeCall, tweenDelta));
+				},
 				expandPattern = function($0, index: string, round: "!") {
 					if (percentComplete < 1) {
 						var startValue = tween.startValue[index],
-							tweenDelta = tween.endValue[index] - startValue,
-							result = startValue + (tweenDelta * easing(percentComplete, activeCall, tweenDelta));
+							result = startValue + getEasing(tween.endValue[index] - startValue);
 					} else {
 						result = tween.endValue[index];
 					}
-
 					return round ? Math.round(result) : result;
 				};
 
@@ -231,9 +234,7 @@ namespace VelocityStatic {
 						currentValue = tween.endValue as number;
 					} else {
 						/* Otherwise, calculate currentValue based on the current delta from startValue. */
-						let tweenDelta = (tween.endValue as number) - (tween.startValue as number);
-
-						currentValue = (tween.startValue as number) + (tweenDelta * easing(percentComplete, activeCall, tweenDelta));
+						currentValue = (tween.startValue as number) + getEasing((tween.endValue as number) - (tween.startValue as number));
 						/* If no value change is occurring, don't proceed with DOM updating. */
 					}
 					if (!firstTick && tween.currentValue === currentValue) {
@@ -333,8 +334,9 @@ namespace VelocityStatic {
 				if (activeCall.visibility !== undefined && activeCall.visibility !== "hidden") {
 					activeCall.visibility = false;
 				}
+				let callbacks = activeCall.callbacks;
 
-				if (activeCall.progress) {
+				if (callbacks && callbacks.first === activeCall && callbacks.progress) {
 					hasProgress = true;
 				}
 			}
@@ -342,9 +344,12 @@ namespace VelocityStatic {
 			if (hasProgress) {
 				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
 					nextCall = activeCall.next;
+
+					let callbacks = activeCall.callbacks;
+
 					/* Pass the elements and the timing data (percentComplete, msRemaining, timeStart, tweenDummyValue) into the progress callback. */
-					if (activeCall.progress) {
-						activeCall.progress.call(activeCall.elements,
+					if (callbacks && callbacks.first === activeCall && callbacks.progress) {
+						callbacks.progress.call(activeCall.elements,
 							activeCall.elements,
 							activeCall.percentComplete,
 							Math.max(0, activeCall.timeStart + activeCall.duration - timeCurrent),

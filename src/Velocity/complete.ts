@@ -17,11 +17,11 @@ namespace VelocityStatic {
 			isRepeat = activeCall.repeat;
 
 		if (!isStopped && (isLoop || isRepeat)) {
-			if (isLoop && activeCall.loop !== true) {
-				activeCall.loop--;
-			}
 			if (isRepeat && activeCall.repeat !== true) {
 				activeCall.repeat--;
+			} else if (isLoop && activeCall.loop !== true) {
+				activeCall.loop--;
+				activeCall.repeat = activeCall.repeatAgain;
 			}
 			/* If a rotateX/Y/Z property is being animated by 360 deg with loop:true, swap tween start/end values to enable
 			 continuous iterative rotation looping. (Otherise, the element would just rotate back and forth.) */
@@ -34,6 +34,7 @@ namespace VelocityStatic {
 
 					tweenContainer.startValue = tweenContainer.endValue;
 					tweenContainer.endValue = oldStartValue;
+					tweenContainer.reverse = !tweenContainer.reverse;
 				}
 			}
 
@@ -102,24 +103,31 @@ namespace VelocityStatic {
 
 			/* Complete is fired once per call (not once per element) and is passed the full raw DOM element set as both its context and its first argument. */
 			/* Note: Callbacks aren't fired when calls are manually stopped (via Velocity("stop"). */
-			if (!isStopped && activeCall.complete) {
-				/* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
-				try {
-					activeCall.complete.call(elements, elements);
-				} catch (error) {
-					setTimeout(function() {
-						throw error;
-					}, 1);
+			let callbacks = activeCall.callbacks;
+
+			if (callbacks && ++callbacks.completed === callbacks.total) {
+				if (!isStopped && callbacks.complete) {
+					/* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
+					try {
+						callbacks.complete.call(elements, elements);
+					} catch (error) {
+						setTimeout(function() {
+							throw error;
+						}, 1);
+					}
+					// Only called once, even if reversed or repeated
+					callbacks.complete = undefined;
 				}
-			}
 
-			/**********************
-			 Promise Resolving
-			 **********************/
+				/**********************
+				 Promise Resolving
+				 **********************/
 
-			/* Note: Infinite loops don't return promises. */
-			if (activeCall.resolver) {
-				activeCall.resolver(elements);
+				/* Note: Infinite loops don't return promises. */
+				if (callbacks.resolver) {
+					callbacks.resolver(elements);
+					callbacks.resolver = undefined;
+				}
 			}
 
 			/***************

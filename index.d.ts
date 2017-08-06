@@ -81,7 +81,14 @@ interface Tween {
 	 * @deprecated
 	 */
 	unitType?: string;
+	/**
+	 * Per property easing
+	 */
 	easing?: any;
+	/**
+	 * If an animation is reversed then the easing is also reversed.
+	 */
+	reverse?: boolean;
 	/**
 	 * @deprecated
 	 */
@@ -95,6 +102,44 @@ interface TweensContainer {
 	[key: string]: Tween | boolean | HTMLorSVGElement;
 }
 
+interface Callbacks {
+	/**
+	 * The first AnimationCall to get this - used for the progress callback.
+	 */
+	first: AnimationCall;
+	/**
+	 * The total number of AnimationCalls that are pointing at this.
+	 */
+	total: number;
+	/**
+	 * The number of AnimationCalls that have started.
+	 */
+	started: number;
+	/**
+	 * The number of AnimationCalls that have finished.
+	 */
+	completed: number;
+	/**
+	 * Begin handler. Only the first element to check this callback gets to use
+	 * it. Cleared after calling
+	 */
+	begin: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>) => void;
+	/**
+	 * Complete handler (only the last element in a set gets this)
+	 */
+	complete: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>) => void;
+	/**
+	 * Progress handler (only the last element in a set gets this)
+	 */
+	progress: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>, percentComplete?: number, remaining?: number, start?: number, tweenValue?: number) => void;
+	/**
+	 * This method is called at most once to signify that the animation has
+	 * completed. Currently a loop:true animation will never complete. This
+	 * allows .then(fn) to run (see Promise support).
+	 */
+	resolver: (value?: {} | PromiseLike<{}>) => void;
+}
+
 interface AnimationCall {
 	/**
 	 * Used to store the next AnimationCell in this list.
@@ -106,17 +151,9 @@ interface AnimationCall {
 	 */
 	prev: AnimationCall;
 	/**
-	 * Begin handler (only the first element in a set gets this)
+	 * The callbacks associated with this AnimationCall.
 	 */
-	begin: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>) => void;
-	/**
-	 * Complete handler (only the last element in a set gets this)
-	 */
-	complete: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>) => void;
-	/**
-	 * Progress handler (only the last element in a set gets this)
-	 */
-	progress: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>, percentComplete?: number, remaining?: number, start?: number, tweenValue?: number) => void;
+	callbacks: Callbacks;
 	/**
 	 * Properties to be tweened
 	 */
@@ -158,12 +195,6 @@ interface AnimationCall {
 	 */
 	duration: number;
 	/**
-	 * This method is called at most once to signify that the animation has
-	 * completed. Currently a loop:true animation will never complete. This
-	 * allows .then(fn) to run (see Promise support).
-	 */
-	resolver: (value?: {} | PromiseLike<{}>) => void;
-	/**
 	 * The pause state of this animation. If true it is paused, if false it was
 	 * paused and needs to be resumed, and if undefined / null then not either.
 	 */
@@ -198,11 +229,16 @@ interface AnimationCall {
 	 */
 	queue: false | string;
 	/**
-	 * Loop
+	 * Loop, calls 2n-1 times reversing it each iteration
 	 */
 	loop: true | number;
 	/**
-	 * Repeat
+	 * Repeat this number of times. If looped then each iteration of the loop
+	 * is actually repeated this number of times.
 	 */
 	repeat: true | number;
+	/**
+	 * Private store of the repeat value used for looping
+	 */
+	repeatAgain: true | number;
 }

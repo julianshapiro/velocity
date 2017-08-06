@@ -432,8 +432,7 @@ var VelocityStatic;
      * same order and with the same content.
      */
     var emptyAnimation = {
-        begin: defaultUndefinedDescriptor,
-        complete: defaultUndefinedDescriptor,
+        callbacks: defaultUndefinedDescriptor,
         delay: defaultNumberDescriptor,
         duration: defaultNumberDescriptor,
         easing: defaultUndefinedDescriptor,
@@ -446,11 +445,10 @@ var VelocityStatic;
         paused: defaultUndefinedDescriptor,
         percentComplete: defaultNumberDescriptor,
         prev: defaultUndefinedDescriptor,
-        progress: defaultUndefinedDescriptor,
         properties: defaultUndefinedDescriptor,
         queue: defaultUndefinedDescriptor,
         repeat: defaultUndefinedDescriptor,
-        resolver: defaultUndefinedDescriptor,
+        repeatAgain: defaultUndefinedDescriptor,
         timeStart: defaultNumberDescriptor,
         tweens: defaultUndefinedDescriptor,
         display: defaultUndefinedDescriptor,
@@ -527,11 +525,11 @@ var VelocityStatic;
          ****************************/
         var isLoop = activeCall.loop, isRepeat = activeCall.repeat;
         if (!isStopped && (isLoop || isRepeat)) {
-            if (isLoop && activeCall.loop !== true) {
-                activeCall.loop--;
-            }
             if (isRepeat && activeCall.repeat !== true) {
                 activeCall.repeat--;
+            } else if (isLoop && activeCall.loop !== true) {
+                activeCall.loop--;
+                activeCall.repeat = activeCall.repeatAgain;
             }
             /* If a rotateX/Y/Z property is being animated by 360 deg with loop:true, swap tween start/end values to enable
              continuous iterative rotation looping. (Otherise, the element would just rotate back and forth.) */
@@ -541,6 +539,7 @@ var VelocityStatic;
                     var tweenContainer = tweens[propertyName], oldStartValue = tweenContainer.startValue;
                     tweenContainer.startValue = tweenContainer.endValue;
                     tweenContainer.endValue = oldStartValue;
+                    tweenContainer.reverse = !tweenContainer.reverse;
                 }
             }
             activeCall.timeStart = VelocityStatic.lastTick;
@@ -594,22 +593,28 @@ var VelocityStatic;
              *********************/
             /* Complete is fired once per call (not once per element) and is passed the full raw DOM element set as both its context and its first argument. */
             /* Note: Callbacks aren't fired when calls are manually stopped (via Velocity("stop"). */
-            if (!isStopped && activeCall.complete) {
-                /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
-                try {
-                    activeCall.complete.call(elements, elements);
-                } catch (error) {
-                    setTimeout(function() {
-                        throw error;
-                    }, 1);
+            var callbacks = activeCall.callbacks;
+            if (callbacks && ++callbacks.completed === callbacks.total) {
+                if (!isStopped && callbacks.complete) {
+                    /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
+                    try {
+                        callbacks.complete.call(elements, elements);
+                    } catch (error) {
+                        setTimeout(function() {
+                            throw error;
+                        }, 1);
+                    }
+                    // Only called once, even if reversed or repeated
+                    callbacks.complete = undefined;
                 }
-            }
-            /**********************
-             Promise Resolving
-             **********************/
-            /* Note: Infinite loops don't return promises. */
-            if (activeCall.resolver) {
-                activeCall.resolver(elements);
+                /**********************
+                 Promise Resolving
+                 **********************/
+                /* Note: Infinite loops don't return promises. */
+                if (callbacks.resolver) {
+                    callbacks.resolver(elements);
+                    callbacks.resolver = undefined;
+                }
             }
             /***************
              Dequeueing
@@ -726,19 +731,17 @@ var VelocityStatic;
                  element's scrollbars are visible (which expands the element's dimensions). Thus, we defer to the more accurate
                  offsetHeight/Width property, which includes the total dimensions for interior, border, padding, and scrollbar.
                  We subtract border and padding to get the sum of interior + scrollbar. */
-                var computedValue = 0;
-                /* Browsers do not return height and width values for elements that are set to display:"none". Thus, we temporarily
+                var computedValue = 0, /* Browsers do not return height and width values for elements that are set to display:"none". Thus, we temporarily
                  toggle display to the element type's default value. */
-                var toggleDisplay = false;
-                if (/^(width|height)$/.test(property) && getPropertyValue(element, "display") === 0) {
-                    toggleDisplay = true;
-                    CSS.setPropertyValue(element, "display", CSS.Values.getDisplayType(element), 1);
-                }
-                var revertDisplay = function() {
+                data = Data(element), computedStyle = data && data.computedStyle ? data.computedStyle : window.getComputedStyle(element, null), toggleDisplay, revertDisplay = function() {
                     if (toggleDisplay) {
                         CSS.setPropertyValue(element, "display", "none", 1);
                     }
                 };
+                if (/^(width|height)$/.test(property) && getPropertyValue(element, "display") === 0) {
+                    toggleDisplay = true;
+                    CSS.setPropertyValue(element, "display", CSS.Values.getDisplayType(element), 1);
+                }
                 if (!forceStyleLookup) {
                     if (property === "height" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
                         var contentBoxHeight = element.offsetHeight - (parseFloat(getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(getPropertyValue(element, "paddingBottom")) || 0);
@@ -750,7 +753,6 @@ var VelocityStatic;
                         return contentBoxWidth;
                     }
                 }
-                var data = Data(element), computedStyle = data && data.computedStyle ? data.computedStyle : window.getComputedStyle(element, null);
                 /* For elements that Velocity hasn't been called on directly (e.g. when Velocity queries the DOM on behalf
                  of a parent of an element its animating), perform a direct getComputedStyle lookup since the object isn't cached. */
                 if (data && !data.computedStyle) {
@@ -759,11 +761,13 @@ var VelocityStatic;
                 /* IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
                  Also, in all browsers, when border colors aren't all the same, a compound value is returned that Velocity isn't setup to parse.
                  So, as a polyfill for querying individual border side colors, we just return the top border's color and animate all borders from that value. */
+                /* TODO: add polyfill */
                 if (property === "borderColor") {
                     property = "borderTopColor";
                 }
                 /* IE9 has a bug in which the "filter" property must be accessed from computedStyle using the getPropertyValue method
                  instead of a direct property lookup. The getPropertyValue method is slower than a direct lookup, which is why we avoid it by default. */
+                /* TODO: add polyfill */
                 if (IE === 9 && property === "filter") {
                     computedValue = computedStyle.getPropertyValue(property);
                 } else {
@@ -871,8 +875,6 @@ var VelocityStatic;
          ************/
         /* Hooks allow a subproperty (e.g. "boxShadowBlur") of a compound-value CSS property
          (e.g. "boxShadow: X Y Blur Spread Color") to be animated as if it were a discrete property. */
-        /* Note: Beyond enabling fine-grained property animation, hooking is necessary since Velocity only
-         tweens properties with single numeric values; unlike CSS transitions, Velocity does not interpolate compound-values. */
         var Hooks;
         (function(Hooks) {
             /********************
@@ -2615,9 +2617,11 @@ var VelocityStatic;
             /* We normally use RAF's high resolution timestamp but as it can be significantly offset when the browser is
              under high stress we give the option for choppiness over allowing the browser to drop huge chunks of frames.
              We use performance.now() and shim it if it doesn't exist for when the tab is hidden. */
-            var timeCurrent = VelocityStatic.lastTick = timestamp && timestamp !== true ? timestamp : performance.now(), activeCall = VelocityStatic.State.first, nextCall, percentComplete, tween, easing, hasProgress, hasComplete, expandPattern = function($0, index, round) {
+            var timeCurrent = VelocityStatic.lastTick = timestamp && timestamp !== true ? timestamp : performance.now(), activeCall = VelocityStatic.State.first, nextCall, percentComplete, tween, easing, hasProgress, hasComplete, getEasing = function(tweenDelta) {
+                return tweenDelta * (tween.reverse ? 1 - easing(1 - percentComplete, activeCall, tweenDelta) : easing(percentComplete, activeCall, tweenDelta));
+            }, expandPattern = function($0, index, round) {
                 if (percentComplete < 1) {
-                    var startValue = tween.startValue[index], tweenDelta = tween.endValue[index] - startValue, result = startValue + tweenDelta * easing(percentComplete, activeCall, tweenDelta);
+                    var startValue = tween.startValue[index], result = startValue + getEasing(tween.endValue[index] - startValue);
                 } else {
                     result = tween.endValue[index];
                 }
@@ -2716,8 +2720,7 @@ var VelocityStatic;
                         currentValue = tween.endValue;
                     } else {
                         /* Otherwise, calculate currentValue based on the current delta from startValue. */
-                        var tweenDelta = tween.endValue - tween.startValue;
-                        currentValue = tween.startValue + tweenDelta * easing(percentComplete, activeCall, tweenDelta);
+                        currentValue = tween.startValue + getEasing(tween.endValue - tween.startValue);
                     }
                     if (!firstTick && tween.currentValue === currentValue) {
                         continue;
@@ -2791,7 +2794,8 @@ var VelocityStatic;
                 if (activeCall.visibility !== undefined && activeCall.visibility !== "hidden") {
                     activeCall.visibility = false;
                 }
-                if (activeCall.progress) {
+                var callbacks = activeCall.callbacks;
+                if (callbacks && callbacks.first === activeCall && callbacks.progress) {
                     hasProgress = true;
                 }
             };
@@ -2807,9 +2811,10 @@ var VelocityStatic;
             if (hasProgress) {
                 for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
                     nextCall = activeCall.next;
+                    var callbacks = activeCall.callbacks;
                     /* Pass the elements and the timing data (percentComplete, msRemaining, timeStart, tweenDummyValue) into the progress callback. */
-                    if (activeCall.progress) {
-                        activeCall.progress.call(activeCall.elements, activeCall.elements, activeCall.percentComplete, Math.max(0, activeCall.timeStart + activeCall.duration - timeCurrent), activeCall.timeStart, (activeCall.tweens["tween"] || {}).currentValue);
+                    if (callbacks && callbacks.first === activeCall && callbacks.progress) {
+                        callbacks.progress.call(activeCall.elements, activeCall.elements, activeCall.percentComplete, Math.max(0, activeCall.timeStart + activeCall.duration - timeCurrent), activeCall.timeStart, (activeCall.tweens["tween"] || {}).currentValue);
                     }
                 }
             }
@@ -2848,19 +2853,24 @@ var VelocityStatic;
 function expandTweens() {
     var State = VelocityStatic.State, activeCall = State.firstNew;
     var _loop_2 = function() {
-        var elements = activeCall.elements, elementsLength = elements.length, element = activeCall.element, elementArrayIndex = elements.indexOf(element);
+        var elements = activeCall.elements, elementsLength = elements.length, element = activeCall.element, elementArrayIndex = elements.indexOf(element), callbacks = activeCall.callbacks;
         /*******************
          Option: Begin
          *******************/
         /* The begin callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
-        if (activeCall.begin) {
-            /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
-            try {
-                activeCall.begin.call(elements, elements);
-            } catch (error) {
-                setTimeout(function() {
-                    throw error;
-                }, 1);
+        if (callbacks && callbacks.started++ === 0) {
+            callbacks.first === activeCall;
+            if (callbacks.begin) {
+                /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
+                try {
+                    callbacks.begin.call(elements, elements);
+                } catch (error) {
+                    setTimeout(function() {
+                        throw error;
+                    }, 1);
+                }
+                // Only called once, even if reversed or repeated
+                callbacks.begin = undefined;
             }
         }
         /* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
@@ -3530,46 +3540,49 @@ function expandTweens() {
                 }
             };
             /* Create a tween out of each property, and append its associated data to tweensContainer. */
-            for (var property in propertiesMap) {
-                if (!propertiesMap.hasOwnProperty(property)) {
-                    continue;
+            if (propertiesMap) {
+                for (var property in propertiesMap) {
+                    if (!propertiesMap.hasOwnProperty(property)) {
+                        continue;
+                    }
+                    /* The original property name's format must be used for the parsePropertyValue() lookup,
+                     but we then use its camelCase styling to normalize it for manipulation. */
+                    propertyName = VelocityStatic.CSS.Names.camelCase(property), valueData = parsePropertyValue(propertiesMap[property]);
+                    /* Find shorthand color properties that have been passed a hex string. */
+                    /* Would be quicker to use vVelocityStatic.CSS.Lists.colors.includes() if possible */
+                    //				if (_inArray(VelocityStatic.CSS.Lists.colors, propertyName)) {
+                    //					/* Parse the value data for each shorthand. */
+                    //					var endValue = valueData[0],
+                    //						easing = valueData[1],
+                    //						startValue = valueData[2];
+                    //
+                    //					if (VelocityStatic.CSS.RegEx.isHex.test(endValue)) {
+                    //						/* Convert the hex strings into their RGB component arrays. */
+                    //						var colorComponents = ["Red", "Green", "Blue"],
+                    //							endValueRGB = VelocityStatic.CSS.Values.hexToRgb(endValue),
+                    //							startValueRGB = startValue ? VelocityStatic.CSS.Values.hexToRgb(startValue) : undefined;
+                    //
+                    //						/* Inject the RGB component tweens into propertiesMap. */
+                    //						for (var i = 0; i < colorComponents.length; i++) {
+                    //							var dataArray = [endValueRGB[i]];
+                    //
+                    //							if (easing) {
+                    //								dataArray.push(easing);
+                    //							}
+                    //
+                    //							if (startValueRGB !== undefined) {
+                    //								dataArray.push(startValueRGB[i]);
+                    //							}
+                    //
+                    //							fixPropertyValue(propertyName + colorComponents[i], dataArray);
+                    //						}
+                    //						/* If we have replaced a shortcut color value then don't update the standard property name */
+                    //						continue;
+                    //					}
+                    //				}
+                    fixPropertyValue(propertyName, valueData);
                 }
-                /* The original property name's format must be used for the parsePropertyValue() lookup,
-                 but we then use its camelCase styling to normalize it for manipulation. */
-                propertyName = VelocityStatic.CSS.Names.camelCase(property), valueData = parsePropertyValue(propertiesMap[property]);
-                /* Find shorthand color properties that have been passed a hex string. */
-                /* Would be quicker to use vVelocityStatic.CSS.Lists.colors.includes() if possible */
-                //				if (_inArray(VelocityStatic.CSS.Lists.colors, propertyName)) {
-                //					/* Parse the value data for each shorthand. */
-                //					var endValue = valueData[0],
-                //						easing = valueData[1],
-                //						startValue = valueData[2];
-                //
-                //					if (VelocityStatic.CSS.RegEx.isHex.test(endValue)) {
-                //						/* Convert the hex strings into their RGB component arrays. */
-                //						var colorComponents = ["Red", "Green", "Blue"],
-                //							endValueRGB = VelocityStatic.CSS.Values.hexToRgb(endValue),
-                //							startValueRGB = startValue ? VelocityStatic.CSS.Values.hexToRgb(startValue) : undefined;
-                //
-                //						/* Inject the RGB component tweens into propertiesMap. */
-                //						for (var i = 0; i < colorComponents.length; i++) {
-                //							var dataArray = [endValueRGB[i]];
-                //
-                //							if (easing) {
-                //								dataArray.push(easing);
-                //							}
-                //
-                //							if (startValueRGB !== undefined) {
-                //								dataArray.push(startValueRGB[i]);
-                //							}
-                //
-                //							fixPropertyValue(propertyName + colorComponents[i], dataArray);
-                //						}
-                //						/* If we have replaced a shortcut color value then don't update the standard property name */
-                //						continue;
-                //					}
-                //				}
-                fixPropertyValue(propertyName, valueData);
+                activeCall.properties = undefined;
             }
             //		}
             /*****************
@@ -3820,50 +3833,53 @@ function Velocity() {
         /* Iterate through all calls and pause any that contain any of our elements */
         for (;activeCall; activeCall = nextCall) {
             nextCall = activeCall.next;
-            activeCall.delay = 0;
-            /* Iterate through the active call's targeted elements. */
-            activeCall.elements.forEach(function(activeElement) {
-                /* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
-                     clear calls associated with the relevant queue. */
-                /* Call stopping logic works as follows:
-                     - options === true --> stop current default queue calls (and queue:false calls), including remaining queued ones.
-                     - options === undefined --> stop current queue:"" call and all queue:false calls.
-                     - options === false --> stop only queue:false calls.
-                     - options === "custom" --> stop current queue:"custom" call, including remaining queued ones (there is no functionality to only clear the currently-running queue:"custom" call). */
-                var queueName = options === undefined ? VelocityStatic.defaults.queue : options;
-                if (queueName !== true && activeCall.queue !== queueName && !(options === undefined && activeCall.queue === false)) {
-                    return true;
-                }
-                /* Iterate through the calls targeted by the stop command. */
-                elements.forEach(function(element) {
-                    /* Check that this call was applied to the target element. */
-                    if (element === activeElement) {
-                        var data = Data(element);
-                        /* Optionally clear the remaining queued calls. If we're doing "finishAll" this won't find anything,
-                             due to the queue-clearing above. */
-                        if (options === true || isString(options)) {
-                            var animation;
-                            /* Iterate through the items in the element's queue. */
-                            while (animation = dequeue(element, isString(options) ? options : undefined, true)) {
-                                animation.resolver(animation.elements);
+            /* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
+                 clear calls associated with the relevant queue. */
+            /* Call stopping logic works as follows:
+                 - options === true --> stop current default queue calls (and queue:false calls), including remaining queued ones.
+                 - options === undefined --> stop current queue:"" call and all queue:false calls.
+                 - options === false --> stop only queue:false calls.
+                 - options === "custom" --> stop current queue:"custom" call, including remaining queued ones (there is no functionality to only clear the currently-running queue:"custom" call). */
+            var queueName_1 = options === undefined ? VelocityStatic.defaults.queue : options;
+            if (queueName_1 !== true && activeCall.queue !== queueName_1 && !(options === undefined && activeCall.queue === false)) {
+                continue;
+            }
+            /* Iterate through the calls targeted by the stop command. */
+            for (var i_3 = 0; i_3 < elementsLength; i_3++) {
+                var element = elements[i_3];
+                /* Check that this call was applied to the target element. */
+                if (element === activeCall.element) {
+                    /* Make sure it can't be delayed */
+                    activeCall.delay = 0;
+                    /* Remove the queue so this can't trigger any newly added animations when it finishes */
+                    activeCall.queue = false;
+                    /* Optionally clear the remaining queued calls. If we're doing "finishAll" this won't find anything,
+                         due to the queue-clearing above. */
+                    if (options === true || isString(options)) {
+                        var animation;
+                        /* Iterate through the items in the element's queue. */
+                        while (animation = dequeue(element, isString(options) ? options : undefined, true)) {
+                            var callbacks_1 = animation.callbacks;
+                            if (callbacks_1.resolver) {
+                                callbacks_1.resolver(animation.elements);
+                                callbacks_1.resolver = undefined;
                             }
                         }
-                        if (propertiesMap === "stop") {
-                            /* Since "reverse" uses cached start values (the previous call's endValues), these values must be
-                                 changed to reflect the final value that the elements were actually tweened to. */
-                            /* Note: If only queue:false animations are currently running on an element, it won't have a tweensContainer
-                                 object. Also, queue:false animations can't be reversed. */
-                            activeCall.queue = false;
-                            activeCall.timeStart = -1;
-                            callsToStop.push(activeCall);
-                        } else if (propertiesMap === "finish" || propertiesMap === "finishAll") {
-                            /* To get active tweens to finish immediately, we forcefully change the start time so that
-                                 they finish upon the next rAf tick then proceed with normal call completion logic. */
-                            activeCall.timeStart = -1;
-                        }
                     }
-                });
-            });
+                    if (propertiesMap === "stop") {
+                        /* Since "reverse" uses cached start values (the previous call's endValues), these values must be
+                             changed to reflect the final value that the elements were actually tweened to. */
+                        /* Note: If only queue:false animations are currently running on an element, it won't have a tweensContainer
+                             object. Also, queue:false animations can't be reversed. */
+                        activeCall.timeStart = -1;
+                        callsToStop.push(activeCall);
+                    } else if (propertiesMap === "finish" || propertiesMap === "finishAll") {
+                        /* To get active tweens to finish immediately, we forcefully change the start time so that
+                             they finish upon the next rAf tick then proceed with normal call completion logic. */
+                        activeCall.timeStart = -1;
+                    }
+                }
+            }
         }
         /* Prematurely call completeCall() on each matched active call. Pass an additional flag for "stop" to indicate
              that the complete callback and display:none setting should be skipped since we're completing prematurely. */
@@ -4052,29 +4068,36 @@ function Velocity() {
      In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
     /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
      the call array is pushed to VelocityStatic.State.calls for live processing by the requestAnimationFrame tick. */
-    for (var i_3 = 0, length_1 = elements.length; i_3 < length_1; i_3++) {
-        var element = elements[i_3], animation = VelocityStatic.getAnimationCall(), isFirst = !i_3, isLast = i_3 === length_1 - 1;
-        animation.begin = isFirst && isFunction(options.begin) && options.begin;
-        animation.complete = isLast && isFunction(options.complete) && options.complete;
-        animation.delay = optionsDelay;
-        animation.duration = optionsDuration;
-        animation.easing = optionsEasing;
-        animation.elements = elements;
-        animation.element = element;
-        animation.ellapsedTime = 0;
-        animation.loop = optionsLoop;
+    var callbacks = {
+        first: undefined,
+        total: elementsLength,
+        started: 0,
+        completed: 0,
+        begin: isFunction(options.begin) && options.begin,
+        complete: isFunction(options.complete) && options.complete,
+        progress: isFunction(options.progress) && options.progress,
+        resolver: promiseData.resolver
+    };
+    for (var i_4 = 0, length_1 = elementsLength; i_4 < length_1; i_4++) {
+        var element = elements[i_4], animation_1 = VelocityStatic.getAnimationCall();
+        animation_1.callbacks = callbacks;
+        animation_1.delay = optionsDelay;
+        animation_1.display = optionsDisplay;
+        animation_1.duration = optionsDuration;
+        animation_1.easing = optionsEasing;
+        animation_1.elements = elements;
+        animation_1.element = element;
+        animation_1.ellapsedTime = 0;
+        animation_1.loop = Math.max(0, optionsLoop * 2 - 1);
+        animation_1.mobileHA = optionsMobileHA;
         //		animation.options = options;
-        animation.queue = options.queue === false ? false : isString(options.queue) ? options.queue : VelocityStatic.defaults.queue;
-        animation.progress = isFirst && isFunction(options.progress) && options.progress;
-        animation.properties = propertiesMap;
-        animation.repeat = optionsRepeat;
-        animation.resolver = isLast && promiseData.resolver;
-        animation.timeStart = 0;
-        animation.tweens = Object.create(null);
-        animation.display = optionsDisplay;
-        animation.visibility = optionsVisibility;
-        animation.mobileHA = optionsMobileHA;
-        queue(elements[0], animation, animation.queue);
+        animation_1.properties = propertiesMap;
+        animation_1.queue = options.queue === false ? false : isString(options.queue) ? options.queue : VelocityStatic.defaults.queue;
+        animation_1.repeat = animation_1.repeatAgain = optionsRepeat;
+        animation_1.timeStart = 0;
+        animation_1.tweens = Object.create(null);
+        animation_1.visibility = optionsVisibility;
+        queue(elements[0], animation_1, animation_1.queue);
         expandTweens();
     }
     /* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */

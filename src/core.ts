@@ -262,57 +262,58 @@ function Velocity(...args: any[]) {
 			/* Iterate through all calls and pause any that contain any of our elements */
 			for (; activeCall; activeCall = nextCall) {
 				nextCall = activeCall.next;
-				activeCall.delay = 0;
-				/* Iterate through the active call's targeted elements. */
-				activeCall.elements.forEach(function(activeElement) {
-					/* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
-					 clear calls associated with the relevant queue. */
-					/* Call stopping logic works as follows:
-					 - options === true --> stop current default queue calls (and queue:false calls), including remaining queued ones.
-					 - options === undefined --> stop current queue:"" call and all queue:false calls.
-					 - options === false --> stop only queue:false calls.
-					 - options === "custom" --> stop current queue:"custom" call, including remaining queued ones (there is no functionality to only clear the currently-running queue:"custom" call). */
-					var queueName = (options === undefined) ? VelocityStatic.defaults.queue : options;
+				/* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
+				 clear calls associated with the relevant queue. */
+				/* Call stopping logic works as follows:
+				 - options === true --> stop current default queue calls (and queue:false calls), including remaining queued ones.
+				 - options === undefined --> stop current queue:"" call and all queue:false calls.
+				 - options === false --> stop only queue:false calls.
+				 - options === "custom" --> stop current queue:"custom" call, including remaining queued ones (there is no functionality to only clear the currently-running queue:"custom" call). */
+				let queueName = options === undefined ? VelocityStatic.defaults.queue : options;
 
-					if (queueName !== true && (activeCall.queue !== queueName) && !(options === undefined && activeCall.queue === false)) {
-						return true;
-					}
+				if (queueName !== true && activeCall.queue !== queueName && !(options === undefined && activeCall.queue === false)) {
+					continue;
+				}
 
-					/* Iterate through the calls targeted by the stop command. */
-					elements.forEach(function(element) {
-						/* Check that this call was applied to the target element. */
-						if (element === activeElement) {
-							var data = Data(element);
+				/* Iterate through the calls targeted by the stop command. */
+				for (let i = 0; i < elementsLength; i++) {
+					let element = elements[i];
 
-							/* Optionally clear the remaining queued calls. If we're doing "finishAll" this won't find anything,
-							 due to the queue-clearing above. */
-							if (options === true || isString(options)) {
-								var animation: AnimationCall;
+					/* Check that this call was applied to the target element. */
+					if (element === activeCall.element) {
+						/* Make sure it can't be delayed */
+						activeCall.delay = 0;
+						/* Remove the queue so this can't trigger any newly added animations when it finishes */
+						activeCall.queue = false;
+						/* Optionally clear the remaining queued calls. If we're doing "finishAll" this won't find anything,
+						 due to the queue-clearing above. */
+						if (options === true || isString(options)) {
+							var animation: AnimationCall;
 
-								/* Iterate through the items in the element's queue. */
-								while ((animation = dequeue(element, isString(options) ? options : undefined, true))) {
-									animation.resolver(animation.elements);
+							/* Iterate through the items in the element's queue. */
+							while ((animation = dequeue(element, isString(options) ? options : undefined, true))) {
+								let callbacks = animation.callbacks;
+
+								if (callbacks.resolver) {
+									callbacks.resolver(animation.elements);
+									callbacks.resolver = undefined;
 								}
 							}
-
-							if (propertiesMap === "stop") {
-								/* Since "reverse" uses cached start values (the previous call's endValues), these values must be
-								 changed to reflect the final value that the elements were actually tweened to. */
-								/* Note: If only queue:false animations are currently running on an element, it won't have a tweensContainer
-								 object. Also, queue:false animations can't be reversed. */
-								activeCall.queue = false;
-								activeCall.timeStart = -1;
-
-								callsToStop.push(activeCall);
-							} else if (propertiesMap === "finish" || propertiesMap === "finishAll") {
-								/* To get active tweens to finish immediately, we forcefully change the start time so that
-								 they finish upon the next rAf tick then proceed with normal call completion logic. */
-								activeCall.timeStart = -1;
-							}
 						}
-					});
-				});
-
+						if (propertiesMap === "stop") {
+							/* Since "reverse" uses cached start values (the previous call's endValues), these values must be
+							 changed to reflect the final value that the elements were actually tweened to. */
+							/* Note: If only queue:false animations are currently running on an element, it won't have a tweensContainer
+							 object. Also, queue:false animations can't be reversed. */
+							activeCall.timeStart = -1;
+							callsToStop.push(activeCall);
+						} else if (propertiesMap === "finish" || propertiesMap === "finishAll") {
+							/* To get active tweens to finish immediately, we forcefully change the start time so that
+							 they finish upon the next rAf tick then proceed with normal call completion logic. */
+							activeCall.timeStart = -1;
+						}
+					}
+				}
 			}
 
 			/* Prematurely call completeCall() on each matched active call. Pass an additional flag for "stop" to indicate
@@ -550,32 +551,38 @@ function Velocity(...args: any[]) {
 	/* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
 	 the call array is pushed to VelocityStatic.State.calls for live processing by the requestAnimationFrame tick. */
 
-	for (let i = 0, length = elements.length; i < length; i++) {
-		let element = elements[i],
-			animation = VelocityStatic.getAnimationCall(),
-			isFirst = !i,
-			isLast = i === length - 1;
+	let callbacks: Callbacks = {
+		first: undefined,
+		total: elementsLength,
+		started: 0,
+		completed: 0,
+		begin: isFunction(options.begin) && options.begin,
+		complete: isFunction(options.complete) && options.complete,
+		progress: isFunction(options.progress) && options.progress,
+		resolver: promiseData.resolver
+	};
 
-		animation.begin = isFirst && isFunction(options.begin) && options.begin;
-		animation.complete = isLast && isFunction(options.complete) && options.complete;
+	for (let i = 0, length = elementsLength; i < length; i++) {
+		let element = elements[i],
+			animation = VelocityStatic.getAnimationCall();
+
+		animation.callbacks = callbacks;
 		animation.delay = optionsDelay;
+		animation.display = optionsDisplay;
 		animation.duration = optionsDuration;
 		animation.easing = optionsEasing;
 		animation.elements = elements;
 		animation.element = element;
 		animation.ellapsedTime = 0;
-		animation.loop = optionsLoop;
+		animation.loop = Math.max(0, optionsLoop * 2 - 1);
+		animation.mobileHA = optionsMobileHA;
 		//		animation.options = options;
-		animation.queue = options.queue === false ? false : isString(options.queue) ? options.queue : VelocityStatic.defaults.queue;
-		animation.progress = isFirst && isFunction(options.progress) && options.progress;
 		animation.properties = propertiesMap;
-		animation.repeat = optionsRepeat;
-		animation.resolver = isLast && promiseData.resolver;
+		animation.queue = options.queue === false ? false : isString(options.queue) ? options.queue : VelocityStatic.defaults.queue;
+		animation.repeat = animation.repeatAgain = optionsRepeat;
 		animation.timeStart = 0;
 		animation.tweens = Object.create(null);
-		animation.display = optionsDisplay;
 		animation.visibility = optionsVisibility;
-		animation.mobileHA = optionsMobileHA;
 		queue(elements[0], animation, animation.queue);
 		expandTweens();
 	}
