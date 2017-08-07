@@ -1,5 +1,4 @@
 ///<reference path="../index.d.ts" />
-///<reference path="jquery.ts" />
 ///<reference path="constants.ts" />
 ///<reference path="types.ts" />
 ///<reference path="utility.ts" />

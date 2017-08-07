@@ -664,12 +664,19 @@ VelocityStatic.CSS.Normalizations.register();
 // Global call
 global.Velocity = Velocity;
 
+interface Window {
+	jQuery: {fn?: any};
+	Zepto: {fn?: any};
+	Velocity: any;
+}
+
 if (window === global) {
 	/* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls.
 	 If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method.  Velocity
 	 also registers itself onto a global container (window.jQuery || window.Zepto || window) so that certain features are
 	 accessible beyond just a per-element scope. Accordingly, Velocity can both act on wrapped DOM elements and stand alone
 	 for targeting raw DOM elements. */
+
 	defineProperty(window.jQuery, "Velocity", Velocity);
 	defineProperty(window.jQuery && window.jQuery.fn, "velocity", Velocity);
 	defineProperty(window.Zepto, "Velocity", Velocity);
