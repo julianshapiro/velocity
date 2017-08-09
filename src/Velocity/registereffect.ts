@@ -25,7 +25,7 @@ namespace VelocityStatic {
 			}
 
 			propertiesToSum.forEach(function(property) {
-				totalHeightDelta += parseFloat(CSS.getPropertyValue(element, property));
+				totalHeightDelta += parseFloat(CSS.getPropertyValue(element, property) as string);
 			});
 		});
 

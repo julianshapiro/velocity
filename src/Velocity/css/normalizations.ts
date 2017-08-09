@@ -25,7 +25,7 @@ namespace VelocityStatic {
 						fields = ["padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width"];
 
 					for (i = 0; i < fields.length; i++) {
-						value = parseFloat(CSS.getPropertyValue(element, fields[i]));
+						value = parseFloat(CSS.getPropertyValue(element, fields[i]) as string);
 						if (!isNaN(value)) {
 							augment += value;
 						}

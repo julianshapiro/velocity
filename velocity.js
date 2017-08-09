@@ -739,8 +739,25 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
+    var State;
+    (function(State) {
+        State.isClient = window && window === window.window, State.isMobile = State.isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), 
+        State.isAndroid = State.isClient && /Android/i.test(navigator.userAgent), State.isGingerbread = State.isClient && /Android 2\.3\.[3-7]/i.test(navigator.userAgent), 
+        State.isChrome = State.isClient && window.chrome, State.isFirefox = State.isClient && /Firefox/i.test(navigator.userAgent), 
+        State.prefixElement = State.isClient && document.createElement("div"), State.prefixMatches = {}, 
+        State.windowScrollAnchor = State.isClient && window.pageYOffset !== undefined, State.scrollAnchor = State.windowScrollAnchor ? window : !State.isClient || document.documentElement || document.body.parentNode || document.body, 
+        State.scrollPropertyLeft = State.windowScrollAnchor ? "pageXOffset" : "scrollLeft", 
+        State.scrollPropertyTop = State.windowScrollAnchor ? "pageYOffset" : "scrollTop", 
+        State.isTicking = false;
+    })(State = VelocityStatic.State || (VelocityStatic.State = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+var VelocityStatic;
+
+(function(VelocityStatic) {
     var CSS;
     (function(CSS) {
+        var SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2" + (IE || VelocityStatic.State.isAndroid && !VelocityStatic.State.isChrome ? "|transform" : ""), SVGAttributesRX = RegExp("^(" + SVGAttributes + ")$", "i");
         CSS.Names = {
             camelCase: function(property) {
                 return property.replace(/-(\w)/g, function(match, subMatch) {
@@ -748,11 +765,7 @@ var VelocityStatic;
                 });
             },
             SVGAttribute: function(property) {
-                var SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2";
-                if (IE || VelocityStatic.State.isAndroid && !VelocityStatic.State.isChrome) {
-                    SVGAttributes += "|transform";
-                }
-                return new RegExp("^(" + SVGAttributes + ")$", "i").test(property);
+                return SVGAttributesRX.test(property);
             },
             prefixCheck: function(property) {
                 if (VelocityStatic.State.prefixMatches[property]) {
@@ -1773,22 +1786,6 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
-    var State;
-    (function(State) {
-        State.isClient = window && window === window.window, State.isMobile = State.isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), 
-        State.isAndroid = State.isClient && /Android/i.test(navigator.userAgent), State.isGingerbread = State.isClient && /Android 2\.3\.[3-7]/i.test(navigator.userAgent), 
-        State.isChrome = State.isClient && window.chrome, State.isFirefox = State.isClient && /Firefox/i.test(navigator.userAgent), 
-        State.prefixElement = State.isClient && document.createElement("div"), State.prefixMatches = {}, 
-        State.windowScrollAnchor = State.isClient && window.pageYOffset !== undefined, State.scrollAnchor = State.windowScrollAnchor ? window : !State.isClient || document.documentElement || document.body.parentNode || document.body, 
-        State.scrollPropertyLeft = State.windowScrollAnchor ? "pageXOffset" : "scrollLeft", 
-        State.scrollPropertyTop = State.windowScrollAnchor ? "pageYOffset" : "scrollTop", 
-        State.isTicking = false;
-    })(State = VelocityStatic.State || (VelocityStatic.State = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-var VelocityStatic;
-
-(function(VelocityStatic) {
     var ticker, performance = function() {
         var perf = window.performance || {};
         if (typeof perf.now !== "function") {
@@ -2023,7 +2020,7 @@ function expandTweens() {
                 return [ endValue || 0, easing, startValue ];
             }
             fixPropertyValue = function(property, valueData) {
-                var rootProperty = VelocityStatic.CSS.Hooks.getRoot(property), rootPropertyValue = false, endValue = valueData[0], easing = valueData[1], startValue = valueData[2], pattern;
+                var rootProperty = VelocityStatic.CSS.Hooks.getRoot(property), rootPropertyValue, endValue = valueData[0], easing = valueData[1], startValue = valueData[2], pattern;
                 if ((!data_3 || !data_3.isSVG) && rootProperty !== "tween" && VelocityStatic.CSS.Names.prefixCheck(rootProperty)[1] === false && VelocityStatic.CSS.Normalizations.registered[rootProperty] === undefined) {
                     if (VelocityStatic.debug) {
                         console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");

@@ -13,7 +13,7 @@ namespace VelocityStatic {
 				/* Since transform values are stored in their parentheses-wrapped form, we use a helper function to strip out their numeric values.
 				 Further, SVG transform properties only take unitless (representing pixels) values, so it's okay that parseFloat() strips the unit suffixed to the float value. */
 				var getTransformFloat = function(transformProperty) {
-					return parseFloat(getPropertyValue(element, transformProperty));
+					return parseFloat(getPropertyValue(element, transformProperty) as string);
 				};
 
 				/* Create an object to organize all the transforms that we'll apply to the SVG element. To keep the logic simple,

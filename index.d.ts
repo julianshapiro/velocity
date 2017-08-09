@@ -73,7 +73,7 @@ interface ScrollData {
 }
 
 interface Tween {
-	rootPropertyValue?: boolean;
+	rootPropertyValue?: string | number;
 	startValue?: number | number[];
 	currentValue?: string | number;
 	endValue?: number | number[];

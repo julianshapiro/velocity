@@ -96,7 +96,7 @@ namespace VelocityStatic {
 
 			/* Look up the root property associated with the hook (e.g. return "textShadow" for "textShadowBlur"). */
 			/* Since a hook cannot be set directly (the browser won't recognize it), style updating for hooks is routed through the hook's root property. */
-			export function getRoot(property) {
+			export function getRoot(property: string) {
 				var hookData = registered[property];
 
 				if (hookData) {
@@ -107,7 +107,7 @@ namespace VelocityStatic {
 				}
 			}
 
-			export function getUnit(str, start) {
+			export function getUnit(str: string, start?: number) {
 				var unit = (str.substr(start || 0, 5).match(/^[a-z%]+/) || [])[0] || "";
 
 				if (unit && _inArray(CSS.Lists.units, unit)) {
@@ -120,7 +120,7 @@ namespace VelocityStatic {
 			 * Replace any css colour name with its rgba() value. It is possible to use
 			 * the name within an "rgba(blue, 0.4)" string this way.
 			 */
-			export function fixColors(str) {
+			export function fixColors(str: string) {
 				return str.replace(/(rgba?\(\s*)?(\b[a-z]+\b)/g, function($0, $1, $2) {
 					if (CSS.Lists.colorNames.hasOwnProperty($2)) {
 						return ($1 ? $1 : "rgba(") + CSS.Lists.colorNames[$2] + ($1 ? "" : ",1)");
@@ -131,7 +131,7 @@ namespace VelocityStatic {
 
 			/* Convert any rootPropertyValue, null or otherwise, into a space-delimited list of hook values so that
 			 the targeted hook can be injected or extracted at its standard position. */
-			export function cleanRootPropertyValue(rootProperty, rootPropertyValue) {
+			export function cleanRootPropertyValue(rootProperty: string, rootPropertyValue: string) {
 				/* If the rootPropertyValue is wrapped with "rgb()", "clip()", etc., remove the wrapping to normalize the value before manipulation. */
 				if (CSS.RegEx.valueUnwrap.test(rootPropertyValue)) {
 					rootPropertyValue = rootPropertyValue.match(CSS.RegEx.valueUnwrap)[1];
@@ -149,7 +149,7 @@ namespace VelocityStatic {
 			}
 
 			/* Extracted the hook's value from its root property's value. This is used to get the starting value of an animating hook. */
-			export function extractValue(fullHookName, rootPropertyValue) {
+			export function extractValue(fullHookName: string, rootPropertyValue: string) {
 				var hookData = registered[fullHookName];
 
 				if (hookData) {
@@ -168,7 +168,7 @@ namespace VelocityStatic {
 
 			/* Inject the hook's value into its root property's value. This is used to piece back together the root property
 			 once Velocity has updated one of its individually hooked values through tweening. */
-			export function injectValue(fullHookName, hookValue, rootPropertyValue) {
+			export function injectValue(fullHookName: string, hookValue: string, rootPropertyValue: string) {
 				var hookData = registered[fullHookName];
 
 				if (hookData) {

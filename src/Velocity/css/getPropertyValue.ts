@@ -6,12 +6,12 @@ namespace VelocityStatic {
 		 ****************************/
 
 		/* The singular getPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
-		export function getPropertyValue(element: HTMLorSVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean) {
+		export function getPropertyValue(element: HTMLorSVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean): string | number {
 			/* Get an element's computed property value. */
 			/* Note: Retrieving the value of a CSS property cannot simply be performed by checking an element's
 			 style attribute (which only reflects user-defined values). Instead, the browser must be queried for a property's
 			 *computed* value. You can read more about getComputedStyle here: https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle */
-			function computePropertyValue(element, property) {
+			function computePropertyValue(element: HTMLorSVGElement, property: string) {
 				/* When box-sizing isn't set to border-box, height and width style values are incorrectly computed when an
 				 element's scrollbars are visible (which expands the element's dimensions). Thus, we defer to the more accurate
 				 offsetHeight/Width property, which includes the total dimensions for interior, border, padding, and scrollbar.
@@ -36,12 +36,14 @@ namespace VelocityStatic {
 
 				if (!forceStyleLookup) {
 					if (property === "height" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-						let contentBoxHeight = element.offsetHeight - (parseFloat(getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(getPropertyValue(element, "paddingBottom")) || 0);
+						// TODO: offsetWidth does not exist on SVGElement
+						let contentBoxHeight = (element as HTMLElement).offsetHeight - (parseFloat(getPropertyValue(element, "borderTopWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "borderBottomWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingTop") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingBottom") as string) || 0);
 						revertDisplay();
 
 						return contentBoxHeight;
 					} else if (property === "width" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-						let contentBoxWidth = element.offsetWidth - (parseFloat(getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(getPropertyValue(element, "paddingRight")) || 0);
+						// TODO: offsetWidth does not exist on SVGElement
+						let contentBoxWidth = (element as HTMLElement).offsetWidth - (parseFloat(getPropertyValue(element, "borderLeftWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "borderRightWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingLeft") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingRight") as string) || 0);
 						revertDisplay();
 
 						return contentBoxWidth;
@@ -110,7 +112,7 @@ namespace VelocityStatic {
 				 query the DOM for the root property's value. */
 				if (rootPropertyValue === undefined) {
 					/* Since the browser is now being directly queried, use the official post-prefixing property name for this lookup. */
-					rootPropertyValue = getPropertyValue(element, Names.prefixCheck(hookRoot)[0]); /* GET */
+					rootPropertyValue = getPropertyValue(element, Names.prefixCheck(hookRoot)[0]) as string; /* GET */
 				}
 
 				/* If this root has a normalization registered, peform the associated normalization extraction. */

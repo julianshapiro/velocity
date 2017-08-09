@@ -1,3 +1,5 @@
+///<reference path="../state.ts" />
+
 namespace VelocityStatic {
 	export namespace CSS {
 
@@ -5,24 +7,21 @@ namespace VelocityStatic {
 		 CSS Property Names
 		 ************************/
 
+		/* Certain browsers require an SVG transform to be applied as an attribute. (Otherwise, application via CSS is preferable due to 3D support.) */
+		var SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2" + (IE || (State.isAndroid && !State.isChrome) ? "|transform" : ""),
+			SVGAttributesRX = RegExp("^(" + SVGAttributes + ")$", "i");
+
 		export var Names = {
 			/* Camelcase a property name into its JavaScript notation (e.g. "background-color" ==> "backgroundColor").
 			 Camelcasing is used to normalize property names between and across calls. */
-			camelCase: function(property) {
-				return property.replace(/-(\w)/g, function(match, subMatch) {
+			camelCase: function(property: string) {
+				return property.replace(/-(\w)/g, function(match: string, subMatch: string) {
 					return subMatch.toUpperCase();
 				});
 			},
 			/* For SVG elements, some properties (namely, dimensional ones) are GET/SET via the element's HTML attributes (instead of via CSS styles). */
-			SVGAttribute: function(property) {
-				var SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2";
-
-				/* Certain browsers require an SVG transform to be applied as an attribute. (Otherwise, application via CSS is preferable due to 3D support.) */
-				if (IE || (State.isAndroid && !State.isChrome)) {
-					SVGAttributes += "|transform";
-				}
-
-				return new RegExp("^(" + SVGAttributes + ")$", "i").test(property);
+			SVGAttribute: function(property: string) {
+				return SVGAttributesRX.test(property);
 			},
 			/* Determine whether a property should be set with a vendor prefix. */
 			/* If a prefixed version of the property exists, return it. Otherwise, return the original property name.

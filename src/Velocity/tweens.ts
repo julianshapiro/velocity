@@ -291,7 +291,7 @@ function expandTweens() {
 			var fixPropertyValue = function(property: string, valueData) {
 				/* In case this property is a hook, there are circumstances where we will intend to work on the hook's root property and not the hooked subproperty. */
 				var rootProperty = VelocityStatic.CSS.Hooks.getRoot(property),
-					rootPropertyValue = false,
+					rootPropertyValue: string | number,
 					/* Parse out endValue, easing, and startValue from the property's data. */
 					endValue = valueData[0],
 					easing = valueData[1],
@@ -338,10 +338,10 @@ function expandTweens() {
 					/* Handle hooked properties. */
 					if (VelocityStatic.CSS.Hooks.registered[property]) {
 						if (startValue === undefined) {
-							rootPropertyValue = VelocityStatic.CSS.getPropertyValue(element, rootProperty); /* GET */
+							rootPropertyValue = VelocityStatic.CSS.getPropertyValue(element, rootProperty) as string; /* GET */
 							/* Note: The following getPropertyValue() call does not actually trigger a DOM query;
 							 getPropertyValue() will extract the hook from rootPropertyValue. */
-							startValue = VelocityStatic.CSS.getPropertyValue(element, property, rootPropertyValue as any);
+							startValue = VelocityStatic.CSS.getPropertyValue(element, property, rootPropertyValue);
 							/* If startValue is already defined via forcefeeding, do not query the DOM for the root property's value;
 							 just grab rootProperty's zero-value template from vVelocityStatic.CSS.Hooks. This overwrites the element's actual
 							 root property value (if one is set), but this is acceptable since the primary reason users forcefeed is
