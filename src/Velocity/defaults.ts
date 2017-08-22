@@ -9,6 +9,6 @@ namespace VelocityStatic {
 		/* Advanced: Set to false to prevent property values from being cached between consecutive Velocity-initiated chain calls. */
 		cache: true,
 		/* Advanced: Set to false if the promise should always resolve on empty element lists. */
-		//promiseRejectEmpty: true
+		promiseRejectEmpty: true
 	};
 };

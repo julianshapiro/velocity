@@ -7,7 +7,7 @@ namespace VelocityStatic {
 
 		/* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
 		export function setPropertyValue(element: HTMLorSVGElement, property: string, propertyValue: any, percentComplete: number, rootPropertyValue?, scrollData?: ScrollData) {
-			var propertyName = property;
+			let propertyName = property;
 
 			//			if (property === "display") {
 			//				if (propertyValue === "none") {
@@ -15,7 +15,7 @@ namespace VelocityStatic {
 			//						element.style[propertyName] = propertyValue;
 			//					}
 			//					if (propertyValue === "flex") {
-			//						var flexValues = ["-webkit-box", "-moz-box", "-ms-flexbox", "-webkit-flex"];
+			//						let flexValues = ["-webkit-box", "-moz-box", "-ms-flexbox", "-webkit-flex"];
 			//
 			//						flexValues.forEach(function(flexValue) {
 			//							CSS.setPropertyValue(element, "display", flexValue, percentComplete);
@@ -49,7 +49,7 @@ namespace VelocityStatic {
 				} else {
 					/* Inject hooks. */
 					if (Hooks.registered[property]) {
-						var hookName = property,
+						let hookName = property,
 							hookRoot = Hooks.getRoot(property);
 
 						/* If a cached rootPropertyValue was not provided, query the DOM for the hookRoot's current value. */
@@ -68,11 +68,14 @@ namespace VelocityStatic {
 					/* Assign the appropriate vendor prefix before performing an official style update. */
 					propertyName = Names.prefixCheck(property)[0];
 
+					let data = Data(element);
+
 					/* A try/catch is used for IE<=8, which throws an error when "invalid" CSS values are set, e.g. a negative width.
 					 Try/catch is avoided for other browsers since it incurs a performance overhead. */
 					if (IE <= 8) {
 						try {
 							element.style[propertyName] = propertyValue;
+							data.style[propertyName] = propertyValue || null;
 						} catch (error) {
 							if (debug) {
 								console.log("Browser does not support [" + propertyValue + "] for [" + propertyName + "]");
@@ -81,8 +84,6 @@ namespace VelocityStatic {
 						/* SVG elements have their dimensional properties (width, height, x, y, cx, etc.) applied directly as attributes instead of as styles. */
 						/* Note: IE8 does not support SVG elements, so it's okay that we skip it for SVG animation. */
 					} else {
-						var data = Data(element);
-
 						if (data && data.isSVG && Names.SVGAttribute(property)) {
 							/* Note: For SVG attributes, vendor-prefixed property names are never used. */
 							/* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
@@ -90,6 +91,7 @@ namespace VelocityStatic {
 						} else {
 							element.style[propertyName] = propertyValue;
 						}
+						data.style[propertyName] = propertyValue || null;
 					}
 
 					if (debug >= 2) {

@@ -10,6 +10,8 @@ namespace VelocityStatic {
 	 Timing
 	 **************/
 
+	const FRAME_TIME = 1000 / 60;
+
 	var ticker: (callback: FrameRequestCallback) => number,
 		/**
 		 * Shim for window.performance in case it doesn't exist
@@ -32,7 +34,7 @@ namespace VelocityStatic {
 				/* Dynamically set delay on a per-tick basis to match 60fps. */
 				/* Based on a technique by Erik Moller. MIT license: https://gist.github.com/paulirish/1579671 */
 				var timeCurrent = performance.now(), // High precision if we can
-					timeDelta = Math.max(0, (1000 / 60) - (timeCurrent - lastTick));
+					timeDelta = Math.max(0, FRAME_TIME - (timeCurrent - lastTick));
 
 				return setTimeout(function() {
 					callback(timeCurrent + timeDelta);
@@ -77,6 +79,7 @@ namespace VelocityStatic {
 
 	/* Note: All calls to Velocity are pushed to the Velocity.State.calls array, which is fully iterated through upon each tick. */
 	export function tick(timestamp?: number | boolean) {
+		expandTweens();
 		/* An empty timestamp argument indicates that this is the first tick occurence since ticking was turned on.
 		 We leverage this metadata to fully ignore the first tick pass since RAF's initial pass is fired whenever
 		 the browser's next tick sync time occurs, which results in the first elements subjected to Velocity
@@ -87,7 +90,8 @@ namespace VelocityStatic {
 			/* We normally use RAF's high resolution timestamp but as it can be significantly offset when the browser is
 			 under high stress we give the option for choppiness over allowing the browser to drop huge chunks of frames.
 			 We use performance.now() and shim it if it doesn't exist for when the tab is hidden. */
-			var timeCurrent = lastTick = timestamp && timestamp !== true ? timestamp : performance.now(),
+			var timeCurrent = timestamp && timestamp !== true ? timestamp : performance.now(),
+				deltaTime = lastTick ? timeCurrent - lastTick : FRAME_TIME,
 				activeCall = State.first,
 				nextCall: AnimationCall,
 				percentComplete: number,
@@ -110,6 +114,7 @@ namespace VelocityStatic {
 					return round ? Math.round(result) : result;
 				};
 
+			lastTick = timeCurrent;
 			//			console.log("tick", timestamp, activeCall, State)
 			/********************
 			 Call Iteration
@@ -135,6 +140,8 @@ namespace VelocityStatic {
 				let timeStart = activeCall.timeStart,
 					paused = activeCall.paused,
 					delay = activeCall.delay,
+					started = activeCall.started,
+					callbacks = activeCall.callbacks,
 					firstTick = !timeStart;
 
 				/* If timeStart is undefined, then this is the first time that this call has been processed by tick().
@@ -146,31 +153,56 @@ namespace VelocityStatic {
 				 first tick iteration isn't wasted by animating at 0% tween completion, which would produce the
 				 same style value as the element's current value. */
 				if (firstTick) {
-					activeCall.timeStart = timeStart = timeCurrent - 16;
+					activeCall.timeStart = timeStart = timeCurrent - deltaTime;
 					/* Apply the "velocity-animating" indicator class. */
 					VelocityStatic.CSS.Values.addClass(element, "velocity-animating");
 				}
 
 				/* If a pause key is present, skip processing unless it has been set to resume */
 				if (paused === true) {
+					/* Update the time start to accomodate the paused completion amount */
+					activeCall.timeStart += deltaTime;
 					continue;
 				} else if (paused === false) {
-					/* Update the time start to accomodate the paused completion amount */
-					timeStart = activeCall.timeStart = Math.round(timeCurrent - activeCall.ellapsedTime - 16);
-
 					/* Remove pause key after processing */
 					activeCall.paused = undefined;
 				}
 
 				// Make sure anything we've delayed doesn't start animating yet
 				// There might still be an active delay after something has been un-paused
-				if (delay) {
+				if (!started && delay) {
 					if (timeStart + delay > timeCurrent) {
 						continue;
 					}
-					activeCall.timeStart = timeStart = timeStart - delay;
-					activeCall.delay = 0;
+					activeCall.timeStart = timeStart = timeCurrent - deltaTime;
 				}
+
+				/*******************
+				 Option: Begin
+				 *******************/
+
+				if (!started) {
+					activeCall.started = true;
+					/* The begin callback is fired once per call -- not once per element -- and is passed the full raw DOM element set as both its context and its first argument. */
+					if (callbacks && callbacks.started++ === 0) {
+						callbacks.first = activeCall;
+						if (callbacks.begin) {
+							/* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
+							try {
+								let elements = activeCall.elements;
+
+								callbacks.begin.call(elements, elements, activeCall);
+							} catch (error) {
+								setTimeout(function() {
+									throw error;
+								}, 1);
+							}
+							// Only called once, even if reversed or repeated
+							callbacks.begin = undefined;
+						}
+					}
+				}
+
 
 				/* The tween's completion percentage is relative to the tween's start time, not the tween's start value
 				 (which would result in unpredictable tween durations since JavaScript's timers are not particularly accurate).
@@ -181,7 +213,7 @@ namespace VelocityStatic {
 					property: string,
 					transformPropertyExists = false;
 
-				percentComplete = activeCall.percentComplete = Math.min((millisecondsEllapsed) / activeCall.duration, 1);
+				percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / activeCall.duration, 1);
 				if (percentComplete === 1) {
 					hasComplete = true;
 				}
@@ -334,8 +366,6 @@ namespace VelocityStatic {
 				if (activeCall.visibility !== undefined && activeCall.visibility !== "hidden") {
 					activeCall.visibility = false;
 				}
-				let callbacks = activeCall.callbacks;
-
 				if (callbacks && callbacks.first === activeCall && callbacks.progress) {
 					hasProgress = true;
 				}
@@ -348,13 +378,14 @@ namespace VelocityStatic {
 					let callbacks = activeCall.callbacks;
 
 					/* Pass the elements and the timing data (percentComplete, msRemaining, timeStart, tweenDummyValue) into the progress callback. */
-					if (callbacks && callbacks.first === activeCall && callbacks.progress) {
+					if (callbacks && activeCall.started && !activeCall.paused && callbacks.first === activeCall && callbacks.progress) {
 						callbacks.progress.call(activeCall.elements,
 							activeCall.elements,
 							activeCall.percentComplete,
 							Math.max(0, activeCall.timeStart + activeCall.duration - timeCurrent),
 							activeCall.timeStart,
-							(activeCall.tweens["tween"] || {} as Tween).currentValue);
+							(activeCall.tweens["tween"] || {} as Tween).currentValue,
+							activeCall);
 					}
 				}
 			}
@@ -362,16 +393,17 @@ namespace VelocityStatic {
 				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
 					nextCall = activeCall.next;
 					/* If this call has finished tweening, pass its index to completeCall() to handle call cleanup. */
-					if (activeCall.percentComplete === 1) {
+					if (activeCall.started && !activeCall.paused && activeCall.percentComplete === 1) {
 						completeCall(activeCall);
 					}
 				}
 			}
 		}
-		expandTweens();
 		/* Note: completeCall() sets the isTicking flag to false when the last call on Velocity.State.calls has completed. */
 		if (State.isTicking) {
 			ticker(tick);
+		} else {
+			lastTick = 0;
 		}
 	}
 };

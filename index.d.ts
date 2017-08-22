@@ -16,7 +16,7 @@ interface VelocityOptions {
 	begin?: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>) => void;
 	complete?: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>) => void;
 	container?: string | HTMLorSVGElement;
-	delay?: string | number | boolean;
+	delay?: string | number;
 	/**
 	 * @deprecated
 	 */
@@ -44,6 +44,18 @@ interface VelocityOptions {
 interface ElementData {
 	isSVG?: boolean;
 	transformCache?: any;
+	/**
+	 * A local cache of the current style values we're using, this is 80x faster
+	 * than <code>element.style</code> access.
+	 * 
+	 * Empty strings are set to null to get the value from getComputedStyle
+	 * instead. If getComputedStyle returns an empty string then that is saved.
+	 */
+	style: CSSStyleDeclaration;
+	/**
+	 * A cached copy of getComputedStyle, this is 50% the speed of
+	 * <code>element.style</code> access.
+	 */
 	computedStyle?: CSSStyleDeclaration;
 	opts?: VelocityOptions;
 	rootPropertyValueCache?: {};
@@ -123,15 +135,15 @@ interface Callbacks {
 	 * Begin handler. Only the first element to check this callback gets to use
 	 * it. Cleared after calling
 	 */
-	begin: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>) => void;
+	begin: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>, activeCall?: AnimationCall) => void;
 	/**
 	 * Complete handler (only the last element in a set gets this)
 	 */
-	complete: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>) => void;
+	complete: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>, activeCall?: AnimationCall) => void;
 	/**
 	 * Progress handler (only the last element in a set gets this)
 	 */
-	progress: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>, percentComplete?: number, remaining?: number, start?: number, tweenValue?: number) => void;
+	progress: (this: NodeListOf<HTMLorSVGElement>, elements?: NodeListOf<HTMLorSVGElement>, percentComplete?: number, remaining?: number, start?: number, tweenValue?: number, activeCall?: AnimationCall) => void;
 	/**
 	 * This method is called at most once to signify that the animation has
 	 * completed. Currently a loop:true animation will never complete. This
@@ -199,6 +211,10 @@ interface AnimationCall {
 	 * paused and needs to be resumed, and if undefined / null then not either.
 	 */
 	paused: boolean;
+	/**
+	 * Set once the animation has started - after any delay (and possible pause)
+	 */
+	started: boolean;
 	/**
 	 * The time (in ms) that this animation has already run. Used with the
 	 * duration and easing to provide the exact tween needed.

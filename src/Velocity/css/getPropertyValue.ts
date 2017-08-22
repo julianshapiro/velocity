@@ -16,45 +16,36 @@ namespace VelocityStatic {
 				 element's scrollbars are visible (which expands the element's dimensions). Thus, we defer to the more accurate
 				 offsetHeight/Width property, which includes the total dimensions for interior, border, padding, and scrollbar.
 				 We subtract border and padding to get the sum of interior + scrollbar. */
-				var computedValue: string | number = 0,
+				let data = Data(element),
+					computedValue: string | number = 0,
+					computedStyle = data && data.computedStyle ? data.computedStyle : window.getComputedStyle(element, null),
+					isWidthHeight = /^(width|height)$/.test(property),
 					/* Browsers do not return height and width values for elements that are set to display:"none". Thus, we temporarily
 					 toggle display to the element type's default value. */
-					data = Data(element),
-					computedStyle = data && data.computedStyle ? data.computedStyle : window.getComputedStyle(element, null),
-					toggleDisplay: boolean,
-					revertDisplay = function() {
-						if (toggleDisplay) {
-							setPropertyValue(element, "display", "none", 1);
-						}
-					};
+					toggleDisplay: boolean = isWidthHeight && getPropertyValue(element, "display") === 0,
+					revertDisplay = toggleDisplay ? function() {
+						setPropertyValue(element, "display", "none", 1);
+					} : function() {};
 
-
-				if (/^(width|height)$/.test(property) && getPropertyValue(element, "display") === 0) {
-					toggleDisplay = true;
+				if (toggleDisplay) {
 					setPropertyValue(element, "display", Values.getDisplayType(element), 1);
 				}
-
-				if (!forceStyleLookup) {
-					if (property === "height" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-						// TODO: offsetWidth does not exist on SVGElement
-						let contentBoxHeight = (element as HTMLElement).offsetHeight - (parseFloat(getPropertyValue(element, "borderTopWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "borderBottomWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingTop") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingBottom") as string) || 0);
-						revertDisplay();
-
-						return contentBoxHeight;
-					} else if (property === "width" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-						// TODO: offsetWidth does not exist on SVGElement
-						let contentBoxWidth = (element as HTMLElement).offsetWidth - (parseFloat(getPropertyValue(element, "borderLeftWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "borderRightWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingLeft") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingRight") as string) || 0);
-						revertDisplay();
-
-						return contentBoxWidth;
-					}
-				}
-
 				/* For elements that Velocity hasn't been called on directly (e.g. when Velocity queries the DOM on behalf
 				 of a parent of an element its animating), perform a direct getComputedStyle lookup since the object isn't cached. */
 				if (data && !data.computedStyle) {
 					data.computedStyle = computedStyle;
 					/* If computedStyle is cached, use it. */
+				}
+				if (!forceStyleLookup && isWidthHeight && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
+					if (property === "height") {
+						// TODO: offsetHeight does not exist on SVGElement
+						computedValue = (element as HTMLElement).offsetHeight - (parseFloat(getPropertyValue(element, "borderTopWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "borderBottomWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingTop") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingBottom") as string) || 0);
+					} else { //if (property === "width") {
+						// TODO: offsetWidth does not exist on SVGElement
+						computedValue = (element as HTMLElement).offsetWidth - (parseFloat(getPropertyValue(element, "borderLeftWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "borderRightWidth") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingLeft") as string) || 0) - (parseFloat(getPropertyValue(element, "paddingRight") as string) || 0);
+					}
+					revertDisplay();
+					return computedValue;
 				}
 
 				/* IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
@@ -73,15 +64,12 @@ namespace VelocityStatic {
 				} else {
 					computedValue = computedStyle[property];
 				}
-
 				/* Fall back to the property's style value (if defined) when computedValue returns nothing,
 				 which can happen when the element hasn't been painted. */
 				if (computedValue === "" || computedValue === null) {
 					computedValue = element.style[property];
 				}
-
 				revertDisplay();
-
 				/* For top, right, bottom, and left (TRBL) values that are set to "auto" on elements of "fixed" or "absolute" position,
 				 defer to jQuery for converting "auto" to a numeric value. (For elements with a "static" or "relative" position, "auto" has the same
 				 effect as being set to 0, so no conversion is necessary.) */
@@ -89,7 +77,7 @@ namespace VelocityStatic {
 				 property, which reverts to "auto", left's value is 0 relative to its parent element, but is often non-zero relative
 				 to its *containing* (not parent) element, which is the nearest "position:relative" ancestor or the viewport (and always the viewport in the case of "position:fixed"). */
 				if (computedValue === "auto" && /^(top|right|bottom|left)$/i.test(property)) {
-					var position = computePropertyValue(element, "position"); /* GET */
+					let position = computePropertyValue(element, "position"); /* GET */
 
 					if (position === "fixed" || (position === "absolute" && /top|left/i.test(property))) {
 						/* Note: this has no pixel unit on its returned values; we re-add it here to conform with computePropertyValue's behavior. */
@@ -100,12 +88,12 @@ namespace VelocityStatic {
 				return computedValue;
 			}
 
-			var propertyValue;
+			let propertyValue;
 
 			/* If this is a hooked property (e.g. "clipLeft" instead of the root property of "clip"),
 			 extract the hook's value from a normalized rootPropertyValue using Hooks.extractValue(). */
 			if (Hooks.registered[property]) {
-				var hook = property,
+				let hook = property,
 					hookRoot = Hooks.getRoot(hook);
 
 				/* If a cached rootPropertyValue wasn't passed in (which Velocity always attempts to do in order to avoid requerying the DOM),
@@ -128,10 +116,8 @@ namespace VelocityStatic {
 				/* Note: Normalizing a property is mutually exclusive from hooking a property since hook-extracted values are strictly
 				 numerical and therefore do not require normalization extraction. */
 			} else if (Normalizations.registered[property]) {
-				var normalizedPropertyName,
+				let normalizedPropertyName = Normalizations.registered[property]("name", element),
 					normalizedPropertyValue;
-
-				normalizedPropertyName = Normalizations.registered[property]("name", element);
 
 				/* Transform values are calculated via normalization extraction (see below), which checks against the element's transformCache.
 				 At no point do transform GETs ever actually query the DOM; initial stylesheet values are never processed.
@@ -153,12 +139,15 @@ namespace VelocityStatic {
 			if (!/^[\d-]/.test(propertyValue)) {
 				/* For SVG elements, dimensional properties (which SVGAttribute() detects) are tweened via
 				 their HTML attribute values instead of their CSS style values. */
-				var data = Data(element);
+				let data = Data(element),
+					isWidthHeight = /^(height|width)$/i.test(property);
 
-				if (data && data.isSVG && Names.SVGAttribute(property)) {
+				if (data && !isWidthHeight && data[property] != null) {
+					propertyValue = data[property];
+				} else if (data && data.isSVG && Names.SVGAttribute(property)) {
 					/* Since the height/width attribute values must be set manually, they don't reflect computed values.
 					 Thus, we use use getBBox() to ensure we always get values for elements with undefined height/width attributes. */
-					if (/^(height|width)$/i.test(property)) {
+					if (isWidthHeight) {
 						/* Firefox throws an error if .getBBox() is called on an SVG that isn't attached to the DOM. */
 						try {
 							propertyValue = (element as any).getBBox()[property];
@@ -176,9 +165,9 @@ namespace VelocityStatic {
 
 			/* Since property lookups are for animation purposes (which entails computing the numeric delta between start and end values),
 			 convert CSS null-values to an integer of value 0. */
-			if (Values.isCSSNullValue(propertyValue)) {
-				propertyValue = 0;
-			}
+			//			if (Values.isCSSNullValue(propertyValue)) {
+			//				propertyValue = 0;
+			//			}
 
 			if (debug >= 2) {
 				console.log("Get " + property + ": " + propertyValue);

@@ -16,6 +16,10 @@ namespace VelocityStatic {
 			 */
 			computedStyle: null,
 			/**
+			 * 
+			 */
+			style: Object.create(null),
+			/**
 			 * The full root property values of each CSS hook being animated on this element are cached so that:
 			 * 1) Concurrently-animating hooks sharing the same root can have their root values' merged into one while tweening.
 			 * 2) Post-hook-injection root values can be transferred over to consecutively chained Velocity calls as starting root values.

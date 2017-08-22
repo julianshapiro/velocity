@@ -186,6 +186,7 @@ var VelocityStatic;
         queue: defaultUndefinedDescriptor,
         repeat: defaultUndefinedDescriptor,
         repeatAgain: defaultUndefinedDescriptor,
+        started: defaultUndefinedDescriptor,
         timeStart: defaultNumberDescriptor,
         tweens: defaultUndefinedDescriptor,
         display: defaultUndefinedDescriptor,
@@ -250,7 +251,8 @@ var VelocityStatic;
                     tweenContainer.reverse = !tweenContainer.reverse;
                 }
             }
-            activeCall.timeStart = VelocityStatic.lastTick;
+            activeCall.timeStart = 0;
+            activeCall.started = false;
         } else {
             var elements = activeCall.elements, element = activeCall.element, data_1 = Data(element);
             if (activeCall.display === "none") {
@@ -262,19 +264,19 @@ var VelocityStatic;
             if (isStopped && data_1 && (activeCall.queue === false || data_1.queueList[activeCall.queue])) {
                 data_1.isAnimating = false;
                 data_1.rootPropertyValueCache = {};
-                var transformHAPropertyExists = false;
+                var transformHAPropertyExists_1 = false;
                 VelocityStatic.CSS.Lists.transforms3D.forEach(function(transformName) {
                     var defaultValue = /^scale/.test(transformName) ? 1 : 0, currentValue = data_1.transformCache[transformName];
                     if (data_1.transformCache[transformName] !== undefined && new RegExp("^\\(" + defaultValue + "[^.]").test(currentValue)) {
-                        transformHAPropertyExists = true;
+                        transformHAPropertyExists_1 = true;
                         delete data_1.transformCache[transformName];
                     }
                 });
                 if (activeCall.mobileHA) {
-                    transformHAPropertyExists = true;
+                    transformHAPropertyExists_1 = true;
                     delete data_1.transformCache.translate3d;
                 }
-                if (transformHAPropertyExists) {
+                if (transformHAPropertyExists_1) {
                     VelocityStatic.CSS.flushTransformCache(element);
                 }
                 VelocityStatic.CSS.Values.removeClass(element, "velocity-animating");
@@ -283,7 +285,7 @@ var VelocityStatic;
             if (callbacks && ++callbacks.completed === callbacks.total) {
                 if (!isStopped && callbacks.complete) {
                     try {
-                        callbacks.complete.call(elements, elements);
+                        callbacks.complete.call(elements, elements, activeCall);
                     } catch (error) {
                         setTimeout(function() {
                             throw error;
@@ -366,28 +368,23 @@ var VelocityStatic;
     (function(CSS) {
         function getPropertyValue(element, property, rootPropertyValue, forceStyleLookup) {
             function computePropertyValue(element, property) {
-                var computedValue = 0, data = Data(element), computedStyle = data && data.computedStyle ? data.computedStyle : window.getComputedStyle(element, null), toggleDisplay, revertDisplay = function() {
-                    if (toggleDisplay) {
-                        CSS.setPropertyValue(element, "display", "none", 1);
-                    }
-                };
-                if (/^(width|height)$/.test(property) && getPropertyValue(element, "display") === 0) {
-                    toggleDisplay = true;
+                var data = Data(element), computedValue = 0, computedStyle = data && data.computedStyle ? data.computedStyle : window.getComputedStyle(element, null), isWidthHeight = /^(width|height)$/.test(property), toggleDisplay = isWidthHeight && getPropertyValue(element, "display") === 0, revertDisplay = toggleDisplay ? function() {
+                    CSS.setPropertyValue(element, "display", "none", 1);
+                } : function() {};
+                if (toggleDisplay) {
                     CSS.setPropertyValue(element, "display", CSS.Values.getDisplayType(element), 1);
-                }
-                if (!forceStyleLookup) {
-                    if (property === "height" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-                        var contentBoxHeight = element.offsetHeight - (parseFloat(getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(getPropertyValue(element, "paddingBottom")) || 0);
-                        revertDisplay();
-                        return contentBoxHeight;
-                    } else if (property === "width" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-                        var contentBoxWidth = element.offsetWidth - (parseFloat(getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(getPropertyValue(element, "paddingRight")) || 0);
-                        revertDisplay();
-                        return contentBoxWidth;
-                    }
                 }
                 if (data && !data.computedStyle) {
                     data.computedStyle = computedStyle;
+                }
+                if (!forceStyleLookup && isWidthHeight && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
+                    if (property === "height") {
+                        computedValue = element.offsetHeight - (parseFloat(getPropertyValue(element, "borderTopWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderBottomWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingTop")) || 0) - (parseFloat(getPropertyValue(element, "paddingBottom")) || 0);
+                    } else {
+                        computedValue = element.offsetWidth - (parseFloat(getPropertyValue(element, "borderLeftWidth")) || 0) - (parseFloat(getPropertyValue(element, "borderRightWidth")) || 0) - (parseFloat(getPropertyValue(element, "paddingLeft")) || 0) - (parseFloat(getPropertyValue(element, "paddingRight")) || 0);
+                    }
+                    revertDisplay();
+                    return computedValue;
                 }
                 if (property === "borderColor") {
                     property = "borderTopColor";
@@ -411,17 +408,16 @@ var VelocityStatic;
             }
             var propertyValue;
             if (CSS.Hooks.registered[property]) {
-                var hook = property, hookRoot = CSS.Hooks.getRoot(hook);
+                var hook_1 = property, hookRoot = CSS.Hooks.getRoot(hook_1);
                 if (rootPropertyValue === undefined) {
                     rootPropertyValue = getPropertyValue(element, CSS.Names.prefixCheck(hookRoot)[0]);
                 }
                 if (CSS.Normalizations.registered[hookRoot]) {
                     rootPropertyValue = CSS.Normalizations.registered[hookRoot]("extract", element, rootPropertyValue);
                 }
-                propertyValue = CSS.Hooks.extractValue(hook, rootPropertyValue);
+                propertyValue = CSS.Hooks.extractValue(hook_1, rootPropertyValue);
             } else if (CSS.Normalizations.registered[property]) {
-                var normalizedPropertyName, normalizedPropertyValue;
-                normalizedPropertyName = CSS.Normalizations.registered[property]("name", element);
+                var normalizedPropertyName = CSS.Normalizations.registered[property]("name", element), normalizedPropertyValue = void 0;
                 if (normalizedPropertyName !== "transform") {
                     normalizedPropertyValue = computePropertyValue(element, CSS.Names.prefixCheck(normalizedPropertyName)[0]);
                     if (CSS.Values.isCSSNullValue(normalizedPropertyValue) && CSS.Hooks.templates[property]) {
@@ -431,9 +427,11 @@ var VelocityStatic;
                 propertyValue = CSS.Normalizations.registered[property]("extract", element, normalizedPropertyValue);
             }
             if (!/^[\d-]/.test(propertyValue)) {
-                var data = Data(element);
-                if (data && data.isSVG && CSS.Names.SVGAttribute(property)) {
-                    if (/^(height|width)$/i.test(property)) {
+                var data_2 = Data(element), isWidthHeight = /^(height|width)$/i.test(property);
+                if (data_2 && !isWidthHeight && data_2[property] != null) {
+                    propertyValue = data_2[property];
+                } else if (data_2 && data_2.isSVG && CSS.Names.SVGAttribute(property)) {
+                    if (isWidthHeight) {
                         try {
                             propertyValue = element.getBBox()[property];
                         } catch (error) {
@@ -445,9 +443,6 @@ var VelocityStatic;
                 } else {
                     propertyValue = computePropertyValue(element, CSS.Names.prefixCheck(property)[0]);
                 }
-            }
-            if (CSS.Values.isCSSNullValue(propertyValue)) {
-                propertyValue = 0;
             }
             if (VelocityStatic.debug >= 2) {
                 console.log("Get " + property + ": " + propertyValue);
@@ -1018,21 +1013,23 @@ var VelocityStatic;
                         property = CSS.Normalizations.registered[property]("name", element);
                     }
                     propertyName = CSS.Names.prefixCheck(property)[0];
+                    var data_3 = Data(element);
                     if (IE <= 8) {
                         try {
                             element.style[propertyName] = propertyValue;
+                            data_3.style[propertyName] = propertyValue || null;
                         } catch (error) {
                             if (VelocityStatic.debug) {
                                 console.log("Browser does not support [" + propertyValue + "] for [" + propertyName + "]");
                             }
                         }
                     } else {
-                        var data = Data(element);
-                        if (data && data.isSVG && CSS.Names.SVGAttribute(property)) {
+                        if (data_3 && data_3.isSVG && CSS.Names.SVGAttribute(property)) {
                             element.setAttribute(property, propertyValue);
                         } else {
                             element.style[propertyName] = propertyValue;
                         }
+                        data_3.style[propertyName] = propertyValue || null;
                     }
                     if (VelocityStatic.debug >= 2) {
                         console.log("Set " + property + " (" + propertyName + "): " + propertyValue);
@@ -1143,7 +1140,8 @@ var VelocityStatic;
         duration: DURATION_DEFAULT,
         easing: EASING_DEFAULT,
         mobileHA: true,
-        cache: true
+        cache: true,
+        promiseRejectEmpty: true
     };
 })(VelocityStatic || (VelocityStatic = {}));
 
@@ -1333,7 +1331,7 @@ function getEasing(value, duration) {
         if (value.length === 1) {
             easing = generateStep(value[0]);
         } else if (value.length === 2) {
-            easing = generateSpringRK4.apply(null, value.concat([ duration ]));
+            easing = generateSpringRK4(value[0], value[1], duration);
         } else if (value.length === 4) {
             easing = generateBezier.apply(null, value);
         } else {
@@ -1431,6 +1429,7 @@ var VelocityStatic;
             isSVG: isSVG(element),
             isAnimating: false,
             computedStyle: null,
+            style: Object.create(null),
             rootPropertyValueCache: Object.create(null),
             transformCache: Object.create(null),
             queueList: Object.create(null),
@@ -1476,19 +1475,18 @@ function animate(animation) {
 }
 
 function queue(element, animation, queue) {
-    var data = Data(element), last;
     if (queue === false) {
         animate(animation);
     } else {
         if (!isString(queue)) {
             queue = "";
         }
-        last = data.queueList[queue];
+        var data = Data(element), last = data.queueList[queue];
         if (!last) {
-            if (data.queueList[queue] === null) {
+            if (last === null) {
                 data.queueList[queue] = animation;
             } else {
-                data.queueList[queue] = undefined;
+                data.queueList[queue] = null;
                 animate(animation);
             }
         } else {
@@ -1503,17 +1501,16 @@ function queue(element, animation, queue) {
 
 function dequeue(element, queue, skip) {
     if (queue !== false) {
-        var data = Data(element), animation;
         if (!isString(queue)) {
             queue = "";
         }
-        animation = data.queueList[queue];
+        var data = Data(element), animation = data.queueList[queue];
         if (animation) {
             data.queueList[queue] = animation.next || null;
             if (!skip) {
                 animate(animation);
             }
-        } else {
+        } else if (animation === null) {
             delete data.queueList[queue];
         }
         return animation;
@@ -1786,6 +1783,7 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
+    var FRAME_TIME = 1e3 / 60;
     var ticker, performance = function() {
         var perf = window.performance || {};
         if (typeof perf.now !== "function") {
@@ -1797,7 +1795,7 @@ var VelocityStatic;
         return perf;
     }(), rAFShim = ticker = function() {
         return window.requestAnimationFrame || function(callback) {
-            var timeCurrent = performance.now(), timeDelta = Math.max(0, 1e3 / 60 - (timeCurrent - VelocityStatic.lastTick));
+            var timeCurrent = performance.now(), timeDelta = Math.max(0, FRAME_TIME - (timeCurrent - VelocityStatic.lastTick));
             return setTimeout(function() {
                 callback(timeCurrent + timeDelta);
             }, timeDelta);
@@ -1821,8 +1819,9 @@ var VelocityStatic;
         document.addEventListener("visibilitychange", updateTicker);
     }
     function tick(timestamp) {
+        expandTweens();
         if (timestamp) {
-            var timeCurrent = VelocityStatic.lastTick = timestamp && timestamp !== true ? timestamp : performance.now(), activeCall = VelocityStatic.State.first, nextCall, percentComplete, tween, easing, hasProgress, hasComplete, getEasing = function(tweenDelta) {
+            var timeCurrent = timestamp && timestamp !== true ? timestamp : performance.now(), deltaTime = VelocityStatic.lastTick ? timeCurrent - VelocityStatic.lastTick : FRAME_TIME, activeCall = VelocityStatic.State.first, nextCall, percentComplete, tween, easing, hasProgress, hasComplete, getEasing = function(tweenDelta) {
                 return tweenDelta * (tween.reverse ? 1 - easing(1 - percentComplete, activeCall, tweenDelta) : easing(percentComplete, activeCall, tweenDelta));
             }, expandPattern = function($0, index, round) {
                 if (percentComplete < 1) {
@@ -1832,30 +1831,47 @@ var VelocityStatic;
                 }
                 return round ? Math.round(result) : result;
             };
+            VelocityStatic.lastTick = timeCurrent;
             var _loop_1 = function() {
                 nextCall = activeCall.next;
-                var element = activeCall.element, data_2 = Data(element);
-                if (!data_2) {
+                var element = activeCall.element, data_4 = Data(element);
+                if (!data_4) {
                     VelocityStatic.freeAnimationCall(activeCall);
                     return "continue";
                 }
-                var timeStart = activeCall.timeStart, paused = activeCall.paused, delay = activeCall.delay, firstTick = !timeStart;
+                var timeStart = activeCall.timeStart, paused = activeCall.paused, delay = activeCall.delay, started = activeCall.started, callbacks = activeCall.callbacks, firstTick = !timeStart;
                 if (firstTick) {
-                    activeCall.timeStart = timeStart = timeCurrent - 16;
+                    activeCall.timeStart = timeStart = timeCurrent - deltaTime;
                     VelocityStatic.CSS.Values.addClass(element, "velocity-animating");
                 }
                 if (paused === true) {
+                    activeCall.timeStart += deltaTime;
                     return "continue";
                 } else if (paused === false) {
-                    timeStart = activeCall.timeStart = Math.round(timeCurrent - activeCall.ellapsedTime - 16);
                     activeCall.paused = undefined;
                 }
-                if (delay) {
+                if (!started && delay) {
                     if (timeStart + delay > timeCurrent) {
                         return "continue";
                     }
-                    activeCall.timeStart = timeStart = timeStart - delay;
-                    activeCall.delay = 0;
+                    activeCall.timeStart = timeStart = timeCurrent - deltaTime;
+                }
+                if (!started) {
+                    activeCall.started = true;
+                    if (callbacks && callbacks.started++ === 0) {
+                        callbacks.first = activeCall;
+                        if (callbacks.begin) {
+                            try {
+                                var elements = activeCall.elements;
+                                callbacks.begin.call(elements, elements, activeCall);
+                            } catch (error) {
+                                setTimeout(function() {
+                                    throw error;
+                                }, 1);
+                            }
+                            callbacks.begin = undefined;
+                        }
+                    }
                 }
                 var tweens = activeCall.tweens, tweenDummyValue = null, millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, property = void 0, transformPropertyExists = false;
                 percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / activeCall.duration, 1);
@@ -1894,7 +1910,7 @@ var VelocityStatic;
                     } else {
                         if (VelocityStatic.CSS.Hooks.registered[property]) {
                             hookRoot = VelocityStatic.CSS.Hooks.getRoot(property);
-                            rootPropertyValueCache = data_2.rootPropertyValueCache[hookRoot];
+                            rootPropertyValueCache = data_4.rootPropertyValueCache[hookRoot];
                             if (rootPropertyValueCache) {
                                 tween.rootPropertyValue = rootPropertyValueCache;
                             }
@@ -1902,9 +1918,9 @@ var VelocityStatic;
                         adjustedSetData = VelocityStatic.CSS.setPropertyValue(element, property, tween.currentValue + (IE < 9 && parseFloat(currentValue) === 0 ? "" : tween.unitType), percentComplete, tween.rootPropertyValue, tween.scrollData);
                         if (VelocityStatic.CSS.Hooks.registered[property]) {
                             if (VelocityStatic.CSS.Normalizations.registered[hookRoot]) {
-                                data_2.rootPropertyValueCache[hookRoot] = VelocityStatic.CSS.Normalizations.registered[hookRoot]("extract", null, adjustedSetData[1]);
+                                data_4.rootPropertyValueCache[hookRoot] = VelocityStatic.CSS.Normalizations.registered[hookRoot]("extract", null, adjustedSetData[1]);
                             } else {
-                                data_2.rootPropertyValueCache[hookRoot] = adjustedSetData[1];
+                                data_4.rootPropertyValueCache[hookRoot] = adjustedSetData[1];
                             }
                         }
                         if (adjustedSetData[0] === "transform") {
@@ -1912,8 +1928,8 @@ var VelocityStatic;
                         }
                     }
                     if (activeCall.mobileHA) {
-                        if (data_2.transformCache.translate3d === undefined) {
-                            data_2.transformCache.translate3d = "(0px, 0px, 0px)";
+                        if (data_4.transformCache.translate3d === undefined) {
+                            data_4.transformCache.translate3d = "(0px, 0px, 0px)";
                             transformPropertyExists = true;
                         }
                     }
@@ -1927,7 +1943,6 @@ var VelocityStatic;
                 if (activeCall.visibility !== undefined && activeCall.visibility !== "hidden") {
                     activeCall.visibility = false;
                 }
-                var callbacks = activeCall.callbacks;
                 if (callbacks && callbacks.first === activeCall && callbacks.progress) {
                     hasProgress = true;
                 }
@@ -1940,23 +1955,24 @@ var VelocityStatic;
                 for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
                     nextCall = activeCall.next;
                     var callbacks = activeCall.callbacks;
-                    if (callbacks && callbacks.first === activeCall && callbacks.progress) {
-                        callbacks.progress.call(activeCall.elements, activeCall.elements, activeCall.percentComplete, Math.max(0, activeCall.timeStart + activeCall.duration - timeCurrent), activeCall.timeStart, (activeCall.tweens["tween"] || {}).currentValue);
+                    if (callbacks && activeCall.started && !activeCall.paused && callbacks.first === activeCall && callbacks.progress) {
+                        callbacks.progress.call(activeCall.elements, activeCall.elements, activeCall.percentComplete, Math.max(0, activeCall.timeStart + activeCall.duration - timeCurrent), activeCall.timeStart, (activeCall.tweens["tween"] || {}).currentValue, activeCall);
                     }
                 }
             }
             if (hasComplete) {
                 for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
                     nextCall = activeCall.next;
-                    if (activeCall.percentComplete === 1) {
+                    if (activeCall.started && !activeCall.paused && activeCall.percentComplete === 1) {
                         VelocityStatic.completeCall(activeCall);
                     }
                 }
             }
         }
-        expandTweens();
         if (VelocityStatic.State.isTicking) {
             ticker(tick);
+        } else {
+            VelocityStatic.lastTick = 0;
         }
     }
     VelocityStatic.tick = tick;
@@ -1972,23 +1988,10 @@ function expandTweens() {
     var State = VelocityStatic.State, activeCall = State.firstNew;
     var _loop_2 = function() {
         var elements = activeCall.elements, elementsLength = elements.length, element = activeCall.element, elementArrayIndex = elements.indexOf(element), callbacks = activeCall.callbacks;
-        if (callbacks && callbacks.started++ === 0) {
-            callbacks.first === activeCall;
-            if (callbacks.begin) {
-                try {
-                    callbacks.begin.call(elements, elements);
-                } catch (error) {
-                    setTimeout(function() {
-                        throw error;
-                    }, 1);
-                }
-                callbacks.begin = undefined;
-            }
-        }
         if (isNode(element)) {
-            var data_3 = Data(element), lastAnimation_1, propertiesMap = activeCall.properties;
-            if (data_3 && data_3.isAnimating && activeCall.queue !== false) {
-                lastAnimation_1 = data_3.lastAnimationList[activeCall.queue];
+            var data_5 = Data(element), lastAnimation_1, propertiesMap = activeCall.properties;
+            if (data_5 && data_5.isAnimating && activeCall.queue !== false) {
+                lastAnimation_1 = data_5.lastAnimationList[activeCall.queue];
             }
             function parsePropertyValue(valueData, skipResolvingEasing) {
                 var endValue, easing, startValue;
@@ -2021,7 +2024,7 @@ function expandTweens() {
             }
             fixPropertyValue = function(property, valueData) {
                 var rootProperty = VelocityStatic.CSS.Hooks.getRoot(property), rootPropertyValue, endValue = valueData[0], easing = valueData[1], startValue = valueData[2], pattern;
-                if ((!data_3 || !data_3.isSVG) && rootProperty !== "tween" && VelocityStatic.CSS.Names.prefixCheck(rootProperty)[1] === false && VelocityStatic.CSS.Normalizations.registered[rootProperty] === undefined) {
+                if ((!data_5 || !data_5.isSVG) && rootProperty !== "tween" && VelocityStatic.CSS.Names.prefixCheck(rootProperty)[1] === false && VelocityStatic.CSS.Normalizations.registered[rootProperty] === undefined) {
                     if (VelocityStatic.debug) {
                         console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
                     }
@@ -2034,7 +2037,7 @@ function expandTweens() {
                     if (startValue === undefined) {
                         startValue = lastAnimation_1.tweens[property].endValue + lastAnimation_1.tweens[property].unitType;
                     }
-                    rootPropertyValue = data_3.rootPropertyValueCache[rootProperty];
+                    rootPropertyValue = data_5.rootPropertyValueCache[rootProperty];
                 } else {
                     if (VelocityStatic.CSS.Hooks.registered[property]) {
                         if (startValue === undefined) {
@@ -2219,11 +2222,11 @@ function expandTweens() {
                 }
                 activeCall.properties = undefined;
             }
-            if (data_3) {
+            if (data_5) {
                 if (activeCall.queue !== false) {
-                    data_3.lastAnimationList[activeCall.queue] = activeCall;
+                    data_5.lastAnimationList[activeCall.queue] = activeCall;
                 }
-                data_3.isAnimating = true;
+                data_5.isAnimating = true;
             }
         }
     };
@@ -2291,8 +2294,8 @@ function Velocity() {
     elements = sanitizeElements(elements);
     if (!elements) {
         if (promiseData.promise) {
-            if (!propertiesMap || !options || options.promiseRejectEmpty !== false) {
-                promiseData.rejecter();
+            if (!propertiesMap || (options && isBoolean(options.promiseRejectEmpty) ? options.promiseRejectEmpty : VelocityStatic.defaults.promiseRejectEmpty) === true) {
+                promiseData.rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
             } else {
                 promiseData.resolver();
             }
@@ -2382,7 +2385,7 @@ function Velocity() {
             for (var i_1 = 0; i_1 < elementsLength; i_1++) {
                 var element = elements[i_1];
                 if (element === activeCall.element) {
-                    activeCall.delay = 0;
+                    activeCall.started = true;
                     activeCall.queue = false;
                     if (options === true || isString(options)) {
                         var animation;
@@ -2455,26 +2458,30 @@ function Velocity() {
         vwToPx: null,
         vhToPx: null
     };
-    if (isNumber(options.duration)) {
-        var optionsDuration = options.duration;
-    } else if (isString(options.duration)) {
-        switch (options.duration.toLowerCase()) {
-          case "fast":
-            optionsDuration = DURATION_FAST;
-            break;
-
-          case "normal":
-            optionsDuration = DURATION_DEFAULT;
-            break;
-
-          case "slow":
-            optionsDuration = DURATION_SLOW;
-            break;
-
-          default:
-            optionsDuration = parseFloat(options.duration) || 1;
+    function parseTime(value, def) {
+        if (value == null || value === "") {
+            value = def;
         }
+        if (isNumber(value)) {
+            return value;
+        } else if (isString(value)) {
+            switch (value.toLowerCase()) {
+              case "fast":
+                return DURATION_FAST;
+
+              case "normal":
+                return DURATION_DEFAULT;
+
+              case "slow":
+                return DURATION_SLOW;
+
+              default:
+                return parseFloat(value.replace("ms", "").replace("s", "000")) || 0;
+            }
+        }
+        return parseTime(def, 0);
     }
+    var optionsDuration = parseTime(options.duration, VelocityStatic.defaults.duration || DURATION_DEFAULT), optionsDelay = parseTime(options.delay, VelocityStatic.defaults.delay || 0);
     if (options.display !== undefined && options.display !== null) {
         var optionsDisplay = options.display.toString().toLowerCase();
         if (optionsDisplay === "auto") {}
@@ -2483,15 +2490,12 @@ function Velocity() {
         var optionsVisibility = options.visibility.toString().toLowerCase();
     }
     if (VelocityStatic.mock === true) {
-        var optionsDelay = 0;
+        optionsDelay = 0;
         optionsDuration = 1;
     } else if (VelocityStatic.mock) {
         var mock = parseFloat(VelocityStatic.mock) || 1;
-        optionsDelay = parseFloat(options.delay) * mock;
+        optionsDelay *= mock;
         optionsDuration *= mock;
-    } else {
-        optionsDelay = parseInt(options.delay, 10) || 0;
-        optionsDuration = optionsDuration || 0;
     }
     var optionsEasing = getEasing(options.easing, optionsDuration);
     var optionsLoop = options.loop || 0;

@@ -16,27 +16,6 @@ function expandTweens() {
 			elementArrayIndex = elements.indexOf(element),
 			callbacks = activeCall.callbacks;
 
-		/*******************
-		 Option: Begin
-		 *******************/
-
-		/* The begin callback is fired once per call -- not once per elemenet -- and is passed the full raw DOM element set as both its context and its first argument. */
-		if (callbacks && callbacks.started++ === 0) {
-			callbacks.first === activeCall;
-			if (callbacks.begin) {
-				/* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
-				try {
-					callbacks.begin.call(elements, elements);
-				} catch (error) {
-					setTimeout(function() {
-						throw error;
-					}, 1);
-				}
-				// Only called once, even if reversed or repeated
-				callbacks.begin = undefined;
-			}
-		}
-
 		/* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
 		if (isNode(element)) {
 			let data = Data(element),

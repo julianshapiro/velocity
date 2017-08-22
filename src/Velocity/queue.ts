@@ -26,8 +26,6 @@ function animate(animation: AnimationCall) {
  * Add an item to an animation queue.
  */
 function queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: string | boolean) {
-	var data = Data(element),
-		last: AnimationCall;
 
 	if (queue === false) {
 		animate(animation);
@@ -35,12 +33,14 @@ function queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: stri
 		if (!isString(queue)) {
 			queue = "";
 		}
-		last = data.queueList[queue];
+		let data = Data(element),
+			last = data.queueList[queue];
+
 		if (!last) {
-			if (data.queueList[queue] === null) {
+			if (last === null) {
 				data.queueList[queue] = animation;
 			} else {
-				data.queueList[queue] = undefined;
+				data.queueList[queue] = null;
 				animate(animation);
 			}
 		} else {
@@ -60,19 +60,18 @@ function queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: stri
  */
 function dequeue(element: HTMLorSVGElement, queue?: string | boolean, skip?: boolean): AnimationCall {
 	if (queue !== false) {
-		var data = Data(element),
-			animation: AnimationCall;
-
 		if (!isString(queue)) {
 			queue = "";
 		}
-		animation = data.queueList[queue];
+		let data = Data(element),
+			animation = data.queueList[queue];
+
 		if (animation) {
 			data.queueList[queue] = animation.next || null;
 			if (!skip) {
 				animate(animation);
 			}
-		} else {
+		} else if(animation === null) {
 			delete data.queueList[queue];
 		}
 		return animation;

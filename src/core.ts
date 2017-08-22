@@ -95,8 +95,8 @@ function Velocity(...args: any[]) {
 
 	if (!elements) {
 		if (promiseData.promise) {
-			if (!propertiesMap || !options || options.promiseRejectEmpty !== false) {
-				promiseData.rejecter();
+			if (!propertiesMap || (options && isBoolean(options.promiseRejectEmpty) ? options.promiseRejectEmpty : VelocityStatic.defaults.promiseRejectEmpty) === true) {
+				promiseData.rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
 			} else {
 				promiseData.resolver();
 			}
@@ -282,7 +282,7 @@ function Velocity(...args: any[]) {
 					/* Check that this call was applied to the target element. */
 					if (element === activeCall.element) {
 						/* Make sure it can't be delayed */
-						activeCall.delay = 0;
+						activeCall.started = true;
 						/* Remove the queue so this can't trigger any newly added animations when it finishes */
 						activeCall.queue = false;
 						/* Optionally clear the remaining queued calls. If we're doing "finishAll" this won't find anything,
@@ -440,28 +440,34 @@ function Velocity(...args: any[]) {
 	 Element-Wide Variables
 	 ***************************/
 
+	function parseTime(value: string | number, def: string | number): number {
+		if (value == null || value === "") {
+			value = def;
+		}
+		if (isNumber(value)) {
+			return value;
+		} else if (isString(value)) {
+			switch (value.toLowerCase()) {
+				case "fast":
+					return DURATION_FAST;
+				case "normal":
+					return DURATION_DEFAULT;
+				case "slow":
+					return DURATION_SLOW;
+				default:
+					/* Remove the potential "ms" suffix and default to 1 if the user is attempting to set a duration of 0 (in order to produce an immediate style change). */
+					return parseFloat(value.replace("ms", "").replace("s", "000")) || 0;
+			}
+		}
+		return parseTime(def, 0);
+	}
+
 	/*********************************
 	 Option: Duration
 	 *********************************/
 
-	if (isNumber(options.duration)) {
-		var optionsDuration = options.duration;
-	} else if (isString(options.duration)) {
-		switch (options.duration.toLowerCase()) {
-			case "fast":
-				optionsDuration = DURATION_FAST;
-				break;
-			case "normal":
-				optionsDuration = DURATION_DEFAULT;
-				break;
-			case "slow":
-				optionsDuration = DURATION_SLOW;
-				break;
-			default:
-				/* Remove the potential "ms" suffix and default to 1 if the user is attempting to set a duration of 0 (in order to produce an immediate style change). */
-				optionsDuration = parseFloat(options.duration as string) || 1;
-		}
-	}
+	var optionsDuration = parseTime(options.duration, VelocityStatic.defaults.duration || DURATION_DEFAULT),
+		optionsDelay = parseTime(options.delay, VelocityStatic.defaults.delay || 0);
 
 	/*********************************
 	 Option: Display & Visibility
@@ -490,17 +496,14 @@ function Velocity(...args: any[]) {
 	/* In mock mode, all animations are forced to 1ms so that they occur immediately upon the next rAF tick.
 	 Alternatively, a multiplier can be passed in to time remap all delays and durations. */
 	if (VelocityStatic.mock === true) {
-		var optionsDelay = 0;
+		optionsDelay = 0;
 		optionsDuration = 1;
 	} else if (VelocityStatic.mock) {
 		// TODO: Put this in the main tick loop - so we can change the speed
 		let mock = parseFloat(VelocityStatic.mock) || 1;
 
-		optionsDelay = parseFloat(options.delay as string) * mock;
+		optionsDelay *= mock;
 		optionsDuration *= mock;
-	} else {
-		optionsDelay = parseInt(options.delay as string, 10) || 0;
-		optionsDuration = optionsDuration || 0;
 	}
 
 	/*******************
@@ -569,7 +572,7 @@ function Velocity(...args: any[]) {
 		animation.callbacks = callbacks;
 		animation.delay = optionsDelay;
 		animation.display = optionsDisplay;
-		animation.duration = optionsDuration;
+		animation.duration = optionsDuration as number;
 		animation.easing = optionsEasing;
 		animation.elements = elements;
 		animation.element = element;

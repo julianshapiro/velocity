@@ -47,6 +47,7 @@ namespace VelocityStatic {
 		queue: defaultUndefinedDescriptor,
 		repeat: defaultUndefinedDescriptor,
 		repeatAgain: defaultUndefinedDescriptor,
+		started: defaultUndefinedDescriptor,
 		timeStart: defaultNumberDescriptor,
 		tweens: defaultUndefinedDescriptor,
 		display: defaultUndefinedDescriptor,

@@ -28,8 +28,8 @@ namespace VelocityStatic {
 			let tweens = activeCall.tweens;
 
 			if (isLoop) {
-				for (var propertyName in tweens) {
-					var tweenContainer = tweens[propertyName],
+				for (let propertyName in tweens) {
+					let tweenContainer = tweens[propertyName],
 						oldStartValue = tweenContainer.startValue;
 
 					tweenContainer.startValue = tweenContainer.endValue;
@@ -38,7 +38,8 @@ namespace VelocityStatic {
 				}
 			}
 
-			activeCall.timeStart = lastTick;
+			activeCall.timeStart = 0;
+			activeCall.started = false;
 		} else {
 			let elements = activeCall.elements,
 				element = activeCall.element,
@@ -69,10 +70,10 @@ namespace VelocityStatic {
 				/* Clear the element's rootPropertyValueCache, which will become stale. */
 				data.rootPropertyValueCache = {};
 
-				var transformHAPropertyExists = false;
+				let transformHAPropertyExists = false;
 				/* If any 3D transform subproperty is at its default value (regardless of unit type), remove it. */
 				CSS.Lists.transforms3D.forEach(function(transformName) {
-					var defaultValue = /^scale/.test(transformName) ? 1 : 0,
+					let defaultValue = /^scale/.test(transformName) ? 1 : 0,
 						currentValue = data.transformCache[transformName];
 
 					if (data.transformCache[transformName] !== undefined && new RegExp("^\\(" + defaultValue + "[^.]").test(currentValue)) {
@@ -109,7 +110,7 @@ namespace VelocityStatic {
 				if (!isStopped && callbacks.complete) {
 					/* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
 					try {
-						callbacks.complete.call(elements, elements);
+						callbacks.complete.call(elements, elements, activeCall);
 					} catch (error) {
 						setTimeout(function() {
 							throw error;
