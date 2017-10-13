@@ -1,3 +1,9 @@
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+
 /**
  * The <strong><code>defineProperty()</code></strong> function provides a
  * shortcut to defining a property that cannot be accidentally iterated across.
@@ -20,15 +26,15 @@ function _deepCopyObject<T, U>(target: T, ...sources: U[]): T & U {
 	if (target == null) { // TypeError if undefined or null
 		throw new TypeError("Cannot convert undefined or null to object");
 	}
-	var to = Object(target),
+	let to = Object(target),
 		source: any,
 		hasOwnProperty = Object.prototype.hasOwnProperty;
 
 	while ((source = sources.shift())) {
 		if (source != null) {
-			for (var key in source) {
+			for (let key in source) {
 				if (hasOwnProperty.call(source, key)) {
-					var value = source[key];
+					let value = source[key];
 
 					if (Array.isArray(value)) {
 						_deepCopyObject(to[key] = [], value);
@@ -55,7 +61,7 @@ function _position(element: HTMLorSVGElement): ClientRect {
  * Date.now() and save creating an object. If that doesn't exist then it'll
  * create one that gets GC.
  */
-var _now = Date.now ? Date.now : function() {
+let _now = Date.now ? Date.now : function() {
 	return (new Date()).getTime();
 };
 
@@ -63,7 +69,7 @@ var _now = Date.now ? Date.now : function() {
  * Shim for [].includes, can fallback to .indexOf and even manual search for
  * IE < 9
  */
-var _inArray = (function() {
+let _inArray = (function() {
 	if ((Array.prototype as any).includes) { // ES6
 		return function(arr: any[], val) {
 			return (arr as any).includes(val);
@@ -75,7 +81,7 @@ var _inArray = (function() {
 		};
 	}
 	return function(arr: any[], val) {
-		for (var i = 0; i < arr.length; i++) {
+		for (let i = 0; i < arr.length; i++) {
 			if (arr[i] === val) {
 				return true;
 			}

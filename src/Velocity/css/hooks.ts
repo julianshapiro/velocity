@@ -1,3 +1,9 @@
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+
 namespace VelocityStatic {
 	export namespace CSS {
 
@@ -14,7 +20,7 @@ namespace VelocityStatic {
 
 			/* Templates are a concise way of indicating which subproperties must be individually registered for each compound-value CSS property. */
 			/* Each template consists of the compound-value's base name, its constituent subproperty names, and those subproperties' default values. */
-			export var templates = {
+			export let templates = {
 				"textShadow": ["Color X Y Blur", "black 0px 0px 0px"],
 				"boxShadow": ["Color X Y Blur Spread", "black 0px 0px 0px 0px"],
 				"clip": ["Top Right Bottom Left", "0px 0px 0px 0px"],
@@ -28,7 +34,7 @@ namespace VelocityStatic {
 			/* Note: A registered hook looks like this ==> textShadowBlur: [ "textShadow", 3 ],
 			 which consists of the subproperty's name, the associated root property's name,
 			 and the subproperty's position in the root's value. */
-			export var registered = Object.create(null);
+			export let registered = Object.create(null);
 
 			/* Convert the templates into individual hooks then append them to the registered object above. */
 			export function register() {
@@ -36,13 +42,13 @@ namespace VelocityStatic {
 				 currently set to "transparent" default to their respective template below when color-animated,
 				 and white is typically a closer match to transparent than black is. An exception is made for text ("color"),
 				 which is almost always set closer to black than white. */
-				for (var i = 0; i < CSS.Lists.colors.length; i++) {
-					var rgbComponents = (CSS.Lists.colors[i] === "color") ? "0 0 0 1" : "255 255 255 1";
+				for (let i = 0; i < CSS.Lists.colors.length; i++) {
+					let rgbComponents = (CSS.Lists.colors[i] === "color") ? "0 0 0 1" : "255 255 255 1";
 
 					templates[CSS.Lists.colors[i]] = ["Red Green Blue Alpha", rgbComponents];
 				}
 
-				var rootProperty: string,
+				let rootProperty: string,
 					hookTemplate: string[],
 					hookNames: string[];
 
@@ -56,7 +62,7 @@ namespace VelocityStatic {
 						hookTemplate = templates[rootProperty];
 						hookNames = hookTemplate[0].split(" ");
 
-						var defaultValues = hookTemplate[1].match(CSS.RegEx.valueSplit);
+						let defaultValues = hookTemplate[1].match(CSS.RegEx.valueSplit);
 
 						if (hookNames[0] === "Color") {
 							/* Reposition both the hook's name and its default value to the end of their respective strings. */
@@ -77,11 +83,11 @@ namespace VelocityStatic {
 					hookTemplate = templates[rootProperty];
 					hookNames = hookTemplate[0].split(" ");
 
-					for (var j in hookNames) {
+					for (let j in hookNames) {
 						if (!hookNames.hasOwnProperty(j)) {
 							continue;
 						}
-						var fullHookName = rootProperty + hookNames[j],
+						let fullHookName = rootProperty + hookNames[j],
 							hookPosition = j;
 
 						/* For each hook, register its full name (e.g. textShadowBlur) with its root property (e.g. textShadow)
@@ -96,8 +102,8 @@ namespace VelocityStatic {
 
 			/* Look up the root property associated with the hook (e.g. return "textShadow" for "textShadowBlur"). */
 			/* Since a hook cannot be set directly (the browser won't recognize it), style updating for hooks is routed through the hook's root property. */
-			export function getRoot(property: string) {
-				var hookData = registered[property];
+			export function getRoot(property: string): string {
+				let hookData = registered[property];
 
 				if (hookData) {
 					return hookData[0];
@@ -107,8 +113,8 @@ namespace VelocityStatic {
 				}
 			}
 
-			export function getUnit(str: string, start?: number) {
-				var unit = (str.substr(start || 0, 5).match(/^[a-z%]+/) || [])[0] || "";
+			export function getUnit(str: string, start?: number): string {
+				let unit = (str.substr(start || 0, 5).match(/^[a-z%]+/) || [])[0] || "";
 
 				if (unit && _inArray(CSS.Lists.units, unit)) {
 					return unit;
@@ -120,7 +126,7 @@ namespace VelocityStatic {
 			 * Replace any css colour name with its rgba() value. It is possible to use
 			 * the name within an "rgba(blue, 0.4)" string this way.
 			 */
-			export function fixColors(str: string) {
+			export function fixColors(str: string): string {
 				return str.replace(/(rgba?\(\s*)?(\b[a-z]+\b)/g, function($0, $1, $2) {
 					if (CSS.Lists.colorNames.hasOwnProperty($2)) {
 						return ($1 ? $1 : "rgba(") + CSS.Lists.colorNames[$2] + ($1 ? "" : ",1)");
@@ -131,7 +137,7 @@ namespace VelocityStatic {
 
 			/* Convert any rootPropertyValue, null or otherwise, into a space-delimited list of hook values so that
 			 the targeted hook can be injected or extracted at its standard position. */
-			export function cleanRootPropertyValue(rootProperty: string, rootPropertyValue: string) {
+			export function cleanRootPropertyValue(rootProperty: string, rootPropertyValue: string): string {
 				/* If the rootPropertyValue is wrapped with "rgb()", "clip()", etc., remove the wrapping to normalize the value before manipulation. */
 				if (CSS.RegEx.valueUnwrap.test(rootPropertyValue)) {
 					rootPropertyValue = rootPropertyValue.match(CSS.RegEx.valueUnwrap)[1];
@@ -149,11 +155,11 @@ namespace VelocityStatic {
 			}
 
 			/* Extracted the hook's value from its root property's value. This is used to get the starting value of an animating hook. */
-			export function extractValue(fullHookName: string, rootPropertyValue: string) {
-				var hookData = registered[fullHookName];
+			export function extractValue(fullHookName: string, rootPropertyValue: string): string {
+				let hookData = registered[fullHookName];
 
 				if (hookData) {
-					var hookRoot = hookData[0],
+					let hookRoot = hookData[0],
 						hookPosition = hookData[1];
 
 					rootPropertyValue = cleanRootPropertyValue(hookRoot, rootPropertyValue);
@@ -168,11 +174,11 @@ namespace VelocityStatic {
 
 			/* Inject the hook's value into its root property's value. This is used to piece back together the root property
 			 once Velocity has updated one of its individually hooked values through tweening. */
-			export function injectValue(fullHookName: string, hookValue: string, rootPropertyValue: string) {
-				var hookData = registered[fullHookName];
+			export function injectValue(fullHookName: string, hookValue: string, rootPropertyValue: string): string {
+				let hookData = registered[fullHookName];
 
 				if (hookData) {
-					var hookRoot = hookData[0],
+					let hookRoot = hookData[0],
 						hookPosition = hookData[1],
 						rootPropertyValueParts,
 						rootPropertyValueUpdated;

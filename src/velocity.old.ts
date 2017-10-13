@@ -44,7 +44,7 @@ interface VelocityData {
 
 namespace Velocity {
 	/* Container for page-wide Velocity state data. */
-	export var State: VelocityState = {
+	export let State: VelocityState = {
 		/* Detect mobile devices to determine if mobileHA should be turned on. */
 		isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
 		/* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
@@ -80,13 +80,13 @@ namespace Velocity {
 	/* A shim of the jQuery utility functions used by Velocity -- provided by Velocity's optional jQuery shim. */
 	//	Utilities: $,
 	/* Container for the user's custom animation redirects that are referenced by name in place of the properties map argument. */
-	export var Redirects = { /* Manually registered by the user. */ };
+	export let Redirects = { /* Manually registered by the user. */ };
 
 	/* Attempt to use ES6 Promises by default. Users can override this with a third-party promises library. */
-	export var Promise = (window as any).Promise;
+	export let Promise = (window as any).Promise;
 
 	/* Velocity option defaults, which can be overriden by the user. */
-	export var defaults = {
+	export let defaults = {
 		queue: "",
 		duration: DURATION_DEFAULT,
 		easing: EASING_DEFAULT,
@@ -103,7 +103,7 @@ namespace Velocity {
 	};
 
 	/* A design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying. Accordingly, each element has a data cache. */
-	export var init = function(element) {
+	export let init = function(element) {
 		//		$.data(element, "velocity", {
 		//			/* Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements. */
 		//			isSVG: isSVG(element),
@@ -125,23 +125,23 @@ namespace Velocity {
 	};
 
 	/* A parallel to jQuery's $.css(), used for getting/setting Velocity's hooked CSS properties. */
-	export var hook = null; /* Defined below. */
+	export let hook = null; /* Defined below. */
 
 	/* Velocity-wide animation time remapping for testing purposes. */
-	export var mock = false;
+	export let mock = false;
 
-	export var version = { major: 1, minor: 3, patch: 0 };
+	export let version = { major: 1, minor: 3, patch: 0 };
 
 	/* Set to 1 or 2 (most verbose) to output debug info to console. */
-	export var debug: boolean | number = false;
+	export let debug: boolean | number = false;
 
 	/* rAF shim. Gist: https://gist.github.com/julianshapiro/9497513 */
-	var rAFShim = (function() {
-		var timeLast = 0;
+	let rAFShim = (function() {
+		let timeLast = 0;
 
 		// No browser prefixes in supported browsers
 		return requestAnimationFrame || function(callback: Function) {
-			var timeCurrent = (new Date()).getTime(),
+			let timeCurrent = (new Date()).getTime(),
 				timeDelta;
 
 			/* Dynamically set delay on a per-tick basis to match 60fps. */
@@ -157,12 +157,12 @@ namespace Velocity {
 
 	/* Array compacting. Copyright Lo-Dash. MIT License: https://github.com/lodash/lodash/blob/master/LICENSE.txt */
 	function compactSparseArray(array: any[]) {
-		var index = -1,
+		let index = -1,
 			length = array ? array.length : 0,
 			result = [];
 
 		while (++index < length) {
-			var value = array[index];
+			let value = array[index];
 
 			if (value) {
 				result.push(value);
@@ -183,12 +183,12 @@ namespace Velocity {
 		return elements;
 	}
 
-	export var expando = "Velocity" + Date.now();
-	export var cache = {};
+	export let expando = "Velocity" + Date.now();
+	export let cache = {};
 
 	/* Shorthand for getting out own data. */
 	function Data(element: HTMLElement): VelocityData {
-		var response = element[expando];
+		let response = element[expando];
 
 		/* jQuery <=1.4.2 returns null instead of undefined when no match is found. We normalize this behavior. */
 		if (response) {
@@ -200,7 +200,7 @@ namespace Velocity {
 		return (typeof variable === "string");
 	}
 
-	export var isArray = Array.isArray || function(variable): variable is any[] {
+	export let isArray = Array.isArray || function(variable): variable is any[] {
 		return Object.prototype.toString.call(variable) === "[object Array]";
 	}
 
@@ -230,7 +230,7 @@ namespace Velocity {
 	}
 
 	export function isEmptyObject(variable): variable is Object {
-		for (var name in variable) {
+		for (let name in variable) {
 			return false;
 		}
 		return true;
@@ -249,7 +249,7 @@ namespace Velocity {
 
 	/* Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License */
 	function generateBezier(mX1: number, mY1?: number, mX2?: number, mY2?: number) {
-		var NEWTON_ITERATIONS = 4,
+		let NEWTON_ITERATIONS = 4,
 			NEWTON_MIN_SLOPE = 0.001,
 			SUBDIVISION_PRECISION = 0.0000001,
 			SUBDIVISION_MAX_ITERATIONS = 10,
@@ -263,7 +263,7 @@ namespace Velocity {
 		}
 
 		/* Arguments must be numbers. */
-		for (var i = 0; i < 4; ++i) {
+		for (let i = 0; i < 4; ++i) {
 			if (typeof arguments[i] !== "number" || isNaN(arguments[i]) || !isFinite(arguments[i])) {
 				return false;
 			}
@@ -275,7 +275,7 @@ namespace Velocity {
 		mX1 = Math.max(mX1, 0);
 		mX2 = Math.max(mX2, 0);
 
-		var mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
+		let mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
 
 		function A(aA1, aA2) {
 			return 1.0 - 3.0 * aA2 + 3.0 * aA1;
@@ -296,14 +296,14 @@ namespace Velocity {
 		}
 
 		function newtonRaphsonIterate(aX, aGuessT) {
-			for (var i = 0; i < NEWTON_ITERATIONS; ++i) {
-				var currentSlope = getSlope(aGuessT, mX1, mX2);
+			for (let i = 0; i < NEWTON_ITERATIONS; ++i) {
+				let currentSlope = getSlope(aGuessT, mX1, mX2);
 
 				if (currentSlope === 0.0) {
 					return aGuessT;
 				}
 
-				var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
+				let currentX = calcBezier(aGuessT, mX1, mX2) - aX;
 				aGuessT -= currentX / currentSlope;
 			}
 
@@ -311,13 +311,13 @@ namespace Velocity {
 		}
 
 		function calcSampleValues() {
-			for (var i = 0; i < kSplineTableSize; ++i) {
+			for (let i = 0; i < kSplineTableSize; ++i) {
 				mSampleValues[i] = calcBezier(i * kSampleStepSize, mX1, mX2);
 			}
 		}
 
 		function binarySubdivide(aX, aA, aB) {
-			var currentX, currentT, i = 0;
+			let currentX, currentT, i = 0;
 
 			do {
 				currentT = aA + (aB - aA) / 2.0;
@@ -333,7 +333,7 @@ namespace Velocity {
 		}
 
 		function getTForX(aX) {
-			var intervalStart = 0.0,
+			let intervalStart = 0.0,
 				currentSample = 1,
 				lastSample = kSplineTableSize - 1;
 
@@ -343,7 +343,7 @@ namespace Velocity {
 
 			--currentSample;
 
-			var dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]),
+			let dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]),
 				guessForT = intervalStart + dist * kSampleStepSize,
 				initialSlope = getSlope(guessForT, mX1, mX2);
 
@@ -356,7 +356,7 @@ namespace Velocity {
 			}
 		}
 
-		var _precomputed = false;
+		let _precomputed = false;
 
 		function precompute() {
 			_precomputed = true;
@@ -365,7 +365,7 @@ namespace Velocity {
 			}
 		}
 
-		var f = function(aX) {
+		let f = function(aX) {
 			if (!_precomputed) {
 				precompute();
 			}
@@ -386,7 +386,7 @@ namespace Velocity {
 			return [{ x: mX1, y: mY1 }, { x: mX2, y: mY2 }];
 		};
 
-		var str = "generateBezier(" + [mX1, mY1, mX2, mY2] + ")";
+		let str = "generateBezier(" + [mX1, mY1, mX2, mY2] + ")";
 		f.toString = function() {
 			return str;
 		};
@@ -397,13 +397,13 @@ namespace Velocity {
 	/* Runge-Kutta spring physics function generator. Adapted from Framer.js, copyright Koen Bok. MIT License: http://en.wikipedia.org/wiki/MIT_License */
 	/* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
 	 then adjusts the time delta -- using the relation between actual time and duration -- to calculate the path for the duration-constrained animation. */
-	var generateSpringRK4 = (function() {
+	let generateSpringRK4 = (function() {
 		function springAccelerationForState(state) {
 			return (-state.tension * state.x) - (state.friction * state.v);
 		}
 
 		function springEvaluateStateWithDerivative(initialState, dt, derivative) {
-			var state = {
+			let state = {
 				x: initialState.x + derivative.dx * dt,
 				v: initialState.v + derivative.dv * dt,
 				tension: initialState.tension,
@@ -414,7 +414,7 @@ namespace Velocity {
 		}
 
 		function springIntegrateState(state, dt) {
-			var a = {
+			let a = {
 				dx: state.v,
 				dv: springAccelerationForState(state)
 			},
@@ -432,7 +432,7 @@ namespace Velocity {
 
 		return function springRK4Factory(tension: number, friction: number, duration?: number): number {
 
-			var initState = {
+			let initState = {
 				x: -1,
 				v: 0,
 				tension: null,
@@ -484,7 +484,7 @@ namespace Velocity {
 	} ());
 
 	/* jQuery easings. */
-	export var Easings = {
+	export let Easings = {
 		linear: function(p) {
 			return p;
 		},
@@ -530,7 +530,7 @@ namespace Velocity {
 
 	/* Determine the appropriate easing type given an easing input. */
 	function getEasing(value, duration) {
-		var easing = value;
+		let easing = value;
 
 		/* The easing option can either be a string that references a pre-registered easing,
 		 or it can be a two-/four-item array of integers to be converted into a bezier/spring function. */
@@ -580,7 +580,7 @@ namespace Velocity {
 		 RegEx
 		 *************/
 
-		export var RegEx = {
+		export let RegEx = {
 			isHex: /^#([A-f\d]{3}){1,2}$/i,
 			/* Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
 			valueUnwrap: /^[A-z]+\((.*)\)$/i,
@@ -592,7 +592,7 @@ namespace Velocity {
 		 Lists
 		 ************/
 
-		export var Lists = {
+		export let Lists = {
 			colors: ["fill", "stroke", "stopColor", "color", "backgroundColor", "borderColor", "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor"],
 			transformsBase: ["translateX", "translateY", "scale", "scaleX", "scaleY", "skewX", "skewY", "rotateZ"],
 			transforms3D: ["transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY"]
@@ -605,7 +605,7 @@ namespace Velocity {
 		 (e.g. "boxShadow: X Y Blur Spread Color") to be animated as if it were a discrete property. */
 		/* Note: Beyond enabling fine-grained property animation, hooking is necessary since Velocity only
 		 tweens properties with single numeric values; unlike CSS transitions, Velocity does not interpolate compound-values. */
-		export var Hooks = {
+		export let Hooks = {
 			/********************
 			 Registration
 			 ********************/
@@ -633,12 +633,12 @@ namespace Velocity {
 				 currently set to "transparent" default to their respective template below when color-animated,
 				 and white is typically a closer match to transparent than black is. An exception is made for text ("color"),
 				 which is almost always set closer to black than white. */
-				for (var i = 0; i < Lists.colors.length; i++) {
-					var rgbComponents = (Lists.colors[i] === "color") ? "0 0 0 1" : "255 255 255 1";
+				for (let i = 0; i < Lists.colors.length; i++) {
+					let rgbComponents = (Lists.colors[i] === "color") ? "0 0 0 1" : "255 255 255 1";
 					Hooks.templates[Lists.colors[i]] = ["Red Green Blue Alpha", rgbComponents];
 				}
 
-				var rootProperty,
+				let rootProperty,
 					hookTemplate,
 					hookNames;
 
@@ -647,8 +647,8 @@ namespace Velocity {
 					hookTemplate = Hooks.templates[rootProperty];
 					hookNames = hookTemplate[0].split(" ");
 
-					for (var j in hookNames) {
-						var fullHookName = rootProperty + hookNames[j],
+					for (let j in hookNames) {
+						let fullHookName = rootProperty + hookNames[j],
 							hookPosition = j;
 
 						/* For each hook, register its full name (e.g. textShadowBlur) with its root property (e.g. textShadow)
@@ -664,7 +664,7 @@ namespace Velocity {
 			/* Look up the root property associated with the hook (e.g. return "textShadow" for "textShadowBlur"). */
 			/* Since a hook cannot be set directly (the browser won't recognize it), style updating for hooks is routed through the hook's root property. */
 			getRoot: function(property) {
-				var hookData = Hooks.registered[property];
+				let hookData = Hooks.registered[property];
 
 				if (hookData) {
 					return hookData[0];
@@ -693,10 +693,10 @@ namespace Velocity {
 			},
 			/* Extracted the hook's value from its root property's value. This is used to get the starting value of an animating hook. */
 			extractValue: function(fullHookName, rootPropertyValue) {
-				var hookData = Hooks.registered[fullHookName];
+				let hookData = Hooks.registered[fullHookName];
 
 				if (hookData) {
-					var hookRoot = hookData[0],
+					let hookRoot = hookData[0],
 						hookPosition = hookData[1];
 
 					rootPropertyValue = Hooks.cleanRootPropertyValue(hookRoot, rootPropertyValue);
@@ -711,10 +711,10 @@ namespace Velocity {
 			/* Inject the hook's value into its root property's value. This is used to piece back together the root property
 			 once Velocity has updated one of its individually hooked values through tweening. */
 			injectValue: function(fullHookName, hookValue, rootPropertyValue) {
-				var hookData = Hooks.registered[fullHookName];
+				let hookData = Hooks.registered[fullHookName];
 
 				if (hookData) {
-					var hookRoot = hookData[0],
+					let hookRoot = hookData[0],
 						hookPosition = hookData[1],
 						rootPropertyValueParts,
 						rootPropertyValueUpdated;
@@ -741,7 +741,7 @@ namespace Velocity {
 
 		/* Normalizations standardize CSS property manipulation by pollyfilling browser-specific implementations (e.g. opacity)
 		 and reformatting special properties (e.g. clip, rgba) to look like standard ones. */
-		export var Normalizations = {
+		export let Normalizations = {
 			/* Normalizations are passed a normalization target (either the property's name, its extracted value, or its injected value),
 			 the targeted element (which may need to be queried), and the targeted property value. */
 			registered: {
@@ -751,7 +751,7 @@ namespace Velocity {
 							return "clip";
 						/* Clip needs to be unwrapped and stripped of its commas during extraction. */
 						case "extract":
-							var extracted;
+							let extracted;
 
 							/* If Velocity also extracted this value, skip extraction. */
 							if (RegEx.wrappedValueAlreadyExtracted.test(propertyValue)) {
@@ -776,11 +776,11 @@ namespace Velocity {
 							return Velocity.State.isFirefox ? "filter" : "-webkit-filter";
 
 						case "extract":
-							var extracted: string | number = parseFloat(propertyValue);
+							let extracted: string | number = parseFloat(propertyValue);
 
 							/* If extracted is NaN, meaning the value isn't already extracted. */
 							if (!(extracted || extracted === 0)) {
-								var blurComponent = propertyValue.toString().match(/blur\(([0-9]+[A-z]+)\)/i);
+								let blurComponent = propertyValue.toString().match(/blur\(([0-9]+[A-z]+)\)/i);
 
 								/* If the filter string had a blur component, return just the blur value and unit type. */
 								if (blurComponent) {
@@ -841,11 +841,11 @@ namespace Velocity {
 				Lists.transformsBase = Lists.transformsBase.concat(Lists.transforms3D);
 			}
 
-			for (var i = 0; i < Lists.transformsBase.length; i++) {
+			for (let i = 0; i < Lists.transformsBase.length; i++) {
 				/* Wrap the dynamically generated normalization function in a new scope so that transformName's value is
 				 paired with its respective function. (Otherwise, all functions would take the final for loop's transformName.) */
 				(function() {
-					var transformName = Lists.transformsBase[i];
+					let transformName = Lists.transformsBase[i];
 
 					CSS.Normalizations.registered[transformName] = function(type, element, propertyValue) {
 						switch (type) {
@@ -863,7 +863,7 @@ namespace Velocity {
 								}
 								return Data(element).transformCache[transformName].replace(/[()]/g, "");
 							case "inject":
-								var invalid = false;
+								let invalid = false;
 
 								/* If an individual transform property contains an unsupported unit type, the browser ignores the *entire* transform property.
 								 Thus, protect users from themselves by skipping setting for transform values supplied with invalid unit types. */
@@ -911,11 +911,11 @@ namespace Velocity {
 
 			/* Since Velocity only animates a single numeric value per property, color animation is achieved by hooking the individual RGBA components of CSS color properties.
 			 Accordingly, color values must be normalized (e.g. "#ff0000", "red", and "rgb(255, 0, 0)" ==> "255 0 0 1") so that their components can be injected/extracted by CSS.Hooks logic. */
-			for (var j = 0; j < Lists.colors.length; j++) {
+			for (let j = 0; j < Lists.colors.length; j++) {
 				/* Wrap the dynamically generated normalization function in a new scope so that colorName's value is paired with its respective function.
 				 (Otherwise, all functions would take the final for loop's colorName.) */
 				(function() {
-					var colorName = Lists.colors[j];
+					let colorName = Lists.colors[j];
 
 					CSS.Normalizations.registered[colorName] = function(type, element, propertyValue) {
 						switch (type) {
@@ -923,13 +923,13 @@ namespace Velocity {
 								return colorName;
 							/* Convert all color values into the rgb format. */
 							case "extract":
-								var extracted;
+								let extracted;
 
 								/* If the color is already in its hookable form (e.g. "255 255 255 1") due to having been previously extracted, skip extraction. */
 								if (RegEx.wrappedValueAlreadyExtracted.test(propertyValue)) {
 									extracted = propertyValue;
 								} else {
-									var converted,
+									let converted,
 										colorNames = {
 											black: "rgb(0, 0, 0)",
 											blue: "rgb(0, 0, 255)",
@@ -981,7 +981,7 @@ namespace Velocity {
 		 CSS Property Names
 		 ************************/
 
-		export var Names = {
+		export let Names = {
 			/* Camelcase a property name into its JavaScript notation (e.g. "background-color" ==> "backgroundColor").
 			 Camelcasing is used to normalize property names between and across calls. */
 			camelCase: function(property) {
@@ -991,7 +991,7 @@ namespace Velocity {
 			},
 			/* For SVG elements, some properties (namely, dimensional ones) are GET/SET via the element's HTML attributes (instead of via CSS styles). */
 			SVGAttribute: function(property) {
-				var SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2";
+				let SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2";
 
 				/* Certain browsers require an SVG transform to be applied as an attribute. (Otherwise, application via CSS is preferable due to 3D support.) */
 				if (Velocity.State.isAndroid && !Velocity.State.isChrome) {
@@ -1008,10 +1008,10 @@ namespace Velocity {
 				if (Velocity.State.prefixMatches[property]) {
 					return [Velocity.State.prefixMatches[property], true];
 				} else {
-					var vendors = ["", "Webkit", "Moz", "ms", "O"];
+					let vendors = ["", "Webkit", "Moz", "ms", "O"];
 
-					for (var i = 0, vendorsLength = vendors.length; i < vendorsLength; i++) {
-						var propertyPrefixed;
+					for (let i = 0, vendorsLength = vendors.length; i < vendorsLength; i++) {
+						let propertyPrefixed;
 
 						if (i === 0) {
 							propertyPrefixed = property;
@@ -1041,10 +1041,10 @@ namespace Velocity {
 		 CSS Property Values
 		 ************************/
 
-		export var Values = {
+		export let Values = {
 			/* Hex to RGB conversion. Copyright Tim Down: http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb */
 			hexToRgb: function(hex) {
-				var shortformRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
+				let shortformRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
 					longformRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i,
 					rgbParts;
 
@@ -1079,9 +1079,9 @@ namespace Velocity {
 			/* HTML elements default to an associated display type when they're not set to display:none. */
 			/* Note: This function is used for correctly setting the non-"none" display value in certain Velocity redirects, such as fadeIn/Out. */
 			getDisplayType: function(element) {
-				var tagName = element && element.tagName.toString().toLowerCase();
+				let tagName = element && element.tagName.toString().toLowerCase();
 
-				if (/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(tagName)) {
+				if (/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(tagName)) {
 					return "inline";
 				} else if (/^(li)$/i.test(tagName)) {
 					return "list-item";
@@ -1128,18 +1128,18 @@ namespace Velocity {
 				 element's scrollbars are visible (which expands the element's dimensions). Thus, we defer to the more accurate
 				 offsetHeight/Width property, which includes the total dimensions for interior, border, padding, and scrollbar.
 				 We subtract border and padding to get the sum of interior + scrollbar. */
-				var computedValue = "0";
+				let computedValue = "0";
 
 				/* Browsers do not return height and width values for elements that are set to display:"none". Thus, we temporarily
 				 toggle display to the element type's default value. */
-				var toggleDisplay = false;
+				let toggleDisplay = false;
 
 				if (/^(width|height)$/.test(property) && getPropertyValue(element, "display") === 0) {
 					toggleDisplay = true;
 					setPropertyValue(element, "display", Values.getDisplayType(element));
 				}
 
-				var revertDisplay = function() {
+				let revertDisplay = function() {
 					if (toggleDisplay) {
 						setPropertyValue(element, "display", "none");
 					}
@@ -1147,7 +1147,7 @@ namespace Velocity {
 
 				if (!forceStyleLookup) {
 					if (property === "height" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-						var contentBoxHeight = element.offsetHeight
+						let contentBoxHeight = element.offsetHeight
 							- (parseFloat(getPropertyValue(element, "borderTopWidth")) || 0)
 							- (parseFloat(getPropertyValue(element, "borderBottomWidth")) || 0)
 							- (parseFloat(getPropertyValue(element, "paddingTop")) || 0)
@@ -1156,7 +1156,7 @@ namespace Velocity {
 
 						return contentBoxHeight;
 					} else if (property === "width" && getPropertyValue(element, "boxSizing").toString().toLowerCase() !== "border-box") {
-						var contentBoxWidth = element.offsetWidth
+						let contentBoxWidth = element.offsetWidth
 							- (parseFloat(getPropertyValue(element, "borderLeftWidth")) || 0)
 							- (parseFloat(getPropertyValue(element, "borderRightWidth")) || 0)
 							- (parseFloat(getPropertyValue(element, "paddingLeft")) || 0)
@@ -1167,7 +1167,7 @@ namespace Velocity {
 					}
 				}
 
-				var computedStyle: CSSStyleDeclaration;
+				let computedStyle: CSSStyleDeclaration;
 
 				/* For elements that Velocity hasn't been called on directly (e.g. when Velocity queries the DOM on behalf
 				 of a parent of an element its animating), perform a direct getComputedStyle lookup since the object isn't cached. */
@@ -1207,7 +1207,7 @@ namespace Velocity {
 				 property, which reverts to "auto", left's value is 0 relative to its parent element, but is often non-zero relative
 				 to its *containing* (not parent) element, which is the nearest "position:relative" ancestor or the viewport (and always the viewport in the case of "position:fixed"). */
 				if (computedValue === "auto" && /^(top|right|bottom|left)$/i.test(property)) {
-					var position = computePropertyValue(element, "position"); /* GET */
+					let position = computePropertyValue(element, "position"); /* GET */
 
 					/* For absolute positioning, jQuery's $.position() only returns values for top and left;
 					 right and bottom will have their "auto" value reverted to 0. */
@@ -1222,12 +1222,12 @@ namespace Velocity {
 				return computedValue;
 			}
 
-			var propertyValue;
+			let propertyValue;
 
 			/* If this is a hooked property (e.g. "clipLeft" instead of the root property of "clip"),
 			 extract the hook's value from a normalized rootPropertyValue using Hooks.extractValue(). */
 			if (Hooks.registered[property]) {
-				var hook = property,
+				let hook = property,
 					hookRoot = Hooks.getRoot(hook);
 
 				/* If a cached rootPropertyValue wasn't passed in (which Velocity always attempts to do in order to avoid requerying the DOM),
@@ -1250,7 +1250,7 @@ namespace Velocity {
 				/* Note: Normalizing a property is mutually exclusive from hooking a property since hook-extracted values are strictly
 				 numerical and therefore do not require normalization extraction. */
 			} else if (Normalizations.registered[property]) {
-				var normalizedPropertyName,
+				let normalizedPropertyName,
 					normalizedPropertyValue;
 
 				normalizedPropertyName = Normalizations.registered[property]("name", element);
@@ -1275,7 +1275,7 @@ namespace Velocity {
 			if (!/^[\d-]/.test(propertyValue)) {
 				/* For SVG elements, dimensional properties (which SVGAttribute() detects) are tweened via
 				 their HTML attribute values instead of their CSS style values. */
-				var data = Data(element);
+				let data = Data(element);
 
 				if (data && data.isSVG && Names.SVGAttribute(property)) {
 					/* Since the height/width attribute values must be set manually, they don't reflect computed values.
@@ -1311,7 +1311,7 @@ namespace Velocity {
 
 		/* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
 		export function setPropertyValue(element: HTMLElement, property: string, propertyValue?: string, rootPropertyValue?: string, scrollData?) {
-			var propertyName = property;
+			let propertyName = property;
 
 			/* In order to be subjected to call options and element queueing, scroll animation is routed through Velocity as if it were a standard CSS property. */
 			if (property === "scroll") {
@@ -1339,7 +1339,7 @@ namespace Velocity {
 				} else {
 					/* Inject hooks. */
 					if (Hooks.registered[property]) {
-						var hookName = property,
+						let hookName = property,
 							hookRoot = Hooks.getRoot(property);
 
 						/* If a cached rootPropertyValue was not provided, query the DOM for the hookRoot's current value. */
@@ -1358,7 +1358,7 @@ namespace Velocity {
 					/* Assign the appropriate vendor prefix before performing an official style update. */
 					propertyName = Names.prefixCheck(property)[0];
 
-					var data = Data(element);
+					let data = Data(element);
 
 					if (data && data.isSVG && Names.SVGAttribute(property)) {
 						/* Note: For SVG attributes, vendor-prefixed property names are never used. */
@@ -1381,7 +1381,7 @@ namespace Velocity {
 		/* To increase performance by batching transform updates into a single SET, transforms are not directly applied to an element until flushTransformCache() is called. */
 		/* Note: Velocity applies transform properties in the same order that they are chronogically introduced to the element's CSS styles. */
 		export function flushTransformCache(element) {
-			var transformString = "",
+			let transformString = "",
 				data = Data(element);
 
 			/* Certain browsers require that SVG transforms be applied as an attribute. However, the SVG transform attribute takes a modified version of CSS's transform string
@@ -1389,13 +1389,13 @@ namespace Velocity {
 			if (Velocity.State.isAndroid && !Velocity.State.isChrome && data && data.isSVG) {
 				/* Since transform values are stored in their parentheses-wrapped form, we use a helper function to strip out their numeric values.
 				 Further, SVG transform properties only take unitless (representing pixels) values, so it's okay that parseFloat() strips the unit suffixed to the float value. */
-				var getTransformFloat = function(transformProperty) {
+				let getTransformFloat = function(transformProperty) {
 					return parseFloat(getPropertyValue(element, transformProperty));
 				};
 
 				/* Create an object to organize all the transforms that we'll apply to the SVG element. To keep the logic simple,
 				 we process *all* transform properties -- even those that may not be explicitly applied (since they default to their zero-values anyway). */
-				var SVGTransforms = {
+				let SVGTransforms = {
 					translate: [getTransformFloat("translateX"), getTransformFloat("translateY")],
 					skewX: [getTransformFloat("skewX")], skewY: [getTransformFloat("skewY")],
 					/* If the scale property is set (non-1), use that value for the scaleX and scaleY values
@@ -1430,7 +1430,7 @@ namespace Velocity {
 					}
 				});
 			} else {
-				var transformValue,
+				let transformValue,
 					perspective;
 
 				/* Transform properties are stored as members of the transformCache object. Concatenate all the members into a string. */

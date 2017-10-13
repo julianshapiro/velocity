@@ -1,38 +1,48 @@
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+
 namespace VelocityStatic {
+	let rxDegree = /^(rotate|skew)/i,
+		rxUnitless = /(^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight)$)|((opacity|red|green|blue|alpha)$)/i,
+		rxShortForm = /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
+		rxLongForm = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i,
+		rxCSSNull = /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i;
+
 	export namespace CSS {
 
 		/************************
 		 CSS Property Values
 		 ************************/
 
-		export var Values = {
+		export let Values = {
 			/* Hex to RGB conversion. Copyright Tim Down: http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb */
 			hexToRgb: function(hex: string): [number, number, number] {
-				var shortformRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
-					longformRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i,
-					rgbParts;
+				let rgbParts;
 
-				hex = hex.replace(shortformRegex, function(m, r, g, b) {
+				hex = hex.replace(rxShortForm, function(m, r, g, b) {
 					return r + r + g + g + b + b;
 				});
 
-				rgbParts = longformRegex.exec(hex);
+				rgbParts = rxLongForm.exec(hex);
 
 				return rgbParts ? [parseInt(rgbParts[1], 16), parseInt(rgbParts[2], 16), parseInt(rgbParts[3], 16)] : [0, 0, 0];
 			},
-			isCSSNullValue: function(value: string): boolean {
+			isCSSNullValue: function(value: any): boolean {
 				/* The browser defaults CSS values that have not been set to either 0 or one of several possible null-value strings.
 				 Thus, we check for both falsiness and these special strings. */
 				/* Null-value checking is performed to default the special strings to 0 (for the sake of tweening) or their hook
 				 templates as defined as Hooks (for the sake of hook injection/extraction). */
 				/* Note: Chrome returns "rgba(0, 0, 0, 0)" for an undefined color whereas IE returns "transparent". */
-				return (!value || /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i.test(value));
+				return (!value || rxCSSNull.test(value));
 			},
 			/* Retrieve a property's default unit type. Used for assigning a unit type when one is not supplied by the user. */
 			getUnitType: function(property: string): string {
-				if (/^(rotate|skew)/i.test(property)) {
+				if (rxDegree.test(property)) {
 					return "deg";
-				} else if (/(^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight)$)|((opacity|red|green|blue|alpha)$)/i.test(property)) {
+				} else if (rxUnitless.test(property)) {
 					/* The above properties are unitless. */
 					return "";
 				} else {
@@ -43,9 +53,9 @@ namespace VelocityStatic {
 			/* HTML elements default to an associated display type when they're not set to display:none. */
 			/* Note: This function is used for correctly setting the non-"none" display value in certain Velocity redirects, such as fadeIn/Out. */
 			getDisplayType: function(element: HTMLorSVGElement): string {
-				var tagName = element && element.tagName.toString().toLowerCase();
+				let tagName = element && element.tagName.toString().toLowerCase();
 
-				if (/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(tagName)) {
+				if (/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(tagName)) {
 					return "inline";
 				} else if (/^(li)$/i.test(tagName)) {
 					return "list-item";
@@ -70,7 +80,7 @@ namespace VelocityStatic {
 						element.className += (element.className.length ? " " : "") + className;
 					} else {
 						// Work around for IE strict mode animating SVG - and anything else that doesn't behave correctly - the same way jQuery does it
-						var currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
+						let currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
 
 						element.setAttribute("class", currentClass + (currentClass ? " " : "") + className);
 					}
@@ -86,7 +96,7 @@ namespace VelocityStatic {
 						element.className = element.className.toString().replace(new RegExp("(^|\\s)" + className.split(" ").join("|") + "(\\s|$)", "gi"), " ");
 					} else {
 						// Work around for IE strict mode animating SVG - and anything else that doesn't behave correctly - the same way jQuery does it
-						var currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
+						let currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
 
 						element.setAttribute("class", currentClass.replace(new RegExp("(^|\s)" + className.split(" ").join("|") + "(\s|$)", "gi"), " "));
 					}

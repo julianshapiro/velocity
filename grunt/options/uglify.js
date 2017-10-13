@@ -26,7 +26,7 @@ module.exports = {
 }(this, function() {
 `,
 			footer: `
-	return Velocity;
+	return VelocityFn;
 }));
 `
 		},
@@ -48,23 +48,6 @@ module.exports = {
 		files: {
 			"velocity.min.js": ["velocity.js"],
 			"velocity.ui.min.js": ["velocity.ui.js"]
-		}
-	},
-	test: {
-		options: {
-			sourceMap: {
-				root: "src/",
-				includeSources: true
-			},
-			compress: false,
-			mangle: false,
-			output: {
-				comments: "all"
-			},
-			banner: "/*! VelocityJS.org Tests (<%= pkg.version %>). MIT @license: en.wikipedia.org/wiki/MIT_License */\n"
-		},
-		files: {
-			"test/test.js": ["test/src/**/*.js"]
 		}
 	}
 };

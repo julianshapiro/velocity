@@ -6,6 +6,8 @@ type HTMLorSVGElement = HTMLElement | SVGElement;
 
 type VelocityProperty = number | string;
 
+type VelocityEasing = (percentComplete: number, startValue: number, endValue: number, property?: string) => number;
+
 interface VelocityPropertiesMap {
 	[property: string]: VelocityProperty | [VelocityProperty] | [VelocityProperty, VelocityProperty] | [VelocityProperty, string, VelocityProperty];
 }
@@ -105,7 +107,8 @@ interface Tween {
 	 * @deprecated
 	 */
 	scrollData?: ScrollData
-	pattern?: string;
+	pattern?: (string | number)[];
+	rounding?: boolean[];
 }
 
 interface TweensContainer {
@@ -163,6 +166,16 @@ interface AnimationCall {
 	 */
 	prev: AnimationCall;
 	/**
+	 * Used to store the next call with a Progress callback.
+	 * @private
+	 */
+	nextProgress: AnimationCall;
+	/**
+	 * Used to store the next call with a Complete callback.
+	 * @private
+	 */
+	nextComplete: AnimationCall;
+	/**
 	 * The callbacks associated with this AnimationCall.
 	 */
 	callbacks: Callbacks;
@@ -192,7 +205,7 @@ interface AnimationCall {
 	/**
 	 * Easing for this animation while running.
 	 */
-	easing: string;
+	easing: (percentComplete: number, startValue: number, endValue: number, property?: string) => number;
 	/**
 	 * The time this animation started according to whichever clock we are
 	 * using.
@@ -258,3 +271,119 @@ interface AnimationCall {
 	 */
 	repeatAgain: true | number;
 }
+
+type VelocityResult = Promise<HTMLElement[]> & HTMLElement[] & {velocity: Velocity};
+
+interface Velocity {
+	(...args: any[]): VelocityResult;
+
+	defaults: VelocityOptions;
+	queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: string | boolean): void;
+	dequeue(element: HTMLorSVGElement, queue?: string | boolean, skip?: boolean): AnimationCall;
+	freeAnimationCall(animation: AnimationCall): void;
+	pauseAll(queueName?: string | false): void;
+	resumeAll(queueName?: string | false): void;
+	RunSequence(originalSequence): void;
+	RegisterEffect(effectName: string, properties): Velocity;
+
+	CSS: {
+		getPropertyValue(element: HTMLorSVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean): string | number;
+		Hooks: {
+			getRoot(property: string): string;
+			getUnit(str: string, start?: number): string;
+			fixColors(str: string): string;
+			cleanRootPropertyValue(rootProperty: string, rootPropertyValue: string): string;
+			extractValue(fullHookName: string, rootPropertyValue: string): string;
+			injectValue(fullHookName: string, hookValue: string, rootPropertyValue: string): string;
+		};
+		Names: {
+			camelCase(property: string): string;
+			SVGAttribute(property: string): boolean;
+			prefixCheck(property: string): [string, boolean];
+		};
+		Values: {
+			hexToRgb(hex: string): [number, number, number];
+			isCSSNullValue(value: any): boolean;
+			getUnitType(property: string): string;
+			getDisplayType(element: HTMLorSVGElement): string;
+			addClass(element: HTMLorSVGElement, className: string): void;
+			removeClass(element: HTMLorSVGElement, className: string): void;
+		};
+	};
+	State: {
+		/**
+		 * Detect if this is a NodeJS or web browser
+		 */
+		isClient: boolean;
+		/**
+		 * Detect mobile devices to determine if mobileHA should be turned
+		 * on.
+		 */
+		isMobile: boolean;
+		/**
+		 * The mobileHA option's behavior changes on older Android devices
+		 * (Gingerbread, versions 2.3.3-2.3.7).
+		 */
+		isAndroid: boolean;
+		/**
+		 * The mobileHA option's behavior changes on older Android devices
+		 * (Gingerbread, versions 2.3.3-2.3.7).
+		 */
+		isGingerbread: boolean;
+		/**
+		 * Chrome browser
+		 */
+		isChrome: boolean;
+		/**
+		 * Firefox browser
+		 */
+		isFirefox: boolean;
+		/**
+		 * Create a cached element for re-use when checking for CSS property
+		 * prefixes.
+		 */
+		prefixElement: boolean;
+		/**
+		 * Cache every prefix match to avoid repeating lookups.
+		 */
+		prefixMatches: {[property: string]: string};
+		/**
+		 * Retrieve the appropriate scroll anchor and property name for the
+		 * browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY
+		 */
+		windowScrollAnchor: boolean;
+		/**
+		 * Cache the anchor used for animating window scrolling.
+		 */
+		scrollAnchor: Element;
+		/**
+		 * Cache the browser-specific property names associated with the
+		 * scroll anchor.
+		 */
+		scrollPropertyLeft: string;
+		/**
+		 * Cache the browser-specific property names associated with the
+		 * scroll anchor.
+		 */
+		scrollPropertyTop: string;
+		/**
+		 * Keep track of whether our RAF tick is running.
+		 */
+		isTicking: boolean;
+		/**
+		 * Container for every in-progress call to Velocity.
+		 */
+		first: AnimationCall;
+		/**
+		 * Container for every in-progress call to Velocity.
+		 */
+		last: AnimationCall;
+		/**
+		 * First new animation - to shortcut starting them all up and push
+		 * any css reads to the start of the tick
+		 */
+		firstNew: AnimationCall;
+	};
+}
+
+declare const Velocity: Velocity;

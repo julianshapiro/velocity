@@ -1,7 +1,13 @@
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+
 namespace VelocityStatic {
 
 	/* Container for the user's custom animation redirects that are referenced by name in place of the properties map argument. */
-	export var Redirects = {/* Manually registered by the user. */};
+	export let Redirects = {/* Manually registered by the user. */};
 
 	/***********************
 	 Packaged Redirects
@@ -10,7 +16,7 @@ namespace VelocityStatic {
 	/* slideUp, slideDown */
 	["Down", "Up"].forEach(function(direction) {
 		Redirects["slide" + direction] = function(element: HTMLorSVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: HTMLorSVGElement[], promiseData) {
-			var opts = {...options},
+			let opts = {...options},
 				begin = opts.begin,
 				complete = opts.complete,
 				inlineValues = {},
@@ -35,7 +41,7 @@ namespace VelocityStatic {
 				}
 
 				/* Cache the elements' original vertical dimensional property values so that we can animate back to them. */
-				for (var property in computedValues) {
+				for (let property in computedValues) {
 					if (!computedValues.hasOwnProperty(property)) {
 						continue;
 					}
@@ -43,7 +49,7 @@ namespace VelocityStatic {
 
 					/* For slideDown, use forcefeeding to animate all vertical properties from 0. For slideUp,
 					 use forcefeeding to start from computed values and animate down to 0. */
-					var propertyValue = CSS.getPropertyValue(element, property);
+					let propertyValue = CSS.getPropertyValue(element, property);
 					computedValues[property] = (direction === "Down") ? [propertyValue, 0] : [0, propertyValue];
 				}
 
@@ -54,7 +60,7 @@ namespace VelocityStatic {
 
 			opts.complete = function() {
 				/* Reset element to its pre-slide inline values once its slide animation is complete. */
-				for (var property in inlineValues) {
+				for (let property in inlineValues) {
 					if (inlineValues.hasOwnProperty(property)) {
 						element.style[property] = inlineValues[property];
 					}
@@ -71,14 +77,14 @@ namespace VelocityStatic {
 				}
 			};
 
-			(Velocity as any)(element, computedValues, opts);
+			(VelocityFn as any)(element, computedValues, opts);
 		};
 	});
 
 	/* fadeIn, fadeOut */
 	["In", "Out"].forEach(function(direction) {
 		Redirects["fade" + direction] = function(element: HTMLorSVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: HTMLorSVGElement[], promiseData) {
-			var opts = {...options},
+			let opts = {...options},
 				complete = opts.complete,
 				propertiesMap = {
 					opacity: (direction === "In") ? 1 : 0
@@ -108,7 +114,7 @@ namespace VelocityStatic {
 				opts.display = (direction === "In" ? "auto" : "none");
 			}
 
-			(Velocity as any)(this, propertiesMap, opts);
+			(VelocityFn as any)(this, propertiesMap, opts);
 		};
 	});
 };

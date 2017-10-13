@@ -1,3 +1,9 @@
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+
 namespace VelocityStatic {
 	export namespace CSS {
 
@@ -75,7 +81,7 @@ namespace VelocityStatic {
 					if (IE <= 8) {
 						try {
 							element.style[propertyName] = propertyValue;
-							data.style[propertyName] = propertyValue || null;
+							data.style[propertyName] = propertyValue;
 						} catch (error) {
 							if (debug) {
 								console.log("Browser does not support [" + propertyValue + "] for [" + propertyName + "]");
@@ -83,15 +89,15 @@ namespace VelocityStatic {
 						}
 						/* SVG elements have their dimensional properties (width, height, x, y, cx, etc.) applied directly as attributes instead of as styles. */
 						/* Note: IE8 does not support SVG elements, so it's okay that we skip it for SVG animation. */
-					} else {
-						if (data && data.isSVG && Names.SVGAttribute(property)) {
+					} else if (data.style[propertyName] !== propertyValue) {
+						data.style[propertyName] = propertyValue;
+						if (data.isSVG && Names.SVGAttribute(property)) {
 							/* Note: For SVG attributes, vendor-prefixed property names are never used. */
 							/* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
 							element.setAttribute(property, propertyValue);
 						} else {
 							element.style[propertyName] = propertyValue;
 						}
-						data.style[propertyName] = propertyValue || null;
 					}
 
 					if (debug >= 2) {

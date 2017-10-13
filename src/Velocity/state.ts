@@ -1,9 +1,15 @@
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+
 namespace VelocityStatic {
 	/**
 	 * Container for page-wide Velocity state data.
 	 */
 	export namespace State {
-		export var
+		export let
 			/**
 			 * Detect if this is a NodeJS or web browser
 			 */

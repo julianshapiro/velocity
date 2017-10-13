@@ -1,27 +1,29 @@
-/*! VelocityJS.org (2.0.0). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
-
-/******************
- Velocity.js
- ******************/
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Core "Velocity" function.
+ */
 
 interface Document {
 	documentMode: any; // IE
 }
 
-function Velocity(...args: any[]) {
+function VelocityFn(...args: any[]) {
 	/******************
 	 Call Chain
 	 ******************/
 
 	/* Logic for determining what to return to the call stack when exiting out of Velocity. */
 	function getChain() {
-		var promise = promiseData.promise,
+		let promise = promiseData.promise,
 			output = elementsWrapped; // || elements;
 
 		/* If we are using the utility function, attempt to return this call's promise. If no promise library was detected,
 		 default to null instead of returning the targeted elements so that utility function's return value is standardized. */
 		if (output) {
-			defineProperty(output, "velocity", Velocity.bind(output));
+			defineProperty(output, "velocity", VelocityFn.bind(output));
 			if (promise) {
 				defineProperty(output, "then", promise.then.bind(promise), true);
 				defineProperty(output, "catch", promise.catch.bind(promise), true);
@@ -39,7 +41,7 @@ function Velocity(...args: any[]) {
 	/* To allow for expressive CoffeeScript code, Velocity supports an alternative syntax in which "elements" (or "e"), "properties" (or "p"), and "options" (or "o")
 	 objects are defined on a container object that's passed in as Velocity's sole argument. */
 	/* Note: Some browsers automatically populate arguments with a "properties" object. We detect it by checking for its default "names" property. */
-	var syntacticSugar = (arguments[0] && (arguments[0].p || ((isPlainObject(arguments[0].properties) && !arguments[0].properties.names) || isString(arguments[0].properties)))),
+	let syntacticSugar = (arguments[0] && (arguments[0].p || ((isPlainObject(arguments[0].properties) && !arguments[0].properties.names) || isString(arguments[0].properties)))),
 		/* Whether Velocity was called via the utility function (as opposed to on a jQuery/Zepto object). */
 		isUtility: boolean = !isNode(this) && !isWrapped(this),
 		/* When Velocity is called via the utility function ($.Velocity()/Velocity()), elements are explicitly
@@ -106,7 +108,7 @@ function Velocity(...args: any[]) {
 
 	/* The length of the element set (in the form of a nodeList or an array of elements) is defaulted to 1 in case a
 	 single raw DOM element is passed in (which doesn't contain a length property). */
-	var elementsLength = elements.length;
+	let elementsLength = elements.length;
 
 	/***************************
 	 Argument Overloading
@@ -117,12 +119,12 @@ function Velocity(...args: any[]) {
 	/* Note: The stop/finish/pause/resume actions do not accept animation options, and are therefore excluded from this check. */
 	if (!/^(stop|finish|finishAll|pause|resume)$/i.test(propertiesMap as string) && !isPlainObject(options)) {
 		/* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
-		var startingArgumentPosition = argumentIndex + 1;
+		let startingArgumentPosition = argumentIndex + 1;
 
 		options = {};
 
 		/* Iterate through all options arguments */
-		for (var i = startingArgumentPosition; i < arguments.length; i++) {
+		for (let i = startingArgumentPosition; i < arguments.length; i++) {
 			/* Treat a number as a duration. Parse it out. */
 			/* Note: The following RegEx will return true if passed an array with a number as its first item.
 			 Thus, arrays are skipped from this check. */
@@ -146,7 +148,7 @@ function Velocity(...args: any[]) {
 	 or they can be started, stopped, paused, resumed, or reversed . If a literal or referenced properties map is passed in as Velocity's
 	 first argument, the associated action is "start". Alternatively, "scroll", "reverse", "pause", "resume" or "stop" can be passed in 
 	 instead of a properties map. */
-	var action;
+	let action;
 
 	switch (propertiesMap) {
 		case "scroll":
@@ -158,68 +160,71 @@ function Velocity(...args: any[]) {
 			break;
 
 		case "pause":
+			{
+				/*******************
+				 Action: Pause
+				 *******************/
 
-			/*******************
-			 Action: Pause
-			 *******************/
+				/* Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a 
+				 single element will cause any calls that contain tweens for that element to be paused/resumed
+				 as well. */
+				let queueName = options === undefined ? "" : options,
+					activeCall = VelocityStatic.State.first,
+					nextCall: AnimationCall;
 
-			/* Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a 
-			 single element will cause any calls that contain tweens for that element to be paused/resumed
-			 as well. */
-			var queueName = options === undefined ? "" : options,
-				activeCall = VelocityStatic.State.first,
-				nextCall: AnimationCall;
-
-			/* Iterate through all calls and pause any that contain any of our elements */
-			for (; activeCall; activeCall = nextCall) {
-				nextCall = activeCall.next;
-				if (activeCall.paused !== true) {
-					/* Iterate through the active call's targeted elements. */
-					activeCall.elements.some(function(activeElement) {
-						if (queueName !== true && (activeCall.queue !== queueName) && !(options === undefined && activeCall.queue === false)) {
-							return true;
-						}
-						if (elements.indexOf(activeElement) >= 0) {
-							return activeCall.paused = true;
-						}
-					});
+				/* Iterate through all calls and pause any that contain any of our elements */
+				for (; activeCall; activeCall = nextCall) {
+					nextCall = activeCall.next;
+					if (activeCall.paused !== true) {
+						/* Iterate through the active call's targeted elements. */
+						activeCall.elements.some(function(activeElement) {
+							if (queueName !== true && (activeCall.queue !== queueName) && !(options === undefined && activeCall.queue === false)) {
+								return true;
+							}
+							if (elements.indexOf(activeElement) >= 0) {
+								return activeCall.paused = true;
+							}
+						});
+					}
 				}
+				/* Since pause creates no new tweens, exit out of Velocity. */
+				return getChain();
 			}
-			/* Since pause creates no new tweens, exit out of Velocity. */
-			return getChain();
 
 		case "resume":
-			/*******************
-			 Action: Resume
-			 *******************/
+			{
+				/*******************
+				 Action: Resume
+				 *******************/
 
-			/* Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a 
-			 single element will cause any calls that containt tweens for that element to be paused/resumed
-			 as well. */
+				/* Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a 
+				 single element will cause any calls that containt tweens for that element to be paused/resumed
+				 as well. */
 
-			/* Iterate through all calls and pause any that contain any of our elements */
-			var queueName = options === undefined ? "" : options,
-				activeCall = VelocityStatic.State.first,
-				nextCall: AnimationCall;
+				/* Iterate through all calls and pause any that contain any of our elements */
+				let queueName = options === undefined ? "" : options,
+					activeCall = VelocityStatic.State.first,
+					nextCall: AnimationCall;
 
-			/* Iterate through all calls and pause any that contain any of our elements */
-			for (; activeCall; activeCall = nextCall) {
-				nextCall = activeCall.next;
-				if (activeCall.paused !== false) {
-					/* Iterate through the active call's targeted elements. */
-					activeCall.elements.some(function(activeElement) {
-						if (queueName !== true && (activeCall.queue !== queueName) && !(options === undefined && activeCall.queue === false)) {
-							return true;
-						}
-						if (elements.indexOf(activeElement) >= 0) {
-							activeCall.paused = false;
-							return true;
-						}
-					});
+				/* Iterate through all calls and pause any that contain any of our elements */
+				for (; activeCall; activeCall = nextCall) {
+					nextCall = activeCall.next;
+					if (activeCall.paused !== false) {
+						/* Iterate through the active call's targeted elements. */
+						activeCall.elements.some(function(activeElement) {
+							if (queueName !== true && (activeCall.queue !== queueName) && !(options === undefined && activeCall.queue === false)) {
+								return true;
+							}
+							if (elements.indexOf(activeElement) >= 0) {
+								activeCall.paused = false;
+								return true;
+							}
+						});
+					}
 				}
+				/* Since resume creates no new tweens, exit out of Velocity. */
+				return getChain();
 			}
-			/* Since resume creates no new tweens, exit out of Velocity. */
-			return getChain();
 
 		case "finishAll":
 			/* Clear the currently-active delay on each targeted element. */
@@ -229,13 +234,13 @@ function Velocity(...args: any[]) {
 					 and call each function. This will make them active calls below, which will
 					 cause them to be applied via the duration setting. */
 					/* Iterate through the items in the element's queue. */
-					var animation: AnimationCall;
+					let animation: AnimationCall;
 
-					while ((animation = dequeue(element, isString(options) ? options : undefined))) {
+					while ((animation = VelocityStatic.dequeue(element, isString(options) ? options : undefined))) {
 						animation.queue = false;
+						VelocityStatic.expandTween(animation);
 					}
 				});
-				expandTweens();
 			}
 		// deliberate fallthrough
 		case "finish":
@@ -244,7 +249,7 @@ function Velocity(...args: any[]) {
 			 Action: Stop
 			 *******************/
 
-			var callsToStop: AnimationCall[] = [];
+			let callsToStop: AnimationCall[] = [];
 
 			/* When the stop action is triggered, the elements' currently active call is immediately stopped. The active call might have
 			 been applied to multiple elements, in which case all of the call's elements will be stopped. When an element
@@ -255,7 +260,7 @@ function Velocity(...args: any[]) {
 			 regardless of the element's current queue state. */
 
 			/* Iterate through every active call. */
-			var queueName = (options === undefined) ? "" : options,
+			let queueName = (options === undefined) ? "" : options,
 				activeCall = VelocityStatic.State.first,
 				nextCall: AnimationCall;
 
@@ -288,10 +293,10 @@ function Velocity(...args: any[]) {
 						/* Optionally clear the remaining queued calls. If we're doing "finishAll" this won't find anything,
 						 due to the queue-clearing above. */
 						if (options === true || isString(options)) {
-							var animation: AnimationCall;
+							let animation: AnimationCall;
 
 							/* Iterate through the items in the element's queue. */
-							while ((animation = dequeue(element, isString(options) ? options : undefined, true))) {
+							while ((animation = VelocityStatic.dequeue(element, isString(options) ? options : undefined, true))) {
 								let callbacks = animation.callbacks;
 
 								if (callbacks.resolver) {
@@ -343,7 +348,7 @@ function Velocity(...args: any[]) {
 
 				/* Check if a string matches a registered redirect (see Redirects above). */
 			} else if (isString(propertiesMap) && VelocityStatic.Redirects[propertiesMap]) {
-				var opts = {...options},
+				let opts = {...options},
 					durationOriginal = parseFloat(options.duration as string),
 					delayOriginal = parseFloat(options.delay as string) || 0;
 
@@ -384,7 +389,7 @@ function Velocity(...args: any[]) {
 				/* Note: The jQuery call chain is kept intact by returning the complete element set. */
 				return getChain();
 			} else {
-				var abortError = "Velocity: First argument (" + propertiesMap + ") was not a property map, a known action, or a registered redirect. Aborting.";
+				let abortError = "Velocity: First argument (" + propertiesMap + ") was not a property map, a known action, or a registered redirect. Aborting.";
 
 				if (promiseData.promise) {
 					promiseData.rejecter(new Error(abortError));
@@ -404,7 +409,7 @@ function Velocity(...args: any[]) {
 	 being animated in a single Velocity call. Calculating unit ratios necessitates DOM querying and updating, and is therefore
 	 avoided (via caching) wherever possible. This container is call-wide instead of page-wide to avoid the risk of using stale
 	 conversion metrics across Velocity animations that are not immediately consecutively chained. */
-	var callUnitConversionData = {
+	let callUnitConversionData = {
 		lastParent: null,
 		lastPosition: null,
 		lastFontSize: null,
@@ -418,7 +423,7 @@ function Velocity(...args: any[]) {
 
 	/* A container for all the ensuing tween data and metadata associated with this call. This container gets pushed to the page-wide
 	 VelocityStatic.State.calls array that is processed during animation ticking. */
-	//var call: TweensContainer[] = [];
+	//let call: TweensContainer[] = [];
 
 	/************************
 	 Element Processing
@@ -466,7 +471,7 @@ function Velocity(...args: any[]) {
 	 Option: Duration
 	 *********************************/
 
-	var optionsDuration = parseTime(options.duration, VelocityStatic.defaults.duration || DURATION_DEFAULT),
+	let optionsDuration = parseTime(options.duration, VelocityStatic.defaults.duration || DURATION_DEFAULT),
 		optionsDelay = parseTime(options.delay, VelocityStatic.defaults.delay || 0);
 
 	/*********************************
@@ -475,8 +480,9 @@ function Velocity(...args: any[]) {
 
 	/* Refer to Velocity's documentation (VelocityJS.org/#displayAndVisibility) for a description of the display and visibility options' behavior. */
 	/* Note: We strictly check for undefined instead of falsiness because display accepts an empty string value. */
+	let optionsDisplay: string;
 	if (options.display !== undefined && options.display !== null) {
-		var optionsDisplay = options.display.toString().toLowerCase();
+		optionsDisplay = options.display.toString().toLowerCase();
 
 		/* Users can pass in a special "auto" value to instruct Velocity to set the element to its default display value. */
 		if (optionsDisplay === "auto") {
@@ -485,8 +491,9 @@ function Velocity(...args: any[]) {
 		}
 	}
 
+	let optionsVisibility: string;
 	if (options.visibility !== undefined && options.visibility !== null) {
-		var optionsVisibility = options.visibility.toString().toLowerCase();
+		optionsVisibility = options.visibility.toString().toLowerCase();
 	}
 
 	/************************
@@ -510,19 +517,19 @@ function Velocity(...args: any[]) {
 	 Option: Easing
 	 *******************/
 
-	var optionsEasing = getEasing(options.easing, optionsDuration);
+	let optionsEasing = VelocityStatic.getEasing(options.easing, optionsDuration);
 
 	/*******************
 	 Option: Loop
 	 *******************/
 
-	var optionsLoop = options.loop || 0;
+	let optionsLoop = options.loop || 0;
 
 	/*******************
 	 Option: Repeat
 	 *******************/
 
-	var optionsRepeat = options.repeat || 0;
+	let optionsRepeat = options.repeat || 0;
 
 	/**********************
 	 Option: mobileHA
@@ -532,12 +539,12 @@ function Velocity(...args: any[]) {
 	 on animating elements. HA is removed from the element at the completion of its animation. */
 	/* Note: Android Gingerbread doesn't support HA. If a null transform hack (mobileHA) is in fact set, it will prevent other tranform subproperties from taking effect. */
 	/* Note: You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
-	var optionsMobileHA = (options.mobileHA && VelocityStatic.State.isMobile && !VelocityStatic.State.isGingerbread);
+	let optionsMobileHA = (options.mobileHA && VelocityStatic.State.isMobile && !VelocityStatic.State.isGingerbread);
 
 	/******************
 	 Element Init
 	 ******************/
-	for (var i = 0; i < elements.length; i++) {
+	for (let i = 0; i < elements.length; i++) {
 		let element = elements[i];
 
 		if (isNode(element) && Data(element) === undefined) {
@@ -567,27 +574,42 @@ function Velocity(...args: any[]) {
 
 	for (let i = 0, length = elementsLength; i < length; i++) {
 		let element = elements[i],
-			animation = VelocityStatic.getAnimationCall();
+			data = Data(element),
+			animation: AnimationCall = {
+				prev: undefined,
+				next: undefined,
+				nextProgress: undefined,
+				nextComplete: undefined,
+				paused: false,
+				started: false,
+				percentComplete: 0,
+				callbacks: callbacks,
+				delay: optionsDelay,
+				display: optionsDisplay,
+				duration: optionsDuration as number,
+				easing: optionsEasing,
+				elements: elements,
+				element: element,
+				ellapsedTime: 0,
+				loop: Math.max(0, optionsLoop * 2 - 1),
+				mobileHA: optionsMobileHA,
+				//		options :options,
+				properties: propertiesMap,
+				queue: options.queue === false ? false : isString(options.queue) ? options.queue : VelocityStatic.defaults.queue,
+				repeat: optionsRepeat,
+				repeatAgain: optionsRepeat,
+				timeStart: 0,
+				tweens: Object.create(null),
+				visibility: optionsVisibility,
+			};
 
-		animation.callbacks = callbacks;
-		animation.delay = optionsDelay;
-		animation.display = optionsDisplay;
-		animation.duration = optionsDuration as number;
-		animation.easing = optionsEasing;
-		animation.elements = elements;
-		animation.element = element;
-		animation.ellapsedTime = 0;
-		animation.loop = Math.max(0, optionsLoop * 2 - 1);
-		animation.mobileHA = optionsMobileHA;
-		//		animation.options = options;
-		animation.properties = propertiesMap;
-		animation.queue = options.queue === false ? false : isString(options.queue) ? options.queue : VelocityStatic.defaults.queue;
-		animation.repeat = animation.repeatAgain = optionsRepeat;
-		animation.timeStart = 0;
-		animation.tweens = Object.create(null);
-		animation.visibility = optionsVisibility;
-		queue(elements[0], animation, animation.queue);
-		expandTweens();
+		// TODO: Remove this and provide better tests
+		data.opts = {
+			duration: animation.duration,
+			easing: animation.easing,
+			complete: callbacks.complete
+		} as any;
+		VelocityStatic.queue(element, animation, animation.queue);
 	}
 	/* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */
 	if (VelocityStatic.State.isTicking === false) {
@@ -630,8 +652,8 @@ var IE = (function() {
 	if (document.documentMode) {
 		return document.documentMode;
 	} else {
-		for (var i = 7; i > 4; i--) {
-			var div = document.createElement("div");
+		for (let i = 7; i > 4; i--) {
+			let div = document.createElement("div");
 
 			div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
 
@@ -650,7 +672,7 @@ var IE = (function() {
  Dependencies
  *****************/
 
-var global: any = this as Window;
+let global: any = this as Window;
 
 /*****************
  CSS Stack
@@ -665,7 +687,7 @@ VelocityStatic.CSS.Normalizations.register();
  ******************/
 
 // Global call
-global.Velocity = Velocity;
+global.Velocity = VelocityFn;
 
 interface Window {
 	jQuery: {fn?: any};
@@ -680,14 +702,14 @@ if (window === global) {
 	 accessible beyond just a per-element scope. Accordingly, Velocity can both act on wrapped DOM elements and stand alone
 	 for targeting raw DOM elements. */
 
-	defineProperty(window.jQuery, "Velocity", Velocity);
-	defineProperty(window.jQuery && window.jQuery.fn, "velocity", Velocity);
-	defineProperty(window.Zepto, "Velocity", Velocity);
-	defineProperty(window.Zepto && window.Zepto.fn, "velocity", Velocity);
+	defineProperty(window.jQuery, "Velocity", VelocityFn);
+	defineProperty(window.jQuery && window.jQuery.fn, "velocity", VelocityFn);
+	defineProperty(window.Zepto, "Velocity", VelocityFn);
+	defineProperty(window.Zepto && window.Zepto.fn, "velocity", VelocityFn);
 
-	defineProperty(Element && Element.prototype, "velocity", Velocity);
-	defineProperty(NodeList && NodeList.prototype, "velocity", Velocity);
-	defineProperty(HTMLCollection && HTMLCollection.prototype, "velocity", Velocity);
+	defineProperty(Element && Element.prototype, "velocity", VelocityFn);
+	defineProperty(NodeList && NodeList.prototype, "velocity", VelocityFn);
+	defineProperty(HTMLCollection && HTMLCollection.prototype, "velocity", VelocityFn);
 }
 
 /******************

@@ -1,10 +1,6 @@
 module.exports = {
 	main: {
-		files: ["src/**/*.ts"],
+		files: ["src/**/*.ts", "test/src/**/*.ts"],
 		tasks: ["default"]
-	},
-	test: {
-		files: ["test/src/**/*.js"],
-		tasks: ["uglify:test"]
 	}
 };

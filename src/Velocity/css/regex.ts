@@ -1,3 +1,9 @@
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+
 namespace VelocityStatic {
 	export namespace CSS {
 
@@ -5,7 +11,7 @@ namespace VelocityStatic {
 		 RegEx
 		 *************/
 
-		export var RegEx = {
+		export let RegEx = {
 			isHex: /^#([A-f\d]{3}){1,2}$/i,
 			/* Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
 			valueUnwrap: /^[A-z]+\((.*)\)$/i,

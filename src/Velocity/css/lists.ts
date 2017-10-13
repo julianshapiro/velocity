@@ -1,3 +1,9 @@
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+
 namespace VelocityStatic {
 	export namespace CSS {
 
@@ -5,7 +11,7 @@ namespace VelocityStatic {
 		 Lists
 		 ************/
 
-		export var Lists = {
+		export let Lists = {
 			colors: ["fill", "stroke", "stopColor", "color", "backgroundColor", "borderColor", "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor"],
 			transformsBase: ["translateX", "translateY", "scale", "scaleX", "scaleY", "skewX", "skewY", "rotateZ"],
 			transforms3D: ["transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY"],

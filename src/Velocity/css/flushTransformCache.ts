@@ -1,10 +1,16 @@
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+
 namespace VelocityStatic {
 	export namespace CSS {
 
 		/* To increase performance by batching transform updates into a single SET, transforms are not directly applied to an element until flushTransformCache() is called. */
 		/* Note: Velocity applies transform properties in the same order that they are chronogically introduced to the element's CSS styles. */
 		export function flushTransformCache(element: HTMLorSVGElement) {
-			var transformString = "",
+			let transformString = "",
 				data = Data(element);
 
 			/* Certain browsers require that SVG transforms be applied as an attribute. However, the SVG transform attribute takes a modified version of CSS's transform string
@@ -12,13 +18,13 @@ namespace VelocityStatic {
 			if ((IE || (State.isAndroid && !State.isChrome)) && data && data.isSVG) {
 				/* Since transform values are stored in their parentheses-wrapped form, we use a helper function to strip out their numeric values.
 				 Further, SVG transform properties only take unitless (representing pixels) values, so it's okay that parseFloat() strips the unit suffixed to the float value. */
-				var getTransformFloat = function(transformProperty) {
+				let getTransformFloat = function(transformProperty) {
 					return parseFloat(getPropertyValue(element, transformProperty) as string);
 				};
 
 				/* Create an object to organize all the transforms that we'll apply to the SVG element. To keep the logic simple,
 				 we process *all* transform properties -- even those that may not be explicitly applied (since they default to their zero-values anyway). */
-				var SVGTransforms = {
+				let SVGTransforms = {
 					translate: [getTransformFloat("translateX"), getTransformFloat("translateY")],
 					skewX: [getTransformFloat("skewX")], skewY: [getTransformFloat("skewY")],
 					/* If the scale property is set (non-1), use that value for the scaleX and scaleY values
@@ -31,7 +37,7 @@ namespace VelocityStatic {
 
 				/* Iterate through the transform properties in the user-defined property map order.
 				 (This mimics the behavior of non-SVG transform animation.) */
-				for (var transformName in Data(element).transformCache) {
+				for (let transformName in Data(element).transformCache) {
 					/* Except for with skewX/Y, revert the axis-specific transform subproperties to their axis-free master
 					 properties so that they match up with SVG's accepted transform properties. */
 					if (/^translate/i.test(transformName)) {
@@ -53,11 +59,11 @@ namespace VelocityStatic {
 					}
 				}
 			} else {
-				var transformValue,
+				let transformValue,
 					perspective;
 
 				/* Transform properties are stored as members of the transformCache object. Concatenate all the members into a string. */
-				for (var transformName in Data(element).transformCache) {
+				for (let transformName in Data(element).transformCache) {
 					transformValue = Data(element).transformCache[transformName];
 
 					/* Transform's perspective subproperty must be set first in order to take effect. Store it temporarily. */

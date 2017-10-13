@@ -1,5 +1,10 @@
-namespace VelocityStatic {
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
 
+namespace VelocityStatic {
 	export namespace CSS {
 
 		/*******************
@@ -14,11 +19,11 @@ namespace VelocityStatic {
 			 Dimensions
 			 **************/
 			function augmentDimension(name, element, wantInner) {
-				var isBorderBox = CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
+				let isBorderBox = CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
 
 				if (isBorderBox === (wantInner || false)) {
 					/* in box-sizing mode, the CSS width / height accessors already give the outerWidth / outerHeight. */
-					var i: number,
+					let i: number,
 						value: number,
 						augment = 0,
 						sides = name === "width" ? ["Left", "Right"] : ["Top", "Bottom"],
@@ -52,14 +57,14 @@ namespace VelocityStatic {
 
 			/* Normalizations are passed a normalization target (either the property's name, its extracted value, or its injected value),
 			 the targeted element (which may need to be queried), and the targeted property value. */
-			export var registered: {[key: string]: ((type: "name" | "extract" | "inject", element?: HTMLorSVGElement, propertyValue?) => any)} = {
+			export let registered: {[key: string]: ((type: "name" | "extract" | "inject", element?: HTMLorSVGElement, propertyValue?) => any)} = {
 				clip: function(type, element, propertyValue) {
 					switch (type) {
 						case "name":
 							return "clip";
 						/* Clip needs to be unwrapped and stripped of its commas during extraction. */
 						case "extract":
-							var extracted;
+							let extracted;
 
 							/* If Velocity also extracted this value, skip extraction. */
 							if (CSS.RegEx.wrappedValueAlreadyExtracted.test(propertyValue)) {
@@ -83,11 +88,11 @@ namespace VelocityStatic {
 						case "name":
 							return VelocityStatic.State.isFirefox ? "filter" : "-webkit-filter";
 						case "extract":
-							var extracted = parseFloat(propertyValue);
+							let extracted = parseFloat(propertyValue);
 
 							/* If extracted is NaN, meaning the value isn't already extracted. */
 							if (!(extracted || extracted === 0)) {
-								var blurComponent = propertyValue.toString().match(/blur\(([0-9]+[A-z]+)\)/i);
+								let blurComponent = propertyValue.toString().match(/blur\(([0-9]+[A-z]+)\)/i);
 
 								/* If the filter string had a blur component, return just the blur value and unit type. */
 								if (blurComponent) {
@@ -118,7 +123,7 @@ namespace VelocityStatic {
 							case "extract":
 								/* <=IE8 return a "filter" value of "alpha(opacity=\d{1,3})".
 								 Extract the value and convert it to a decimal value to match the standard CSS opacity property's formatting. */
-								var extracted = propertyValue.toString().match(/alpha\(opacity=(.*)\)/i);
+								let extracted = propertyValue.toString().match(/alpha\(opacity=(.*)\)/i);
 
 								if (extracted) {
 									/* Convert to decimal value. */
@@ -189,11 +194,11 @@ namespace VelocityStatic {
 					CSS.Lists.transformsBase = CSS.Lists.transformsBase.concat(CSS.Lists.transforms3D);
 				}
 
-				for (var i = 0; i < CSS.Lists.transformsBase.length; i++) {
+				for (let i = 0; i < CSS.Lists.transformsBase.length; i++) {
 					/* Wrap the dynamically generated normalization function in a new scope so that transformName's value is
 					 paired with its respective function. (Otherwise, all functions would take the final for loop's transformName.) */
 					(function() {
-						var transformName = CSS.Lists.transformsBase[i];
+						let transformName = CSS.Lists.transformsBase[i];
 
 						CSS.Normalizations.registered[transformName] = function(type, element, propertyValue) {
 							switch (type) {
@@ -211,7 +216,7 @@ namespace VelocityStatic {
 									}
 									return Data(element).transformCache[transformName].replace(/[()]/g, "");
 								case "inject":
-									var invalid = false;
+									let invalid = false;
 
 									/* If an individual transform property contains an unsupported unit type, the browser ignores the *entire* transform property.
 									 Thus, protect users from themselves by skipping setting for transform values supplied with invalid unit types. */

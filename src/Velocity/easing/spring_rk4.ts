@@ -1,26 +1,46 @@
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
 
+namespace Easing {
 
-/* Runge-Kutta spring physics function generator. Adapted from Framer.js, copyright Koen Bok. MIT License: http://en.wikipedia.org/wiki/MIT_License */
-/* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
- then adjusts the time delta -- using the relation between actual time and duration -- to calculate the path for the duration-constrained animation. */
-var generateSpringRK4 = (function() {
-	function springAccelerationForState(state) {
+	interface springState {
+		x: number;
+		v: number;
+		tension: number;
+		friction: number;
+	};
+
+	interface springDelta {
+		dx: number;
+		dv: number;
+	};
+
+	/* Runge-Kutta spring physics function generator. Adapted from Framer.js, copyright Koen Bok. MIT License: http://en.wikipedia.org/wiki/MIT_License */
+	/* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
+	 then adjusts the time delta -- using the relation between actual time and duration -- to calculate the path for the duration-constrained animation. */
+	function springAccelerationForState(state: springState) {
 		return (-state.tension * state.x) - (state.friction * state.v);
 	}
 
-	function springEvaluateStateWithDerivative(initialState, dt, derivative) {
-		var state = {
+	function springEvaluateStateWithDerivative(initialState: springState, dt: number, derivative: springDelta): springDelta {
+		let state = {
 			x: initialState.x + derivative.dx * dt,
 			v: initialState.v + derivative.dv * dt,
 			tension: initialState.tension,
 			friction: initialState.friction
 		};
 
-		return {dx: state.v, dv: springAccelerationForState(state)};
+		return {
+			dx: state.v,
+			dv: springAccelerationForState(state)
+		};
 	}
 
-	function springIntegrateState(state, dt) {
-		var a = {
+	function springIntegrateState(state: springState, dt: number) {
+		let a = {
 			dx: state.v,
 			dv: springAccelerationForState(state)
 		},
@@ -36,33 +56,27 @@ var generateSpringRK4 = (function() {
 		return state;
 	}
 
-	return function springRK4Factory(tension, friction, duration?: number) {
-
-		var initState = {
+	export function generateSpringRK4(tension: number, friction: number): number;
+	export function generateSpringRK4(tension: number, friction: number, duration: number): VelocityEasing;
+	export function generateSpringRK4(tension: number, friction: number, duration?: number): any {
+		let initState: springState = {
 			x: -1,
 			v: 0,
-			tension: null,
-			friction: null
+			tension: parseFloat(tension as any) || 500,
+			friction: parseFloat(friction as any) || 20
 		},
 			path = [0],
 			time_lapsed = 0,
 			tolerance = 1 / 10000,
 			DT = 16 / 1000,
-			have_duration, dt, last_state;
-
-		tension = parseFloat(tension) || 500;
-		friction = parseFloat(friction) || 20;
-		duration = duration || null;
-
-		initState.tension = tension;
-		initState.friction = friction;
-
-		have_duration = duration !== null;
+			have_duration = duration != null, // deliberate "==", as undefined == null != 0
+			dt: number,
+			last_state: springState;
 
 		/* Calculate the actual time it takes for this animation to complete with the provided conditions. */
 		if (have_duration) {
 			/* Run the simulation without a duration. */
-			time_lapsed = springRK4Factory(tension, friction) as number;
+			time_lapsed = generateSpringRK4(initState.tension, initState.friction);
 			/* Compute the adjusted time delta. */
 			dt = (time_lapsed as number) / duration * DT;
 		} else {
@@ -83,8 +97,8 @@ var generateSpringRK4 = (function() {
 
 		/* If duration is not defined, return the actual time required for completing this animation. Otherwise, return a closure that holds the
 		 computed path and returns a snapshot of the position according to a given percentComplete. */
-		return !have_duration ? time_lapsed : function(percentComplete) {
-			return path[(percentComplete * (path.length - 1)) | 0];
+		return !have_duration ? time_lapsed : function(percentComplete: number, startValue: number, endValue: number) {
+			return startValue + path[(percentComplete * (path.length - 1)) | 0] * (endValue - startValue);
 		};
 	};
-}());
+};

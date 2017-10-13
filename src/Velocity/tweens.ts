@@ -1,21 +1,25 @@
-
-/**
- * Expand all queued animations that haven't gone yet
- * 
- * This will automatically expand the properties map for any recently added
- * animations so that the start and end values are correct
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Tweens
  */
-function expandTweens() {
-	var State = VelocityStatic.State,
-		activeCall = State.firstNew;
 
-	for (; activeCall; activeCall = activeCall.next) {
+namespace VelocityStatic {
+	/**
+	 * Expand all queued animations that haven't gone yet
+	 * 
+	 * This will automatically expand the properties map for any recently added
+	 * animations so that the start and end values are correct
+	 */
+	export function expandTween(activeCall: AnimationCall) {
 		let elements = activeCall.elements,
 			elementsLength = elements.length,
 			element = activeCall.element,
-			elementArrayIndex = elements.indexOf(element),
-			callbacks = activeCall.callbacks;
+			elementArrayIndex = elements.indexOf(element);
 
+		State.firstNew = activeCall.next;
 		/* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
 		if (isNode(element)) {
 			let data = Data(element),
@@ -31,7 +35,7 @@ function expandTweens() {
 			/* Note: In order to be subjected to chaining and animation options, scroll's tweening is routed through Velocity as if it were a standard CSS property animation. */
 			//			if (action === "scroll") {
 			//				/* The scroll action uniquely takes an optional "offset" option -- specified in pixels -- that offsets the targeted scroll position. */
-			//				var scrollDirection = (/^x$/i.test(opts.axis) ? "Left" : "Top"),
+			//				let scrollDirection = (/^x$/i.test(opts.axis) ? "Left" : "Top"),
 			//					scrollOffset = parseFloat(opts.offset as any as string) || 0,
 			//					scrollPositionCurrent,
 			//					scrollPositionCurrentAlternate,
@@ -59,9 +63,9 @@ function expandTweens() {
 			//				} else {
 			//					/* If the window itself is being scrolled -- not a containing element -- perform a live scroll position lookup using
 			//					 the appropriate cached property names (which differ based on browser type). */
-			//					scrollPositionCurrent = VelocityStatic.State.scrollAnchor[VelocityStatic.State["scrollProperty" + scrollDirection]]; /* GET */
+			//					scrollPositionCurrent = State.scrollAnchor[State["scrollProperty" + scrollDirection]]; /* GET */
 			//					/* When scrolling the browser window, cache the alternate axis's current value since window.scrollTo() doesn't let us change only one value at a time. */
-			//					scrollPositionCurrentAlternate = VelocityStatic.State.scrollAnchor[VelocityStatic.State["scrollProperty" + (scrollDirection === "Left" ? "Top" : "Left")]]; /* GET */
+			//					scrollPositionCurrentAlternate = State.scrollAnchor[State["scrollProperty" + (scrollDirection === "Left" ? "Top" : "Left")]]; /* GET */
 			//
 			//					/* Unlike $.position(), $.offset() values are relative to the browser window's true dimensions -- not merely its currently viewable area --
 			//					 and therefore end values do not need to be compounded onto current values. */
@@ -86,7 +90,7 @@ function expandTweens() {
 			//					element: element
 			//				};
 			//
-			//				if (VelocityStatic.debug) {
+			//				if (debug) {
 			//					console.log("tweensContainer (scroll): ", (tweensContainer as any).scroll, element);
 			//				}
 			//
@@ -157,10 +161,10 @@ function expandTweens() {
 			//				lastTweensContainer = _deepCopyObject({}, data ? data.tweensContainer : null);
 			//
 			//				/* Manipulate the previous tweensContainer by replacing its end values and currentValues with its start values. */
-			//				for (var lastTween in lastTweensContainer) {
+			//				for (let lastTween in lastTweensContainer) {
 			//					/* In addition to tween data, tweensContainers contain an element property that we ignore here. */
 			//					if (lastTweensContainer.hasOwnProperty(lastTween) && lastTween !== "element") {
-			//						var lastStartValue = lastTweensContainer[lastTween].startValue;
+			//						let lastStartValue = lastTweensContainer[lastTween].startValue;
 			//
 			//						lastTweensContainer[lastTween].startValue = lastTweensContainer[lastTween].currentValue = lastTweensContainer[lastTween].endValue;
 			//						lastTweensContainer[lastTween].endValue = lastStartValue;
@@ -172,7 +176,7 @@ function expandTweens() {
 			//							lastTweensContainer[lastTween].easing = opts.easing;
 			//						}
 			//
-			//						if (VelocityStatic.debug) {
+			//						if (debug) {
 			//							console.log("reverse tweensContainer (" + lastTween + "): " + JSON.stringify(lastTweensContainer[lastTween]), element);
 			//						}
 			//					}
@@ -216,7 +220,7 @@ function expandTweens() {
 			 The optional third parameter is a forcefed startValue to be used instead of querying the DOM for
 			 the element's current value. Read Velocity's docmentation to learn more about forcefeeding: VelocityJS.org/#forcefeeding */
 			function parsePropertyValue(valueData: any, skipResolvingEasing?: boolean) {
-				var endValue, easing, startValue;
+				let endValue, easing, startValue;
 
 				/* If we have a function as the main argument then resolve it first, in case it returns an array that needs to be split */
 				if (isFunction(valueData)) {
@@ -232,10 +236,10 @@ function expandTweens() {
 
 					/* Two-item array format: If the second item is a number, function, or hex string, treat it as a
 					 start value since easings can only be non-hex strings or arrays. */
-					if ((!Array.isArray(valueData[1]) && /^[\d-]/.test(valueData[1])) || isFunction(valueData[1]) || VelocityStatic.CSS.RegEx.isHex.test(valueData[1])) {
+					if ((!Array.isArray(valueData[1]) && /^[\d-]/.test(valueData[1])) || isFunction(valueData[1]) || CSS.RegEx.isHex.test(valueData[1])) {
 						startValue = valueData[1];
 						/* Two or three-item array: If the second item is a non-hex string easing name or an array, treat it as an easing. */
-					} else if ((isString(valueData[1]) && !VelocityStatic.CSS.RegEx.isHex.test(valueData[1]) && VelocityStatic.Easings[valueData[1]]) || Array.isArray(valueData[1])) {
+					} else if ((isString(valueData[1]) && !CSS.RegEx.isHex.test(valueData[1]) && Easings[valueData[1]]) || Array.isArray(valueData[1])) {
 						easing = skipResolvingEasing ? valueData[1] : getEasing(valueData[1], activeCall.duration);
 
 						/* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
@@ -267,539 +271,34 @@ function expandTweens() {
 				return [endValue || 0, easing, startValue];
 			};
 
-			var fixPropertyValue = function(property: string, valueData) {
-				/* In case this property is a hook, there are circumstances where we will intend to work on the hook's root property and not the hooked subproperty. */
-				var rootProperty = VelocityStatic.CSS.Hooks.getRoot(property),
-					rootPropertyValue: string | number,
-					/* Parse out endValue, easing, and startValue from the property's data. */
-					endValue = valueData[0],
-					easing = valueData[1],
-					startValue = valueData[2],
-					pattern: string;
-
-				/**************************
-				 Start Value Sourcing
-				 **************************/
-
-				/* Other than for the dummy tween property, properties that are not supported by the browser (and do not have an associated normalization) will
-				 inherently produce no style changes when set, so they are skipped in order to decrease animation tick overhead.
-				 Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
-				/* Note: Since SVG elements have some of their properties directly applied as HTML attributes,
-				 there is no way to check for their explicit browser support, and so we skip skip this check for them. */
-				if ((!data || !data.isSVG) && rootProperty !== "tween" && VelocityStatic.CSS.Names.prefixCheck(rootProperty)[1] === false && VelocityStatic.CSS.Normalizations.registered[rootProperty] === undefined) {
-					if (VelocityStatic.debug) {
-						console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
-					}
-					return;
-				}
-
-				/* If the display option is being set to a non-"none" (e.g. "block") and opacity (filter on IE<=8) is being
-				 animated to an endValue of non-zero, the user's intention is to fade in from invisible, thus we forcefeed opacity
-				 a startValue of 0 if its startValue hasn't already been sourced by value transferring or prior forcefeeding. */
-				if (((activeCall.display !== undefined && activeCall.display !== null && activeCall.display !== "none") || (activeCall.visibility !== undefined && activeCall.visibility !== "hidden")) && /opacity|filter/.test(property) && !startValue && endValue !== 0) {
-					startValue = 0;
-				}
-
-				/* If values have been transferred from the previous Velocity call, extract the endValue and rootPropertyValue
-				 for all of the current call's properties that were *also* animated in the previous call. */
-				/* Note: Value transferring can optionally be disabled by the user via the _cacheValues option. */
-				if (lastAnimation && lastAnimation.tweens[property]) {
-					if (startValue === undefined) {
-						startValue = lastAnimation.tweens[property].endValue + lastAnimation.tweens[property].unitType;
-					}
-
-					/* The previous call's rootPropertyValue is extracted from the element's data cache since that's the
-					 instance of rootPropertyValue that gets freshly updated by the tweening process, whereas the rootPropertyValue
-					 attached to the incoming lastTweensContainer is equal to the root property's value prior to any tweening. */
-					rootPropertyValue = data.rootPropertyValueCache[rootProperty];
-					/* If values were not transferred from a previous Velocity call, query the DOM as needed. */
-				} else {
-					/* Handle hooked properties. */
-					if (VelocityStatic.CSS.Hooks.registered[property]) {
-						if (startValue === undefined) {
-							rootPropertyValue = VelocityStatic.CSS.getPropertyValue(element, rootProperty) as string; /* GET */
-							/* Note: The following getPropertyValue() call does not actually trigger a DOM query;
-							 getPropertyValue() will extract the hook from rootPropertyValue. */
-							startValue = VelocityStatic.CSS.getPropertyValue(element, property, rootPropertyValue);
-							/* If startValue is already defined via forcefeeding, do not query the DOM for the root property's value;
-							 just grab rootProperty's zero-value template from vVelocityStatic.CSS.Hooks. This overwrites the element's actual
-							 root property value (if one is set), but this is acceptable since the primary reason users forcefeed is
-							 to avoid DOM queries, and thus we likewise avoid querying the DOM for the root property's value. */
-						} else {
-							/* Grab this hook's zero-value template, e.g. "0px 0px 0px black". */
-							rootPropertyValue = VelocityStatic.CSS.Hooks.templates[rootProperty][1];
-						}
-						/* Handle non-hooked properties that haven't already been defined via forcefeeding. */
-					} else if (startValue === undefined) {
-						startValue = VelocityStatic.CSS.getPropertyValue(element, property); /* GET */
-					}
-				}
-
-				/**************************
-				 Value Data Extraction
-				 **************************/
-
-				var separatedValue,
-					endValueUnitType,
-					startValueUnitType,
-					operator: boolean | string = false;
-
-				/* Separates a property value into its numeric value and its unit type. */
-				var separateValue = function(property: string, value: string) {
-					var unitType,
-						numericValue;
-
-					numericValue = (value || "0")
-						.toString()
-						.toLowerCase()
-						/* Match the unit type at the end of the value. */
-						.replace(/[%A-z]+$/, function(match) {
-							/* Grab the unit type. */
-							unitType = match;
-
-							/* Strip the unit type off of value. */
-							return "";
-						});
-
-					/* If no unit type was supplied, assign one that is appropriate for this property (e.g. "deg" for rotateZ or "px" for width). */
-					if (!unitType) {
-						unitType = VelocityStatic.CSS.Values.getUnitType(property);
-					}
-
-					return [numericValue, unitType];
-				};
-
-				if (startValue !== endValue && isString(startValue) && isString(endValue)) {
-					pattern = "";
-					var iStart = 0, // index in startValue
-						iEnd = 0, // index in endValue
-						aStart = [], // array of startValue numbers
-						aEnd = [], // array of endValue numbers
-						inCalc = 0, // Keep track of being inside a "calc()" so we don't duplicate it
-						inRGB = 0, // Keep track of being inside an RGB as we can't use fractional values
-						inRGBA = 0; // Keep track of being inside an RGBA as we must pass fractional for the alpha channel
-
-					startValue = VelocityStatic.CSS.Hooks.fixColors(startValue);
-					endValue = VelocityStatic.CSS.Hooks.fixColors(endValue);
-					while (iStart < startValue.length && iEnd < endValue.length) {
-						var cStart = startValue[iStart],
-							cEnd = endValue[iEnd];
-
-						if (/[\d\.-]/.test(cStart) && /[\d\.-]/.test(cEnd)) {
-							var tStart = cStart, // temporary character buffer
-								tEnd = cEnd, // temporary character buffer
-								dotStart = ".", // Make sure we can only ever match a single dot in a decimal
-								dotEnd = "."; // Make sure we can only ever match a single dot in a decimal
-
-							while (++iStart < startValue.length) {
-								cStart = startValue[iStart];
-								if (cStart === dotStart) {
-									dotStart = ".."; // Can never match two characters
-								} else if (!/\d/.test(cStart)) {
-									break;
-								}
-								tStart += cStart;
-							}
-							while (++iEnd < endValue.length) {
-								cEnd = endValue[iEnd];
-								if (cEnd === dotEnd) {
-									dotEnd = ".."; // Can never match two characters
-								} else if (!/\d/.test(cEnd)) {
-									break;
-								}
-								tEnd += cEnd;
-							}
-							var uStart = VelocityStatic.CSS.Hooks.getUnit(startValue, iStart), // temporary unit type
-								uEnd = VelocityStatic.CSS.Hooks.getUnit(endValue, iEnd); // temporary unit type
-
-							iStart += uStart.length;
-							iEnd += uEnd.length;
-							if (uStart === uEnd) {
-								// Same units
-								if (tStart === tEnd) {
-									// Same numbers, so just copy over
-									pattern += tStart + uStart;
-								} else {
-									// Different numbers, so store them
-									pattern += "{" + aStart.length + (inRGB ? "!" : "") + "}" + uStart;
-									aStart.push(parseFloat(tStart));
-									aEnd.push(parseFloat(tEnd));
-								}
-							} else {
-								// Different units, so put into a "calc(from + to)" and animate each side to/from zero
-								var nStart = parseFloat(tStart),
-									nEnd = parseFloat(tEnd);
-
-								pattern += (inCalc < 5 ? "calc" : "") + "("
-									+ (nStart ? "{" + aStart.length + (inRGB ? "!" : "") + "}" : "0") + uStart
-									+ " + "
-									+ (nEnd ? "{" + (aStart.length + (nStart ? 1 : 0)) + (inRGB ? "!" : "") + "}" : "0") + uEnd
-									+ ")";
-								if (nStart) {
-									aStart.push(nStart);
-									aEnd.push(0);
-								}
-								if (nEnd) {
-									aStart.push(0);
-									aEnd.push(nEnd);
-								}
-							}
-						} else if (cStart === cEnd) {
-							pattern += cStart;
-							iStart++;
-							iEnd++;
-							// Keep track of being inside a calc()
-							if (inCalc === 0 && cStart === "c"
-								|| inCalc === 1 && cStart === "a"
-								|| inCalc === 2 && cStart === "l"
-								|| inCalc === 3 && cStart === "c"
-								|| inCalc >= 4 && cStart === "("
-							) {
-								inCalc++;
-							} else if ((inCalc && inCalc < 5)
-								|| inCalc >= 4 && cStart === ")" && --inCalc < 5) {
-								inCalc = 0;
-							}
-							// Keep track of being inside an rgb() / rgba()
-							if (inRGB === 0 && cStart === "r"
-								|| inRGB === 1 && cStart === "g"
-								|| inRGB === 2 && cStart === "b"
-								|| inRGB === 3 && cStart === "a"
-								|| inRGB >= 3 && cStart === "("
-							) {
-								if (inRGB === 3 && cStart === "a") {
-									inRGBA = 1;
-								}
-								inRGB++;
-							} else if (inRGBA && cStart === ",") {
-								if (++inRGBA > 3) {
-									inRGB = inRGBA = 0;
-								}
-							} else if ((inRGBA && inRGB < (inRGBA ? 5 : 4))
-								|| inRGB >= (inRGBA ? 4 : 3) && cStart === ")" && --inRGB < (inRGBA ? 5 : 4)) {
-								inRGB = inRGBA = 0;
-							}
-						} else {
-							inCalc = 0;
-							// TODO: changing units, fixing colours
-							break;
-						}
-					}
-					if (iStart !== startValue.length || iEnd !== endValue.length) {
-						if (VelocityStatic.debug) {
-							console.error("Trying to pattern match mis-matched strings [\"" + endValue + "\", \"" + startValue + "\"]");
-						}
-						pattern = undefined;
-					}
-					if (pattern) {
-						if (aStart.length) {
-							if (VelocityStatic.debug) {
-								console.log("Pattern found \"" + pattern + "\" -> ", aStart, aEnd, "[" + startValue + "," + endValue + "]");
-							}
-							startValue = aStart;
-							endValue = aEnd;
-							endValueUnitType = startValueUnitType = "";
-						} else {
-							pattern = undefined;
-						}
-					}
-				}
-
-				if (!pattern) {
-					/* Separate startValue. */
-					separatedValue = separateValue(property, startValue);
-					startValue = separatedValue[0];
-					startValueUnitType = separatedValue[1];
-
-					/* Separate endValue, and extract a value operator (e.g. "+=", "-=") if one exists. */
-					separatedValue = separateValue(property, endValue);
-					endValue = separatedValue[0].replace(/^([+-\/*])=/, function(match, subMatch) {
-						operator = subMatch;
-
-						/* Strip the operator off of the value. */
-						return "";
-					});
-					endValueUnitType = separatedValue[1];
-
-					/* Parse float values from endValue and startValue. Default to 0 if NaN is returned. */
-					startValue = parseFloat(startValue) || 0;
-					endValue = parseFloat(endValue) || 0;
-
-					/***************************************
-					 Property-Specific Value Conversion
-					 ***************************************/
-
-					/* Custom support for properties that don't actually accept the % unit type, but where pollyfilling is trivial and relatively foolproof. */
-					if (endValueUnitType === "%") {
-						/* A %-value fontSize/lineHeight is relative to the parent's fontSize (as opposed to the parent's dimensions),
-						 which is identical to the em unit's behavior, so we piggyback off of that. */
-						if (/^(fontSize|lineHeight)$/.test(property)) {
-							/* Convert % into an em decimal value. */
-							endValue = endValue / 100;
-							endValueUnitType = "em";
-							/* For scaleX and scaleY, convert the value into its decimal format and strip off the unit type. */
-						} else if (/^scale/.test(property)) {
-							endValue = endValue / 100;
-							endValueUnitType = "";
-							/* For RGB components, take the defined percentage of 255 and strip off the unit type. */
-						} else if (/(Red|Green|Blue)$/i.test(property)) {
-							endValue = (endValue / 100) * 255;
-							endValueUnitType = "";
-						}
-					}
-				}
-
-				/***************************
-				 Unit Ratio Calculation
-				 ***************************/
-
-				/* When queried, the browser returns (most) CSS property values in pixels. Therefore, if an endValue with a unit type of
-				 %, em, or rem is animated toward, startValue must be converted from pixels into the same unit type as endValue in order
-				 for value manipulation logic (increment/decrement) to proceed. Further, if the startValue was forcefed or transferred
-				 from a previous call, startValue may also not be in pixels. Unit conversion logic therefore consists of two steps:
-				 1) Calculating the ratio of %/em/rem/vh/vw relative to pixels
-				 2) Converting startValue into the same unit of measurement as endValue based on these ratios. */
-				/* Unit conversion ratios are calculated by inserting a sibling node next to the target node, copying over its position property,
-				 setting values with the target unit type then comparing the returned pixel value. */
-				/* Note: Even if only one of these unit types is being animated, all unit ratios are calculated at once since the overhead
-				 of batching the SETs and GETs together upfront outweights the potential overhead
-				 of layout thrashing caused by re-querying for uncalculated ratios for subsequently-processed properties. */
-				/* Todo: Shift this logic into the calls' first tick instance so that it's synced with RAF. */
-				//					var calculateUnitRatios = function() {
-				//
-				//						/************************
-				//						 Same Ratio Checks
-				//						 ************************/
-				//
-				//						/* The properties below are used to determine whether the element differs sufficiently from this call's
-				//						 previously iterated element to also differ in its unit conversion ratios. If the properties match up with those
-				//						 of the prior element, the prior element's conversion ratios are used. Like most optimizations in Velocity,
-				//						 this is done to minimize DOM querying. */
-				//						var sameRatioIndicators = {
-				//							myParent: element.parentNode || document.body, /* GET */
-				//							position: VelocityStatic.CSS.getPropertyValue(element, "position"), /* GET */
-				//							fontSize: VelocityStatic.CSS.getPropertyValue(element, "fontSize") /* GET */
-				//						},
-				//							/* Determine if the same % ratio can be used. % is based on the element's position value and its parent's width and height dimensions. */
-				//							samePercentRatio = ((sameRatioIndicators.position === callUnitConversionData.lastPosition) && (sameRatioIndicators.myParent === callUnitConversionData.lastParent)),
-				//							/* Determine if the same em ratio can be used. em is relative to the element's fontSize. */
-				//							sameEmRatio = (sameRatioIndicators.fontSize === callUnitConversionData.lastFontSize);
-				//
-				//						/* Store these ratio indicators call-wide for the next element to compare against. */
-				//						callUnitConversionData.lastParent = sameRatioIndicators.myParent;
-				//						callUnitConversionData.lastPosition = sameRatioIndicators.position;
-				//						callUnitConversionData.lastFontSize = sameRatioIndicators.fontSize;
-				//
-				//						/***************************
-				//						 Element-Specific Units
-				//						 ***************************/
-				//
-				//						/* Note: IE8 rounds to the nearest pixel when returning CSS values, thus we perform conversions using a measurement
-				//						 of 100 (instead of 1) to give our ratios a precision of at least 2 decimal values. */
-				//						var measurement = 100,
-				//							unitRatios: {[key: string]: any} = {};
-				//
-				//						if (!sameEmRatio || !samePercentRatio) {
-				//							var dummy = data && data.isSVG ? document.createElementNS("http://www.w3.org/2000/svg", "rect") : document.createElement("div");
-				//
-				//							VelocityStatic.init(dummy);
-				//							sameRatioIndicators.myParent.appendChild(dummy);
-				//
-				//							/* To accurately and consistently calculate conversion ratios, the element's cascaded overflow and box-sizing are stripped.
-				//							 Similarly, since width/height can be artificially constrained by their min-/max- equivalents, these are controlled for as well. */
-				//							/* Note: Overflow must be also be controlled for per-axis since the overflow property overwrites its per-axis values. */
-				//							["overflow", "overflowX", "overflowY"].forEach(function(property) {
-				//								VelocityStatic.CSS.setPropertyValue(dummy, property, "hidden");
-				//							});
-				//							VelocityStatic.CSS.setPropertyValue(dummy, "position", sameRatioIndicators.position);
-				//							VelocityStatic.CSS.setPropertyValue(dummy, "fontSize", sameRatioIndicators.fontSize);
-				//							VelocityStatic.CSS.setPropertyValue(dummy, "boxSizing", "content-box");
-				//
-				//							/* width and height act as our proxy properties for measuring the horizontal and vertical % ratios. */
-				//							["minWidth", "maxWidth", "width", "minHeight", "maxHeight", "height"].forEach(function(property) {
-				//								VelocityStatic.CSS.setPropertyValue(dummy, property, measurement + "%");
-				//							});
-				//							/* paddingLeft arbitrarily acts as our proxy property for the em ratio. */
-				//							VelocityStatic.CSS.setPropertyValue(dummy, "paddingLeft", measurement + "em");
-				//
-				//							/* Divide the returned value by the measurement to get the ratio between 1% and 1px. Default to 1 since working with 0 can produce Infinite. */
-				//							unitRatios.percentToPxWidth = callUnitConversionData.lastPercentToPxWidth = (parseFloat(VelocityStatic.CSS.getPropertyValue(dummy, "width", null, true)) || 1) / measurement; /* GET */
-				//							unitRatios.percentToPxHeight = callUnitConversionData.lastPercentToPxHeight = (parseFloat(VelocityStatic.CSS.getPropertyValue(dummy, "height", null, true)) || 1) / measurement; /* GET */
-				//							unitRatios.emToPx = callUnitConversionData.lastEmToPx = (parseFloat(VelocityStatic.CSS.getPropertyValue(dummy, "paddingLeft")) || 1) / measurement; /* GET */
-				//
-				//							sameRatioIndicators.myParent.removeChild(dummy);
-				//						} else {
-				//							unitRatios.emToPx = callUnitConversionData.lastEmToPx;
-				//							unitRatios.percentToPxWidth = callUnitConversionData.lastPercentToPxWidth;
-				//							unitRatios.percentToPxHeight = callUnitConversionData.lastPercentToPxHeight;
-				//						}
-				//
-				//						/***************************
-				//						 Element-Agnostic Units
-				//						 ***************************/
-				//
-				//						/* Whereas % and em ratios are determined on a per-element basis, the rem unit only needs to be checked
-				//						 once per call since it's exclusively dependant upon document.body's fontSize. If this is the first time
-				//						 that calculateUnitRatios() is being run during this call, remToPx will still be set to its default value of null,
-				//						 so we calculate it now. */
-				//						if (callUnitConversionData.remToPx === null) {
-				//							/* Default to browsers' default fontSize of 16px in the case of 0. */
-				//							callUnitConversionData.remToPx = parseFloat(VelocityStatic.CSS.getPropertyValue(document.body, "fontSize")) || 16; /* GET */
-				//						}
-				//
-				//						/* Similarly, viewport units are %-relative to the window's inner dimensions. */
-				//						if (callUnitConversionData.vwToPx === null) {
-				//							callUnitConversionData.vwToPx = window.innerWidth / 100; /* GET */
-				//							callUnitConversionData.vhToPx = window.innerHeight / 100; /* GET */
-				//						}
-				//
-				//						unitRatios.remToPx = callUnitConversionData.remToPx;
-				//						unitRatios.vwToPx = callUnitConversionData.vwToPx;
-				//						unitRatios.vhToPx = callUnitConversionData.vhToPx;
-				//
-				//						if (VelocityStatic.debug >= 1) {
-				//							console.log("Unit ratios: " + JSON.stringify(unitRatios), element);
-				//						}
-				//						return unitRatios;
-				//					};
-
-				/********************
-				 Unit Conversion
-				 ********************/
-
-				/* The * and / operators, which are not passed in with an associated unit, inherently use startValue's unit. Skip value and unit conversion. */
-				//					if (/[\/*]/.test(operator as any as string)) {
-				//						endValueUnitType = startValueUnitType;
-				//						/* If startValue and endValue differ in unit type, convert startValue into the same unit type as endValue so that if endValueUnitType
-				//						 is a relative unit (%, em, rem), the values set during tweening will continue to be accurately relative even if the metrics they depend
-				//						 on are dynamically changing during the course of the animation. Conversely, if we always normalized into px and used px for setting values, the px ratio
-				//						 would become stale if the original unit being animated toward was relative and the underlying metrics change during the animation. */
-				//						/* Since 0 is 0 in any unit type, no conversion is necessary when startValue is 0 -- we just start at 0 with endValueUnit */
-				//					} else if ((startValueUnitType !== endValueUnitType) && startValue !== 0) {
-				//						/* Unit conversion is also skipped when endValue is 0, but *startValueUnitType* must be used for tween values to remain accurate. */
-				//						/* Note: Skipping unit conversion here means that if endValueUnitType was originally a relative unit, the animation won't relatively
-				//						 match the underlying metrics if they change, but this is acceptable since we're animating toward invisibility instead of toward visibility,
-				//						 which remains past the point of the animation's completion. */
-				//						if (endValue === 0) {
-				//							endValueUnitType = startValueUnitType;
-				//						} else {
-				//							/* By this point, we cannot avoid unit conversion (it's undesirable since it causes layout thrashing).
-				//							 If we haven't already, we trigger calculateUnitRatios(), which runs once per element per call. */
-				//							elementUnitConversionData = elementUnitConversionData || calculateUnitRatios();
-				//
-				//							/* The following RegEx matches CSS properties that have their % values measured relative to the x-axis. */
-				//							/* Note: W3C spec mandates that all of margin and padding's properties (even top and bottom) are %-relative to the *width* of the parent element. */
-				//							var axis = (/margin|padding|left|right|width|text|word|letter/i.test(property) || /X$/.test(property) || property === "x") ? "x" : "y";
-				//
-				//							/* In order to avoid generating n^2 bespoke conversion functions, unit conversion is a two-step process:
-				//							 1) Convert startValue into pixels. 2) Convert this new pixel value into endValue's unit type. */
-				//							switch (startValueUnitType) {
-				//								case "%":
-				//									/* Note: translateX and translateY are the only properties that are %-relative to an element's own dimensions -- not its parent's dimensions.
-				//									 Velocity does not include a special conversion process to account for this behavior. Therefore, animating translateX/Y from a % value
-				//									 to a non-% value will produce an incorrect start value. Fortunately, this sort of cross-unit conversion is rarely done by users in practice. */
-				//									startValue *= (axis === "x" ? elementUnitConversionData.percentToPxWidth : elementUnitConversionData.percentToPxHeight);
-				//									break;
-				//
-				//								case "px":
-				//									/* px acts as our midpoint in the unit conversion process; do nothing. */
-				//									break;
-				//
-				//								default:
-				//									startValue *= elementUnitConversionData[startValueUnitType + "ToPx"];
-				//							}
-				//
-				//							/* Invert the px ratios to convert into to the target unit. */
-				//							switch (endValueUnitType) {
-				//								case "%":
-				//									startValue *= 1 / (axis === "x" ? elementUnitConversionData.percentToPxWidth : elementUnitConversionData.percentToPxHeight);
-				//									break;
-				//
-				//								case "px":
-				//									/* startValue is already in px, do nothing; we're done. */
-				//									break;
-				//
-				//								default:
-				//									startValue *= 1 / elementUnitConversionData[endValueUnitType + "ToPx"];
-				//							}
-				//						}
-				//					}
-
-				/*********************
-				 Relative Values
-				 *********************/
-
-				/* Operator logic must be performed last since it requires unit-normalized start and end values. */
-				/* Note: Relative *percent values* do not behave how most people think; while one would expect "+=50%"
-				 to increase the property 1.5x its current value, it in fact increases the percent units in absolute terms:
-				 50 points is added on top of the current % value. */
-				switch (operator as any as string) {
-					case "+":
-						endValue = startValue + endValue;
-						break;
-
-					case "-":
-						endValue = startValue - endValue;
-						break;
-
-					case "*":
-						endValue = startValue * endValue;
-						break;
-
-					case "/":
-						endValue = startValue / endValue;
-						break;
-				}
-
-				/**************************
-				 tweensContainer Push
-				 **************************/
-
-				/* Construct the per-property tween object. */
-				activeCall.tweens[property] = {
-					rootPropertyValue: rootPropertyValue,
-					startValue: startValue,
-					currentValue: startValue,
-					endValue: endValue,
-					unitType: endValueUnitType,
-					easing: easing,
-					pattern: pattern
-				};
-
-				if (VelocityStatic.debug) {
-					console.log("tweensContainer (" + property + "): " + JSON.stringify(activeCall.tweens[property]), element);
-				}
-			};
-
 			/* Create a tween out of each property, and append its associated data to tweensContainer. */
 			if (propertiesMap) {
 				for (let property in propertiesMap) {
-
 					if (!propertiesMap.hasOwnProperty(property)) {
 						continue;
 					}
 					/* The original property name's format must be used for the parsePropertyValue() lookup,
 					 but we then use its camelCase styling to normalize it for manipulation. */
-					var propertyName = VelocityStatic.CSS.Names.camelCase(property),
+					let propertyName = CSS.Names.camelCase(property),
 						valueData = parsePropertyValue(propertiesMap[property]);
 
 					/* Find shorthand color properties that have been passed a hex string. */
-					/* Would be quicker to use vVelocityStatic.CSS.Lists.colors.includes() if possible */
-					//				if (_inArray(VelocityStatic.CSS.Lists.colors, propertyName)) {
+					/* Would be quicker to use vCSS.Lists.colors.includes() if possible */
+					//				if (_inArray(CSS.Lists.colors, propertyName)) {
 					//					/* Parse the value data for each shorthand. */
-					//					var endValue = valueData[0],
+					//					let endValue = valueData[0],
 					//						easing = valueData[1],
 					//						startValue = valueData[2];
 					//
-					//					if (VelocityStatic.CSS.RegEx.isHex.test(endValue)) {
+					//					if (CSS.RegEx.isHex.test(endValue)) {
 					//						/* Convert the hex strings into their RGB component arrays. */
-					//						var colorComponents = ["Red", "Green", "Blue"],
-					//							endValueRGB = VelocityStatic.CSS.Values.hexToRgb(endValue),
-					//							startValueRGB = startValue ? VelocityStatic.CSS.Values.hexToRgb(startValue) : undefined;
+					//						let colorComponents = ["Red", "Green", "Blue"],
+					//							endValueRGB = CSS.Values.hexToRgb(endValue),
+					//							startValueRGB = startValue ? CSS.Values.hexToRgb(startValue) : undefined;
 					//
 					//						/* Inject the RGB component tweens into propertiesMap. */
-					//						for (var i = 0; i < colorComponents.length; i++) {
-					//							var dataArray = [endValueRGB[i]];
+					//						for (let i = 0; i < colorComponents.length; i++) {
+					//							let dataArray = [endValueRGB[i]];
 					//
 					//							if (easing) {
 					//								dataArray.push(easing);
@@ -815,7 +314,531 @@ function expandTweens() {
 					//						continue;
 					//					}
 					//				}
-					fixPropertyValue(propertyName, valueData);
+					/* In case this property is a hook, there are circumstances where we will intend to work on the hook's root property and not the hooked subproperty. */
+					let rootProperty = CSS.Hooks.getRoot(propertyName),
+						rootPropertyValue: string | number,
+						/* Parse out endValue, easing, and startValue from the property's data. */
+						endValue = valueData[0],
+						easing = valueData[1],
+						startValue = valueData[2],
+						pattern: (string | number)[],
+						rounding: boolean[];
+
+					/**************************
+					 Start Value Sourcing
+					 **************************/
+
+					/* Other than for the dummy tween property, properties that are not supported by the browser (and do not have an associated normalization) will
+					 inherently produce no style changes when set, so they are skipped in order to decrease animation tick overhead.
+					 Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
+					/* Note: Since SVG elements have some of their properties directly applied as HTML attributes,
+					 there is no way to check for their explicit browser support, and so we skip skip this check for them. */
+					if ((!data || !data.isSVG) && rootProperty !== "tween" && CSS.Names.prefixCheck(rootProperty)[1] === false && CSS.Normalizations.registered[rootProperty] === undefined) {
+						if (debug) {
+							console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
+						}
+						return;
+					}
+
+					/* If the display option is being set to a non-"none" (e.g. "block") and opacity (filter on IE<=8) is being
+					 animated to an endValue of non-zero, the user's intention is to fade in from invisible, thus we forcefeed opacity
+					 a startValue of 0 if its startValue hasn't already been sourced by value transferring or prior forcefeeding. */
+					if (((activeCall.display !== undefined && activeCall.display !== null && activeCall.display !== "none") || (activeCall.visibility !== undefined && activeCall.visibility !== "hidden")) && /opacity|filter/.test(propertyName) && !startValue && endValue !== 0) {
+						startValue = 0;
+					}
+
+					/* If values have been transferred from the previous Velocity call, extract the endValue and rootPropertyValue
+					 for all of the current call's properties that were *also* animated in the previous call. */
+					/* Note: Value transferring can optionally be disabled by the user via the _cacheValues option. */
+					if (lastAnimation && lastAnimation.tweens[propertyName]) {
+						if (startValue === undefined) {
+							startValue = lastAnimation.tweens[propertyName].endValue + lastAnimation.tweens[propertyName].unitType;
+						}
+
+						/* The previous call's rootPropertyValue is extracted from the element's data cache since that's the
+						 instance of rootPropertyValue that gets freshly updated by the tweening process, whereas the rootPropertyValue
+						 attached to the incoming lastTweensContainer is equal to the root property's value prior to any tweening. */
+						rootPropertyValue = data.rootPropertyValueCache[rootProperty];
+						/* If values were not transferred from a previous Velocity call, query the DOM as needed. */
+					} else {
+						/* Handle hooked properties. */
+						if (CSS.Hooks.registered[propertyName]) {
+							if (startValue === undefined) {
+								rootPropertyValue = CSS.getPropertyValue(element, rootProperty) as string; /* GET */
+								/* Note: The following getPropertyValue() call does not actually trigger a DOM query;
+								 getPropertyValue() will extract the hook from rootPropertyValue. */
+								startValue = CSS.getPropertyValue(element, propertyName, rootPropertyValue);
+								/* If startValue is already defined via forcefeeding, do not query the DOM for the root property's value;
+								 just grab rootProperty's zero-value template from vCSS.Hooks. This overwrites the element's actual
+								 root property value (if one is set), but this is acceptable since the primary reason users forcefeed is
+								 to avoid DOM queries, and thus we likewise avoid querying the DOM for the root property's value. */
+							} else {
+								/* Grab this hook's zero-value template, e.g. "0px 0px 0px black". */
+								rootPropertyValue = CSS.Hooks.templates[rootProperty][1];
+							}
+							/* Handle non-hooked properties that haven't already been defined via forcefeeding. */
+						} else if (startValue === undefined) {
+							startValue = CSS.getPropertyValue(element, propertyName); /* GET */
+						}
+					}
+
+					/**************************
+					 Value Data Extraction
+					 **************************/
+
+					let separatedValue,
+						endValueUnitType,
+						startValueUnitType,
+						operator: boolean | string = false;
+
+					/* Separates a property value into its numeric value and its unit type. */
+					let separateValue = function(property: string, value: string) {
+						let unitType,
+							numericValue;
+
+						numericValue = (value || "0")
+							.toString()
+							.toLowerCase()
+							/* Match the unit type at the end of the value. */
+							.replace(/[%a-z]+$/, function(match) {
+								/* Grab the unit type. */
+								unitType = match;
+
+								/* Strip the unit type off of value. */
+								return "";
+							});
+
+						/* If no unit type was supplied, assign one that is appropriate for this property (e.g. "deg" for rotateZ or "px" for width). */
+						if (!unitType) {
+							unitType = CSS.Values.getUnitType(property);
+						}
+
+						return [numericValue, unitType];
+					};
+
+					if (isNumber(startValue)) {
+						startValue = String(startValue) + CSS.Values.getUnitType(property);
+					}
+
+					if (isNumber(endValue)) {
+						endValue = String(endValue) + CSS.Values.getUnitType(property);
+					}
+
+					if (startValue !== endValue && isString(startValue) && isString(endValue)) {
+						pattern = [];
+						let iStart = 0, // index in startValue
+							iEnd = 0, // index in endValue
+							aStart = [], // array of startValue numbers
+							aEnd = [], // array of endValue numbers
+							inCalc = 0, // Keep track of being inside a "calc()" so we don't duplicate it
+							inRGB = 0, // Keep track of being inside an RGB as we can't use fractional values
+							inRGBA = 0, // Keep track of being inside an RGBA as we must pass fractional for the alpha channel
+							lastPattern = ""; // The last part of the pattern, push out into pattern when it changes
+
+						startValue = CSS.Hooks.fixColors(startValue);
+						endValue = CSS.Hooks.fixColors(endValue);
+						while (iStart < startValue.length && iEnd < endValue.length) {
+							let cStart = startValue[iStart],
+								cEnd = endValue[iEnd];
+
+							if (/[\d\.-]/.test(cStart) && /[\d\.-]/.test(cEnd)) {
+								let tStart = cStart, // temporary character buffer
+									tEnd = cEnd, // temporary character buffer
+									dotStart = ".", // Make sure we can only ever match a single dot in a decimal
+									dotEnd = "."; // Make sure we can only ever match a single dot in a decimal
+
+								while (++iStart < startValue.length) {
+									cStart = startValue[iStart];
+									if (cStart === dotStart) {
+										dotStart = ".."; // Can never match two characters
+									} else if (!/\d/.test(cStart)) {
+										break;
+									}
+									tStart += cStart;
+								}
+								while (++iEnd < endValue.length) {
+									cEnd = endValue[iEnd];
+									if (cEnd === dotEnd) {
+										dotEnd = ".."; // Can never match two characters
+									} else if (!/\d/.test(cEnd)) {
+										break;
+									}
+									tEnd += cEnd;
+								}
+								let uStart = CSS.Hooks.getUnit(startValue, iStart), // temporary unit type
+									uEnd = CSS.Hooks.getUnit(endValue, iEnd); // temporary unit type
+
+								iStart += uStart.length;
+								iEnd += uEnd.length;
+								if (uStart === uEnd) {
+									// Same units
+									if (tStart === tEnd) {
+										// Same numbers, so just copy over
+										lastPattern += tStart + uStart;
+									} else {
+										// Different numbers, so store them
+										if (lastPattern) {
+											pattern.push(lastPattern);
+											lastPattern = "";
+										}
+										if (inRGB) {
+											if (!rounding) {
+												rounding = [];
+											}
+											rounding[aStart.length] = true;
+										}
+										pattern.push(0);
+										lastPattern = uStart;
+										aStart.push(parseFloat(tStart));
+										aEnd.push(parseFloat(tEnd));
+									}
+								} else {
+									// Different units, so put into a "calc(from + to)" and animate each side to/from zero
+									let nStart = parseFloat(tStart),
+										nEnd = parseFloat(tEnd);
+
+									pattern.push("calc(", nStart ? 0 : "0", uStart + " + ", nEnd ? 0 : "0", uEnd + ")");
+									if (nStart) {
+										aStart.push(nStart);
+										aEnd.push(0);
+									}
+									if (nEnd) {
+										aStart.push(0);
+										aEnd.push(nEnd);
+									}
+								}
+							} else if (cStart === cEnd) {
+								if (!pattern.length) {
+									pattern.push("");
+								}
+								pattern[pattern.length - 1] += cStart;
+								iStart++;
+								iEnd++;
+								// Keep track of being inside a calc()
+								if (inCalc === 0 && cStart === "c"
+									|| inCalc === 1 && cStart === "a"
+									|| inCalc === 2 && cStart === "l"
+									|| inCalc === 3 && cStart === "c"
+									|| inCalc >= 4 && cStart === "("
+								) {
+									inCalc++;
+								} else if ((inCalc && inCalc < 5)
+									|| inCalc >= 4 && cStart === ")" && --inCalc < 5) {
+									inCalc = 0;
+								}
+								// Keep track of being inside an rgb() / rgba()
+								if (inRGB === 0 && cStart === "r"
+									|| inRGB === 1 && cStart === "g"
+									|| inRGB === 2 && cStart === "b"
+									|| inRGB === 3 && cStart === "a"
+									|| inRGB >= 3 && cStart === "("
+								) {
+									if (inRGB === 3 && cStart === "a") {
+										inRGBA = 1;
+									}
+									inRGB++;
+								} else if (inRGBA && cStart === ",") {
+									if (++inRGBA > 3) {
+										inRGB = inRGBA = 0;
+									}
+								} else if ((inRGBA && inRGB < (inRGBA ? 5 : 4))
+									|| inRGB >= (inRGBA ? 4 : 3) && cStart === ")" && --inRGB < (inRGBA ? 5 : 4)) {
+									inRGB = inRGBA = 0;
+								}
+							} else {
+								inCalc = 0;
+								// TODO: changing units, fixing colours
+								break;
+							}
+						}
+						if (iStart !== startValue.length || iEnd !== endValue.length) {
+							if (debug) {
+								console.error("Trying to pattern match mis-matched strings [\"" + endValue + "\", \"" + startValue + "\"]");
+							}
+							pattern = undefined;
+						}
+						if (pattern) {
+							if (aStart.length) {
+								if (debug) {
+									console.log("Pattern found:", pattern, " -> ", aStart, aEnd, "[" + startValue + "," + endValue + "]");
+								}
+								if (lastPattern) {
+									pattern.push(lastPattern);
+								}
+								startValue = aStart;
+								endValue = aEnd;
+								endValueUnitType = startValueUnitType = "";
+							} else {
+								pattern = undefined;
+							}
+						}
+					}
+
+					if (!pattern) {
+						/* Separate startValue. */
+						separatedValue = separateValue(propertyName, startValue);
+						startValue = separatedValue[0];
+						startValueUnitType = separatedValue[1];
+
+						/* Separate endValue, and extract a value operator (e.g. "+=", "-=") if one exists. */
+						separatedValue = separateValue(propertyName, endValue);
+						endValue = separatedValue[0].replace(/^([+-\/*])=/, function(match, subMatch) {
+							operator = subMatch;
+
+							/* Strip the operator off of the value. */
+							return "";
+						});
+						endValueUnitType = separatedValue[1];
+
+						/* Parse float values from endValue and startValue. Default to 0 if NaN is returned. */
+						startValue = parseFloat(startValue) || 0;
+						endValue = parseFloat(endValue) || 0;
+
+						/***************************************
+						 Property-Specific Value Conversion
+						 ***************************************/
+
+						/* Custom support for properties that don't actually accept the % unit type, but where pollyfilling is trivial and relatively foolproof. */
+						if (endValueUnitType === "%") {
+							/* A %-value fontSize/lineHeight is relative to the parent's fontSize (as opposed to the parent's dimensions),
+							 which is identical to the em unit's behavior, so we piggyback off of that. */
+							if (/^(fontSize|lineHeight)$/.test(propertyName)) {
+								/* Convert % into an em decimal value. */
+								endValue = endValue / 100;
+								endValueUnitType = "em";
+								/* For scaleX and scaleY, convert the value into its decimal format and strip off the unit type. */
+							} else if (/^scale/.test(propertyName)) {
+								endValue = endValue / 100;
+								endValueUnitType = "";
+								/* For RGB components, take the defined percentage of 255 and strip off the unit type. */
+							} else if (/(Red|Green|Blue)$/i.test(propertyName)) {
+								endValue = (endValue / 100) * 255;
+								endValueUnitType = "";
+							}
+						}
+					}
+
+					/***************************
+					 Unit Ratio Calculation
+					 ***************************/
+
+					/* When queried, the browser returns (most) CSS property values in pixels. Therefore, if an endValue with a unit type of
+					 %, em, or rem is animated toward, startValue must be converted from pixels into the same unit type as endValue in order
+					 for value manipulation logic (increment/decrement) to proceed. Further, if the startValue was forcefed or transferred
+					 from a previous call, startValue may also not be in pixels. Unit conversion logic therefore consists of two steps:
+					 1) Calculating the ratio of %/em/rem/vh/vw relative to pixels
+					 2) Converting startValue into the same unit of measurement as endValue based on these ratios. */
+					/* Unit conversion ratios are calculated by inserting a sibling node next to the target node, copying over its position property,
+					 setting values with the target unit type then comparing the returned pixel value. */
+					/* Note: Even if only one of these unit types is being animated, all unit ratios are calculated at once since the overhead
+					 of batching the SETs and GETs together upfront outweights the potential overhead
+					 of layout thrashing caused by re-querying for uncalculated ratios for subsequently-processed properties. */
+					/* Todo: Shift this logic into the calls' first tick instance so that it's synced with RAF. */
+					//					let calculateUnitRatios = function() {
+					//
+					//						/************************
+					//						 Same Ratio Checks
+					//						 ************************/
+					//
+					//						/* The properties below are used to determine whether the element differs sufficiently from this call's
+					//						 previously iterated element to also differ in its unit conversion ratios. If the properties match up with those
+					//						 of the prior element, the prior element's conversion ratios are used. Like most optimizations in Velocity,
+					//						 this is done to minimize DOM querying. */
+					//						let sameRatioIndicators = {
+					//							myParent: element.parentNode || document.body, /* GET */
+					//							position: CSS.getPropertyValue(element, "position"), /* GET */
+					//							fontSize: CSS.getPropertyValue(element, "fontSize") /* GET */
+					//						},
+					//							/* Determine if the same % ratio can be used. % is based on the element's position value and its parent's width and height dimensions. */
+					//							samePercentRatio = ((sameRatioIndicators.position === callUnitConversionData.lastPosition) && (sameRatioIndicators.myParent === callUnitConversionData.lastParent)),
+					//							/* Determine if the same em ratio can be used. em is relative to the element's fontSize. */
+					//							sameEmRatio = (sameRatioIndicators.fontSize === callUnitConversionData.lastFontSize);
+					//
+					//						/* Store these ratio indicators call-wide for the next element to compare against. */
+					//						callUnitConversionData.lastParent = sameRatioIndicators.myParent;
+					//						callUnitConversionData.lastPosition = sameRatioIndicators.position;
+					//						callUnitConversionData.lastFontSize = sameRatioIndicators.fontSize;
+					//
+					//						/***************************
+					//						 Element-Specific Units
+					//						 ***************************/
+					//
+					//						/* Note: IE8 rounds to the nearest pixel when returning CSS values, thus we perform conversions using a measurement
+					//						 of 100 (instead of 1) to give our ratios a precision of at least 2 decimal values. */
+					//						let measurement = 100,
+					//							unitRatios: {[key: string]: any} = {};
+					//
+					//						if (!sameEmRatio || !samePercentRatio) {
+					//							let dummy = data && data.isSVG ? document.createElementNS("http://www.w3.org/2000/svg", "rect") : document.createElement("div");
+					//
+					//							init(dummy);
+					//							sameRatioIndicators.myParent.appendChild(dummy);
+					//
+					//							/* To accurately and consistently calculate conversion ratios, the element's cascaded overflow and box-sizing are stripped.
+					//							 Similarly, since width/height can be artificially constrained by their min-/max- equivalents, these are controlled for as well. */
+					//							/* Note: Overflow must be also be controlled for per-axis since the overflow property overwrites its per-axis values. */
+					//							["overflow", "overflowX", "overflowY"].forEach(function(property) {
+					//								CSS.setPropertyValue(dummy, property, "hidden");
+					//							});
+					//							CSS.setPropertyValue(dummy, "position", sameRatioIndicators.position);
+					//							CSS.setPropertyValue(dummy, "fontSize", sameRatioIndicators.fontSize);
+					//							CSS.setPropertyValue(dummy, "boxSizing", "content-box");
+					//
+					//							/* width and height act as our proxy properties for measuring the horizontal and vertical % ratios. */
+					//							["minWidth", "maxWidth", "width", "minHeight", "maxHeight", "height"].forEach(function(property) {
+					//								CSS.setPropertyValue(dummy, property, measurement + "%");
+					//							});
+					//							/* paddingLeft arbitrarily acts as our proxy property for the em ratio. */
+					//							CSS.setPropertyValue(dummy, "paddingLeft", measurement + "em");
+					//
+					//							/* Divide the returned value by the measurement to get the ratio between 1% and 1px. Default to 1 since working with 0 can produce Infinite. */
+					//							unitRatios.percentToPxWidth = callUnitConversionData.lastPercentToPxWidth = (parseFloat(CSS.getPropertyValue(dummy, "width", null, true)) || 1) / measurement; /* GET */
+					//							unitRatios.percentToPxHeight = callUnitConversionData.lastPercentToPxHeight = (parseFloat(CSS.getPropertyValue(dummy, "height", null, true)) || 1) / measurement; /* GET */
+					//							unitRatios.emToPx = callUnitConversionData.lastEmToPx = (parseFloat(CSS.getPropertyValue(dummy, "paddingLeft")) || 1) / measurement; /* GET */
+					//
+					//							sameRatioIndicators.myParent.removeChild(dummy);
+					//						} else {
+					//							unitRatios.emToPx = callUnitConversionData.lastEmToPx;
+					//							unitRatios.percentToPxWidth = callUnitConversionData.lastPercentToPxWidth;
+					//							unitRatios.percentToPxHeight = callUnitConversionData.lastPercentToPxHeight;
+					//						}
+					//
+					//						/***************************
+					//						 Element-Agnostic Units
+					//						 ***************************/
+					//
+					//						/* Whereas % and em ratios are determined on a per-element basis, the rem unit only needs to be checked
+					//						 once per call since it's exclusively dependant upon document.body's fontSize. If this is the first time
+					//						 that calculateUnitRatios() is being run during this call, remToPx will still be set to its default value of null,
+					//						 so we calculate it now. */
+					//						if (callUnitConversionData.remToPx === null) {
+					//							/* Default to browsers' default fontSize of 16px in the case of 0. */
+					//							callUnitConversionData.remToPx = parseFloat(CSS.getPropertyValue(document.body, "fontSize")) || 16; /* GET */
+					//						}
+					//
+					//						/* Similarly, viewport units are %-relative to the window's inner dimensions. */
+					//						if (callUnitConversionData.vwToPx === null) {
+					//							callUnitConversionData.vwToPx = window.innerWidth / 100; /* GET */
+					//							callUnitConversionData.vhToPx = window.innerHeight / 100; /* GET */
+					//						}
+					//
+					//						unitRatios.remToPx = callUnitConversionData.remToPx;
+					//						unitRatios.vwToPx = callUnitConversionData.vwToPx;
+					//						unitRatios.vhToPx = callUnitConversionData.vhToPx;
+					//
+					//						if (debug >= 1) {
+					//							console.log("Unit ratios: " + JSON.stringify(unitRatios), element);
+					//						}
+					//						return unitRatios;
+					//					};
+
+					/********************
+					 Unit Conversion
+					 ********************/
+
+					/* The * and / operators, which are not passed in with an associated unit, inherently use startValue's unit. Skip value and unit conversion. */
+					//					if (/[\/*]/.test(operator as any as string)) {
+					//						endValueUnitType = startValueUnitType;
+					//						/* If startValue and endValue differ in unit type, convert startValue into the same unit type as endValue so that if endValueUnitType
+					//						 is a relative unit (%, em, rem), the values set during tweening will continue to be accurately relative even if the metrics they depend
+					//						 on are dynamically changing during the course of the animation. Conversely, if we always normalized into px and used px for setting values, the px ratio
+					//						 would become stale if the original unit being animated toward was relative and the underlying metrics change during the animation. */
+					//						/* Since 0 is 0 in any unit type, no conversion is necessary when startValue is 0 -- we just start at 0 with endValueUnit */
+					//					} else if ((startValueUnitType !== endValueUnitType) && startValue !== 0) {
+					//						/* Unit conversion is also skipped when endValue is 0, but *startValueUnitType* must be used for tween values to remain accurate. */
+					//						/* Note: Skipping unit conversion here means that if endValueUnitType was originally a relative unit, the animation won't relatively
+					//						 match the underlying metrics if they change, but this is acceptable since we're animating toward invisibility instead of toward visibility,
+					//						 which remains past the point of the animation's completion. */
+					//						if (endValue === 0) {
+					//							endValueUnitType = startValueUnitType;
+					//						} else {
+					//							/* By this point, we cannot avoid unit conversion (it's undesirable since it causes layout thrashing).
+					//							 If we haven't already, we trigger calculateUnitRatios(), which runs once per element per call. */
+					//							elementUnitConversionData = elementUnitConversionData || calculateUnitRatios();
+					//
+					//							/* The following RegEx matches CSS properties that have their % values measured relative to the x-axis. */
+					//							/* Note: W3C spec mandates that all of margin and padding's properties (even top and bottom) are %-relative to the *width* of the parent element. */
+					//							let axis = (/margin|padding|left|right|width|text|word|letter/i.test(property) || /X$/.test(property) || property === "x") ? "x" : "y";
+					//
+					//							/* In order to avoid generating n^2 bespoke conversion functions, unit conversion is a two-step process:
+					//							 1) Convert startValue into pixels. 2) Convert this new pixel value into endValue's unit type. */
+					//							switch (startValueUnitType) {
+					//								case "%":
+					//									/* Note: translateX and translateY are the only properties that are %-relative to an element's own dimensions -- not its parent's dimensions.
+					//									 Velocity does not include a special conversion process to account for this behavior. Therefore, animating translateX/Y from a % value
+					//									 to a non-% value will produce an incorrect start value. Fortunately, this sort of cross-unit conversion is rarely done by users in practice. */
+					//									startValue *= (axis === "x" ? elementUnitConversionData.percentToPxWidth : elementUnitConversionData.percentToPxHeight);
+					//									break;
+					//
+					//								case "px":
+					//									/* px acts as our midpoint in the unit conversion process; do nothing. */
+					//									break;
+					//
+					//								default:
+					//									startValue *= elementUnitConversionData[startValueUnitType + "ToPx"];
+					//							}
+					//
+					//							/* Invert the px ratios to convert into to the target unit. */
+					//							switch (endValueUnitType) {
+					//								case "%":
+					//									startValue *= 1 / (axis === "x" ? elementUnitConversionData.percentToPxWidth : elementUnitConversionData.percentToPxHeight);
+					//									break;
+					//
+					//								case "px":
+					//									/* startValue is already in px, do nothing; we're done. */
+					//									break;
+					//
+					//								default:
+					//									startValue *= 1 / elementUnitConversionData[endValueUnitType + "ToPx"];
+					//							}
+					//						}
+					//					}
+
+					/*********************
+					 Relative Values
+					 *********************/
+
+					/* Operator logic must be performed last since it requires unit-normalized start and end values. */
+					/* Note: Relative *percent values* do not behave how most people think; while one would expect "+=50%"
+					 to increase the property 1.5x its current value, it in fact increases the percent units in absolute terms:
+					 50 points is added on top of the current % value. */
+					switch (operator as any as string) {
+						case "+":
+							endValue = startValue + endValue;
+							break;
+
+						case "-":
+							endValue = startValue - endValue;
+							break;
+
+						case "*":
+							endValue = startValue * endValue;
+							break;
+
+						case "/":
+							endValue = startValue / endValue;
+							break;
+					}
+
+					/**************************
+					 tweensContainer Push
+					 **************************/
+
+					/* Construct the per-property tween object. */
+					activeCall.tweens[propertyName] = {
+						rootPropertyValue: rootPropertyValue,
+						startValue: startValue,
+						currentValue: startValue,
+						endValue: endValue,
+						unitType: endValueUnitType,
+						easing: easing,
+						pattern: pattern,
+						rounding: rounding
+					};
+
+					if (debug) {
+						console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(activeCall.tweens[propertyName]), element);
+					}
 				}
 				activeCall.properties = undefined;
 			}
@@ -835,5 +858,4 @@ function expandTweens() {
 			}
 		}
 	}
-	State.firstNew = undefined;
 }

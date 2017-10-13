@@ -1,3 +1,10 @@
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Runtime type checking methods.
+ */
 
 function isBoolean(variable): variable is boolean {
 	return variable === true || variable === false;
@@ -39,13 +46,13 @@ function isPlainObject(variable): variable is {} {
 	if (!variable || String(variable) !== "[object Object]") {
 		return false;
 	}
-	var proto = Object.getPrototypeOf(variable) as Object;
+	let proto = Object.getPrototypeOf(variable) as Object;
 
 	return !proto || (proto.hasOwnProperty("constructor") && proto.constructor === Object);
 }
 
 function isEmptyObject(variable): variable is {} {
-	for (var name in variable) {
+	for (let name in variable) {
 		if (variable.hasOwnProperty(name)) {
 			return false;
 		}

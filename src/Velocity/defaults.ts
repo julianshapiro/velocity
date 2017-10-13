@@ -1,7 +1,13 @@
-namespace VelocityStatic {
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Velocity option defaults, which can be overriden by the user.
+ */
 
-	/* Velocity option defaults, which can be overriden by the user. */
-	export var defaults: VelocityOptions = {
+namespace VelocityStatic {
+	export let defaults: VelocityOptions = {
 		queue: "",
 		duration: DURATION_DEFAULT,
 		easing: EASING_DEFAULT,
