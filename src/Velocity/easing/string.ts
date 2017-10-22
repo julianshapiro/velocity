@@ -9,19 +9,19 @@
 
 namespace Easing {
 	export function atStart(percentComplete: number, startValue: any, endValue: any): any {
-		return percentComplete <= 0
+		return percentComplete === 0
 			? startValue
 			: endValue;
 	}
 
 	export function atEnd(percentComplete: number, startValue: any, endValue: any): any {
-		return percentComplete < 1
-			? startValue
-			: endValue;
+		return percentComplete === 1
+			? endValue
+			: startValue;
 	}
 
 	export function during(percentComplete: number, startValue: any, endValue: any): any {
-		return percentComplete <= 0 || percentComplete >= 1
+		return percentComplete === 0 || percentComplete === 1
 			? startValue
 			: endValue;
 	}

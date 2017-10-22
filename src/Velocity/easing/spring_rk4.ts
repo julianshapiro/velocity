@@ -57,7 +57,7 @@ namespace Easing {
 	}
 
 	export function generateSpringRK4(tension: number, friction: number): number;
-	export function generateSpringRK4(tension: number, friction: number, duration: number): VelocityEasing;
+	export function generateSpringRK4(tension: number, friction: number, duration: number): VelocityEasingFn;
 	export function generateSpringRK4(tension: number, friction: number, duration?: number): any {
 		let initState: springState = {
 			x: -1,
@@ -98,6 +98,12 @@ namespace Easing {
 		/* If duration is not defined, return the actual time required for completing this animation. Otherwise, return a closure that holds the
 		 computed path and returns a snapshot of the position according to a given percentComplete. */
 		return !have_duration ? time_lapsed : function(percentComplete: number, startValue: number, endValue: number) {
+			if (percentComplete === 0) {
+				return startValue;
+			}
+			if (percentComplete === 1) {
+				return endValue;
+			}
 			return startValue + path[(percentComplete * (path.length - 1)) | 0] * (endValue - startValue);
 		};
 	};

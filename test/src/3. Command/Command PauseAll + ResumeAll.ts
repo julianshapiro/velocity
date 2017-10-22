@@ -6,7 +6,7 @@
  */
 
 QUnit.test("Global Pause / Resume", function(assert) {
-	var done = assert.async(3),
+	var done = assert.async(4),
 		$target1 = getTarget(),
 		$target2 = getTarget(),
 		$target3 = getTarget(),
@@ -80,7 +80,7 @@ QUnit.test("Global Pause / Resume", function(assert) {
 	}, 200);
 
 	setTimeout(function() {
-		//start(); ???
+		done(); // Let the tests know when we're running normally again
 		Velocity.resumeAll();
 	}, 400);
 

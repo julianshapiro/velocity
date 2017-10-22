@@ -7,7 +7,7 @@
  */
 
 namespace VelocityStatic {
-	export function getEasing(value: any, duration: number): VelocityEasing {
+	export function getEasing(value: any, duration: number): VelocityEasingFn {
 		let easing = value;
 
 		/* The easing option can either be a string that references a pre-registered easing,

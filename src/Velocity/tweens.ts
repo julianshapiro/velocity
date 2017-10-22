@@ -26,7 +26,7 @@ namespace VelocityStatic {
 				lastAnimation: AnimationCall,
 				/* A container for the processed data associated with each property in the propertyMap.
 				 (Each property in the map produces its own "tween".) */
-				propertiesMap = activeCall.properties as VelocityPropertiesMap;
+				propertiesMap = activeCall.properties as VelocityProperties;
 
 			/*****************************************
 			 Tween Data Construction (for Scroll)

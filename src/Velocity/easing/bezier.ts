@@ -7,7 +7,34 @@
  */
 
 namespace Easing {
-	export function generateBezier(mX1: number, mY1: number, mX2: number, mY2: number): VelocityEasing {
+	/**
+	 * Fix to a range of <code>0 <= num <= 1</code>.
+	 */
+	function fixRange(num: number) {
+		return Math.min(Math.max(num, 0), 1);
+	}
+
+	function A(aA1, aA2) {
+		return 1.0 - 3.0 * aA2 + 3.0 * aA1;
+	}
+
+	function B(aA1, aA2) {
+		return 3.0 * aA2 - 6.0 * aA1;
+	}
+
+	function C(aA1) {
+		return 3.0 * aA1;
+	}
+
+	function calcBezier(aT, aA1, aA2) {
+		return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT;
+	}
+
+	function getSlope(aT, aA1, aA2) {
+		return 3.0 * A(aA1, aA2) * aT * aT + 2.0 * B(aA1, aA2) * aT + C(aA1);
+	}
+
+	export function generateBezier(mX1: number, mY1: number, mX2: number, mY2: number): VelocityEasingFn {
 		let NEWTON_ITERATIONS = 4,
 			NEWTON_MIN_SLOPE = 0.001,
 			SUBDIVISION_PRECISION = 0.0000001,
@@ -29,30 +56,10 @@ namespace Easing {
 		}
 
 		/* X values must be in the [0, 1] range. */
-		mX1 = Math.min(mX1, 1);
-		mX2 = Math.min(mX2, 1);
-		mX1 = Math.max(mX1, 0);
-		mX2 = Math.max(mX2, 0);
+		mX1 = fixRange(mX1);
+		mX2 = fixRange(mX2);
 
 		let mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
-
-		function A(aA1, aA2) {
-			return 1.0 - 3.0 * aA2 + 3.0 * aA1;
-		}
-		function B(aA1, aA2) {
-			return 3.0 * aA2 - 6.0 * aA1;
-		}
-		function C(aA1) {
-			return 3.0 * aA1;
-		}
-
-		function calcBezier(aT, aA1, aA2) {
-			return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT;
-		}
-
-		function getSlope(aT, aA1, aA2) {
-			return 3.0 * A(aA1, aA2) * aT * aT + 2.0 * B(aA1, aA2) * aT + C(aA1);
-		}
 
 		function newtonRaphsonIterate(aX, aGuessT) {
 			for (let i = 0; i < NEWTON_ITERATIONS; ++i) {
@@ -128,16 +135,15 @@ namespace Easing {
 			if (!_precomputed) {
 				precompute();
 			}
-			if (mX1 === mY1 && mX2 === mY2) {
-				return startValue + percentComplete * (endValue - startValue);
-			}
 			if (percentComplete === 0) {
 				return startValue;
 			}
 			if (percentComplete === 1) {
 				return endValue;
 			}
-
+			if (mX1 === mY1 && mX2 === mY2) {
+				return startValue + percentComplete * (endValue - startValue);
+			}
 			return startValue + calcBezier(getTForX(percentComplete), mY1, mY2) * (endValue - startValue);
 		};
 

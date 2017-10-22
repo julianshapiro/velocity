@@ -162,25 +162,25 @@ namespace VelocityStatic {
 					continue;
 				} else if (paused === false) {
 					/* Remove pause key after processing */
-					activeCall.paused = undefined;
+					delete activeCall.paused;
 				}
-
-				// Make sure anything we've delayed doesn't start animating yet
-				// There might still be an active delay after something has been un-paused
-				if (!started && delay) {
-					if (timeStart + delay > timeCurrent) {
-						continue;
-					}
-					activeCall.timeStart = timeStart = timeCurrent - deltaTime;
-				}
-
-				// TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
 
 				/*******************
 				 Option: Begin
 				 *******************/
 
 				if (!started) {
+					// Make sure anything we've delayed doesn't start animating yet
+					// There might still be an active delay after something has been un-paused
+					if (delay) {
+						if (timeStart + delay > timeCurrent) {
+							continue;
+						}
+						activeCall.timeStart = timeStart = timeCurrent - deltaTime;
+					}
+
+					// TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
+
 					activeCall.started = true;
 					/* Apply the "velocity-animating" indicator class. */
 					CSS.Values.addClass(element, "velocity-animating");
@@ -275,37 +275,23 @@ namespace VelocityStatic {
 					if (tween.pattern) {
 						for (let pattern = tween.pattern, rounding = tween.rounding, i = 0, index = 0; i < pattern.length; i++) {
 							if (typeof pattern[i] === "number") {
-								let result: number;
-
-								if (percentComplete === 1) {
-									result = tween.endValue[index];
-								} else {
-									let startValue = tween.startValue[index],
-										endValue = tween.endValue[index];
-
+								let startValue = tween.startValue[index],
+									endValue = tween.endValue[index],
 									result = tween.reverse
 										? easing(percentComplete, endValue, startValue, property)
 										: easing(percentComplete, startValue, endValue, property);
-								}
+
 								pattern[i] = rounding && rounding[index] ? Math.round(result) : result;
 								index++;
 							}
 						}
 						currentValue = "".concat.apply("", tween.pattern);
-						//console.log(property, currentValue)
-					} else if (percentComplete === 1) {
-						/* If this is the last tick pass (if we've reached 100% completion for this tween),
-						 ensure that currentValue is explicitly set to its target endValue so that it's not subjected to any rounding. */
-						currentValue = tween.endValue as number;
 					} else {
-						/* Otherwise, calculate currentValue based on the current delta from startValue. */
-						let tweenDelta = (tween.endValue as number) - (tween.startValue as number);
-
-						currentValue = (tween.startValue as number) + tweenDelta * (tween.reverse
-							? 1 - easing(1 - percentComplete, activeCall, tweenDelta)
-							: easing(percentComplete, activeCall, tweenDelta));
-						/* If no value change is occurring, don't proceed with DOM updating. */
+						currentValue = tween.reverse
+							? 1 - easing(1 - percentComplete, tween.endValue as number, tween.startValue as number, property)
+							: easing(percentComplete, tween.startValue as number, tween.endValue as number, property);
 					}
+					/* If no value change is occurring, don't proceed with DOM updating. */
 					if (!firstTick && tween.currentValue === currentValue) {
 						continue;
 					}

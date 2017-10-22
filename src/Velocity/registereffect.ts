@@ -8,18 +8,18 @@
 
 namespace VelocityStatic {
 	/* Animate the expansion/contraction of the elements' parent's height for In/Out effects. */
-	function animateParentHeight(elements, direction, totalDuration, stagger) {
+	function animateParentHeight(elements: HTMLorSVGElement | HTMLorSVGElement[], direction, totalDuration, stagger) {
 		let totalHeightDelta = 0,
-			parentNode;
+			parentNode: HTMLorSVGElement;
 
 		/* Sum the total height (including padding and margin) of all targeted elements. */
-		(elements.nodeType ? [elements] : elements).forEach(function(element, i) {
+		((elements as HTMLorSVGElement).nodeType ? [elements as HTMLorSVGElement] : elements as HTMLorSVGElement[]).forEach(function(element: HTMLorSVGElement, i) {
 			if (stagger) {
 				/* Increase the totalDuration by the successive delay amounts produced by the stagger option. */
 				totalDuration += i * stagger;
 			}
 
-			parentNode = element.parentNode;
+			parentNode = element.parentNode as HTMLorSVGElement;
 
 			let propertiesToSum = ["height", "paddingTop", "paddingBottom", "marginTop", "marginBottom"];
 
@@ -34,7 +34,8 @@ namespace VelocityStatic {
 		});
 
 		/* Animate the parent element's height adjustment (with a varying duration multiplier for aesthetic benefits). */
-		VelocityFn(
+		// TODO: Get this typesafe again
+		(VelocityFn as any)(
 			parentNode,
 			{height: (direction === "In" ? "+" : "-") + "=" + totalHeightDelta},
 			{queue: false, easing: "ease-in-out", duration: totalDuration * (direction === "In" ? 0.6 : 1)}

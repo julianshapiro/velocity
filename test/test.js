@@ -923,7 +923,7 @@ QUnit.test("Pause / Resume", function (assert) {
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 QUnit.test("Global Pause / Resume", function (assert) {
-    var done = assert.async(3), $target1 = getTarget(), $target2 = getTarget(), $target3 = getTarget(), $target4 = getTarget(), isPaused = false, hasProgressed2 = false;
+    var done = assert.async(4), $target1 = getTarget(), $target2 = getTarget(), $target3 = getTarget(), $target4 = getTarget(), isPaused = false, hasProgressed2 = false;
     assert.expect(3);
     Velocity($target1, { opacity: 0 }, Object.assign({}, defaultOptions, {
         delay: 100,
@@ -984,7 +984,7 @@ QUnit.test("Global Pause / Resume", function (assert) {
         Velocity.resumeAll();
     }, 200);
     setTimeout(function () {
-        //start(); ???
+        done(); // Let the tests know when we're running normally again
         Velocity.resumeAll();
     }, 400);
 });
