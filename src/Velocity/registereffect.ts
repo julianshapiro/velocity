@@ -156,10 +156,7 @@ namespace VelocityStatic {
 							Redirects[effectName](element, redirectOptions, elementsIndex, elementsSize, elements, promiseData, loop === true ? true : Math.max(0, loop - 1));
 						}
 						if (properties.reset) {
-							for (let resetProperty in properties.reset) {
-								if (!properties.reset.hasOwnProperty(resetProperty)) {
-									continue;
-								}
+							for (let resetProperty of Object.keys(properties.reset)) {
 								let resetValue = properties.reset[resetProperty];
 
 								/* Format each non-array value in the reset property map to [ value, value ] so that changes apply

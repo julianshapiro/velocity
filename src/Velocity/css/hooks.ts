@@ -76,17 +76,11 @@ namespace VelocityStatic {
 				}
 
 				/* Hook registration. */
-				for (rootProperty in templates) {
-					if (!templates.hasOwnProperty(rootProperty)) {
-						continue;
-					}
+				for (rootProperty of Object.keys(templates)) {
 					hookTemplate = templates[rootProperty];
 					hookNames = hookTemplate[0].split(" ");
 
-					for (let j in hookNames) {
-						if (!hookNames.hasOwnProperty(j)) {
-							continue;
-						}
+					for (let j of Object.keys(hookNames)) {
 						let fullHookName = rootProperty + hookNames[j],
 							hookPosition = j;
 

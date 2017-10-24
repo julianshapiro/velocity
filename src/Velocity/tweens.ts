@@ -9,7 +9,7 @@
 namespace VelocityStatic {
 	/**
 	 * Expand all queued animations that haven't gone yet
-	 * 
+	 *
 	 * This will automatically expand the properties map for any recently added
 	 * animations so that the start and end values are correct
 	 */
@@ -273,10 +273,7 @@ namespace VelocityStatic {
 
 			/* Create a tween out of each property, and append its associated data to tweensContainer. */
 			if (propertiesMap) {
-				for (let property in propertiesMap) {
-					if (!propertiesMap.hasOwnProperty(property)) {
-						continue;
-					}
+				for (let property of Object.keys(propertiesMap)) {
 					/* The original property name's format must be used for the parsePropertyValue() lookup,
 					 but we then use its camelCase styling to normalize it for manipulation. */
 					let propertyName = CSS.Names.camelCase(property),
