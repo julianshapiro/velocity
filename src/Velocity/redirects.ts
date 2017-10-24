@@ -41,10 +41,7 @@ namespace VelocityStatic {
 				}
 
 				/* Cache the elements' original vertical dimensional property values so that we can animate back to them. */
-				for (let property in computedValues) {
-					if (!computedValues.hasOwnProperty(property)) {
-						continue;
-					}
+				for (let property of Object.keys(computedValues)) {
 					inlineValues[property] = element.style[property];
 
 					/* For slideDown, use forcefeeding to animate all vertical properties from 0. For slideUp,
@@ -60,10 +57,8 @@ namespace VelocityStatic {
 
 			opts.complete = function() {
 				/* Reset element to its pre-slide inline values once its slide animation is complete. */
-				for (let property in inlineValues) {
-					if (inlineValues.hasOwnProperty(property)) {
-						element.style[property] = inlineValues[property];
-					}
+				for (let property of Object.keys(inlineValues)) {
+					element.style[property] = inlineValues[property];
 				}
 
 				/* If the user passed in a complete callback, fire it now. */

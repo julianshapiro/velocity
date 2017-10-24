@@ -633,16 +633,12 @@ var VelocityStatic;
                     }
                 }
                 /* Hook registration. */
-                for (rootProperty in Hooks.templates) {
-                    if (!Hooks.templates.hasOwnProperty(rootProperty)) {
-                        continue;
-                    }
+                for (var _i = 0, _a = Object.keys(Hooks.templates); _i < _a.length; _i++) {
+                    rootProperty = _a[_i];
                     hookTemplate = Hooks.templates[rootProperty];
                     hookNames = hookTemplate[0].split(" ");
-                    for (var j in hookNames) {
-                        if (!hookNames.hasOwnProperty(j)) {
-                            continue;
-                        }
+                    for (var _b = 0, _c = Object.keys(hookNames); _b < _c.length; _b++) {
+                        var j = _c[_b];
                         var fullHookName = rootProperty + hookNames[j], hookPosition = j;
                         /* For each hook, register its full name (e.g. textShadowBlur) with its root property (e.g. textShadow)
                          and the hook's position in its template's default value string. */
@@ -2200,10 +2196,8 @@ var VelocityStatic;
                     begin.call(elements, elements);
                 }
                 /* Cache the elements' original vertical dimensional property values so that we can animate back to them. */
-                for (var property in computedValues) {
-                    if (!computedValues.hasOwnProperty(property)) {
-                        continue;
-                    }
+                for (var _i = 0, _a = Object.keys(computedValues); _i < _a.length; _i++) {
+                    var property = _a[_i];
                     inlineValues[property] = element.style[property];
                     /* For slideDown, use forcefeeding to animate all vertical properties from 0. For slideUp,
                      use forcefeeding to start from computed values and animate down to 0. */
@@ -2216,10 +2210,9 @@ var VelocityStatic;
             };
             opts.complete = function() {
                 /* Reset element to its pre-slide inline values once its slide animation is complete. */
-                for (var property in inlineValues) {
-                    if (inlineValues.hasOwnProperty(property)) {
-                        element.style[property] = inlineValues[property];
-                    }
+                for (var _i = 0, _a = Object.keys(inlineValues); _i < _a.length; _i++) {
+                    var property = _a[_i];
+                    element.style[property] = inlineValues[property];
                 }
                 /* If the user passed in a complete callback, fire it now. */
                 if (elementsIndex === elementsSize - 1) {
@@ -2398,10 +2391,8 @@ var VelocityStatic;
                             VelocityStatic.Redirects[effectName](element, redirectOptions, elementsIndex, elementsSize, elements, promiseData, loop === true ? true : Math.max(0, loop - 1));
                         }
                         if (properties.reset) {
-                            for (var resetProperty in properties.reset) {
-                                if (!properties.reset.hasOwnProperty(resetProperty)) {
-                                    continue;
-                                }
+                            for (var _i = 0, _a = Object.keys(properties.reset); _i < _a.length; _i++) {
+                                var resetProperty = _a[_i];
                                 var resetValue = properties.reset[resetProperty];
                                 /* Format each non-array value in the reset property map to [ value, value ] so that changes apply
                                  immediately and DOM querying is avoided (via forcefeeding). */
@@ -3102,9 +3093,6 @@ var VelocityStatic;
             /* Create a tween out of each property, and append its associated data to tweensContainer. */
             if (propertiesMap) {
                 var _loop_4 = function(property) {
-                    if (!propertiesMap.hasOwnProperty(property)) {
-                        return "continue";
-                    }
                     /* The original property name's format must be used for the parsePropertyValue() lookup,
                      but we then use its camelCase styling to normalize it for manipulation. */
                     var propertyName = VelocityStatic.CSS.Names.camelCase(property), valueData = parsePropertyValue(propertiesMap[property]);
@@ -3601,7 +3589,8 @@ var VelocityStatic;
                         console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(activeCall.tweens[propertyName]), element);
                     }
                 };
-                for (var property in propertiesMap) {
+                for (var _i = 0, _a = Object.keys(propertiesMap); _i < _a.length; _i++) {
+                    var property = _a[_i];
                     var state_1 = _loop_4(property);
                     if (typeof state_1 === "object") return state_1.value;
                 }
