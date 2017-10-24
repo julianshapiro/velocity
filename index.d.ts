@@ -22,13 +22,14 @@ type VelocityEasingFn = (percentComplete: number, startValue: number, endValue: 
  * into the array in such a way as to not interfere with other methods unless
  * they are specifically overwriting them.
  */
-type VelocityResult = Promise<HTMLElement[]> & HTMLorSVGElement[] & {velocity: Velocity};
+type VelocityResult = Promise<HTMLorSVGElement[]> & HTMLorSVGElement[] & {velocity: Velocity & {animations: AnimationCall[]}};
 
 /**
  * A property value can be a string or a number. If it is a number then it will
  * get the correct unit added to it depending on the property name if required.
  */
 type VelocityPropertyValue = number | string;
+// TODO: | ((element: HTMLorSVGElement, index: number, elements: HTMLorSVGElement[]) => number | string);
 
 // TODO: Add easings array support, should add a typename for each of the array easings to make it more obvious
 type VelocityProperties = {

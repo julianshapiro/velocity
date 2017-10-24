@@ -43,12 +43,17 @@ function VelocityFn(this: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult
 	 */
 	function getChain(): VelocityResult {
 		let promise = promiseData.promise,
-			output = elementsWrapped; // || elements;
+			output = elementsWrapped;
 
 		/* If we are using the utility function, attempt to return this call's promise. If no promise library was detected,
 		 default to null instead of returning the targeted elements so that utility function's return value is standardized. */
 		if (output) {
-			defineProperty(output, "velocity", VelocityFn.bind(output));
+			let velocity = VelocityFn.bind(output);
+
+			defineProperty(output, "velocity", velocity, true);
+			if (animations) {
+				defineProperty(velocity, "animations", animations, true);
+			}
 			if (promise) {
 				defineProperty(output, "then", promise.then.bind(promise), true);
 				defineProperty(output, "catch", promise.catch.bind(promise), true);
@@ -65,13 +70,14 @@ function VelocityFn(this: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult
 	/* To allow for expressive CoffeeScript code, Velocity supports an alternative syntax in which "elements" (or "e"), "properties" (or "p"), and "options" (or "o")
 	 objects are defined on a container object that's passed in as Velocity's sole argument. */
 	/* Note: Some browsers automatically populate arguments with a "properties" object. We detect it by checking for its default "names" property. */
-	let syntacticSugar = (arguments[0] && (arguments[0].p || ((isPlainObject(arguments[0].properties) && !arguments[0].properties.names) || isString(arguments[0].properties)))),
+	let syntacticSugar = (arguments[0] && ((arguments[0] as VelocityObjectArgs2).p || ((isPlainObject((arguments[0] as VelocityObjectArgs).properties) && !((arguments[0] as VelocityObjectArgs).properties as any).names) || isString((arguments[0] as VelocityObjectArgs).properties)))),
 		/* Whether Velocity was called via the utility function (as opposed to on a jQuery/Zepto object). */
 		isUtility: boolean = !isNode(this) && !isWrapped(this),
-		/* When Velocity is called via the utility function ($.Velocity()/Velocity()), elements are explicitly
+		/* When Velocity is called via the utility function (Velocity()), elements are explicitly
 		 passed in as the first parameter. Thus, argument positioning varies. We normalize them here. */
 		elementsWrapped: HTMLorSVGElement[],
 		argumentIndex: number,
+		animations: AnimationCall[],
 		elements: HTMLorSVGElement[],
 		propertiesMap: string | VelocityProperties,
 		options: VelocityOptions,
@@ -102,17 +108,18 @@ function VelocityFn(this: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult
 	if (isUtility) {
 		/* Raw elements are being animated via the utility function. */
 		argumentIndex = 1;
-		elements = syntacticSugar ? (arguments[0].elements || arguments[0].e) : arguments[0];
+		elements = syntacticSugar ? ((arguments[0] as VelocityObjectArgs).elements || (arguments[0] as VelocityObjectArgs2).e) : arguments[0];
 	} else {
 		/* Detect jQuery/Zepto/Native elements being animated via .velocity() method. */
 		argumentIndex = 0;
+		animations = this && (this as VelocityResult).velocity && (this as VelocityResult).velocity.animations;
 		elements = isNode(this) ? [this as HTMLorSVGElement] : this as HTMLorSVGElement[];
 		elementsWrapped = elements;
 	}
 
 	if (syntacticSugar) {
-		propertiesMap = (arguments[0].properties || arguments[0].p) as string | VelocityProperties;
-		options = arguments[0].options || arguments[0].o;
+		propertiesMap = ((arguments[0] as VelocityObjectArgs).properties || (arguments[0] as VelocityObjectArgs2).p) as string | VelocityProperties;
+		options = (arguments[0] as VelocityObjectArgs).options || (arguments[0] as VelocityObjectArgs2).o;
 	} else {
 		propertiesMap = arguments[argumentIndex] as string | VelocityProperties;
 		options = arguments[argumentIndex + 1];
@@ -623,6 +630,7 @@ function VelocityFn(this: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult
 			visibility: optionsVisibility
 		};
 
+	animations = [];
 	for (let i = 0, length = elementsLength; i < length; i++) {
 		let element = elements[i],
 			data = Data(element),
@@ -637,6 +645,7 @@ function VelocityFn(this: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult
 			easing: animation.easing,
 			complete: callbacks.complete
 		} as any;
+		animations.push(animation);
 		VelocityStatic.queue(element, animation, animation.queue);
 	}
 	/* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */
