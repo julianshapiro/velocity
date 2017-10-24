@@ -9,20 +9,22 @@ QUnit.test("Delay (Note: Browser Tab Must Have Focus Due to rAF)", function(asse
 	var done = assert.async(2),
 		testDelay = 250,
 		$target = getTarget(),
-		now = Date.now();
+		start = getNow();
 
 	assert.expect(2);
 	Velocity($target, defaultProperties, {
+		duration: defaultOptions.duration,
 		delay: testDelay,
 		begin: function(elements, activeCall) {
-			assert.close(Date.now() - now, testDelay, 32, "Delayed calls start after the correct delay");
+			assert.close(getNow() - start, testDelay, 32, "Delayed calls start after the correct delay");
 			done();
 		}
 	});
 	Velocity($target, defaultProperties, {
+		duration: defaultOptions.duration,
 		delay: testDelay,
 		begin: function(elements, activeCall) {
-			assert.close(Date.now() - now, (testDelay * 2) + (defaultOptions.duration as number), 70, "Queued delays start after the correct delay");
+			assert.close(getNow() - start, (testDelay * 2) + (defaultOptions.duration as number), 32, "Queued delays start after the correct delay");
 			done();
 		}
 	});

@@ -10,52 +10,52 @@ QUnit.todo("End Value Setting (Note: Browser Tab Must Have Focus Due to rAF)", f
 		+ (!(IE < 9) ? 1 : 0)
 		+ (!(IE < 10) && !Velocity.State.isGingerbread ? 1 : 0)
 		+ (!Velocity.State.isGingerbread ? 1 : 0),
-		done = assert.async(count);
+		done = assert.async(1);
 
 	/* Transforms and the properties that are hooked by Velocity aren't supported below IE9. */
 	if (!(IE < 9)) {
-		var testHooks = {
-			boxShadowBlur: "10px", // "black 0px 0px 10px 0px"
-			boxShadowSpread: "20px", // "black 0px 0px 0px 20px"
-			textShadowBlur: "30px" // "black 0px 0px 30px"
-		};
+		//		var testHooks: VelocityProperties = {
+		//			boxShadowBlur: "10px", // "black 0px 0px 10px 0px"
+		//			boxShadowSpread: "20px", // "black 0px 0px 0px 20px"
+		//			textShadowBlur: "30px" // "black 0px 0px 30px"
+		//		};
+		//
+		//		/* Hooks. */
+		//		var $target3 = getTarget();
+		//		Velocity($target3, testHooks);
+		//		setTimeout(function() {
+		//			/* Check for a match anywhere in the string since browser differ in where they inject the color value. */
+		//			assert.equal(/0px 0px 10px 20px/.test(Velocity.CSS.getPropertyValue($target3, "boxShadow") as string), true, "Hook end value #1 was set.");
+		//			/* textShadow isn't supported below IE10. */
+		//			if (!IE || IE >= 10) {
+		//				assert.equal(/0px 0px 30px/.test(Velocity.CSS.getPropertyValue($target3, "textShadow") as string), true, "Hook end value #2 was set.");
+		//			}
+		//			done();
+		//		}, completeCheckDuration);
 
-		/* Hooks. */
-		var $target3 = getTarget();
-		Velocity($target3, testHooks);
-		setTimeout(function() {
-			/* Check for a match anywhere in the string since browser differ in where they inject the color value. */
-			assert.equal(/0px 0px 10px 20px/.test(Velocity.CSS.getPropertyValue($target3, "boxShadow") as string), true, "Hook end value #1 was set.");
-			/* textShadow isn't supported below IE10. */
-			if (!IE || IE >= 10) {
-				assert.equal(/0px 0px 30px/.test(Velocity.CSS.getPropertyValue($target3, "textShadow") as string), true, "Hook end value #2 was set.");
-			}
-			done();
-		}, completeCheckDuration);
-
-		if (!(IE < 10) && !Velocity.State.isGingerbread) {
-			var testTransforms = {
-				translateY: "10em", // Should stay the same
-				translateX: "20px", // Should stay the same
-				scaleX: "1.50", // Should remain unitless
-				translateZ: "30", // Should become "10px"
-				scaleY: "1.50deg" // Should be ignored entirely since it uses an invalid unit
-			},
-				testTransformsOutput = "matrix3d(1.5, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 20, 160, 30, 1)";
-
-			/* Transforms. */
-			var $target4 = getTarget();
-			Velocity($target4, testTransforms);
-			setTimeout(function() {
-				/* Check for a match anywhere in the string since browser differ in where they inject the color value. */
-				assert.equal(Velocity.CSS.getPropertyValue($target4, "transform"), testTransformsOutput, "Transform end value was set.");
-
-				/* Ensure previous transform values are reused. */
-				Velocity($target4, {translateX: parseFloat(testTransforms.translateX) / 2});
-				//				assert.equal(Data($target4).style.translateX.startValue, parseFloat(testTransforms.translateX), "Previous transform value was reused.");
-				done();
-			}, completeCheckDuration);
-		}
+		//		if (!(IE < 10) && !Velocity.State.isGingerbread) {
+		//			var testTransforms: VelocityProperties = {
+		//				translateY: "10em", // Should stay the same
+		//				translateX: "20px", // Should stay the same
+		//				scaleX: "1.50", // Should remain unitless
+		//				translateZ: "30", // Should become "10px"
+		//				scaleY: "1.50deg" // Should be ignored entirely since it uses an invalid unit
+		//			},
+		//				testTransformsOutput = "matrix3d(1.5, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 20, 160, 30, 1)";
+		//
+		//			/* Transforms. */
+		//			var $target4 = getTarget();
+		//			Velocity($target4, testTransforms);
+		//			setTimeout(function() {
+		//				/* Check for a match anywhere in the string since browser differ in where they inject the color value. */
+		//				assert.equal(Velocity.CSS.getPropertyValue($target4, "transform"), testTransformsOutput, "Transform end value was set.");
+		//
+		//				/* Ensure previous transform values are reused. */
+		//				Velocity($target4, {translateX: parseFloat(testTransforms.translateX) / 2});
+		//				//				assert.equal(Data($target4).style.translateX.startValue, parseFloat(testTransforms.translateX), "Previous transform value was reused.");
+		//				done();
+		//			}, completeCheckDuration);
+		//		}
 
 		if (!Velocity.State.isGingerbread) {
 			/* SVG. */

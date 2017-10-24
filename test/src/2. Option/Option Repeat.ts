@@ -21,7 +21,7 @@ QUnit.test("Repeat", function(assert) {
 		begin: function(elements, animation) {
 			begin++;
 		},
-		progress: function(elements, percentComplete, remaining, start, tweenValue, animation) {
+		progress: function(elements, percentComplete, remaining, start, tweenValue) {
 			if (percentComplete === 1) {
 				repeat++;
 			}

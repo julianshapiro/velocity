@@ -22,7 +22,7 @@ QUnit.test("Easing", function(assert) {
 	/* Ensure that an improperly-formmated bezier curve array doesn't throw an error. */
 	try {
 		success = true;
-		Velocity(getTarget(), defaultProperties, {easing: ["a", 0.5, 0.5, 0.5]});
+		Velocity(getTarget(), defaultProperties, {easing: ["a" as any, 0.5, 0.5, 0.5]});
 		Velocity(getTarget(), defaultProperties, {easing: [0.5, 0.5, 0.5]});
 	} catch (e) {
 		success = false;

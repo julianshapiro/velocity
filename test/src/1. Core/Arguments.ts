@@ -26,7 +26,7 @@ QUnit.todo("Arguments", function(assert) {
 			assert.notOk(false, "Calling with no arguments should reject a Promise");
 		})
 		.then(done);
-	Velocity($target1)
+	Velocity($target1 as any)
 		.then(function() {
 			assert.notOk(true, "Calling with no properties should reject a Promise");
 		}, function() {

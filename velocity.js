@@ -217,24 +217,23 @@ var VelocityStatic;
          ****************************/
         var isLoop = activeCall.loop, isRepeat = activeCall.repeat;
         if (!isStopped && (isLoop || isRepeat)) {
+            var tweens = activeCall.tweens, queue_1 = activeCall.queue;
             if (isRepeat && activeCall.repeat !== true) {
                 activeCall.repeat--;
             } else if (isLoop && activeCall.loop !== true) {
                 activeCall.loop--;
                 activeCall.repeat = activeCall.repeatAgain;
             }
-            /* If a rotateX/Y/Z property is being animated by 360 deg with loop:true, swap tween start/end values to enable
-             continuous iterative rotation looping. (Otherise, the element would just rotate back and forth.) */
-            var tweens = activeCall.tweens;
             if (isLoop) {
                 for (var propertyName in tweens) {
-                    var tweenContainer = tweens[propertyName], oldStartValue = tweenContainer.startValue;
-                    tweenContainer.startValue = tweenContainer.endValue;
-                    tweenContainer.endValue = oldStartValue;
+                    var tweenContainer = tweens[propertyName];
                     tweenContainer.reverse = !tweenContainer.reverse;
                 }
             }
-            activeCall.timeStart = 0;
+            if (queue_1 !== false) {
+                Data(activeCall.element).lastFinishList[queue_1] = activeCall.timeStart + activeCall.duration;
+            }
+            activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
             activeCall.started = false;
         } else {
             var elements = activeCall.elements, element = activeCall.element, data_1 = Data(element);
@@ -312,11 +311,13 @@ var VelocityStatic;
             /***************
              Dequeueing
              ***************/
+            var queue_2 = activeCall.queue;
             /* Fire the next call in the queue so long as this call's queue wasn't set to false (to trigger a parallel animation),
              which would have already caused the next call to fire. Note: Even if the end of the animation queue has been reached,
              dequeue() must still be called in order to completely clear jQuery's animation queue. */
-            if (activeCall.queue !== false) {
-                VelocityStatic.dequeue(element, activeCall.queue);
+            if (queue_2 !== false) {
+                data_1.lastFinishList[queue_2] = activeCall.timeStart + activeCall.duration;
+                VelocityStatic.dequeue(element, queue_2);
             }
             /************************
              Cleanup
@@ -1515,59 +1516,6 @@ var VelocityStatic;
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    VelocityStatic.data = new WeakMap();
-})(VelocityStatic || (VelocityStatic = {}));
-
-function Data(element, value) {
-    if (value) {
-        VelocityStatic.data.set(element, value);
-    } else {
-        return VelocityStatic.data.get(element);
-    }
-}
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    /* Set to 1 or 2 (most verbose) to output debug info to console. */
-    VelocityStatic.debug = false;
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Velocity option defaults, which can be overriden by the user.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    VelocityStatic.defaults = {
-        queue: "",
-        duration: DURATION_DEFAULT,
-        easing: EASING_DEFAULT,
-        mobileHA: true,
-        /* Advanced: Set to false to prevent property values from being cached between consecutive Velocity-initiated chain calls. */
-        cache: true,
-        /* Advanced: Set to false if the promise should always resolve on empty element lists. */
-        promiseRejectEmpty: true
-    };
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License
  */
@@ -1871,7 +1819,6 @@ var VelocityStatic;
     VelocityStatic.getEasing = getEasing;
 })(VelocityStatic || (VelocityStatic = {}));
 
-///<reference path="easing/_all.d.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -1938,6 +1885,59 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
+    VelocityStatic.data = new WeakMap();
+})(VelocityStatic || (VelocityStatic = {}));
+
+function Data(element, value) {
+    if (value) {
+        VelocityStatic.data.set(element, value);
+    } else {
+        return VelocityStatic.data.get(element);
+    }
+}
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    /* Set to 1 or 2 (most verbose) to output debug info to console. */
+    VelocityStatic.debug = false;
+})(VelocityStatic || (VelocityStatic = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Velocity option defaults, which can be overriden by the user.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    VelocityStatic.defaults = {
+        queue: "",
+        duration: DURATION_DEFAULT,
+        easing: EASING_DEFAULT,
+        mobileHA: true,
+        /* Advanced: Set to false to prevent property values from being cached between consecutive Velocity-initiated chain calls. */
+        cache: true,
+        /* Advanced: Set to false if the promise should always resolve on empty element lists. */
+        promiseRejectEmpty: true
+    };
+})(VelocityStatic || (VelocityStatic = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
     /* A parallel to jQuery's $.css(), used for getting/setting Velocity's hooked CSS properties. */
     function hook(elements, arg2, arg3) {
         var value;
@@ -1992,7 +1992,7 @@ var VelocityStatic;
              */
             computedStyle: null,
             /**
-             *
+             * Cached current value as set
              */
             style: Object.create(null),
             /**
@@ -2004,7 +2004,7 @@ var VelocityStatic;
              */
             rootPropertyValueCache: Object.create(null),
             /**
-             * A cache for transform updates, which must be manually flushed via vVelocityStatic.CSS.flushTransformCache().
+             * A cache for transform updates, which must be manually flushed via VelocityStatic.CSS.flushTransformCache().
              *
              * @deprecated
              */
@@ -2016,7 +2016,11 @@ var VelocityStatic;
             /**
              * The last tweens for use as repetitions
              */
-            lastAnimationList: Object.create(null)
+            lastAnimationList: Object.create(null),
+            /**
+             * The last tweens for use as repetitions
+             */
+            lastFinishList: Object.create(null)
         });
     }
     VelocityStatic.init = init;
@@ -2631,7 +2635,12 @@ var VelocityStatic;
                  first tick iteration isn't wasted by animating at 0% tween completion, which would produce the
                  same style value as the element's current value. */
                 if (firstTick) {
-                    activeCall.timeStart = timeStart = timeCurrent - deltaTime;
+                    var queue_3 = activeCall.queue;
+                    timeStart = timeCurrent - deltaTime;
+                    if (queue_3 !== false) {
+                        timeStart = Math.max(timeStart, data_7.lastFinishList[queue_3] || 0);
+                    }
+                    activeCall.timeStart = timeStart;
                 }
                 /* If a pause key is present, skip processing unless it has been set to resume */
                 if (paused === true) {
@@ -2652,7 +2661,7 @@ var VelocityStatic;
                         if (timeStart + delay > timeCurrent) {
                             return "continue";
                         }
-                        activeCall.timeStart = timeStart = timeCurrent - deltaTime;
+                        activeCall.timeStart = timeStart += delay;
                     }
                     // TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
                     activeCall.started = true;
@@ -3659,11 +3668,14 @@ function VelocityFn() {
      */
     function getChain() {
         var promise = promiseData.promise, output = elementsWrapped;
-        // || elements;
         /* If we are using the utility function, attempt to return this call's promise. If no promise library was detected,
          default to null instead of returning the targeted elements so that utility function's return value is standardized. */
         if (output) {
-            defineProperty(output, "velocity", VelocityFn.bind(output));
+            var velocity = VelocityFn.bind(output);
+            defineProperty(output, "velocity", velocity, true);
+            if (animations) {
+                defineProperty(velocity, "animations", animations, true);
+            }
             if (promise) {
                 defineProperty(output, "then", promise.then.bind(promise), true);
                 defineProperty(output, "catch", promise.catch.bind(promise), true);
@@ -3679,9 +3691,9 @@ function VelocityFn() {
      objects are defined on a container object that's passed in as Velocity's sole argument. */
     /* Note: Some browsers automatically populate arguments with a "properties" object. We detect it by checking for its default "names" property. */
     var syntacticSugar = arguments[0] && (arguments[0].p || (isPlainObject(arguments[0].properties) && !arguments[0].properties.names || isString(arguments[0].properties))), /* Whether Velocity was called via the utility function (as opposed to on a jQuery/Zepto object). */
-    isUtility = !isNode(this) && !isWrapped(this), /* When Velocity is called via the utility function ($.Velocity()/Velocity()), elements are explicitly
+    isUtility = !isNode(this) && !isWrapped(this), /* When Velocity is called via the utility function (Velocity()), elements are explicitly
      passed in as the first parameter. Thus, argument positioning varies. We normalize them here. */
-    elementsWrapped, argumentIndex, elements, propertiesMap, options, promiseData = {
+    elementsWrapped, argumentIndex, animations, elements, propertiesMap, options, promiseData = {
         promise: null,
         resolver: null,
         rejecter: null
@@ -3709,6 +3721,7 @@ function VelocityFn() {
     } else {
         /* Detect jQuery/Zepto/Native elements being animated via .velocity() method. */
         argumentIndex = 0;
+        animations = this && this.velocity && this.velocity.animations;
         elements = isNode(this) ? [ this ] : this;
         elementsWrapped = elements;
     }
@@ -4142,6 +4155,7 @@ function VelocityFn() {
         //tweens: {},
         visibility: optionsVisibility
     };
+    animations = [];
     for (var i = 0, length_1 = elementsLength; i < length_1; i++) {
         var element = elements[i], data = Data(element), animation = Object.assign({
             element: element,
@@ -4153,6 +4167,7 @@ function VelocityFn() {
             easing: animation.easing,
             complete: callbacks.complete
         };
+        animations.push(animation);
         VelocityStatic.queue(element, animation, animation.queue);
     }
     /* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */

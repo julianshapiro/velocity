@@ -1,9 +1,9 @@
 ///<reference path="complete.ts" />
 ///<reference path="css/_all.d.ts" />
+///<reference path="easing/_all.d.ts" />
 ///<reference path="data.ts" />
 ///<reference path="debug.ts" />
 ///<reference path="defaults.ts" />
-///<reference path="easings.ts" />
 ///<reference path="hook.ts" />
 ///<reference path="init.ts" />
 ///<reference path="mock.ts" />

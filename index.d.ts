@@ -22,25 +22,60 @@ type VelocityEasingFn = (percentComplete: number, startValue: number, endValue: 
  * into the array in such a way as to not interfere with other methods unless
  * they are specifically overwriting them.
  */
-type VelocityResult = Promise<HTMLorSVGElement[]> & HTMLorSVGElement[] & {velocity: Velocity & {animations: AnimationCall[]}};
+type VelocityResult = Promise<HTMLorSVGElement[]> & HTMLorSVGElement[] & {
+	velocity: Velocity & {
+		(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+		(this: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
+		(this: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
+		(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
+
+		animations: AnimationCall[]
+	}
+};
+
+// TODO: I don't like having two of these - need to merge into a type or similar
+interface VelocityObjectArgs {
+	elements: HTMLorSVGElement[];
+	properties: VelocityProperties;
+	options?: VelocityOptions;
+}
+
+interface VelocityObjectArgs2 {
+	e: HTMLorSVGElement[];
+	p: VelocityProperties;
+	o?: VelocityOptions;
+}
+
+/**
+ * The various formats of Element argument for Velocity. Some libraries such as
+ * jQuery and Zepto provide an array-like 
+ */
+type VelocityElements = HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult;
 
 /**
  * A property value can be a string or a number. If it is a number then it will
  * get the correct unit added to it depending on the property name if required.
  */
-type VelocityPropertyValue = number | string;
+type VelocityPropertyValue = number | string | [number | string] | [number | string, number | string] | [number | string, number[] | string, number | string];
+
+/**
+ * A property value can be a string or a number. If it is a number then it will
+ * get the correct unit added to it depending on the property name if required.
+ */
+type VelocityProperty = VelocityPropertyValue | ((index?: number, total?: number) => VelocityPropertyValue);
+
 // TODO: | ((element: HTMLorSVGElement, index: number, elements: HTMLorSVGElement[]) => number | string);
 
 // TODO: Add easings array support, should add a typename for each of the array easings to make it more obvious
 type VelocityProperties = {
-	[property in keyof CSSStyleDeclaration]: VelocityPropertyValue | [VelocityPropertyValue] | [VelocityPropertyValue, VelocityPropertyValue] | [VelocityPropertyValue, string, VelocityPropertyValue];
+	[property in keyof CSSStyleDeclaration]?: VelocityProperty;
 };
 
 // TODO: Clean this up, add comments, remove deprecated options
 interface VelocityOptions {
 	backwards?: boolean;
-	begin?: (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[]) => void;
-	complete?: (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[]) => void;
+	begin?: (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], activeCall?: AnimationCall) => void;
+	complete?: (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], activeCall?: AnimationCall) => void;
 	container?: string | HTMLorSVGElement;
 	delay?: string | number;
 	/**
@@ -48,8 +83,8 @@ interface VelocityOptions {
 	 */
 	display?: string | boolean;
 	drag?: boolean;
-	duration?: string | number;
-	easing?: string;
+	duration?: "fast" | "normal" | "slow" | number;
+	easing?: string | number[];
 	loop?: false | number;
 	mobileHA?: boolean;
 	offset?: number;
@@ -107,7 +142,7 @@ interface ElementData {
 	/**
 	 * Set when this Element has a running animation on it.
 	 */
-	isAnimating?: boolean;
+	isAnimating: boolean;
 	/**
 	 * Animations to be run for each queue. The animations are linked lists,
 	 * but treated as a FIFO queue (new ones are added to the end). When the
@@ -117,12 +152,18 @@ interface ElementData {
 	 * 
 	 * The default queue is an empty string - ""
 	 */
-	queueList?: {[name: string]: AnimationCall};
+	queueList: {[name: string]: AnimationCall};
 	/**
 	 * Last properties tweened per each queue. Used for both "reverse" and
 	 * "repeat" methods.
 	 */
-	lastAnimationList?: {[name: string]: AnimationCall};
+	lastAnimationList: {[name: string]: AnimationCall};
+	/**
+	 * The time the last animation on an element finished. This is used for
+	 * starting a new animation and making sure it follows directly if possible,
+	 * otherwise it will start as if one frame in already.
+	 */
+	lastFinishList: {[name: string]: number};
 }
 
 /**
@@ -358,7 +399,13 @@ interface AnimationCall {
 
 interface Velocity {
 	// TODO: Add all variations of the velocity argument formats allowed. Make them TYPE based as they're used in multiple places.
-	(...args: any[]): VelocityResult;
+	(options?: VelocityObjectArgs | VelocityObjectArgs2): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | VelocityProperties, options?: VelocityOptions): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | VelocityProperties, option?: any, value?: any): VelocityResult;
 
 	defaults: VelocityOptions;
 	queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: string | boolean): void;

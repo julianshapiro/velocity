@@ -21,28 +21,26 @@ namespace VelocityStatic {
 			isRepeat = activeCall.repeat;
 
 		if (!isStopped && (isLoop || isRepeat)) {
+			let tweens = activeCall.tweens,
+				queue = activeCall.queue;
+
 			if (isRepeat && activeCall.repeat !== true) {
 				activeCall.repeat--;
 			} else if (isLoop && activeCall.loop !== true) {
 				activeCall.loop--;
 				activeCall.repeat = activeCall.repeatAgain;
 			}
-			/* If a rotateX/Y/Z property is being animated by 360 deg with loop:true, swap tween start/end values to enable
-			 continuous iterative rotation looping. (Otherise, the element would just rotate back and forth.) */
-			let tweens = activeCall.tweens;
-
 			if (isLoop) {
 				for (let propertyName in tweens) {
-					let tweenContainer = tweens[propertyName],
-						oldStartValue = tweenContainer.startValue;
+					let tweenContainer = tweens[propertyName];
 
-					tweenContainer.startValue = tweenContainer.endValue;
-					tweenContainer.endValue = oldStartValue;
 					tweenContainer.reverse = !tweenContainer.reverse;
 				}
 			}
-
-			activeCall.timeStart = 0;
+			if (queue !== false) {
+				Data(activeCall.element).lastFinishList[queue] = activeCall.timeStart + activeCall.duration;
+			}
+			activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
 			activeCall.started = false;
 		} else {
 			let elements = activeCall.elements,
@@ -139,11 +137,14 @@ namespace VelocityStatic {
 			 Dequeueing
 			 ***************/
 
+			let queue = activeCall.queue;
+
 			/* Fire the next call in the queue so long as this call's queue wasn't set to false (to trigger a parallel animation),
 			 which would have already caused the next call to fire. Note: Even if the end of the animation queue has been reached,
 			 dequeue() must still be called in order to completely clear jQuery's animation queue. */
-			if (activeCall.queue !== false) {
-				dequeue(element, activeCall.queue);
+			if (queue !== false) {
+				data.lastFinishList[queue] = activeCall.timeStart + activeCall.duration;
+				dequeue(element, queue);
 			}
 
 			/************************

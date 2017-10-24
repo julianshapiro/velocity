@@ -36,7 +36,7 @@ namespace VelocityStatic {
 		/* Revert to the Velocity-wide default easing type, or fall back to "swing"
 		 if the Velocity-wide default has been incorrectly modified. */
 		if (easing === false) {
-			easing = Easings[defaults.easing] || Easings[EASING_DEFAULT];
+			easing = Easings[defaults.easing as string] || Easings[EASING_DEFAULT];
 		}
 		return easing;
 	}

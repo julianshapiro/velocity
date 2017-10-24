@@ -7,12 +7,12 @@
 
 QUnit.todo("In/Out", function(assert) {
 	var done = assert.async(2),
-			$target1 = getTarget(),
-			$target2 = getTarget(),
-			$target3 = getTarget(),
-			$target4 = getTarget(),
-			$target5 = getTarget(),
-			$target6 = getTarget();
+		$target1 = getTarget(),
+		$target2 = getTarget(),
+		$target3 = getTarget(),
+		$target4 = getTarget(),
+		$target5 = getTarget(),
+		$target6 = getTarget();
 
 	Velocity($target1, "transition.bounceIn", defaultOptions.duration);
 

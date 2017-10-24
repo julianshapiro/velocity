@@ -10,7 +10,6 @@ QUnit.skip("Call Options", function(assert) {
 			UICallOptions1 = {
 				delay: 123,
 				duration: defaultOptions.duration,
-				loop: true, // Should get ignored
 				easing: "spring" // Should get ignored
 			},
 			$target1 = getTarget();
@@ -21,7 +20,6 @@ QUnit.skip("Call Options", function(assert) {
 	setTimeout(function() {
 		// Note: We can do this because transition.slideLeftIn is composed of a single call.
 		assert.equal(Data($target1).opts.delay, UICallOptions1.delay, "Whitelisted option passed in.");
-		assert.notEqual(Data($target1).opts.loop, UICallOptions1.loop, "Non-whitelisted option not passed in #1a.");
 		assert.notEqual(Data($target1).opts.easing, UICallOptions1.easing, "Non-whitelisted option not passed in #1a.");
 		assert.equal(!/velocity-animating/.test(Data($target1).className), true, "Duration option passed in.");
 

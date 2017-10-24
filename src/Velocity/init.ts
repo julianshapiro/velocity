@@ -22,7 +22,7 @@ namespace VelocityStatic {
 			 */
 			computedStyle: null,
 			/**
-			 * 
+			 * Cached current value as set
 			 */
 			style: Object.create(null),
 			/**
@@ -34,7 +34,7 @@ namespace VelocityStatic {
 			 */
 			rootPropertyValueCache: Object.create(null),
 			/**
-			 * A cache for transform updates, which must be manually flushed via vVelocityStatic.CSS.flushTransformCache().
+			 * A cache for transform updates, which must be manually flushed via VelocityStatic.CSS.flushTransformCache().
 			 * 
 			 * @deprecated
 			 */
@@ -46,7 +46,11 @@ namespace VelocityStatic {
 			/**
 			 * The last tweens for use as repetitions
 			 */
-			lastAnimationList: Object.create(null)
+			lastAnimationList: Object.create(null),
+			/**
+			 * The last tweens for use as repetitions
+			 */
+			lastFinishList: Object.create(null)
 		});
 	}
 };

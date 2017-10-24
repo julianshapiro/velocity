@@ -1,4 +1,3 @@
-///<reference path="easing/_all.d.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *

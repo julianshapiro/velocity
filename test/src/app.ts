@@ -43,11 +43,10 @@ var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.
 		colorGreen: 200,
 		textShadowBlur: 3
 	},
-	defaultProperties = {
+	defaultProperties: VelocityProperties = {
 		opacity: defaultStyles.opacity / 2,
 		width: defaultStyles.width * 2,
-		height: defaultStyles.height * 2,
-		colorGreen: defaultStyles.colorGreen / 2
+		height: defaultStyles.height * 2
 	},
 	defaultOptions: VelocityOptions = {
 		queue: "",
@@ -94,6 +93,10 @@ function applyStartValues(element, startValues) {
 
 function Data(element) { // TODO: :ElementData
 	return element.jquery ? (Velocity as any).data.get(element[0]) : (Velocity as any).data.get(element);
+}
+
+function getNow(): number {
+	return performance && performance.now ? performance.now() : Date.now();
 }
 
 function getTarget() {

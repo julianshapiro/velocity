@@ -10,32 +10,20 @@ interface Document {
 	documentMode: any; // IE
 }
 
-interface VelocityObjectArgs {
-	elements: HTMLorSVGElement[];
-	properties: VelocityProperties;
-	options?: VelocityOptions;
-}
-
-interface VelocityObjectArgs2 {
-	e: HTMLorSVGElement[];
-	p: VelocityProperties;
-	o?: VelocityOptions;
-}
-
 /**
  * The main Velocity function. Acts as a gateway to everything else.
  */
 function VelocityFn(options: VelocityObjectArgs | VelocityObjectArgs2): VelocityResult;
-function VelocityFn(elements: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult, propertyMap: string | VelocityProperties, options?: VelocityOptions): VelocityResult;
-function VelocityFn(elements: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-function VelocityFn(elements: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-function VelocityFn(elements: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
-function VelocityFn(elements: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
-function VelocityFn(this: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-function VelocityFn(this: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-function VelocityFn(this: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
-function VelocityFn(this: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
-function VelocityFn(this: HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult | void, ...args: any[]): VelocityResult {
+function VelocityFn(elements: VelocityElements, propertyMap: string | VelocityProperties, options?: VelocityOptions): VelocityResult;
+function VelocityFn(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+function VelocityFn(elements: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
+function VelocityFn(elements: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
+function VelocityFn(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
+function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
+function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
+function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
+function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResult {
 
 	/**
 	 * Logic for determining what to return to the call stack when exiting out

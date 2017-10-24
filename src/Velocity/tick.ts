@@ -152,7 +152,13 @@ namespace VelocityStatic {
 				 first tick iteration isn't wasted by animating at 0% tween completion, which would produce the
 				 same style value as the element's current value. */
 				if (firstTick) {
-					activeCall.timeStart = timeStart = timeCurrent - deltaTime;
+					let queue = activeCall.queue;
+
+					timeStart = timeCurrent - deltaTime;
+					if (queue !== false) {
+						timeStart = Math.max(timeStart, data.lastFinishList[queue] || 0);
+					}
+					activeCall.timeStart = timeStart;
 				}
 
 				/* If a pause key is present, skip processing unless it has been set to resume */
@@ -176,7 +182,7 @@ namespace VelocityStatic {
 						if (timeStart + delay > timeCurrent) {
 							continue;
 						}
-						activeCall.timeStart = timeStart = timeCurrent - deltaTime;
+						activeCall.timeStart = timeStart += delay;
 					}
 
 					// TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
