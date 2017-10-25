@@ -75,7 +75,16 @@
 
     message = message || (actual + " should be within " + maxDifference + " (inclusive) of " + expected + (result ? "" : ". Actual: " + actualDiff));
 
-    pushContext.push(result, actual, expected, message);
+	if (pushContext.pushResult) {
+		pushContext.pushResult({
+			"result": result,
+			"actual": actual,
+			"expected": expected,
+			"message": message
+		});
+	} else {
+		pushContext.push(result, actual, expected, message);
+	}
   }
 
 
@@ -109,7 +118,16 @@
     }
     message = message || (actual + " should be within " + maxPercentDifference + "% (inclusive) of " + expected + (result ? "" : ". Actual: " + actualDiff + "%"));
 
-    pushContext.push(result, actual, expected, message);
+	if (pushContext.pushResult) {
+		pushContext.pushResult({
+			"result": result,
+			"actual": actual,
+			"expected": expected,
+			"message": message
+		});
+	} else {
+		pushContext.push(result, actual, expected, message);
+	}
   };
 
 
@@ -131,7 +149,16 @@
 
     message = message || (actual + " should not be within " + minDifference + " (exclusive) of " + expected + (result ? "" : ". Actual: " + actualDiff));
 
-    pushContext.push(result, actual, expected, message);
+	if (pushContext.pushResult) {
+		pushContext.pushResult({
+			"result": result,
+			"actual": actual,
+			"expected": expected,
+			"message": message
+		});
+	} else {
+		pushContext.push(result, actual, expected, message);
+	}
   }
 
 
@@ -165,7 +192,16 @@
     }
     message = message || (actual + " should not be within " + minPercentDifference + "% (exclusive) of " + expected + (result ? "" : ". Actual: " + actualDiff + "%"));
 
-    pushContext.push(result, actual, expected, message);
+	if (pushContext.pushResult) {
+		pushContext.pushResult({
+			"result": result,
+			"actual": actual,
+			"expected": expected,
+			"message": message
+		});
+	} else {
+		pushContext.push(result, actual, expected, message);
+	}
   };
 
 
