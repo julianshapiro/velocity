@@ -3732,6 +3732,9 @@ function VelocityFn() {
         propertiesMap = arguments[argumentIndex];
         options = arguments[argumentIndex + 1];
     }
+    if (!options) {
+        options = {};
+    }
     elements = sanitizeElements(elements);
     if (!elements) {
         if (promiseData.promise) {
@@ -4129,7 +4132,8 @@ function VelocityFn() {
         complete: isFunction(options.complete) && options.complete,
         progress: isFunction(options.progress) && options.progress,
         resolver: promiseData.resolver
-    }, rootAnimation = {
+    }, // TODO: Don't make such a large object on every call - optimise it down, but make sure things can handle an "undefined" value - maybe have shared options to go with per-animation options
+    rootAnimation = {
         prev: undefined,
         next: undefined,
         //nextProgress: undefined,

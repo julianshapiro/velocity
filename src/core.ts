@@ -112,6 +112,9 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 		propertiesMap = arguments[argumentIndex] as string | VelocityProperties;
 		options = arguments[argumentIndex + 1];
 	}
+	if (!options) {
+		options = {}; // TODO: Remove the need for this and check for individual options in a better way
+	}
 	elements = sanitizeElements(elements);
 
 	if (!elements) {
@@ -591,6 +594,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 		progress: isFunction(options.progress) && options.progress,
 		resolver: promiseData.resolver
 	},
+		// TODO: Don't make such a large object on every call - optimise it down, but make sure things can handle an "undefined" value - maybe have shared options to go with per-animation options
 		rootAnimation: AnimationCall = {
 			prev: undefined,
 			next: undefined,
