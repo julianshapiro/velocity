@@ -6,6 +6,10 @@
  * Velocity version (should grab from package.json during build).
  */
 
+var MAJOR = 2,
+	MINOR = 0,
+	PATCH = 0;
+
 namespace VelocityStatic {
 	export let version = {major: MAJOR, minor: MINOR, patch: PATCH};
 };

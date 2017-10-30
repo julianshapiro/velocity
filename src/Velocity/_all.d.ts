@@ -17,4 +17,5 @@
 ///<reference path="tick.ts" />
 ///<reference path="timestamp.ts" />
 ///<reference path="tweens.ts" />
+///<reference path="validate.ts" />
 ///<reference path="version.ts" />

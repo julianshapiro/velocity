@@ -15,7 +15,7 @@ namespace VelocityStatic {
 
 	/* slideUp, slideDown */
 	["Down", "Up"].forEach(function(direction) {
-		Redirects["slide" + direction] = function(element: HTMLorSVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: HTMLorSVGElement[], promiseData) {
+		Redirects["slide" + direction] = function(element: HTMLorSVGElement, options: VelocityOptions, elementsIndex: number, elementsSize, elements: HTMLorSVGElement[], resolver: (value?: HTMLorSVGElement[] | VelocityResult) => void) {
 			let opts = {...options},
 				begin = opts.begin,
 				complete = opts.complete,
@@ -71,8 +71,8 @@ namespace VelocityStatic {
 					if (complete) {
 						complete.call(elements, elements);
 					}
-					if (promiseData) {
-						promiseData.resolver(elements);
+					if (resolver) {
+						resolver(elements);
 					}
 				}
 			};

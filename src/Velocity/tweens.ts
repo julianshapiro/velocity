@@ -240,7 +240,7 @@ namespace VelocityStatic {
 						startValue = valueData[1];
 						/* Two or three-item array: If the second item is a non-hex string easing name or an array, treat it as an easing. */
 					} else if ((isString(valueData[1]) && !CSS.RegEx.isHex.test(valueData[1]) && Easings[valueData[1]]) || Array.isArray(valueData[1])) {
-						easing = skipResolvingEasing ? valueData[1] : getEasing(valueData[1], activeCall.duration);
+						easing = skipResolvingEasing ? valueData[1] : validateEasing(valueData[1], activeCall.duration);
 
 						/* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
 						startValue = valueData[2];
@@ -552,6 +552,7 @@ namespace VelocityStatic {
 							}
 						}
 						if (iStart !== startValue.length || iEnd !== endValue.length) {
+							// TODO: change the tween to use a string type if they're different
 							if (debug) {
 								console.error("Trying to pattern match mis-matched strings [\"" + endValue + "\", \"" + startValue + "\"]");
 							}

@@ -46,7 +46,7 @@ namespace VelocityStatic {
 	export function RegisterEffect(effectName: string, properties): Velocity {
 
 		/* Register a custom redirect for each effect. */
-		Redirects[effectName] = function(element, redirectOptions, elementsIndex, elementsSize, elements, promiseData, loop) {
+		Redirects[effectName] = function(element, redirectOptions, elementsIndex, elementsSize, elements, resolver: (value?: HTMLorSVGElement[] | VelocityResult) => void, loop) {
 			let finalElement = (elementsIndex === elementsSize - 1),
 				totalDuration = 0;
 
@@ -146,14 +146,14 @@ namespace VelocityStatic {
 						if (redirectOptions.complete) {
 							redirectOptions.complete.call(elements, elements);
 						}
-						if (promiseData) {
-							promiseData.resolver(elements || element);
+						if (resolver) {
+							resolver(elements || element);
 						}
 					};
 
 					opts.complete = function() {
 						if (loop) {
-							Redirects[effectName](element, redirectOptions, elementsIndex, elementsSize, elements, promiseData, loop === true ? true : Math.max(0, loop - 1));
+							Redirects[effectName](element, redirectOptions, elementsIndex, elementsSize, elements, resolver, loop === true ? true : Math.max(0, loop - 1));
 						}
 						if (properties.reset) {
 							for (let resetProperty in properties.reset) {

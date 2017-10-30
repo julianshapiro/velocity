@@ -7,7 +7,7 @@
 namespace VelocityStatic {
 	/* A design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying. Accordingly, each element has a data cache. */
 	export function init(element: HTMLorSVGElement) {
-		Data(element, {
+		let data = {
 			/**
 			 * Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements.
 			 */
@@ -51,6 +51,8 @@ namespace VelocityStatic {
 			 * The last tweens for use as repetitions
 			 */
 			lastFinishList: Object.create(null)
-		});
+		}
+		Data(element, data);
+		return data;
 	}
 };

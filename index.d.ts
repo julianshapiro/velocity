@@ -15,6 +15,24 @@ type HTMLorSVGElement = HTMLElement | SVGElement;
 type VelocityEasingFn = (percentComplete: number, startValue: number, endValue: number, property?: string) => number;
 
 /**
+ * List of all easing types for easy code completion in TypeScript
+ */
+type VelocityEasingType = VelocityEasingFn
+	| "linear" | "swing" | "spring"
+	| "ease" | "easeIn" | "easeOut" | "easeInOut" | "easeInSine" | "easeOutSine"
+	| "easeInOutSine" | "easeInQuad" | "easeOutQuad" | "easeInOutQuad"
+	| "easeInCubic" | "easeOutCubic" | "easeInOutCubic" | "easeInQuart"
+	| "easeOutQuart" | "easeInOutQuart" | "easeInQuint" | "easeOutQuint"
+	| "easeInOutQuint" | "easeInExpo" | "easeOutExpo" | "easeInOutExpo"
+	| "easeInCirc" | "easeOutCirc" | "easeInOutCirc"
+	| "ease-in" | "ease-out" | "ease-in-out"
+	| "at-start" | "at-end" | "during"
+	| [number]
+	| [number, number]
+	| [number, number, number, number]
+	| VelocityEasingFn;
+
+/**
  * The return type of any velocity call. If this is called via a "utility"
  * function (such a jQuery <code>$(elements).velocity(...)</code>) then it will
  * be based on the array-like list of elements supplied, otherwise it will
@@ -26,25 +44,25 @@ type VelocityResult = Promise<HTMLorSVGElement[]> & HTMLorSVGElement[] & {
 	velocity: Velocity & {
 		(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
 		(this: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-		(this: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
-		(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
-
+		(this: VelocityElements, propertyMap: string | VelocityProperties, easing?: VelocityEasingType, complete?: () => void): VelocityResult;
+		(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: VelocityEasingType, complete?: () => void): VelocityResult;
+		/**
+		 * TODO: Decide if this should be public
+		 * @private
+		 */
 		animations: AnimationCall[]
 	}
 };
 
 // TODO: I don't like having two of these - need to merge into a type or similar
-interface VelocityObjectArgs {
-	elements: HTMLorSVGElement[];
-	properties: VelocityProperties;
+type VelocityObjectArgs = {
+	elements?: HTMLorSVGElement[];
+	properties?: VelocityProperties;
 	options?: VelocityOptions;
-}
-
-interface VelocityObjectArgs2 {
-	e: HTMLorSVGElement[];
-	p: VelocityProperties;
+	e?: HTMLorSVGElement[];
+	p?: VelocityProperties;
 	o?: VelocityOptions;
-}
+};
 
 /**
  * The various formats of Element argument for Velocity. Some libraries such as
@@ -66,40 +84,135 @@ type VelocityProperty = VelocityPropertyValue | ((index?: number, total?: number
 
 // TODO: | ((element: HTMLorSVGElement, index: number, elements: HTMLorSVGElement[]) => number | string);
 
-// TODO: Add easings array support, should add a typename for each of the array easings to make it more obvious
+/**
+ * The properties that are permitted to be animated.
+ * TODO: Add SVG and "Tween" properties. Should (can?) this get html / svg specifics later
+ */
 type VelocityProperties = {
 	[property in keyof CSSStyleDeclaration]?: VelocityProperty;
 };
 
+/**
+ * A callback used at the beginning or end of an animation.
+ */
+type VelocityCallback = (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], activeCall?: AnimationCall) => void;
+
+/**
+ * A callback used for progress tracking.
+ */
+type VelocityProgress = (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], percentComplete?: number, remaining?: number, start?: number, tweenValue?: number) => void;
+
 // TODO: Clean this up, add comments, remove deprecated options
 interface VelocityOptions {
 	backwards?: boolean;
-	begin?: (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], activeCall?: AnimationCall) => void;
-	complete?: (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], activeCall?: AnimationCall) => void;
+	begin?: VelocityCallback;
+	complete?: VelocityCallback;
+	/**
+	 * How long the animation should delay after becoming active and before it
+	 * actually starts to animate. This is a millisecond timer, but
+	 * can handle some string values.
+	 * <code>"fast"</code> = 200ms
+	 * <code>"normal"</code> = 400ms
+	 * <code>"slow"</code> = 600ms
+	 * NOTE: If passing a negative number then this will allow you to start with
+	 * the animation partially complete from the start.
+	 * 
+	 * @default 0
+	 */
+	delay?: "fast" | "normal" | "slow" | number;
+	drag?: boolean;
+	/**
+	 * How long the animation should run for. This is a millisecond timer, but
+	 * can handle some string values.
+	 * <code>"fast"</code> = 200ms
+	 * <code>"normal"</code> = 400ms (default)
+	 * <code>"slow"</code> = 600ms
+	 * 
+	 * @default 400
+	 */
+	duration?: "fast" | "normal" | "slow" | number;
+	/**
+	 * Easing is the rate of change over time for an animation. A linear easing
+	 * would simply be 1% of the time to 1% of the animation. This allows you
+	 * to specify how that rate of change should be. There are various named
+	 * easings, but you can also supply your own.
+	 * 
+	 * TODO: Copy more of the original description
+	 * 
+	 * @default "swing"
+	 */
+	easing?: VelocityEasingType;
+	/**
+	 * How many times should this option loop. A loop is defined as a "return to
+	 * start values", so it will run, then reverse. This counts as a single
+	 * loop. Setting <code>loop:4</code> will cause the animation to take the
+	 * same time as <code>4n+1</code> iterations.
+	 * 
+	 * @default 0
+	 */
+	loop?: false | number;
+	mobileHA?: boolean;
+	progress?: VelocityProgress;
+	/**
+	 * If this should return a Promise with everything else. If promises are not
+	 * required at all, then simply setting it globally will turn them off.
+	 * 
+	 * @default true
+	 */
+	promise?: boolean;
+	/**
+	 * If promises are turned on, then the promise can reject if there are no
+	 * elements supplied (an empty array is still valid).
+	 * 
+	 * @default false
+	 */
+	promiseRejectEmpty?: boolean;
+	/**
+	 * The name of the queue to use. If this is set to <code>false</code> then
+	 * it will be added immediately ignoring any other queues running. Queues
+	 * start playing automatically (unlike jQuery, this doesn't need a queue to
+	 * be manually started).
+	 * 
+	 * @default ""
+	 */
+	queue?: false | string;
+	/**
+	 * How many times should this animation repeat. A repeat will restart at
+	 * initial values and animate once. This is most useful for rotating
+	 * animations where <code>0deg === 360deg</code>. If you are after a more
+	 * "bounce" effect then look at <code>loop</code>.
+	 * 
+	 * @default 0
+	 */
+	repeat?: false | number;
+	stagger?: string | number;
+
+	/**
+	 * @deprecated
+	 */
 	container?: string | HTMLorSVGElement;
-	delay?: string | number;
 	/**
 	 * @deprecated
 	 */
 	display?: string | boolean;
-	drag?: boolean;
-	duration?: "fast" | "normal" | "slow" | number;
-	easing?: string | number[];
-	loop?: false | number;
-	mobileHA?: boolean;
-	offset?: number;
-	progress?: (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], percentComplete?: number, remaining?: number, start?: number, tweenValue?: number) => void;
-	queue?: false | string;
-	repeat?: false | number;
-	stagger?: string | number;
 	/**
 	 * @deprecated
 	 */
 	visibility?: boolean | string;
+	/**
+	 * @deprecated
+	 */
+	offset?: number;
 
-	/* private */
+	/**
+	 * Should the cache be used for the tweens. Turning this off can improve
+	 * memory usage slightly, but will also make things slower when creating
+	 * animations.
+	 * 
+	 * @private
+	 * @default true
+	 */
 	cache?: boolean;
-	promiseRejectEmpty?: boolean;
 }
 
 /**
@@ -259,21 +372,21 @@ interface Callbacks {
 	 * Begin handler. Only the first element to check this callback gets to use
 	 * it. Cleared after calling
 	 */
-	begin: (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], activeCall?: AnimationCall) => void;
+	begin: VelocityCallback;
 	/**
 	 * Complete handler (only the last element in a set gets this)
 	 */
-	complete: (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], activeCall?: AnimationCall) => void;
+	complete: VelocityCallback;
 	/**
 	 * Progress handler (only the last element in a set gets this)
 	 */
-	progress: (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], percentComplete?: number, remaining?: number, start?: number, tweenValue?: number, activeCall?: AnimationCall) => void;
+	progress: VelocityProgress;
 	/**
 	 * This method is called at most once to signify that the animation has
 	 * completed. Currently a loop:true animation will never complete. This
 	 * allows .then(fn) to run (see Promise support).
 	 */
-	resolver: (value?: {} | PromiseLike<{}>) => void;
+	resolver: (value?: HTMLorSVGElement[] | PromiseLike<HTMLorSVGElement[]>) => void;
 }
 
 interface AnimationCall {
@@ -399,7 +512,7 @@ interface AnimationCall {
 
 interface Velocity {
 	// TODO: Add all variations of the velocity argument formats allowed. Make them TYPE based as they're used in multiple places.
-	(options?: VelocityObjectArgs | VelocityObjectArgs2): VelocityResult;
+	(options?: VelocityObjectArgs): VelocityResult;
 	(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
 	(elements: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
 	(elements: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;

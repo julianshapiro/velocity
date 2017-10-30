@@ -8,8 +8,8 @@
  * The <strong><code>defineProperty()</code></strong> function provides a
  * shortcut to defining a property that cannot be accidentally iterated across.
  */
-function defineProperty(proto: any, name: string, value: Function | any, force?: boolean) {
-	if (proto && (force || !proto[name])) {
+function defineProperty(proto: any, name: string, value: Function | any) {
+	if (proto) {
 		Object.defineProperty(proto, name, {
 			configurable: true,
 			writable: true,
@@ -101,4 +101,19 @@ function sanitizeElements(elements: HTMLorSVGElement | HTMLorSVGElement[]): HTML
 		elements = [elements];
 	}
 	return elements as HTMLorSVGElement[];
+}
+
+/**
+ * When there are multiple locations for a value pass them all in, then get the
+ * first value that is valid.
+ */
+function getValue<T>(...args: T[]): T;
+function getValue<T>(args: any): T {
+	for (let i = 0, _args = arguments; i < _args.length; i++) {
+		let _arg = _args[i];
+
+		if (_arg !== undefined && _arg !== NaN) {
+			return _arg;
+		}
+	}
 }
