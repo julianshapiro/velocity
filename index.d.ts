@@ -199,6 +199,7 @@ interface VelocityOptions {
 	 * @deprecated
 	 */
 	visibility?: boolean | string;
+	fpsLimit?: number;
 	/**
 	 * @deprecated
 	 */

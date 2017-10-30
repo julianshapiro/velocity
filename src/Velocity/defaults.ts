@@ -21,6 +21,7 @@ namespace VelocityStatic {
 
 	export let defaults: VelocityOptions = {
 		mobileHA: true
+		fpsLimit: 60
 	};
 
 	Object.defineProperties(defaults, {
