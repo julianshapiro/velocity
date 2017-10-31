@@ -13,6 +13,7 @@ namespace VelocityStatic {
 		_delay: number = DEFAULT_DELAY,
 		_duration: number = DEFAULT_DURATION,
 		_easing: VelocityEasingType = DEFAULT_EASING,
+		_fpsLimit: number = DEFAULT_FPSLIMIT,
 		_loop: number = DEFAULT_LOOP,
 		_promise: boolean = DEFAULT_PROMISE,
 		_promiseRejectEmpty: boolean = DEFAULT_PROMISE_REJECT_EMPTY,
@@ -21,7 +22,6 @@ namespace VelocityStatic {
 
 	export let defaults: VelocityOptions = {
 		mobileHA: true
-		fpsLimit: 60
 	};
 
 	Object.defineProperties(defaults, {
@@ -88,6 +88,17 @@ namespace VelocityStatic {
 				value = validateEasing(value, _duration);
 				if (value !== undefined) {
 					_easing = value;
+				}
+			})
+		},
+		fpsLimit: {
+			get: (function(): number | false {
+				return _fpsLimit;
+			}),
+			set: (function(value: number | false) {
+				value = validateFpsLimit(value);
+				if (value !== undefined) {
+					_fpsLimit = value;
 				}
 			})
 		},
