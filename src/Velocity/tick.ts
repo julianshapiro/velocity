@@ -108,11 +108,8 @@ namespace VelocityStatic {
 				lastProgress: AnimationCall,
 				firstComplete: AnimationCall,
 				lastComplete: AnimationCall;
-			/**
-			 * Skip iterations if we exceed the max fps
-			 * We increment the fpsLimit by 5% so that the rendered fps is closer to the limit
-			 */
-			if (deltaTime >=  1000 / (defaults.fpsLimit * 1.05) || !lastTick) {
+
+			if (deltaTime >= defaults.minFrameTime || !lastTick) {
 				lastTick = timeCurrent;
 
 				/********************

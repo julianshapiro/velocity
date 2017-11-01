@@ -143,6 +143,11 @@ interface VelocityOptions {
 	 */
 	easing?: VelocityEasingType;
 	/**
+	 * Maximum number of frames to render on each second for all animations
+	 * @default 60
+	 */
+	fpsLimit?: number;
+	/**
 	 * How many times should this option loop. A loop is defined as a "return to
 	 * start values", so it will run, then reverse. This counts as a single
 	 * loop. Setting <code>loop:4</code> will cause the animation to take the
@@ -151,6 +156,11 @@ interface VelocityOptions {
 	 * @default 0
 	 */
 	loop?: false | number;
+	/**
+	 * The minimum frame time to achieve, the value is calculated based on fpsLimit
+	 * @default 16,33333333
+	 */
+	minFrameTime?: number;
 	mobileHA?: boolean;
 	progress?: VelocityProgress;
 	/**
@@ -199,7 +209,6 @@ interface VelocityOptions {
 	 * @deprecated
 	 */
 	visibility?: boolean | string;
-	fpsLimit?: number;
 	/**
 	 * @deprecated
 	 */

@@ -139,7 +139,7 @@ function validateFpsLimit(value: number | false): number {
 		let parsed = parseInt(value as any, 10);
 
 		if (!isNaN(parsed) && parsed >= 0) {
-			return parsed;
+			return Math.min(parsed, 60);
 		}
 	}
 	if (value != null) {

@@ -15,6 +15,7 @@ namespace VelocityStatic {
 		_easing: VelocityEasingType = DEFAULT_EASING,
 		_fpsLimit: number = DEFAULT_FPSLIMIT,
 		_loop: number = DEFAULT_LOOP,
+		_minFrameTime: number = DEFAULT_MILISECONDS_PER_FRAME / DEFAULT_FPSLIMIT,
 		_promise: boolean = DEFAULT_PROMISE,
 		_promiseRejectEmpty: boolean = DEFAULT_PROMISE_REJECT_EMPTY,
 		_queue: string | false = DEFAULT_QUEUE,
@@ -99,6 +100,7 @@ namespace VelocityStatic {
 				value = validateFpsLimit(value);
 				if (value !== undefined) {
 					_fpsLimit = value;
+					_minFrameTime = DEFAULT_MILISECONDS_PER_FRAME / value;
 				}
 			})
 		},
@@ -112,6 +114,11 @@ namespace VelocityStatic {
 					_loop = value;
 				}
 			})
+		},
+		minFrameTime:{
+		   	get: (function(): number | false {
+		   		return _minFrameTime;
+		   	})
 		},
 		promise: {
 			get: (function(): boolean {
