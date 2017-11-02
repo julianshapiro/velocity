@@ -2,7 +2,7 @@
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
- * 
+ *
  * Validation functions used for various types of data that can be supplied.
  * All errors are reported in the non-minified version for development. If a
  * validation fails then it should return <code>undefined</code>.
@@ -128,6 +128,25 @@ function validateEasing(value: VelocityEasingType, duration: number): VelocityEa
 		console.error("VelocityJS: Trying to set 'easing' to an invalid value:", value);
 	}
 }
+/**
+ * Validate a <code>fpsLimit</code> option.
+ * @private
+ */
+function validateFpsLimit(value: number | false): number {
+	if (value === false) {
+		return 0;
+	} else {
+		let parsed = parseInt(value as any, 10);
+
+		if (!isNaN(parsed) && parsed >= 0) {
+			return Math.min(parsed, 60);
+		}
+	}
+	if (value != null) {
+		console.warn("VelocityJS: Trying to set 'fpsLimit' to an invalid value:", value);
+	}
+}
+
 
 /**
  * Validate a <code>loop</code> option.
