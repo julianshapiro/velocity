@@ -44,7 +44,11 @@ var DEFAULT_DURATION = DURATION_NORMAL;
 
 var DEFAULT_EASING = "swing";
 
+var DEFAULT_FPSLIMIT = 60;
+
 var DEFAULT_LOOP = 0;
+
+var FUZZY_MS_PER_SECOND = 980;
 
 var DEFAULT_PROMISE = true;
 
@@ -1897,7 +1901,7 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
-    var _cache = DEFAULT_CACHE, _begin, _complete, _delay = DEFAULT_DELAY, _duration = DEFAULT_DURATION, _easing = DEFAULT_EASING, _loop = DEFAULT_LOOP, _promise = DEFAULT_PROMISE, _promiseRejectEmpty = DEFAULT_PROMISE_REJECT_EMPTY, _queue = DEFAULT_QUEUE, _repeat = DEFAULT_REPEAT;
+    var _cache = DEFAULT_CACHE, _begin, _complete, _delay = DEFAULT_DELAY, _duration = DEFAULT_DURATION, _easing = DEFAULT_EASING, _fpsLimit = DEFAULT_FPSLIMIT, _loop = DEFAULT_LOOP, _minFrameTime = FUZZY_MS_PER_SECOND / DEFAULT_FPSLIMIT, _promise = DEFAULT_PROMISE, _promiseRejectEmpty = DEFAULT_PROMISE_REJECT_EMPTY, _queue = DEFAULT_QUEUE, _repeat = DEFAULT_REPEAT;
     VelocityStatic.defaults = {
         mobileHA: true
     };
@@ -1968,6 +1972,18 @@ var VelocityStatic;
                 }
             }
         },
+        fpsLimit: {
+            get: function() {
+                return _fpsLimit;
+            },
+            set: function(value) {
+                value = validateFpsLimit(value);
+                if (value !== undefined) {
+                    _fpsLimit = value;
+                    _minFrameTime = FUZZY_MS_PER_SECOND / value;
+                }
+            }
+        },
         loop: {
             get: function() {
                 return _loop;
@@ -1977,6 +1993,11 @@ var VelocityStatic;
                 if (value !== undefined) {
                     _loop = value;
                 }
+            }
+        },
+        minFrameTime: {
+            get: function() {
+                return _minFrameTime;
             }
         },
         promise: {
@@ -2702,236 +2723,236 @@ var VelocityStatic;
              under high stress we give the option for choppiness over allowing the browser to drop huge chunks of frames.
              We use performance.now() and shim it if it doesn't exist for when the tab is hidden. */
             var timeCurrent = timestamp && timestamp !== true ? timestamp : performance.now(), deltaTime = VelocityStatic.lastTick ? timeCurrent - VelocityStatic.lastTick : FRAME_TIME, activeCall = void 0, nextCall = void 0, firstProgress = void 0, lastProgress = void 0, firstComplete = void 0, lastComplete = void 0;
-            VelocityStatic.lastTick = timeCurrent;
-            //			console.log("tick", timestamp, activeCall, State)
-            /********************
-             Call Iteration
-             ********************/
-            /* Exapand any tweens that might need it */
-            while (activeCall = VelocityStatic.State.firstNew) {
-                VelocityStatic.expandTween(activeCall);
-            }
-            var _loop_3 = function() {
-                nextCall = activeCall.next;
-                /************************
-                 Call-Wide Variables
-                 ************************/
-                var element = activeCall.element, data_7 = Data(element);
-                //				console.log("activeCall tick", activeCall, data)
-                /* Check to see if this element has been deleted midway through the animation by checking for the
-                 continued existence of its data cache. If it's gone then end this animation. */
-                if (!data_7) {
-                    VelocityStatic.freeAnimationCall(activeCall);
-                    return "continue";
+            if (deltaTime >= VelocityStatic.defaults.minFrameTime || !VelocityStatic.lastTick) {
+                VelocityStatic.lastTick = timeCurrent;
+                /********************
+                 Call Iteration
+                 ********************/
+                /* Exapand any tweens that might need it */
+                while (activeCall = VelocityStatic.State.firstNew) {
+                    VelocityStatic.expandTween(activeCall);
                 }
-                var timeStart = activeCall.timeStart, options = activeCall.options, paused = activeCall.paused, delay = getValue(activeCall.delay, options.delay), started = activeCall.started, firstTick = !timeStart;
-                /* If timeStart is undefined, then this is the first time that this call has been processed by tick().
-                 We assign timeStart now so that its value is as close to the real animation start time as possible.
-                 (Conversely, had timeStart been defined when this call was added to Velocity.State.calls, the delay
-                 between that time and now would cause the first few frames of the tween to be skipped since
-                 percentComplete is calculated relative to timeStart.) */
-                /* Further, subtract 16ms (the approximate resolution of RAF) from the current time value so that the
-                 first tick iteration isn't wasted by animating at 0% tween completion, which would produce the
-                 same style value as the element's current value. */
-                if (firstTick) {
-                    var queue_1 = getValue(activeCall.queue, options.queue);
-                    timeStart = timeCurrent - deltaTime;
-                    if (queue_1 !== false) {
-                        timeStart = Math.max(timeStart, data_7.lastFinishList[queue_1] || 0);
+                var _loop_3 = function() {
+                    nextCall = activeCall.next;
+                    /************************
+                     Call-Wide Variables
+                     ************************/
+                    var element = activeCall.element, data_7 = Data(element);
+                    /* Check to see if this element has been deleted midway through the animation by checking for the
+                     continued existence of its data cache. If it's gone then end this animation. */
+                    if (!data_7) {
+                        VelocityStatic.freeAnimationCall(activeCall);
+                        return "continue";
                     }
-                    activeCall.timeStart = timeStart;
-                }
-                /* If a pause key is present, skip processing unless it has been set to resume */
-                if (paused === true) {
-                    /* Update the time start to accomodate the paused completion amount */
-                    activeCall.timeStart += deltaTime;
-                    return "continue";
-                } else if (paused === false) {
-                    /* Remove pause key after processing */
-                    delete activeCall.paused;
-                }
-                /*******************
-                 Option: Begin
-                 *******************/
-                if (!started) {
-                    // Make sure anything we've delayed doesn't start animating yet
-                    // There might still be an active delay after something has been un-paused
-                    if (delay) {
-                        if (timeStart + delay > timeCurrent) {
-                            return "continue";
+                    var timeStart = activeCall.timeStart, options = activeCall.options, paused = activeCall.paused, delay = getValue(activeCall.delay, options.delay), started = activeCall.started, firstTick = !timeStart;
+                    /* If timeStart is undefined, then this is the first time that this call has been processed by tick().
+                     We assign timeStart now so that its value is as close to the real animation start time as possible.
+                     (Conversely, had timeStart been defined when this call was added to Velocity.State.calls, the delay
+                     between that time and now would cause the first few frames of the tween to be skipped since
+                     percentComplete is calculated relative to timeStart.) */
+                    /* Further, subtract 16ms (the approximate resolution of RAF) from the current time value so that the
+                     first tick iteration isn't wasted by animating at 0% tween completion, which would produce the
+                     same style value as the element's current value. */
+                    if (firstTick) {
+                        var queue_1 = getValue(activeCall.queue, options.queue);
+                        timeStart = timeCurrent - deltaTime;
+                        if (queue_1 !== false) {
+                            timeStart = Math.max(timeStart, data_7.lastFinishList[queue_1] || 0);
                         }
-                        activeCall.timeStart = timeStart += delay;
+                        activeCall.timeStart = timeStart;
                     }
-                    // TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
-                    activeCall.started = true;
-                    /* Apply the "velocity-animating" indicator class. */
-                    VelocityStatic.CSS.Values.addClass(element, "velocity-animating");
-                    /**********************************
-                     Display & Visibility Toggling
-                     **********************************/
-                    /* If the display option is set to non-"none", set it upfront so that the element can become visible before tweening begins.
-                     (Otherwise, display's "none" value is set in completeCall() once the animation has completed.) */
-                    if (activeCall.display !== undefined && activeCall.display !== null && activeCall.display !== "none") {
-                        if (activeCall.display === "flex") {
-                            var flexValues = [ "-webkit-box", "-moz-box", "-ms-flexbox", "-webkit-flex" ];
-                            flexValues.forEach(function(flexValue) {
-                                VelocityStatic.CSS.setPropertyValue(element, "display", flexValue, 0);
-                            });
-                        }
-                        VelocityStatic.CSS.setPropertyValue(element, "display", activeCall.display, 0);
-                        activeCall.display = false;
+                    /* If a pause key is present, skip processing unless it has been set to resume */
+                    if (paused === true) {
+                        /* Update the time start to accomodate the paused completion amount */
+                        activeCall.timeStart += deltaTime;
+                        return "continue";
+                    } else if (paused === false) {
+                        /* Remove pause key after processing */
+                        delete activeCall.paused;
                     }
-                    /* Same goes with the visibility option, but its "none" equivalent is "hidden". */
-                    if (activeCall.visibility !== undefined && activeCall.visibility !== "hidden") {
-                        VelocityStatic.CSS.setPropertyValue(element, "visibility", activeCall.visibility, 0);
-                        activeCall.visibility = false;
-                    }
-                    /* The begin callback is fired once per call -- not once per element -- and is passed the full raw DOM element set as both its context and its first argument. */
-                    if (options && options._started++ === 0) {
-                        options._first = activeCall;
-                        if (options.begin) {
-                            /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
-                            try {
-                                var elements = activeCall.elements;
-                                options.begin.call(elements, elements, activeCall);
-                            } catch (error) {
-                                setTimeout(function() {
-                                    throw error;
-                                }, 1);
+                    /*******************
+                     Option: Begin
+                     *******************/
+                    if (!started) {
+                        // Make sure anything we've delayed doesn't start animating yet
+                        // There might still be an active delay after something has been un-paused
+                        if (delay) {
+                            if (timeStart + delay > timeCurrent) {
+                                return "continue";
                             }
-                            // Only called once, even if reversed or repeated
-                            options.begin = undefined;
+                            activeCall.timeStart = timeStart += delay;
                         }
-                    }
-                }
-                if (options && options._first === activeCall && options.progress) {
-                    activeCall.nextProgress = undefined;
-                    if (lastProgress) {
-                        lastProgress.nextProgress = lastProgress = activeCall;
-                    } else {
-                        firstProgress = lastProgress = activeCall;
-                    }
-                }
-                /* The tween's completion percentage is relative to the tween's start time, not the tween's start value
-                 (which would result in unpredictable tween durations since JavaScript's timers are not particularly accurate).
-                 Accordingly, we ensure that percentComplete does not exceed 1. */
-                var tweens = activeCall.tweens, millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, property = void 0, transformPropertyExists = false, percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration), 1);
-                if (percentComplete === 1) {
-                    activeCall.nextComplete = undefined;
-                    if (lastComplete) {
-                        lastComplete.nextComplete = lastComplete = activeCall;
-                    } else {
-                        firstComplete = lastComplete = activeCall;
-                    }
-                }
-                /************************
-                 Property Iteration
-                 ************************/
-                var activeEasing = getValue(activeCall.easing, options.easing, VelocityStatic.defaults.easing);
-                /* For every element, iterate through each property. */
-                for (property in tweens) {
-                    var currentValue = void 0, tween = tweens[property], /* Easing can either be a pre-genereated function or a string that references a pre-registered easing
-                     on the Easings object. In either case, return the appropriate easing *function*. */
-                    easing = tween.easing ? isString(tween.easing) ? VelocityStatic.Easings[tween.easing] : tween.easing : activeEasing;
-                    /******************************
-                     Current Value Calculation
-                     ******************************/
-                    if (tween.pattern) {
-                        for (var pattern = tween.pattern, rounding = tween.rounding, i = 0, index = 0; i < pattern.length; i++) {
-                            if (typeof pattern[i] === "number") {
-                                var startValue = tween.startValue[index], endValue = tween.endValue[index], result = tween.reverse ? easing(percentComplete, endValue, startValue, property) : easing(percentComplete, startValue, endValue, property);
-                                pattern[i] = rounding && rounding[index] ? Math.round(result) : result;
-                                index++;
+                        // TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
+                        activeCall.started = true;
+                        /* Apply the "velocity-animating" indicator class. */
+                        VelocityStatic.CSS.Values.addClass(element, "velocity-animating");
+                        /**********************************
+                         Display & Visibility Toggling
+                         **********************************/
+                        /* If the display option is set to non-"none", set it upfront so that the element can become visible before tweening begins.
+                         (Otherwise, display's "none" value is set in completeCall() once the animation has completed.) */
+                        if (activeCall.display !== undefined && activeCall.display !== null && activeCall.display !== "none") {
+                            if (activeCall.display === "flex") {
+                                var flexValues = [ "-webkit-box", "-moz-box", "-ms-flexbox", "-webkit-flex" ];
+                                flexValues.forEach(function(flexValue) {
+                                    VelocityStatic.CSS.setPropertyValue(element, "display", flexValue, 0);
+                                });
+                            }
+                            VelocityStatic.CSS.setPropertyValue(element, "display", activeCall.display, 0);
+                            activeCall.display = false;
+                        }
+                        /* Same goes with the visibility option, but its "none" equivalent is "hidden". */
+                        if (activeCall.visibility !== undefined && activeCall.visibility !== "hidden") {
+                            VelocityStatic.CSS.setPropertyValue(element, "visibility", activeCall.visibility, 0);
+                            activeCall.visibility = false;
+                        }
+                        /* The begin callback is fired once per call -- not once per element -- and is passed the full raw DOM element set as both its context and its first argument. */
+                        if (options && options._started++ === 0) {
+                            options._first = activeCall;
+                            if (options.begin) {
+                                /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
+                                try {
+                                    var elements = activeCall.elements;
+                                    options.begin.call(elements, elements, activeCall);
+                                } catch (error) {
+                                    setTimeout(function() {
+                                        throw error;
+                                    }, 1);
+                                }
+                                // Only called once, even if reversed or repeated
+                                options.begin = undefined;
                             }
                         }
-                        currentValue = "".concat.apply("", tween.pattern);
-                    } else {
-                        currentValue = tween.reverse ? 1 - easing(1 - percentComplete, tween.endValue, tween.startValue, property) : easing(percentComplete, tween.startValue, tween.endValue, property);
                     }
-                    /* If no value change is occurring, don't proceed with DOM updating. */
-                    if (!firstTick && tween.currentValue === currentValue) {
-                        continue;
+                    if (options && options._first === activeCall && options.progress) {
+                        activeCall.nextProgress = undefined;
+                        if (lastProgress) {
+                            lastProgress.nextProgress = lastProgress = activeCall;
+                        } else {
+                            firstProgress = lastProgress = activeCall;
+                        }
                     }
-                    tween.currentValue = currentValue;
-                    /* Skip the fake 'tween' property as that is only passed into the progress callback. */
-                    if (property !== "tween") {
-                        /******************
-                         Hooks: Part I
-                         ******************/
-                        var hookRoot = void 0;
-                        /* For hooked properties, the newly-updated rootPropertyValueCache is cached onto the element so that it can be used
-                         for subsequent hooks in this call that are associated with the same root property. If we didn't cache the updated
-                         rootPropertyValue, each subsequent update to the root property in this tick pass would reset the previous hook's
-                         updates to rootPropertyValue prior to injection. A nice performance byproduct of rootPropertyValue caching is that
-                         subsequently chained animations using the same hookRoot but a different hook can use this cached rootPropertyValue. */
-                        if (VelocityStatic.CSS.Hooks.registered[property]) {
-                            hookRoot = VelocityStatic.CSS.Hooks.getRoot(property);
-                            var rootPropertyValueCache = data_7.rootPropertyValueCache[hookRoot];
-                            if (rootPropertyValueCache) {
-                                tween.rootPropertyValue = rootPropertyValueCache;
+                    /* The tween's completion percentage is relative to the tween's start time, not the tween's start value
+                     (which would result in unpredictable tween durations since JavaScript's timers are not particularly accurate).
+                     Accordingly, we ensure that percentComplete does not exceed 1. */
+                    var tweens = activeCall.tweens, millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, property = void 0, transformPropertyExists = false, percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration), 1);
+                    if (percentComplete === 1) {
+                        activeCall.nextComplete = undefined;
+                        if (lastComplete) {
+                            lastComplete.nextComplete = lastComplete = activeCall;
+                        } else {
+                            firstComplete = lastComplete = activeCall;
+                        }
+                    }
+                    /************************
+                     Property Iteration
+                     ************************/
+                    var activeEasing = getValue(activeCall.easing, options.easing, VelocityStatic.defaults.easing);
+                    /* For every element, iterate through each property. */
+                    for (property in tweens) {
+                        var currentValue = void 0, tween = tweens[property], /* Easing can either be a pre-genereated function or a string that references a pre-registered easing
+                         on the Easings object. In either case, return the appropriate easing *function*. */
+                        easing = tween.easing ? isString(tween.easing) ? VelocityStatic.Easings[tween.easing] : tween.easing : activeEasing;
+                        /******************************
+                         Current Value Calculation
+                         ******************************/
+                        if (tween.pattern) {
+                            for (var pattern = tween.pattern, rounding = tween.rounding, i = 0, index = 0; i < pattern.length; i++) {
+                                if (typeof pattern[i] === "number") {
+                                    var startValue = tween.startValue[index], endValue = tween.endValue[index], result = tween.reverse ? easing(percentComplete, endValue, startValue, property) : easing(percentComplete, startValue, endValue, property);
+                                    pattern[i] = rounding && rounding[index] ? Math.round(result) : result;
+                                    index++;
+                                }
+                            }
+                            currentValue = "".concat.apply("", tween.pattern);
+                        } else {
+                            currentValue = tween.reverse ? 1 - easing(1 - percentComplete, tween.endValue, tween.startValue, property) : easing(percentComplete, tween.startValue, tween.endValue, property);
+                        }
+                        /* If no value change is occurring, don't proceed with DOM updating. */
+                        if (!firstTick && tween.currentValue === currentValue) {
+                            continue;
+                        }
+                        tween.currentValue = currentValue;
+                        /* Skip the fake 'tween' property as that is only passed into the progress callback. */
+                        if (property !== "tween") {
+                            /******************
+                             Hooks: Part I
+                             ******************/
+                            var hookRoot = void 0;
+                            /* For hooked properties, the newly-updated rootPropertyValueCache is cached onto the element so that it can be used
+                             for subsequent hooks in this call that are associated with the same root property. If we didn't cache the updated
+                             rootPropertyValue, each subsequent update to the root property in this tick pass would reset the previous hook's
+                             updates to rootPropertyValue prior to injection. A nice performance byproduct of rootPropertyValue caching is that
+                             subsequently chained animations using the same hookRoot but a different hook can use this cached rootPropertyValue. */
+                            if (VelocityStatic.CSS.Hooks.registered[property]) {
+                                hookRoot = VelocityStatic.CSS.Hooks.getRoot(property);
+                                var rootPropertyValueCache = data_7.rootPropertyValueCache[hookRoot];
+                                if (rootPropertyValueCache) {
+                                    tween.rootPropertyValue = rootPropertyValueCache;
+                                }
+                            }
+                            /*****************
+                             DOM Update
+                             *****************/
+                            /* setPropertyValue() returns an array of the property name and property value post any normalization that may have been performed. */
+                            /* Note: To solve an IE<=8 positioning bug, the unit type is dropped when setting a property value of 0. */
+                            var adjustedSetData = VelocityStatic.CSS.setPropertyValue(element, /* SET */ property, tween.currentValue + (IE < 9 && parseFloat(currentValue) === 0 ? "" : tween.unitType), percentComplete, tween.rootPropertyValue, tween.scrollData);
+                            /*******************
+                             Hooks: Part II
+                             *******************/
+                            /* Now that we have the hook's updated rootPropertyValue (the post-processed value provided by adjustedSetData), cache it onto the element. */
+                            if (VelocityStatic.CSS.Hooks.registered[property]) {
+                                /* Since adjustedSetData contains normalized data ready for DOM updating, the rootPropertyValue needs to be re-extracted from its normalized form. ?? */
+                                if (VelocityStatic.CSS.Normalizations.registered[hookRoot]) {
+                                    data_7.rootPropertyValueCache[hookRoot] = VelocityStatic.CSS.Normalizations.registered[hookRoot]("extract", null, adjustedSetData[1]);
+                                } else {
+                                    data_7.rootPropertyValueCache[hookRoot] = adjustedSetData[1];
+                                }
+                            }
+                            /***************
+                             Transforms
+                             ***************/
+                            /* Flag whether a transform property is being animated so that flushTransformCache() can be triggered once this tick pass is complete. */
+                            if (adjustedSetData[0] === "transform") {
+                                transformPropertyExists = true;
                             }
                         }
-                        /*****************
-                         DOM Update
-                         *****************/
-                        /* setPropertyValue() returns an array of the property name and property value post any normalization that may have been performed. */
-                        /* Note: To solve an IE<=8 positioning bug, the unit type is dropped when setting a property value of 0. */
-                        var adjustedSetData = VelocityStatic.CSS.setPropertyValue(element, /* SET */ property, tween.currentValue + (IE < 9 && parseFloat(currentValue) === 0 ? "" : tween.unitType), percentComplete, tween.rootPropertyValue, tween.scrollData);
-                        /*******************
-                         Hooks: Part II
-                         *******************/
-                        /* Now that we have the hook's updated rootPropertyValue (the post-processed value provided by adjustedSetData), cache it onto the element. */
-                        if (VelocityStatic.CSS.Hooks.registered[property]) {
-                            /* Since adjustedSetData contains normalized data ready for DOM updating, the rootPropertyValue needs to be re-extracted from its normalized form. ?? */
-                            if (VelocityStatic.CSS.Normalizations.registered[hookRoot]) {
-                                data_7.rootPropertyValueCache[hookRoot] = VelocityStatic.CSS.Normalizations.registered[hookRoot]("extract", null, adjustedSetData[1]);
-                            } else {
-                                data_7.rootPropertyValueCache[hookRoot] = adjustedSetData[1];
+                        /****************
+                         mobileHA
+                         ****************/
+                        /* If mobileHA is enabled, set the translate3d transform to null to force hardware acceleration.
+                         It's safe to override this property since Velocity doesn't actually support its animation (hooks are used in its place). */
+                        if (getValue(activeCall.mobileHA, options.mobileHA, VelocityStatic.defaults.mobileHA)) {
+                            /* Don't set the null transform hack if we've already done so. */
+                            if (data_7.transformCache.translate3d === undefined) {
+                                /* All entries on the transformCache object are later concatenated into a single transform string via flushTransformCache(). */
+                                data_7.transformCache.translate3d = "(0px, 0px, 0px)";
+                                transformPropertyExists = true;
                             }
                         }
-                        /***************
-                         Transforms
-                         ***************/
-                        /* Flag whether a transform property is being animated so that flushTransformCache() can be triggered once this tick pass is complete. */
-                        if (adjustedSetData[0] === "transform") {
-                            transformPropertyExists = true;
+                        if (transformPropertyExists) {
+                            VelocityStatic.CSS.flushTransformCache(element);
                         }
                     }
-                    /****************
-                     mobileHA
-                     ****************/
-                    /* If mobileHA is enabled, set the translate3d transform to null to force hardware acceleration.
-                     It's safe to override this property since Velocity doesn't actually support its animation (hooks are used in its place). */
-                    if (getValue(activeCall.mobileHA, options.mobileHA, VelocityStatic.defaults.mobileHA)) {
-                        /* Don't set the null transform hack if we've already done so. */
-                        if (data_7.transformCache.translate3d === undefined) {
-                            /* All entries on the transformCache object are later concatenated into a single transform string via flushTransformCache(). */
-                            data_7.transformCache.translate3d = "(0px, 0px, 0px)";
-                            transformPropertyExists = true;
-                        }
-                    }
-                    if (transformPropertyExists) {
-                        VelocityStatic.CSS.flushTransformCache(element);
-                    }
+                };
+                /* Iterate through each active call. */
+                for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
+                    _loop_3();
                 }
-            };
-            /* Iterate through each active call. */
-            for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
-                _loop_3();
-            }
-            /* Callbacks and things that might read the DOM again */
-            // Progress callback
-            for (activeCall = firstProgress; activeCall; activeCall = nextCall) {
-                nextCall = activeCall.nextProgress;
-                var options = activeCall.options;
-                /* Pass the elements and the timing data (percentComplete, msRemaining, timeStart, tweenDummyValue) into the progress callback. */
-                activeCall.options.progress.call(activeCall.elements, activeCall.elements, activeCall.percentComplete, Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, VelocityStatic.defaults.duration) - timeCurrent), activeCall.timeStart, (activeCall.tweens["tween"] || {}).currentValue, activeCall);
-            }
-            // Complete animations, including complete callback or looping
-            for (activeCall = firstComplete; activeCall; activeCall = nextCall) {
-                nextCall = activeCall.nextComplete;
-                /* If this call has finished tweening, pass it to complete() to handle call cleanup. */
-                VelocityStatic.completeCall(activeCall);
+                /* Callbacks and things that might read the DOM again */
+                // Progress callback
+                for (activeCall = firstProgress; activeCall; activeCall = nextCall) {
+                    nextCall = activeCall.nextProgress;
+                    var options = activeCall.options;
+                    /* Pass the elements and the timing data (percentComplete, msRemaining, timeStart, tweenDummyValue) into the progress callback. */
+                    activeCall.options.progress.call(activeCall.elements, activeCall.elements, activeCall.percentComplete, Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, VelocityStatic.defaults.duration) - timeCurrent), activeCall.timeStart, (activeCall.tweens["tween"] || {}).currentValue, activeCall);
+                }
+                // Complete animations, including complete callback or looping
+                for (activeCall = firstComplete; activeCall; activeCall = nextCall) {
+                    nextCall = activeCall.nextComplete;
+                    /* If this call has finished tweening, pass it to complete() to handle call cleanup. */
+                    VelocityStatic.completeCall(activeCall);
+                }
             }
         }
         if (VelocityStatic.State.first) {
@@ -3864,6 +3885,24 @@ function validateEasing(value, duration) {
     }
     if (value != null) {
         console.error("VelocityJS: Trying to set 'easing' to an invalid value:", value);
+    }
+}
+
+/**
+ * Validate a <code>fpsLimit</code> option.
+ * @private
+ */
+function validateFpsLimit(value) {
+    if (value === false) {
+        return 0;
+    } else {
+        var parsed = parseInt(value, 10);
+        if (!isNaN(parsed) && parsed >= 0) {
+            return Math.min(parsed, 60);
+        }
+    }
+    if (value != null) {
+        console.warn("VelocityJS: Trying to set 'fpsLimit' to an invalid value:", value);
     }
 }
 

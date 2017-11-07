@@ -13,7 +13,9 @@ namespace VelocityStatic {
 		_delay: number = DEFAULT_DELAY,
 		_duration: number = DEFAULT_DURATION,
 		_easing: VelocityEasingType = DEFAULT_EASING,
+		_fpsLimit: number = DEFAULT_FPSLIMIT,
 		_loop: number | true = DEFAULT_LOOP,
+		_minFrameTime: number = FUZZY_MS_PER_SECOND / DEFAULT_FPSLIMIT,
 		_promise: boolean = DEFAULT_PROMISE,
 		_promiseRejectEmpty: boolean = DEFAULT_PROMISE_REJECT_EMPTY,
 		_queue: string | false = DEFAULT_QUEUE,
@@ -90,6 +92,18 @@ namespace VelocityStatic {
 				}
 			})
 		},
+		fpsLimit: {
+			get: (function(): number | false {
+				return _fpsLimit;
+			}),
+			set: (function(value: number | false) {
+				value = validateFpsLimit(value);
+				if (value !== undefined) {
+					_fpsLimit = value;
+					_minFrameTime = FUZZY_MS_PER_SECOND / value;
+				}
+			})
+		},
 		loop: {
 			get: (function(): number | true {
 				return _loop;
@@ -99,6 +113,11 @@ namespace VelocityStatic {
 				if (value !== undefined) {
 					_loop = value;
 				}
+			})
+		},
+		minFrameTime: {
+			get: (function(): number | false {
+				return _minFrameTime;
 			})
 		},
 		promise: {

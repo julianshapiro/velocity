@@ -61,3 +61,5 @@ Various fixes including ticker (loading Velocity in a background window) and col
 ====
 
 [MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).
+
+[![Kiss My Button](https://presskit.kissmybutton.gr/logos/kissmybutton-logo-small.png)](https://kissmybutton.gr)  sponsors Velocity's development.
