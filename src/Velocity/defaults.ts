@@ -13,13 +13,13 @@ namespace VelocityStatic {
 		_delay: number = DEFAULT_DELAY,
 		_duration: number = DEFAULT_DURATION,
 		_easing: VelocityEasingType = DEFAULT_EASING,
-		_loop: number = DEFAULT_LOOP,
+		_loop: number | true = DEFAULT_LOOP,
 		_promise: boolean = DEFAULT_PROMISE,
 		_promiseRejectEmpty: boolean = DEFAULT_PROMISE_REJECT_EMPTY,
 		_queue: string | false = DEFAULT_QUEUE,
-		_repeat: number = DEFAULT_REPEAT;
+		_repeat: number | true = DEFAULT_REPEAT;
 
-	export let defaults: VelocityOptions = {
+	export let defaults: StrictVelocityOptions = {
 		mobileHA: true
 	};
 
@@ -91,10 +91,10 @@ namespace VelocityStatic {
 			})
 		},
 		loop: {
-			get: (function(): number | false {
+			get: (function(): number | true {
 				return _loop;
 			}),
-			set: (function(value: number | false) {
+			set: (function(value: number | boolean) {
 				value = validateLoop(value);
 				if (value !== undefined) {
 					_loop = value;
@@ -135,10 +135,10 @@ namespace VelocityStatic {
 			})
 		},
 		repeat: {
-			get: (function(): number | false {
+			get: (function(): number | true {
 				return _repeat;
 			}),
-			set: (function(value: number | false) {
+			set: (function(value: number | boolean) {
 				value = validateRepeat(value);
 				if (value !== undefined) {
 					_repeat = value;

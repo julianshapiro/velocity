@@ -137,10 +137,10 @@ namespace VelocityStatic {
 				}
 
 				let timeStart = activeCall.timeStart,
+					options = activeCall.options,
 					paused = activeCall.paused,
-					delay = activeCall.delay,
+					delay = getValue(activeCall.delay, options.delay),
 					started = activeCall.started,
-					callbacks = activeCall.callbacks,
 					firstTick = !timeStart;
 
 				/* If timeStart is undefined, then this is the first time that this call has been processed by tick().
@@ -152,7 +152,7 @@ namespace VelocityStatic {
 				 first tick iteration isn't wasted by animating at 0% tween completion, which would produce the
 				 same style value as the element's current value. */
 				if (firstTick) {
-					let queue = activeCall.queue;
+					let queue = getValue(activeCall.queue, options.queue);
 
 					timeStart = timeCurrent - deltaTime;
 					if (queue !== false) {
@@ -217,25 +217,25 @@ namespace VelocityStatic {
 					}
 
 					/* The begin callback is fired once per call -- not once per element -- and is passed the full raw DOM element set as both its context and its first argument. */
-					if (callbacks && callbacks.started++ === 0) {
-						callbacks.first = activeCall;
-						if (callbacks.begin) {
+					if (options && options._started++ === 0) {
+						options._first = activeCall;
+						if (options.begin) {
 							/* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
 							try {
 								let elements = activeCall.elements;
 
-								callbacks.begin.call(elements, elements, activeCall);
+								options.begin.call(elements, elements, activeCall);
 							} catch (error) {
 								setTimeout(function() {
 									throw error;
 								}, 1);
 							}
 							// Only called once, even if reversed or repeated
-							callbacks.begin = undefined;
+							options.begin = undefined;
 						}
 					}
 				}
-				if (callbacks && callbacks.first === activeCall && callbacks.progress) {
+				if (options && options._first === activeCall && options.progress) {
 					activeCall.nextProgress = undefined;
 					if (lastProgress) {
 						lastProgress.nextProgress = lastProgress = activeCall;
@@ -251,7 +251,7 @@ namespace VelocityStatic {
 					millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart,
 					property: string,
 					transformPropertyExists = false,
-					percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / activeCall.duration, 1);
+					percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / getValue(activeCall.duration, options.duration, defaults.duration), 1);
 
 				if (percentComplete === 1) {
 					activeCall.nextComplete = undefined;
@@ -266,13 +266,17 @@ namespace VelocityStatic {
 				 Property Iteration
 				 ************************/
 
+				let activeEasing = getValue(activeCall.easing, options.easing, defaults.easing);
+
 				/* For every element, iterate through each property. */
 				for (property in tweens) {
 					let currentValue: string | number,
 						tween = tweens[property],
 						/* Easing can either be a pre-genereated function or a string that references a pre-registered easing
 						 on the Easings object. In either case, return the appropriate easing *function*. */
-						easing = isString(tween.easing) ? Easings[tween.easing] : tween.easing;
+						easing = tween.easing
+							? (isString(tween.easing) ? Easings[tween.easing] : tween.easing)
+							: activeEasing;
 
 					/******************************
 					 Current Value Calculation
@@ -369,7 +373,7 @@ namespace VelocityStatic {
 
 					/* If mobileHA is enabled, set the translate3d transform to null to force hardware acceleration.
 					 It's safe to override this property since Velocity doesn't actually support its animation (hooks are used in its place). */
-					if (activeCall.mobileHA) {
+					if (getValue(activeCall.mobileHA, options.mobileHA, defaults.mobileHA)) {
 						/* Don't set the null transform hack if we've already done so. */
 						if (data.transformCache.translate3d === undefined) {
 							/* All entries on the transformCache object are later concatenated into a single transform string via flushTransformCache(). */
@@ -390,11 +394,13 @@ namespace VelocityStatic {
 			// Progress callback
 			for (activeCall = firstProgress; activeCall; activeCall = nextCall) {
 				nextCall = activeCall.nextProgress;
+				let options = activeCall.options;
+
 				/* Pass the elements and the timing data (percentComplete, msRemaining, timeStart, tweenDummyValue) into the progress callback. */
-				activeCall.callbacks.progress.call(activeCall.elements,
+				activeCall.options.progress.call(activeCall.elements,
 					activeCall.elements,
 					activeCall.percentComplete,
-					Math.max(0, activeCall.timeStart + activeCall.duration - timeCurrent),
+					Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, defaults.duration) - timeCurrent),
 					activeCall.timeStart,
 					(activeCall.tweens["tween"] || {} as Tween).currentValue,
 					activeCall);

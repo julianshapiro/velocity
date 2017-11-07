@@ -17,7 +17,7 @@ QUnit.test("Easing", function(assert) {
 	} catch (e) {
 		success = false;
 	}
-	assert.ok(success, "Fake easing didn't throw error.");
+	assert.ok(success, "Fake easing string didn't throw error.");
 
 	/* Ensure that an improperly-formmated bezier curve array doesn't throw an error. */
 	try {
@@ -37,7 +37,7 @@ QUnit.test("Easing", function(assert) {
 	Velocity(getTarget(), defaultProperties, {
 		easing: easingBezierArray,
 		begin: function(elements, animation) {
-			assert.close(animation.easing(easingBezierTestPercent, 0, 1), easingBezierTestValue, 0.005, "Array converted into bezier function.");
+			assert.close(animation.options.easing(easingBezierTestPercent, 0, 1), easingBezierTestValue, 0.005, "Array converted into bezier function.");
 			done();
 		}
 	});
@@ -52,7 +52,7 @@ QUnit.test("Easing", function(assert) {
 		duration: 150,
 		easing: easingSpringRK4Array,
 		begin: function(elements, animation) {
-			assert.close(animation.easing(easingSpringRK4TestPercent, 0, 1), easingSpringRK4TestValue, 10, "Array with duration converted into springRK4 function.");
+			assert.close(animation.options.easing(easingSpringRK4TestPercent, 0, 1), easingSpringRK4TestValue, 10, "Array with duration converted into springRK4 function.");
 			done();
 		}
 	});
@@ -74,7 +74,7 @@ QUnit.test("Easing", function(assert) {
 	Velocity(getTarget(), defaultProperties, {
 		easing: easingStepArray,
 		begin: function(elements, animation) {
-			assert.close(animation.easing(easingStepTestPercent, 0, 1), easingStepTestValue, 0.05, "Array converted into Step function.");
+			assert.close(animation.options.easing(easingStepTestPercent, 0, 1), easingStepTestValue, 0.05, "Array converted into Step function.");
 			done();
 		}
 	});

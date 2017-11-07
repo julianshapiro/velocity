@@ -102,11 +102,13 @@ namespace VelocityStatic {
 		} else if (animation.next) {
 			animation.next.prev = animation.prev;
 		}
-		if (animation.queue !== false) {
+		let queue = getValue(animation.queue, animation.options.queue, defaults.queue);
+
+		if (queue !== false) {
 			let data = Data(animation.element);
 
 			if (data) {
-				data.lastAnimationList[animation.queue] = animation;
+				data.lastAnimationList[queue] = animation;
 				animation.next = animation.prev = undefined;
 			}
 		}

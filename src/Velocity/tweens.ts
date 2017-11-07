@@ -15,9 +15,71 @@ namespace VelocityStatic {
 	 */
 	export function expandTween(activeCall: AnimationCall) {
 		let elements = activeCall.elements,
+			options = activeCall.options,
 			elementsLength = elements.length,
 			element = activeCall.element,
 			elementArrayIndex = elements.indexOf(element);
+
+		/***************************
+		 Tween Data Calculation
+		 ***************************/
+
+		/* This function parses property data and defaults endValue, easing, and startValue as appropriate. */
+		/* Property map values can either take the form of 1) a single value representing the end value,
+		 or 2) an array in the form of [ endValue, [, easing] [, startValue] ].
+		 The optional third parameter is a forcefed startValue to be used instead of querying the DOM for
+		 the element's current value. Read Velocity's docmentation to learn more about forcefeeding: VelocityJS.org/#forcefeeding */
+		function parsePropertyValue(valueData: any, skipResolvingEasing?: boolean) {
+			let endValue, easing, startValue;
+
+			/* If we have a function as the main argument then resolve it first, in case it returns an array that needs to be split */
+			if (isFunction(valueData)) {
+				valueData = valueData.call(element, elementArrayIndex, elementsLength);
+			}
+
+			/* Handle the array format, which can be structured as one of three potential overloads:
+			 A) [ endValue, easing, startValue ], B) [ endValue, easing ], or C) [ endValue, startValue ] */
+			if (Array.isArray(valueData)) {
+				/* endValue is always the first item in the array. Don't bother validating endValue's value now
+				 since the ensuing property cycling logic does that. */
+				endValue = valueData[0];
+
+				/* Two-item array format: If the second item is a number, function, or hex string, treat it as a
+				 start value since easings can only be non-hex strings or arrays. */
+				if ((!Array.isArray(valueData[1]) && /^[\d-]/.test(valueData[1])) || isFunction(valueData[1]) || CSS.RegEx.isHex.test(valueData[1])) {
+					startValue = valueData[1];
+					/* Two or three-item array: If the second item is a non-hex string easing name or an array, treat it as an easing. */
+				} else if ((isString(valueData[1]) && !CSS.RegEx.isHex.test(valueData[1]) && Easings[valueData[1]]) || Array.isArray(valueData[1])) {
+					easing = skipResolvingEasing ? valueData[1] : validateEasing(valueData[1], getValue(activeCall.duration, options.duration));
+
+					/* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
+					startValue = valueData[2];
+				} else {
+					startValue = valueData[1] || valueData[2];
+				}
+				/* Handle the single-value format. */
+			} else {
+				endValue = valueData;
+			}
+
+			/* Default to the call's easing if a per-property easing type was not defined. */
+			if (!skipResolvingEasing) {
+				easing = getValue(easing, activeCall.easing, options.easing, defaults.easing);
+			}
+
+			/* If functions were passed in as values, pass the function the current element as its context,
+			 plus the element's index and the element set's size as arguments. Then, assign the returned value. */
+			if (isFunction(endValue)) {
+				endValue = endValue.call(element, elementArrayIndex, elementsLength);
+			}
+
+			if (isFunction(startValue)) {
+				startValue = startValue.call(element, elementArrayIndex, elementsLength);
+			}
+
+			/* Allow startValue to be left as undefined to indicate to the ensuing code that its value was not forcefed. */
+			return [endValue || 0, easing, startValue];
+		};
 
 		State.firstNew = activeCall.next;
 		/* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
@@ -206,70 +268,11 @@ namespace VelocityStatic {
 			/* The per-element isAnimating flag is used to indicate whether it's safe (i.e. the data isn't stale)
 			 to transfer over end values to use as start values. If it's set to true and there is a previous
 			 Velocity call to pull values from, do so. */
-			if (data && data.isAnimating && activeCall.queue !== false) {
-				lastAnimation = data.lastAnimationList[activeCall.queue];
+			let queue = getValue(activeCall.queue, options.queue, defaults.queue);
+
+			if (data && data.isAnimating && queue !== false) {
+				lastAnimation = data.lastAnimationList[queue];
 			}
-
-			/***************************
-			 Tween Data Calculation
-			 ***************************/
-
-			/* This function parses property data and defaults endValue, easing, and startValue as appropriate. */
-			/* Property map values can either take the form of 1) a single value representing the end value,
-			 or 2) an array in the form of [ endValue, [, easing] [, startValue] ].
-			 The optional third parameter is a forcefed startValue to be used instead of querying the DOM for
-			 the element's current value. Read Velocity's docmentation to learn more about forcefeeding: VelocityJS.org/#forcefeeding */
-			function parsePropertyValue(valueData: any, skipResolvingEasing?: boolean) {
-				let endValue, easing, startValue;
-
-				/* If we have a function as the main argument then resolve it first, in case it returns an array that needs to be split */
-				if (isFunction(valueData)) {
-					valueData = valueData.call(element, elementArrayIndex, elementsLength);
-				}
-
-				/* Handle the array format, which can be structured as one of three potential overloads:
-				 A) [ endValue, easing, startValue ], B) [ endValue, easing ], or C) [ endValue, startValue ] */
-				if (Array.isArray(valueData)) {
-					/* endValue is always the first item in the array. Don't bother validating endValue's value now
-					 since the ensuing property cycling logic does that. */
-					endValue = valueData[0];
-
-					/* Two-item array format: If the second item is a number, function, or hex string, treat it as a
-					 start value since easings can only be non-hex strings or arrays. */
-					if ((!Array.isArray(valueData[1]) && /^[\d-]/.test(valueData[1])) || isFunction(valueData[1]) || CSS.RegEx.isHex.test(valueData[1])) {
-						startValue = valueData[1];
-						/* Two or three-item array: If the second item is a non-hex string easing name or an array, treat it as an easing. */
-					} else if ((isString(valueData[1]) && !CSS.RegEx.isHex.test(valueData[1]) && Easings[valueData[1]]) || Array.isArray(valueData[1])) {
-						easing = skipResolvingEasing ? valueData[1] : validateEasing(valueData[1], activeCall.duration);
-
-						/* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
-						startValue = valueData[2];
-					} else {
-						startValue = valueData[1] || valueData[2];
-					}
-					/* Handle the single-value format. */
-				} else {
-					endValue = valueData;
-				}
-
-				/* Default to the call's easing if a per-property easing type was not defined. */
-				if (!skipResolvingEasing) {
-					easing = easing || activeCall.easing;
-				}
-
-				/* If functions were passed in as values, pass the function the current element as its context,
-				 plus the element's index and the element set's size as arguments. Then, assign the returned value. */
-				if (isFunction(endValue)) {
-					endValue = endValue.call(element, elementArrayIndex, elementsLength);
-				}
-
-				if (isFunction(startValue)) {
-					startValue = startValue.call(element, elementArrayIndex, elementsLength);
-				}
-
-				/* Allow startValue to be left as undefined to indicate to the ensuing code that its value was not forcefed. */
-				return [endValue || 0, easing, startValue];
-			};
 
 			/* Create a tween out of each property, and append its associated data to tweensContainer. */
 			if (propertiesMap) {
@@ -851,8 +854,8 @@ namespace VelocityStatic {
 
 			if (data) {
 				/* Store the tweensContainer and options if we're working on the default effects queue, so that they can be used by the reverse or repeat commands. */
-				if (activeCall.queue !== false) {
-					data.lastAnimationList[activeCall.queue] = activeCall;
+				if (queue !== false) {
+					data.lastAnimationList[queue] = activeCall;
 				}
 				/* Switch on the element's animating flag. */
 				data.isAnimating = true;

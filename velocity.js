@@ -238,14 +238,14 @@ var VelocityStatic;
         /****************************
          Option: Loop || Repeat
          ****************************/
-        var isLoop = activeCall.loop, isRepeat = activeCall.repeat;
+        var options = activeCall.options, queue = getValue(activeCall.queue, options.queue, VelocityStatic.defaults.queue), isLoop = getValue(activeCall.loop, options.loop, VelocityStatic.defaults.loop), isRepeat = getValue(activeCall.repeat, options.repeat, VelocityStatic.defaults.repeat);
         if (!isStopped && (isLoop || isRepeat)) {
-            var tweens = activeCall.tweens, queue_1 = activeCall.queue;
-            if (isRepeat && activeCall.repeat !== true) {
-                activeCall.repeat--;
-            } else if (isLoop && activeCall.loop !== true) {
-                activeCall.loop--;
-                activeCall.repeat = activeCall.repeatAgain;
+            var tweens = activeCall.tweens;
+            if (isRepeat && isRepeat !== true) {
+                activeCall.repeat = isRepeat - 1;
+            } else if (isLoop && isLoop !== true) {
+                activeCall.loop = isLoop - 1;
+                activeCall.repeat = getValue(activeCall.repeatAgain, options.repeatAgain, VelocityStatic.defaults.repeatAgain);
             }
             if (isLoop) {
                 for (var propertyName in tweens) {
@@ -253,8 +253,8 @@ var VelocityStatic;
                     tweenContainer.reverse = !tweenContainer.reverse;
                 }
             }
-            if (queue_1 !== false) {
-                Data(activeCall.element).lastFinishList[queue_1] = activeCall.timeStart + activeCall.duration;
+            if (queue !== false) {
+                Data(activeCall.element).lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration);
             }
             activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
             activeCall.started = false;
@@ -277,7 +277,7 @@ var VelocityStatic;
              an element's CSS values and thereby cause Velocity's cached value data to go stale. To detect if a queue entry was initiated by Velocity,
              we check for the existence of our special Velocity.queueEntryFlag declaration, which minifiers won't rename since the flag
              is assigned to jQuery's global $ object and thus exists out of Velocity's own scope. */
-            if (isStopped && data_1 && (activeCall.queue === false || data_1.queueList[activeCall.queue])) {
+            if (isStopped && data_1 && (queue === false || data_1.queueList[queue])) {
                 /* The element may have been deleted. Ensure that its data cache still exists before acting on it. */
                 data_1.isAnimating = false;
                 /* Clear the element's rootPropertyValueCache, which will become stale. */
@@ -292,7 +292,7 @@ var VelocityStatic;
                     }
                 });
                 /* Mobile devices have hardware acceleration removed at the end of the animation in order to avoid hogging the GPU's memory. */
-                if (activeCall.mobileHA) {
+                if (getValue(activeCall.mobileHA, options.mobileHA, VelocityStatic.defaults.mobileHA)) {
                     transformHAPropertyExists_1 = true;
                     delete data_1.transformCache.translate3d;
                 }
@@ -308,39 +308,39 @@ var VelocityStatic;
              *********************/
             /* Complete is fired once per call (not once per element) and is passed the full raw DOM element set as both its context and its first argument. */
             /* Note: Callbacks aren't fired when calls are manually stopped (via Velocity("stop"). */
-            var callbacks = activeCall.callbacks;
-            if (callbacks && ++callbacks.completed === callbacks.total) {
-                if (!isStopped && callbacks.complete) {
+            if (options && ++options._completed === options._total) {
+                var complete = options.complete;
+                if (!isStopped && complete) {
                     /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
                     try {
-                        callbacks.complete.call(elements, elements, activeCall);
+                        complete.call(elements, elements, activeCall);
                     } catch (error) {
                         setTimeout(function() {
                             throw error;
                         }, 1);
                     }
                     // Only called once, even if reversed or repeated
-                    callbacks.complete = undefined;
+                    delete options.complete;
                 }
                 /**********************
                  Promise Resolving
                  **********************/
                 /* Note: Infinite loops don't return promises. */
-                if (callbacks.resolver) {
-                    callbacks.resolver(elements);
-                    callbacks.resolver = undefined;
+                var resolver = options._resolver;
+                if (resolver) {
+                    resolver(elements);
+                    delete options._resolver;
                 }
             }
             /***************
              Dequeueing
              ***************/
-            var queue_2 = activeCall.queue;
             /* Fire the next call in the queue so long as this call's queue wasn't set to false (to trigger a parallel animation),
              which would have already caused the next call to fire. Note: Even if the end of the animation queue has been reached,
              dequeue() must still be called in order to completely clear jQuery's animation queue. */
-            if (queue_2 !== false) {
-                data_1.lastFinishList[queue_2] = activeCall.timeStart + activeCall.duration;
-                VelocityStatic.dequeue(element, queue_2);
+            if (queue !== false) {
+                data_1.lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration);
+                VelocityStatic.dequeue(element, queue);
             }
             /************************
              Cleanup
@@ -2257,10 +2257,11 @@ var VelocityStatic;
         } else if (animation.next) {
             animation.next.prev = animation.prev;
         }
-        if (animation.queue !== false) {
+        var queue = getValue(animation.queue, animation.options.queue, VelocityStatic.defaults.queue);
+        if (queue !== false) {
             var data_6 = Data(animation.element);
             if (data_6) {
-                data_6.lastAnimationList[animation.queue] = animation;
+                data_6.lastAnimationList[queue] = animation;
                 animation.next = animation.prev = undefined;
             }
         }
@@ -2723,7 +2724,7 @@ var VelocityStatic;
                     VelocityStatic.freeAnimationCall(activeCall);
                     return "continue";
                 }
-                var timeStart = activeCall.timeStart, paused = activeCall.paused, delay = activeCall.delay, started = activeCall.started, callbacks = activeCall.callbacks, firstTick = !timeStart;
+                var timeStart = activeCall.timeStart, options = activeCall.options, paused = activeCall.paused, delay = getValue(activeCall.delay, options.delay), started = activeCall.started, firstTick = !timeStart;
                 /* If timeStart is undefined, then this is the first time that this call has been processed by tick().
                  We assign timeStart now so that its value is as close to the real animation start time as possible.
                  (Conversely, had timeStart been defined when this call was added to Velocity.State.calls, the delay
@@ -2733,10 +2734,10 @@ var VelocityStatic;
                  first tick iteration isn't wasted by animating at 0% tween completion, which would produce the
                  same style value as the element's current value. */
                 if (firstTick) {
-                    var queue_3 = activeCall.queue;
+                    var queue_1 = getValue(activeCall.queue, options.queue);
                     timeStart = timeCurrent - deltaTime;
-                    if (queue_3 !== false) {
-                        timeStart = Math.max(timeStart, data_7.lastFinishList[queue_3] || 0);
+                    if (queue_1 !== false) {
+                        timeStart = Math.max(timeStart, data_7.lastFinishList[queue_1] || 0);
                     }
                     activeCall.timeStart = timeStart;
                 }
@@ -2786,24 +2787,24 @@ var VelocityStatic;
                         activeCall.visibility = false;
                     }
                     /* The begin callback is fired once per call -- not once per element -- and is passed the full raw DOM element set as both its context and its first argument. */
-                    if (callbacks && callbacks.started++ === 0) {
-                        callbacks.first = activeCall;
-                        if (callbacks.begin) {
+                    if (options && options._started++ === 0) {
+                        options._first = activeCall;
+                        if (options.begin) {
                             /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
                             try {
                                 var elements = activeCall.elements;
-                                callbacks.begin.call(elements, elements, activeCall);
+                                options.begin.call(elements, elements, activeCall);
                             } catch (error) {
                                 setTimeout(function() {
                                     throw error;
                                 }, 1);
                             }
                             // Only called once, even if reversed or repeated
-                            callbacks.begin = undefined;
+                            options.begin = undefined;
                         }
                     }
                 }
-                if (callbacks && callbacks.first === activeCall && callbacks.progress) {
+                if (options && options._first === activeCall && options.progress) {
                     activeCall.nextProgress = undefined;
                     if (lastProgress) {
                         lastProgress.nextProgress = lastProgress = activeCall;
@@ -2814,7 +2815,7 @@ var VelocityStatic;
                 /* The tween's completion percentage is relative to the tween's start time, not the tween's start value
                  (which would result in unpredictable tween durations since JavaScript's timers are not particularly accurate).
                  Accordingly, we ensure that percentComplete does not exceed 1. */
-                var tweens = activeCall.tweens, millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, property = void 0, transformPropertyExists = false, percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / activeCall.duration, 1);
+                var tweens = activeCall.tweens, millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, property = void 0, transformPropertyExists = false, percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration), 1);
                 if (percentComplete === 1) {
                     activeCall.nextComplete = undefined;
                     if (lastComplete) {
@@ -2826,11 +2827,12 @@ var VelocityStatic;
                 /************************
                  Property Iteration
                  ************************/
+                var activeEasing = getValue(activeCall.easing, options.easing, VelocityStatic.defaults.easing);
                 /* For every element, iterate through each property. */
                 for (property in tweens) {
                     var currentValue = void 0, tween = tweens[property], /* Easing can either be a pre-genereated function or a string that references a pre-registered easing
                      on the Easings object. In either case, return the appropriate easing *function*. */
-                    easing = isString(tween.easing) ? VelocityStatic.Easings[tween.easing] : tween.easing;
+                    easing = tween.easing ? isString(tween.easing) ? VelocityStatic.Easings[tween.easing] : tween.easing : activeEasing;
                     /******************************
                      Current Value Calculation
                      ******************************/
@@ -2900,7 +2902,7 @@ var VelocityStatic;
                      ****************/
                     /* If mobileHA is enabled, set the translate3d transform to null to force hardware acceleration.
                      It's safe to override this property since Velocity doesn't actually support its animation (hooks are used in its place). */
-                    if (activeCall.mobileHA) {
+                    if (getValue(activeCall.mobileHA, options.mobileHA, VelocityStatic.defaults.mobileHA)) {
                         /* Don't set the null transform hack if we've already done so. */
                         if (data_7.transformCache.translate3d === undefined) {
                             /* All entries on the transformCache object are later concatenated into a single transform string via flushTransformCache(). */
@@ -2921,8 +2923,9 @@ var VelocityStatic;
             // Progress callback
             for (activeCall = firstProgress; activeCall; activeCall = nextCall) {
                 nextCall = activeCall.nextProgress;
+                var options = activeCall.options;
                 /* Pass the elements and the timing data (percentComplete, msRemaining, timeStart, tweenDummyValue) into the progress callback. */
-                activeCall.callbacks.progress.call(activeCall.elements, activeCall.elements, activeCall.percentComplete, Math.max(0, activeCall.timeStart + activeCall.duration - timeCurrent), activeCall.timeStart, (activeCall.tweens["tween"] || {}).currentValue, activeCall);
+                activeCall.options.progress.call(activeCall.elements, activeCall.elements, activeCall.percentComplete, Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, VelocityStatic.defaults.duration) - timeCurrent), activeCall.timeStart, (activeCall.tweens["tween"] || {}).currentValue, activeCall);
             }
             // Complete animations, including complete callback or looping
             for (activeCall = firstComplete; activeCall; activeCall = nextCall) {
@@ -2973,7 +2976,56 @@ var VelocityStatic;
      * animations so that the start and end values are correct
      */
     function expandTween(activeCall) {
-        var elements = activeCall.elements, elementsLength = elements.length, element = activeCall.element, elementArrayIndex = elements.indexOf(element);
+        var elements = activeCall.elements, options = activeCall.options, elementsLength = elements.length, element = activeCall.element, elementArrayIndex = elements.indexOf(element);
+        /***************************
+         Tween Data Calculation
+         ***************************/
+        /* This function parses property data and defaults endValue, easing, and startValue as appropriate. */
+        /* Property map values can either take the form of 1) a single value representing the end value,
+         or 2) an array in the form of [ endValue, [, easing] [, startValue] ].
+         The optional third parameter is a forcefed startValue to be used instead of querying the DOM for
+         the element's current value. Read Velocity's docmentation to learn more about forcefeeding: VelocityJS.org/#forcefeeding */
+        function parsePropertyValue(valueData, skipResolvingEasing) {
+            var endValue, easing, startValue;
+            /* If we have a function as the main argument then resolve it first, in case it returns an array that needs to be split */
+            if (isFunction(valueData)) {
+                valueData = valueData.call(element, elementArrayIndex, elementsLength);
+            }
+            /* Handle the array format, which can be structured as one of three potential overloads:
+             A) [ endValue, easing, startValue ], B) [ endValue, easing ], or C) [ endValue, startValue ] */
+            if (Array.isArray(valueData)) {
+                /* endValue is always the first item in the array. Don't bother validating endValue's value now
+                 since the ensuing property cycling logic does that. */
+                endValue = valueData[0];
+                /* Two-item array format: If the second item is a number, function, or hex string, treat it as a
+                 start value since easings can only be non-hex strings or arrays. */
+                if (!Array.isArray(valueData[1]) && /^[\d-]/.test(valueData[1]) || isFunction(valueData[1]) || VelocityStatic.CSS.RegEx.isHex.test(valueData[1])) {
+                    startValue = valueData[1];
+                } else if (isString(valueData[1]) && !VelocityStatic.CSS.RegEx.isHex.test(valueData[1]) && VelocityStatic.Easings[valueData[1]] || Array.isArray(valueData[1])) {
+                    easing = skipResolvingEasing ? valueData[1] : validateEasing(valueData[1], getValue(activeCall.duration, options.duration));
+                    /* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
+                    startValue = valueData[2];
+                } else {
+                    startValue = valueData[1] || valueData[2];
+                }
+            } else {
+                endValue = valueData;
+            }
+            /* Default to the call's easing if a per-property easing type was not defined. */
+            if (!skipResolvingEasing) {
+                easing = getValue(easing, activeCall.easing, options.easing, VelocityStatic.defaults.easing);
+            }
+            /* If functions were passed in as values, pass the function the current element as its context,
+             plus the element's index and the element set's size as arguments. Then, assign the returned value. */
+            if (isFunction(endValue)) {
+                endValue = endValue.call(element, elementArrayIndex, elementsLength);
+            }
+            if (isFunction(startValue)) {
+                startValue = startValue.call(element, elementArrayIndex, elementsLength);
+            }
+            /* Allow startValue to be left as undefined to indicate to the ensuing code that its value was not forcefed. */
+            return [ endValue || 0, easing, startValue ];
+        }
         VelocityStatic.State.firstNew = activeCall.next;
         /* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
         if (isNode(element)) {
@@ -3154,57 +3206,9 @@ var VelocityStatic;
             /* The per-element isAnimating flag is used to indicate whether it's safe (i.e. the data isn't stale)
              to transfer over end values to use as start values. If it's set to true and there is a previous
              Velocity call to pull values from, do so. */
-            if (data_8 && data_8.isAnimating && activeCall.queue !== false) {
-                lastAnimation = data_8.lastAnimationList[activeCall.queue];
-            }
-            /***************************
-             Tween Data Calculation
-             ***************************/
-            /* This function parses property data and defaults endValue, easing, and startValue as appropriate. */
-            /* Property map values can either take the form of 1) a single value representing the end value,
-             or 2) an array in the form of [ endValue, [, easing] [, startValue] ].
-             The optional third parameter is a forcefed startValue to be used instead of querying the DOM for
-             the element's current value. Read Velocity's docmentation to learn more about forcefeeding: VelocityJS.org/#forcefeeding */
-            function parsePropertyValue(valueData, skipResolvingEasing) {
-                var endValue, easing, startValue;
-                /* If we have a function as the main argument then resolve it first, in case it returns an array that needs to be split */
-                if (isFunction(valueData)) {
-                    valueData = valueData.call(element, elementArrayIndex, elementsLength);
-                }
-                /* Handle the array format, which can be structured as one of three potential overloads:
-                 A) [ endValue, easing, startValue ], B) [ endValue, easing ], or C) [ endValue, startValue ] */
-                if (Array.isArray(valueData)) {
-                    /* endValue is always the first item in the array. Don't bother validating endValue's value now
-                     since the ensuing property cycling logic does that. */
-                    endValue = valueData[0];
-                    /* Two-item array format: If the second item is a number, function, or hex string, treat it as a
-                     start value since easings can only be non-hex strings or arrays. */
-                    if (!Array.isArray(valueData[1]) && /^[\d-]/.test(valueData[1]) || isFunction(valueData[1]) || VelocityStatic.CSS.RegEx.isHex.test(valueData[1])) {
-                        startValue = valueData[1];
-                    } else if (isString(valueData[1]) && !VelocityStatic.CSS.RegEx.isHex.test(valueData[1]) && VelocityStatic.Easings[valueData[1]] || Array.isArray(valueData[1])) {
-                        easing = skipResolvingEasing ? valueData[1] : validateEasing(valueData[1], activeCall.duration);
-                        /* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
-                        startValue = valueData[2];
-                    } else {
-                        startValue = valueData[1] || valueData[2];
-                    }
-                } else {
-                    endValue = valueData;
-                }
-                /* Default to the call's easing if a per-property easing type was not defined. */
-                if (!skipResolvingEasing) {
-                    easing = easing || activeCall.easing;
-                }
-                /* If functions were passed in as values, pass the function the current element as its context,
-                 plus the element's index and the element set's size as arguments. Then, assign the returned value. */
-                if (isFunction(endValue)) {
-                    endValue = endValue.call(element, elementArrayIndex, elementsLength);
-                }
-                if (isFunction(startValue)) {
-                    startValue = startValue.call(element, elementArrayIndex, elementsLength);
-                }
-                /* Allow startValue to be left as undefined to indicate to the ensuing code that its value was not forcefed. */
-                return [ endValue || 0, easing, startValue ];
+            var queue_2 = getValue(activeCall.queue, options.queue, VelocityStatic.defaults.queue);
+            if (data_8 && data_8.isAnimating && queue_2 !== false) {
+                lastAnimation = data_8.lastAnimationList[queue_2];
             }
             /* Create a tween out of each property, and append its associated data to tweensContainer. */
             if (propertiesMap) {
@@ -3721,8 +3725,8 @@ var VelocityStatic;
              *****************/
             if (data_8) {
                 /* Store the tweensContainer and options if we're working on the default effects queue, so that they can be used by the reverse or repeat commands. */
-                if (activeCall.queue !== false) {
-                    data_8.lastAnimationList[activeCall.queue] = activeCall;
+                if (queue_2 !== false) {
+                    data_8.lastAnimationList[queue_2] = activeCall;
                 }
                 /* Switch on the element's animating flag. */
                 data_8.isAnimating = true;
@@ -3870,6 +3874,8 @@ function validateEasing(value, duration) {
 function validateLoop(value) {
     if (value === false) {
         return 0;
+    } else if (value === true) {
+        return true;
     } else {
         var parsed = parseInt(value, 10);
         if (!isNaN(parsed) && parsed >= 0) {
@@ -3940,6 +3946,8 @@ function validateQueue(value) {
 function validateRepeat(value) {
     if (value === false) {
         return 0;
+    } else if (value === true) {
+        return true;
     } else {
         var parsed = parseInt(value, 10);
         if (!isNaN(parsed) && parsed >= 0) {
@@ -4047,6 +4055,10 @@ function VelocityFn() {
      * handling after finishing.
      */
     propertiesMap, /**
+     * Options supplied, this will be mapped and validated into
+     * <code>options</code>.
+     */
+    optionsMap, /**
      * The options for this set of animations.
      */
     options, /**
@@ -4063,6 +4075,7 @@ function VelocityFn() {
     promise, // Used when the animation is finished
     resolver, // Used when there was an issue with one or more of the Velocity arguments
     rejecter;
+    //console.log("Velocity", arguments)
     // First get the elements, and the animations connected to the last call if
     // this is chained.
     if (isUtility) {
@@ -4073,37 +4086,117 @@ function VelocityFn() {
     }
     // Next get the propertiesMap and options.
     if (syntacticSugar) {
-        propertiesMap = args0.properties || args0.p;
-        options = args0.options || args0.o;
+        propertiesMap = getValue(args0.properties, args0.p);
+        if (!isString(propertiesMap)) {
+            var opts = getValue(args0.options, args0.o);
+            options = {};
+            if (isPlainObject(opts)) {
+                optionsMap = opts;
+            }
+        }
     } else {
         propertiesMap = arguments[argumentIndex++];
-        if (isPlainObject(arguments[argumentIndex])) {
-            options = arguments[argumentIndex];
-        } else {
+        if (!isString(propertiesMap)) {
+            var opts = arguments[argumentIndex];
             options = {};
+            if (isPlainObject(opts)) {
+                optionsMap = opts;
+            } else {
+                var offset = 0, duration = validateDuration(arguments[argumentIndex + offset]);
+                if (duration !== undefined) {
+                    offset++;
+                    options.duration = duration;
+                }
+                var easing = validateEasing(arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration));
+                if (easing !== undefined) {
+                    offset++;
+                    options.easing = easing;
+                }
+                var complete = validateComplete(arguments[argumentIndex + offset]);
+                if (complete !== undefined) {
+                    offset++;
+                    options.complete = complete;
+                }
+            }
         }
-        var offset = 1, duration = validateDuration(arguments[argumentIndex + offset]);
-        if (duration !== undefined) {
-            offset++;
-            options.duration = duration;
+    }
+    if (options) {
+        defineProperty(options, "_started", 0);
+        defineProperty(options, "_completed", 0);
+        defineProperty(options, "_total", 0);
+    }
+    if (optionsMap) {
+        // In mock mode, all animations are forced to 1ms so that they occur
+        // immediately upon the next rAF tick. Alternatively, a multiplier can
+        // be passed in to time remap all delays and durations.
+        if (VelocityStatic.mock === true) {
+            options.delay = 0;
+            options.duration = 1;
+        } else {
+            options.duration = getValue(validateDuration(optionsMap.duration), defaults.duration);
+            options.delay = getValue(validateDuration(optionsMap.delay), defaults.delay);
+            // TODO: Put mock in the main tick loop - so we can change the speed
+            if (VelocityStatic.mock) {
+                var mock = parseFloat(VelocityStatic.mock) || 1;
+                options.delay *= mock;
+                options.duration *= mock;
+            }
         }
-        var easing = validateEasing(arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration));
-        if (easing !== undefined) {
-            offset++;
-            options.easing = easing;
+        // Need the extra fallback here in case it supplies an invalid
+        // easing that we need to overrride with the default.
+        options.easing = validateEasing(getValue(optionsMap.easing, defaults.easing), options.duration) || validateEasing(defaults.easing, options.duration);
+        options.loop = validateLoop(optionsMap.loop) || 0;
+        options.repeat = validateRepeat(optionsMap.repeat) || 0;
+        options.repeatAgain = validateRepeat(optionsMap.repeat) || 0;
+        options.queue = getValue(validateQueue(optionsMap.queue), defaults.queue);
+        if (optionsMap.mobileHA && !VelocityStatic.State.isGingerbread) {
+            /* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack)
+             on animating elements. HA is removed from the element at the completion of its animation. */
+            /* Note: Android Gingerbread doesn't support HA. If a null transform hack (mobileHA) is in fact set, it will prevent other tranform subproperties from taking effect. */
+            /* Note: You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
+            options.mobileHA = true;
         }
-        var complete = validateComplete(arguments[argumentIndex + offset]);
-        if (complete !== undefined) {
-            offset++;
-            options.complete = complete;
+        // TODO: Allow functional options for different options per element
+        var optionsBegin = validateBegin(optionsMap.begin), optionsComplete = validateComplete(optionsMap.complete), optionsProgress = validateProgress(optionsMap.progress);
+        if (optionsBegin !== undefined) {
+            options.begin = optionsBegin;
+        }
+        if (optionsComplete !== undefined) {
+            options.complete = optionsComplete;
+        }
+        if (optionsProgress !== undefined) {
+            options.progress = optionsProgress;
         }
     }
     // Create the promise if supported and wanted.
-    if (Promise && getValue(options && options.promise, defaults.promise)) {
-        promise = new Promise(function(_resolve, _reject) {
-            resolver = _resolve;
-            rejecter = _reject;
+    if (Promise && getValue(optionsMap && optionsMap.promise, defaults.promise)) {
+        promise = new Promise(function(resolve, reject) {
+            rejecter = reject;
+            if (options) {
+                defineProperty(options, "_resolver", function(args) {
+                    // IMPORTANT:
+                    // If a resolver tries to run on a Promise then it will
+                    // wait until that Promise resolves - but in this case we're
+                    // running on our own Promise, so need to make sure it's not
+                    // seen as one. Setting these values to
+                    // <code>undefined</code> for the duration of the resolve.
+                    // Due to being an async call, they should be back to
+                    // "normal" before the <vode>.then()</code> function gets
+                    // called.
+                    var _then = args.then;
+                    if (_then) {
+                        args.then = undefined;
+                        resolve(args);
+                        args.then = _then;
+                    } else {
+                        resolve(args);
+                    }
+                });
+            }
         });
+        if (options) {
+            defineProperty(options, "_promise", promise);
+        }
     }
     // Make sure the elements are actually a usable array of some sort.
     elements = sanitizeElements(elements);
@@ -4146,14 +4239,15 @@ function VelocityFn() {
                 /* Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a
                      single element will cause any calls that contain tweens for that element to be paused/resumed
                      as well. */
-                var queueName_1 = options === undefined ? "" : options, activeCall_1 = VelocityStatic.State.first, nextCall_1;
+                var queueName_1 = getValue(validateQueue(options), defaults.queue), activeCall_1 = VelocityStatic.State.first, nextCall_1;
                 /* Iterate through all calls and pause any that contain any of our elements */
                 for (;activeCall_1; activeCall_1 = nextCall_1) {
                     nextCall_1 = activeCall_1.next;
                     if (activeCall_1.paused !== true) {
                         /* Iterate through the active call's targeted elements. */
                         activeCall_1.elements.some(function(activeElement) {
-                            if (queueName_1 !== true && activeCall_1.queue !== queueName_1 && !(options === undefined && activeCall_1.queue === false)) {
+                            var queue = getValue(activeCall_1.queue, activeCall_1.options.queue);
+                            if (queueName_1 !== true && queue !== queueName_1 && !(options === undefined && queue === false)) {
                                 return true;
                             }
                             if (elements.indexOf(activeElement) >= 0) {
@@ -4175,14 +4269,15 @@ function VelocityFn() {
                      single element will cause any calls that containt tweens for that element to be paused/resumed
                      as well. */
                 /* Iterate through all calls and pause any that contain any of our elements */
-                var queueName_2 = options === undefined ? "" : options, activeCall_2 = VelocityStatic.State.first, nextCall_2;
+                var queueName_2 = getValue(validateQueue(options), defaults.queue), activeCall_2 = VelocityStatic.State.first, nextCall_2;
                 /* Iterate through all calls and pause any that contain any of our elements */
                 for (;activeCall_2; activeCall_2 = nextCall_2) {
                     nextCall_2 = activeCall_2.next;
                     if (activeCall_2.paused !== false) {
                         /* Iterate through the active call's targeted elements. */
                         activeCall_2.elements.some(function(activeElement) {
-                            if (queueName_2 !== true && activeCall_2.queue !== queueName_2 && !(options === undefined && activeCall_2.queue === false)) {
+                            var queue = getValue(activeCall_2.queue, activeCall_2.options.queue);
+                            if (queueName_2 !== true && queue !== queueName_2 && !(options === undefined && queue === false)) {
                                 return true;
                             }
                             if (elements.indexOf(activeElement) >= 0) {
@@ -4257,10 +4352,10 @@ function VelocityFn() {
                             var animation = void 0;
                             /* Iterate through the items in the element's queue. */
                             while (animation = VelocityStatic.dequeue(element, isString(options) ? options : undefined, true)) {
-                                var callbacks_1 = animation.callbacks;
-                                if (callbacks_1.resolver) {
-                                    callbacks_1.resolver(animation.elements);
-                                    callbacks_1.resolver = undefined;
+                                var resolver_1 = options._resolver;
+                                if (resolver_1) {
+                                    resolver_1(animation.elements);
+                                    delete options._resolver;
                                 }
                             }
                         }
@@ -4285,7 +4380,7 @@ function VelocityFn() {
                 callsToStop.forEach(function(activeCall) {
                     VelocityStatic.completeCall(activeCall, true);
                 });
-                if (promise) {
+                if (promise && resolver) {
                     /* Immediately resolve the promise associated with this stop call since stop runs synchronously. */
                     resolver(elements);
                 }
@@ -4354,10 +4449,6 @@ function VelocityFn() {
      Part I: Pre-Queueing
      *************************/
     /*********************************
-     Option: Duration
-     *********************************/
-    var optionsDuration = getValue(validateDuration(options.duration), defaults.duration), optionsDelay = getValue(validateDuration(options.delay), defaults.delay);
-    /*********************************
      Option: Display & Visibility
      *********************************/
     /* Refer to Velocity's documentation (VelocityJS.org/#displayAndVisibility) for a description of the display and visibility options' behavior. */
@@ -4372,28 +4463,6 @@ function VelocityFn() {
     if (options.visibility !== undefined && options.visibility !== null) {
         optionsVisibility = options.visibility.toString().toLowerCase();
     }
-    /************************
-     Global Option: Mock
-     ************************/
-    /* In mock mode, all animations are forced to 1ms so that they occur immediately upon the next rAF tick.
-     Alternatively, a multiplier can be passed in to time remap all delays and durations. */
-    if (VelocityStatic.mock === true) {
-        optionsDelay = 0;
-        optionsDuration = 1;
-    } else if (VelocityStatic.mock) {
-        // TODO: Put this in the main tick loop - so we can change the speed
-        var mock = parseFloat(VelocityStatic.mock) || 1;
-        optionsDelay *= mock;
-        optionsDuration *= mock;
-    }
-    /**********************
-     Option: mobileHA
-     **********************/
-    /* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack)
-     on animating elements. HA is removed from the element at the completion of its animation. */
-    /* Note: Android Gingerbread doesn't support HA. If a null transform hack (mobileHA) is in fact set, it will prevent other tranform subproperties from taking effect. */
-    /* Note: You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
-    var optionsMobileHA = options.mobileHA && VelocityStatic.State.isMobile && !VelocityStatic.State.isGingerbread;
     /***********************
      Part II: Queueing
      ***********************/
@@ -4401,73 +4470,39 @@ function VelocityFn() {
      In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
     /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
      the call array is pushed to VelocityStatic.State.calls for live processing by the requestAnimationFrame tick. */
-    var elementsCount = 0, callbacks = {
-        started: 0,
-        completed: 0
-    }, // TODO: Don't make such a large object on every call - optimise it down, but make sure things can handle an "undefined" value - maybe have shared options to go with per-animation options
-    rootAnimation = {
+    var rootAnimation = {
         prev: undefined,
         next: undefined,
-        //nextProgress: undefined,
-        //nextComplete: undefined,
-        //paused: false,
+        options: options,
         started: false,
         percentComplete: 0,
-        callbacks: callbacks,
-        delay: optionsDelay,
-        display: optionsDisplay,
-        duration: optionsDuration,
-        easing: validateEasing(getValue(options.easing, defaults.easing), optionsDuration) || validateEasing(defaults.easing, optionsDuration),
         //element: element,
         elements: elements,
         ellapsedTime: 0,
-        loop: validateLoop(options.loop) || 0,
-        mobileHA: optionsMobileHA,
         properties: propertiesMap,
-        queue: getValue(validateQueue(options.queue), defaults.queue),
-        repeat: validateRepeat(options.repeat) || 0,
-        repeatAgain: validateRepeat(options.repeat) || 0,
         timeStart: 0,
-        //tweens: {},
+        display: optionsDisplay,
         visibility: optionsVisibility
     };
-    // TODO: Allow functional options for different options per element
-    var optionsBegin = validateBegin(options && options.begin), optionsComplete = validateComplete(options && options.complete), optionsProgress = validateProgress(options && options.progress);
-    if (optionsBegin !== undefined) {
-        callbacks.begin = optionsBegin;
-    }
-    if (optionsComplete !== undefined) {
-        callbacks.complete = optionsComplete;
-    }
-    if (optionsProgress !== undefined) {
-        callbacks.progress = optionsProgress;
-    }
-    Object.defineProperty(callbacks, "resolver", {
-        get: resolver
-    });
     animations = [];
     for (var i = 0, length_1 = elementsLength; i < length_1; i++) {
         var element = elements[i];
         if (isNode(element)) {
-            var data = Data(element), animation = Object.assign({
+            var data = Data(element) || VelocityStatic.init(element), animation = Object.assign({
                 element: element,
                 tweens: {}
             }, rootAnimation);
-            if (data === undefined) {
-                data = VelocityStatic.init(element);
-            }
-            elementsCount++;
+            options._total++;
             // TODO: Remove this and provide better tests
             data.opts = {
                 duration: animation.duration,
                 easing: animation.easing,
-                complete: callbacks.complete
+                complete: options.complete
             };
             animations.push(animation);
             VelocityStatic.queue(element, animation, animation.queue);
         }
     }
-    callbacks.total = elementsCount;
     /* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */
     if (VelocityStatic.State.isTicking === false) {
         VelocityStatic.State.isTicking = true;
@@ -4528,6 +4563,13 @@ VelocityStatic.CSS.Hooks.register();
 VelocityStatic.CSS.Normalizations.register();
 
 /******************
+ Unsupported
+ ******************/
+if (IE <= 8) {
+    throw new Error("VelocityJS cannot run on Internet Explorer 8 or earlier");
+}
+
+/******************
  Frameworks
  ******************/
 // Global call
@@ -4546,13 +4588,6 @@ if (window === global) {
     defineProperty(Element && Element.prototype, "velocity", VelocityFn);
     defineProperty(NodeList && NodeList.prototype, "velocity", VelocityFn);
     defineProperty(HTMLCollection && HTMLCollection.prototype, "velocity", VelocityFn);
-}
-
-/******************
- Unsupported
- ******************/
-if (IE <= 8) {
-    throw new Error("VelocityJS cannot run on Internet Explorer 8 or earlier");
 }
 
 /******************

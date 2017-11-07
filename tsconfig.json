@@ -1,5 +1,8 @@
 {
 	"compilerOptions": {
+		"allowUnreachableCode": true,
+		"allowUnusedLabels": true,
+		"alwaysStrict": false,
 		"forceConsistentCasingInFileNames": true,
 		"noEmitOnError": true,
 		"noImplicitAny": false,

@@ -17,18 +17,19 @@ namespace VelocityStatic {
 		 Option: Loop || Repeat
 		 ****************************/
 
-		let isLoop = activeCall.loop,
-			isRepeat = activeCall.repeat;
+		let options = activeCall.options,
+			queue = getValue(activeCall.queue, options.queue, defaults.queue),
+			isLoop = getValue(activeCall.loop, options.loop, defaults.loop),
+			isRepeat = getValue(activeCall.repeat, options.repeat, defaults.repeat);
 
 		if (!isStopped && (isLoop || isRepeat)) {
-			let tweens = activeCall.tweens,
-				queue = activeCall.queue;
+			let tweens = activeCall.tweens;
 
-			if (isRepeat && activeCall.repeat !== true) {
-				activeCall.repeat--;
-			} else if (isLoop && activeCall.loop !== true) {
-				activeCall.loop--;
-				activeCall.repeat = activeCall.repeatAgain;
+			if (isRepeat && isRepeat !== true) {
+				activeCall.repeat = isRepeat - 1;
+			} else if (isLoop && isLoop !== true) {
+				activeCall.loop = isLoop - 1;
+				activeCall.repeat = getValue(activeCall.repeatAgain, options.repeatAgain, defaults.repeatAgain);
 			}
 			if (isLoop) {
 				for (let propertyName in tweens) {
@@ -38,7 +39,7 @@ namespace VelocityStatic {
 				}
 			}
 			if (queue !== false) {
-				Data(activeCall.element).lastFinishList[queue] = activeCall.timeStart + activeCall.duration;
+				Data(activeCall.element).lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, defaults.duration);
 			}
 			activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
 			activeCall.started = false;
@@ -66,7 +67,7 @@ namespace VelocityStatic {
 			 an element's CSS values and thereby cause Velocity's cached value data to go stale. To detect if a queue entry was initiated by Velocity,
 			 we check for the existence of our special Velocity.queueEntryFlag declaration, which minifiers won't rename since the flag
 			 is assigned to jQuery's global $ object and thus exists out of Velocity's own scope. */
-			if (isStopped && data && (activeCall.queue === false || data.queueList[activeCall.queue])) {
+			if (isStopped && data && (queue === false || data.queueList[queue])) {
 				/* The element may have been deleted. Ensure that its data cache still exists before acting on it. */
 				data.isAnimating = false;
 				/* Clear the element's rootPropertyValueCache, which will become stale. */
@@ -86,7 +87,7 @@ namespace VelocityStatic {
 				});
 
 				/* Mobile devices have hardware acceleration removed at the end of the animation in order to avoid hogging the GPU's memory. */
-				if (activeCall.mobileHA) {
+				if (getValue(activeCall.mobileHA, options.mobileHA, defaults.mobileHA)) {
 					transformHAPropertyExists = true;
 					delete data.transformCache.translate3d;
 				}
@@ -106,20 +107,20 @@ namespace VelocityStatic {
 
 			/* Complete is fired once per call (not once per element) and is passed the full raw DOM element set as both its context and its first argument. */
 			/* Note: Callbacks aren't fired when calls are manually stopped (via Velocity("stop"). */
-			let callbacks = activeCall.callbacks;
+			if (options && ++options._completed === options._total) {
+				let complete = options.complete;
 
-			if (callbacks && ++callbacks.completed === callbacks.total) {
-				if (!isStopped && callbacks.complete) {
+				if (!isStopped && complete) {
 					/* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
 					try {
-						callbacks.complete.call(elements, elements, activeCall);
+						complete.call(elements, elements, activeCall);
 					} catch (error) {
 						setTimeout(function() {
 							throw error;
 						}, 1);
 					}
 					// Only called once, even if reversed or repeated
-					callbacks.complete = undefined;
+					delete options.complete;
 				}
 
 				/**********************
@@ -127,9 +128,11 @@ namespace VelocityStatic {
 				 **********************/
 
 				/* Note: Infinite loops don't return promises. */
-				if (callbacks.resolver) {
-					callbacks.resolver(elements);
-					callbacks.resolver = undefined;
+				let resolver = options._resolver;
+
+				if (resolver) {
+					resolver(elements);
+					delete options._resolver;
 				}
 			}
 
@@ -137,13 +140,11 @@ namespace VelocityStatic {
 			 Dequeueing
 			 ***************/
 
-			let queue = activeCall.queue;
-
 			/* Fire the next call in the queue so long as this call's queue wasn't set to false (to trigger a parallel animation),
 			 which would have already caused the next call to fire. Note: Even if the end of the animation queue has been reached,
 			 dequeue() must still be called in order to completely clear jQuery's animation queue. */
 			if (queue !== false) {
-				data.lastFinishList[queue] = activeCall.timeStart + activeCall.duration;
+				data.lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, defaults.duration);
 				dequeue(element, queue);
 			}
 

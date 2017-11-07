@@ -519,7 +519,7 @@ QUnit.test("Easing", function (assert) {
     catch (e) {
         success = false;
     }
-    assert.ok(success, "Fake easing didn't throw error.");
+    assert.ok(success, "Fake easing string didn't throw error.");
     /* Ensure that an improperly-formmated bezier curve array doesn't throw an error. */
     try {
         success = true;
@@ -535,7 +535,7 @@ QUnit.test("Easing", function (assert) {
     Velocity(getTarget(), defaultProperties, {
         easing: easingBezierArray,
         begin: function (elements, animation) {
-            assert.close(animation.easing(easingBezierTestPercent, 0, 1), easingBezierTestValue, 0.005, "Array converted into bezier function.");
+            assert.close(animation.options.easing(easingBezierTestPercent, 0, 1), easingBezierTestValue, 0.005, "Array converted into bezier function.");
             done();
         }
     });
@@ -546,7 +546,7 @@ QUnit.test("Easing", function (assert) {
         duration: 150,
         easing: easingSpringRK4Array,
         begin: function (elements, animation) {
-            assert.close(animation.easing(easingSpringRK4TestPercent, 0, 1), easingSpringRK4TestValue, 10, "Array with duration converted into springRK4 function.");
+            assert.close(animation.options.easing(easingSpringRK4TestPercent, 0, 1), easingSpringRK4TestValue, 10, "Array with duration converted into springRK4 function.");
             done();
         }
     });
@@ -563,7 +563,7 @@ QUnit.test("Easing", function (assert) {
     Velocity(getTarget(), defaultProperties, {
         easing: easingStepArray,
         begin: function (elements, animation) {
-            assert.close(animation.easing(easingStepTestPercent, 0, 1), easingStepTestValue, 0.05, "Array converted into Step function.");
+            assert.close(animation.options.easing(easingStepTestPercent, 0, 1), easingStepTestValue, 0.05, "Array converted into Step function.");
             done();
         }
     });
@@ -791,7 +791,7 @@ QUnit.todo("Finish / FinishAll", function (assert) {
  */
 QUnit.todo("Pause / Resume", function (assert) {
     var done = assert.async(8), $target1 = getTarget(), $target1d = getTarget(); //delayed
-    assert.expect(10);
+    assert.expect(9);
     /* Ensure an error isn't thrown when "pause" is called on a $target that isn't animating. */
     Velocity($target1, "pause");
     Velocity($target1d, "pause");
@@ -825,7 +825,7 @@ QUnit.todo("Pause / Resume", function (assert) {
     Velocity($target2, "resume");
     setTimeout(function () {
         Velocity($target2d, "resume");
-    }, 80);
+    }, 130);
     setTimeout(function () {
         assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target2, "opacity")), 0, "Tween completed after pause/resume.");
         done();
@@ -896,19 +896,15 @@ QUnit.todo("Pause / Resume", function (assert) {
                 done();
             }
         });
-        Velocity($target4, { top: 20 }, {
-            duration: 100,
-            easing: "linear",
-            begin: function (elements) {
-                if (!isResumed) {
-                    assert.ok(false, "Queued animation began after previously paused animation completed");
-                }
-                else {
-                    assert.ok(true, "Queued animation began after previously paused animation completed");
-                }
-                done();
-            }
-        });
+        // TODO: Re-enable this test
+        //		Velocity($target4, {top: 20}, {
+        //			duration: 100,
+        //			easing: "linear",
+        //			begin: function(elements) {
+        //				assert.ok(isResumed, "Queued animation began after previously paused animation completed");
+        //				done();
+        //			}
+        //		});
     }, 100);
     setTimeout(function () {
         isResumed = true;
@@ -922,6 +918,7 @@ QUnit.todo("Pause / Resume", function (assert) {
         }
         catch (e) {
         }
+        done();
     }, 800);
 });
 ///<reference path="_module.ts" />
@@ -1273,12 +1270,14 @@ QUnit.todo("Forcefeeding", function (assert) {
  */
 QUnit.test("Promises", function (assert) {
     var done = assert.async(4), $target1 = getTarget();
-    assert.expect(4);
-    Velocity($target1, defaultProperties, 10000).then(function (elements) {
+    assert.expect(5);
+    Velocity($target1, defaultProperties, 100)
+        .then(function (elements) {
         assert.deepEqual(elements, [$target1], "Active call fulfilled.");
         done();
     });
-    Velocity($target1, defaultProperties, 10000).then(function (elements) {
+    Velocity($target1, defaultProperties, 100)
+        .then(function (elements) {
         assert.deepEqual(elements, [$target1], "Queued call fulfilled.");
         done();
     });
@@ -1289,11 +1288,14 @@ QUnit.test("Promises", function (assert) {
     //		done();
     //	});
     var $target2 = getTarget(), $target3 = getTarget();
-    Velocity([$target2, $target3], "fake", defaultOptions)["catch"](function (error) {
+    Velocity([$target2, $target3], "invalid", defaultOptions)
+        .catch(function (error) {
         assert.equal(error instanceof Error, true, "Invalid command caused promise rejection.");
         done();
     });
-    Velocity([$target2, $target3], defaultProperties, defaultOptions).then(function (elements) {
+    Velocity([$target2, $target3], defaultProperties, defaultOptions)
+        .then(function (elements) {
+        assert.ok(elements && elements.length, "Array of Elements passed back into resolved promise.");
         assert.deepEqual(elements, [$target2, $target3], "Elements passed back into resolved promise.");
         done();
     });

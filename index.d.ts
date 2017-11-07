@@ -150,7 +150,7 @@ interface VelocityOptions {
 	 * 
 	 * @default 0
 	 */
-	loop?: false | number;
+	loop?: boolean | number;
 	mobileHA?: boolean;
 	progress?: VelocityProgress;
 	/**
@@ -184,7 +184,7 @@ interface VelocityOptions {
 	 * 
 	 * @default 0
 	 */
-	repeat?: false | number;
+	repeat?: boolean | number;
 	stagger?: string | number;
 
 	/**
@@ -213,6 +213,100 @@ interface VelocityOptions {
 	 * @default true
 	 */
 	cache?: boolean;
+}
+
+/**
+ * After correcting the options so they are usable internally, they will be of
+ * this type. The base VelocityOptions includes human readable and shortcuts,
+ * which this doesn't.
+ */
+interface StrictVelocityOptions extends VelocityOptions {
+	/**
+	 * Begin handler. Only the first element to check this callback gets to use
+	 * it. Cleared after calling
+	 * @private
+	 */
+	begin?: VelocityCallback;
+	/**
+	 * Complete handler (only the last element in a set gets this)
+	 * @private
+	 */
+	complete?: VelocityCallback;
+	/**
+	 * The amount of delay before this animation can start doing anything.
+	 */
+	delay?: number;
+	/**
+	 * The length of time this animation will run for.
+	 */
+	duration?: number;
+	/**
+	 * Easing for this animation while running.
+	 */
+	easing?: VelocityEasingFn;
+	/**
+	 * Loop, calls 2n-1 times reversing it each iteration
+	 */
+	loop?: true | number;
+	/**
+	 * TODO: Remove this so it's a normal property
+	 */
+	mobileHA?: boolean;
+	/**
+	 * Progress handler (only the last element in a set gets this)
+	 * @private
+	 */
+	progress?: VelocityProgress;
+	/**
+	 * Queue
+	 */
+	queue?: false | string;
+	/**
+	 * Repeat this number of times. If looped then each iteration of the loop
+	 * is actually repeated this number of times.
+	 */
+	repeat?: true | number;
+	/**
+	 * This is a cache of the repeat value. When looping and repeating work
+	 * together, the repeat is looped, so it needs to remember how many repeats
+	 * to perform for each loop.
+	 */
+	repeatAgain?: true | number;
+	//}
+	//
+	//interface ExtendedVelocityOptions extends StrictVelocityOptions {
+	/**
+	 * The first AnimationCall to get this - used for the progress callback.
+	 * @private
+	 */
+	_first?: AnimationCall;
+	/**
+	 * A saved copy of the Promise.
+	 * @private
+	 */
+	_promise?: Promise<HTMLorSVGElement[]>;
+	/**
+	 * The total number of AnimationCalls that are pointing at this.
+	 * @private
+	 */
+	_total?: number;
+	/**
+	 * The number of AnimationCalls that have started.
+	 * @private
+	 */
+	_started?: number;
+	/**
+	 * The number of AnimationCalls that have finished.
+	 * @private
+	 */
+	_completed?: number;
+	/**
+	 * This method is called at most once to signify that the animation has
+	 * completed. Currently a loop:true animation will never complete. This
+	 * allows .then(fn) to run (see Promise support).
+	 * @private
+	 */
+	_resolver?: (value?: HTMLorSVGElement[] | PromiseLike<HTMLorSVGElement[]>) => void;
 }
 
 /**
@@ -333,63 +427,7 @@ interface Tween {
 	rounding?: boolean[];
 }
 
-/**
- * @deprecated
- */
-interface TweensContainer {
-	/**
-	 * @deprecated
-	 */
-	element?: HTMLorSVGElement;
-	/**
-	 * @deprecated
-	 */
-	scroll?: Tween;
-	/**
-	 * @deprecated
-	 */
-	[key: string]: Tween | boolean | HTMLorSVGElement;
-}
-
-interface Callbacks {
-	/**
-	 * The first AnimationCall to get this - used for the progress callback.
-	 */
-	first: AnimationCall;
-	/**
-	 * The total number of AnimationCalls that are pointing at this.
-	 */
-	total: number;
-	/**
-	 * The number of AnimationCalls that have started.
-	 */
-	started: number;
-	/**
-	 * The number of AnimationCalls that have finished.
-	 */
-	completed: number;
-	/**
-	 * Begin handler. Only the first element to check this callback gets to use
-	 * it. Cleared after calling
-	 */
-	begin: VelocityCallback;
-	/**
-	 * Complete handler (only the last element in a set gets this)
-	 */
-	complete: VelocityCallback;
-	/**
-	 * Progress handler (only the last element in a set gets this)
-	 */
-	progress: VelocityProgress;
-	/**
-	 * This method is called at most once to signify that the animation has
-	 * completed. Currently a loop:true animation will never complete. This
-	 * allows .then(fn) to run (see Promise support).
-	 */
-	resolver: (value?: HTMLorSVGElement[] | PromiseLike<HTMLorSVGElement[]>) => void;
-}
-
-interface AnimationCall {
+interface AnimationCall extends StrictVelocityOptions {
 	/**
 	 * Used to store the next AnimationCell in this list.
 	 */
@@ -409,10 +447,6 @@ interface AnimationCall {
 	 * @private
 	 */
 	nextComplete?: AnimationCall;
-	/**
-	 * The callbacks associated with this AnimationCall.
-	 */
-	callbacks?: Callbacks;
 	/**
 	 * Properties to be tweened
 	 */
@@ -437,26 +471,14 @@ interface AnimationCall {
 	 */
 	elements?: HTMLorSVGElement[];
 	/**
-	 * The "fixed" options passed to this animation.
+	 * Shared options for the entire set of elements.
 	 */
-	//	options: VelocityOptions;
-	/**
-	 * Easing for this animation while running.
-	 */
-	easing?: VelocityEasingFn;
+	options?: StrictVelocityOptions;
 	/**
 	 * The time this animation started according to whichever clock we are
 	 * using.
 	 */
 	timeStart?: number;
-	/**
-	 * The amount of delay before this animation can start doing anything.
-	 */
-	delay?: number;
-	/**
-	 * The length of time this animation will run for.
-	 */
-	duration?: number;
 	/**
 	 * The pause state of this animation. If true it is paused, if false it was
 	 * paused and needs to be resumed, and if undefined / null then not either.
@@ -487,27 +509,6 @@ interface AnimationCall {
 	 * @deprecated
 	 */
 	visibility?: boolean | string;
-	/**
-	 * TODO: Remove this so it's a normal property
-	 */
-	mobileHA?: boolean;
-	/**
-	 * Queue
-	 */
-	queue?: false | string;
-	/**
-	 * Loop, calls 2n-1 times reversing it each iteration
-	 */
-	loop?: true | number;
-	/**
-	 * Repeat this number of times. If looped then each iteration of the loop
-	 * is actually repeated this number of times.
-	 */
-	repeat?: true | number;
-	/**
-	 * Private store of the repeat value used for looping
-	 */
-	repeatAgain?: true | number;
 }
 
 interface Velocity {

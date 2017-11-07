@@ -133,9 +133,11 @@ function validateEasing(value: VelocityEasingType, duration: number): VelocityEa
  * Validate a <code>loop</code> option.
  * @private
  */
-function validateLoop(value: number | false): number {
+function validateLoop(value: number | boolean): number | true {
 	if (value === false) {
 		return 0;
+	} else if (value === true) {
+		return true;
 	} else {
 		let parsed = parseInt(value as any, 10);
 
@@ -204,9 +206,11 @@ function validateQueue(value: string | false): string | false {
  * Validate a <code>repeat</code> option.
  * @private
  */
-function validateRepeat(value: number | false): number {
+function validateRepeat(value: number | boolean): number | true {
 	if (value === false) {
 		return 0;
+	} else if (value === true) {
+		return true;
 	} else {
 		let parsed = parseInt(value as any, 10);
 
