@@ -1,16 +1,13 @@
 ///<reference path="complete.ts" />
 ///<reference path="css/_all.d.ts" />
 ///<reference path="easing/_all.d.ts" />
+///<reference path="actions/_all.d.ts" />
 ///<reference path="data.ts" />
 ///<reference path="debug.ts" />
 ///<reference path="defaults.ts" />
 ///<reference path="hook.ts" />
 ///<reference path="init.ts" />
 ///<reference path="mock.ts" />
-///<reference path="actions/defaultAction.ts" />
-///<reference path="actions/stop.ts" />
-///<reference path="actions/pauseResume.ts" />
-///<reference path="actions/finishAll.ts" />
 ///<reference path="pauseAll.ts" />
 ///<reference path="queue.ts" />
 ///<reference path="redirects.ts" />
