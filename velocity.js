@@ -4355,7 +4355,7 @@ function VelocityFn() {
     // Next get the propertiesMap and options.
     if (syntacticSugar) {
         propertiesMap = getValue(args0.properties, args0.p);
-        if (!isString(propertiesMap)) {
+        if (isPlainObject(propertiesMap)) {
             var opts = getValue(args0.options, args0.o);
             options = {};
             if (isPlainObject(opts)) {
@@ -4364,7 +4364,7 @@ function VelocityFn() {
         }
     } else {
         propertiesMap = arguments[argumentIndex++];
-        if (!isString(propertiesMap)) {
+        if (isPlainObject(propertiesMap)) {
             var opts = arguments[argumentIndex];
             options = {};
             if (isPlainObject(opts)) {

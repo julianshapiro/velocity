@@ -138,7 +138,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 	// Next get the propertiesMap and options.
 	if (syntacticSugar) {
 		propertiesMap = getValue(args0.properties, args0.p);
-		if (!isString(propertiesMap)) {
+		if (isPlainObject(propertiesMap)) {
 			let opts = getValue(args0.options, args0.o);
 
 			options = {};
@@ -148,7 +148,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 		}
 	} else {
 		propertiesMap = arguments[argumentIndex++] as string | VelocityProperties;
-		if (!isString(propertiesMap)) {
+		if (isPlainObject(propertiesMap)) {
 			let opts = arguments[argumentIndex];
 
 			options = {};
