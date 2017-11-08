@@ -16,10 +16,10 @@ namespace VelocityStatic {
 	function animate(animation: AnimationCall) {
 		let prev = State.last;
 
-		animation.prev = prev;
-		animation.next = undefined;
+		animation._prev = prev;
+		animation._next = undefined;
 		if (prev) {
-			prev.next = animation;
+			prev._next = animation;
 		} else {
 			State.first = animation;
 		}
@@ -51,11 +51,11 @@ namespace VelocityStatic {
 					animate(animation);
 				}
 			} else {
-				while (last.next) {
-					last = last.next;
+				while (last._next) {
+					last = last._next;
 				}
-				last.next = animation;
-				animation.prev = last;
+				last._next = animation;
+				animation._prev = last;
 			}
 		}
 	}
@@ -74,7 +74,7 @@ namespace VelocityStatic {
 				animation = data.queueList[queue];
 
 			if (animation) {
-				data.queueList[queue] = animation.next || null;
+				data.queueList[queue] = animation._next || null;
 				if (!skip) {
 					animate(animation);
 				}
@@ -93,14 +93,14 @@ namespace VelocityStatic {
 	 */
 	export function freeAnimationCall(animation: AnimationCall): void {
 		if (State.first === animation) {
-			State.first = animation.next;
-		} else if (animation.prev) {
-			animation.prev.next = animation.next;
+			State.first = animation._next;
+		} else if (animation._prev) {
+			animation._prev._next = animation._next;
 		}
 		if (State.last === animation) {
-			State.last = animation.prev;
-		} else if (animation.next) {
-			animation.next.prev = animation.prev;
+			State.last = animation._prev;
+		} else if (animation._next) {
+			animation._next._prev = animation._prev;
 		}
 		let queue = getValue(animation.queue, animation.options.queue, defaults.queue);
 
@@ -109,7 +109,7 @@ namespace VelocityStatic {
 
 			if (data) {
 				data.lastAnimationList[queue] = animation;
-				animation.next = animation.prev = undefined;
+				animation._next = animation._prev = undefined;
 			}
 		}
 	}

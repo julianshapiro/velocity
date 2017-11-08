@@ -23,7 +23,7 @@ namespace VelocityStatic {
 	 * @param {Promise<HTMLorSVGElement[]>} An optional promise if the user uses promises
 	 * @param {(value?: (HTMLorSVGElement[] | VelocityResult)) => void} resolver The resolve method of the promise
 	 */
-	function defaultAction(args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string): void {
+	function defaultAction(args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string): void {
 		// TODO: default is wrong, should be runSequence based, and needs all arguments
 		if (isString(action) && VelocityStatic.Redirects[action]) {
 			let options = isPlainObject(args[0]) ? args[0] as VelocityOptions : {},

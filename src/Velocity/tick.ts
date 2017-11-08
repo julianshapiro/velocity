@@ -122,7 +122,7 @@ namespace VelocityStatic {
 				}
 				/* Iterate through each active call. */
 				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
-					nextCall = activeCall.next;
+					nextCall = activeCall._next;
 					/************************
 					 Call-Wide Variables
 					 ************************/
@@ -236,9 +236,9 @@ namespace VelocityStatic {
 						}
 					}
 					if (options && options._first === activeCall && options.progress) {
-						activeCall.nextProgress = undefined;
+						activeCall._nextProgress = undefined;
 						if (lastProgress) {
-							lastProgress.nextProgress = lastProgress = activeCall;
+							lastProgress._nextProgress = lastProgress = activeCall;
 						} else {
 							firstProgress = lastProgress = activeCall;
 						}
@@ -254,9 +254,9 @@ namespace VelocityStatic {
 						percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / getValue(activeCall.duration, options.duration, defaults.duration), 1);
 
 					if (percentComplete === 1) {
-						activeCall.nextComplete = undefined;
+						activeCall._nextComplete = undefined;
 						if (lastComplete) {
-							lastComplete.nextComplete = lastComplete = activeCall;
+							lastComplete._nextComplete = lastComplete = activeCall;
 						} else {
 							firstComplete = lastComplete = activeCall;
 						}
@@ -393,7 +393,7 @@ namespace VelocityStatic {
 
 				// Progress callback
 				for (activeCall = firstProgress; activeCall; activeCall = nextCall) {
-					nextCall = activeCall.nextProgress;
+					nextCall = activeCall._nextProgress;
 					let options = activeCall.options;
 
 					/* Pass the elements and the timing data (percentComplete, msRemaining, timeStart, tweenDummyValue) into the progress callback. */
@@ -407,7 +407,7 @@ namespace VelocityStatic {
 				}
 				// Complete animations, including complete callback or looping
 				for (activeCall = firstComplete; activeCall; activeCall = nextCall) {
-					nextCall = activeCall.nextComplete;
+					nextCall = activeCall._nextComplete;
 					/* If this call has finished tweening, pass it to complete() to handle call cleanup. */
 					completeCall(activeCall);
 				}

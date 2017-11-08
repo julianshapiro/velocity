@@ -13,7 +13,7 @@ namespace VelocityStatic {
 	 * Clear the currently-active delay on each targeted element.
 	 * @param {HTMLorSVGElement[]} elements The velocity elements
 	 */
-	function finishAll(args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string): void {
+	function finishAll(args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string): void {
 		let activeCall = VelocityStatic.State.first;
 		/* Clear the currently-active delay on each targeted element. */
 		elements.forEach((element) => {

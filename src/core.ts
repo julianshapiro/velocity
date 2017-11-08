@@ -301,10 +301,15 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 		// There is one special case - "reverse" - which is handled differently,
 		// by being stored on the animation and then expanded when the animation
 		// starts.
-		let callback = VelocityStatic.Actions[propertiesMap] || VelocityStatic.Actions["default"];
+		let action = propertiesMap.replace(/\..*$/, ""),
+			callback = VelocityStatic.Actions[action] || VelocityStatic.Actions["default"];
 
 		if (callback) {
-			callback(args, elements, promiseHandler, propertiesMap);
+			let result = callback(args, elements, promiseHandler, propertiesMap);
+
+			if (result !== undefined) {
+				return result;
+			}
 		} else {
 			console.warn("VelocityJS: Unknown action:", propertiesMap);
 		}
@@ -358,8 +363,8 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 	 the call array is pushed to VelocityStatic.State.calls for live processing by the requestAnimationFrame tick. */
 
 	let rootAnimation: AnimationCall = {
-		prev: undefined,
-		next: undefined,
+		_prev: undefined,
+		_next: undefined,
 		options: options,
 		started: false,
 		percentComplete: 0,

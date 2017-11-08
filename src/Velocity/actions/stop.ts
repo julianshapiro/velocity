@@ -22,7 +22,7 @@ namespace VelocityStatic {
 	 * @param {Promise<HTMLorSVGElement[]>} An optional promise if the user uses promises
 	 * @param {(value?: (HTMLorSVGElement[] | VelocityResult)) => void} resolver The resolve method of the promise
 	 */
-	function stop(args: any[], elements: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string): void {
+	function stop(args: any[], elements: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string): void {
 		let callsToStop: AnimationCall[] = [],
 			/* Iterate through every active call. */
 			activeCall = State.first,
@@ -30,7 +30,7 @@ namespace VelocityStatic {
 
 		/* Iterate through all calls and pause any that contain any of our elements */
 		while (activeCall) {
-			activeCall = activeCall.next;
+			activeCall = activeCall._next;
 			let options = activeCall.options;
 
 			/* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only

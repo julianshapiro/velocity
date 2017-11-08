@@ -17,7 +17,7 @@ type VelocityEasingFn = (percentComplete: number, startValue: number, endValue: 
 /**
  * Used for action callbacks.
  */
-type VelocityActionFn = (args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string) => void;
+type VelocityActionFn = (args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) => any;
 
 /**
  * List of all easing types for easy code completion in TypeScript
@@ -458,23 +458,29 @@ interface Tween {
 interface AnimationCall extends StrictVelocityOptions {
 	/**
 	 * Used to store the next AnimationCell in this list.
+	 * 
+	 * @private
 	 */
-	next?: AnimationCall;
+	_next?: AnimationCall;
 	/**
 	 * Used to store the previous AnimationCell in this list. Used to make
 	 * removing items from the list significantly easier.
+	 * 
+	 * @private
 	 */
-	prev?: AnimationCall;
+	_prev?: AnimationCall;
 	/**
 	 * Used to store the next call with a Progress callback.
+	 * 
 	 * @private
 	 */
-	nextProgress?: AnimationCall;
+	_nextProgress?: AnimationCall;
 	/**
 	 * Used to store the next call with a Complete callback.
+	 * 
 	 * @private
 	 */
-	nextComplete?: AnimationCall;
+	_nextComplete?: AnimationCall;
 	/**
 	 * Properties to be tweened
 	 */

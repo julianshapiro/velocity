@@ -9,7 +9,7 @@
 
 namespace VelocityStatic {
 	export function resumeAll(queueName: string | false): void {
-		for (let activeCall = VelocityStatic.State.first; activeCall; activeCall = activeCall.next) {
+		for (let activeCall = VelocityStatic.State.first; activeCall; activeCall = activeCall._next) {
 			/* If we have a queueName and this call is not on that queue, skip */
 			if (queueName !== undefined && ((activeCall.queue !== queueName) || (activeCall.queue === false))) {
 				continue;
@@ -22,7 +22,7 @@ namespace VelocityStatic {
 		}
 	}
 
-	registerAction(["resumeAll", function(args: any[], elements: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string) {
+	registerAction(["resumeAll", function(args: any[], elements: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) {
 		resumeAll(args[0]);
 	}], true);
 };

@@ -26,6 +26,14 @@ function isNode(variable): variable is HTMLorSVGElement {
 	return variable && variable.nodeType;
 }
 
+function isVelocityResult(variable): variable is VelocityResult {
+	return variable && variable.length && (variable as VelocityResult).velocity === VelocityFn;
+}
+
+function propertyIsEnumerable(object: Object, property: string): boolean {
+	return Object.prototype.propertyIsEnumerable.call(object, property);
+}
+
 /* Determine if variable is an array-like wrapped jQuery, Zepto or similar element, or even a NodeList etc. */
 /* NOTE: HTMLFormElements also have a length. */
 function isWrapped(variable): variable is HTMLorSVGElement[] {

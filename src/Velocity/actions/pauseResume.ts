@@ -23,7 +23,7 @@ namespace VelocityStatic {
 
 		/* Iterate through all calls and pause any that contain any of our elements */
 		while (activeCall && !activeCall.paused) {
-			activeCall = activeCall.next;
+			activeCall = activeCall._next;
 			if (activeCall.paused !== isPaused) {
 				/* Iterate through the active call's targeted elements. */
 				activeCall.elements.some((activeElement) => {
@@ -41,11 +41,11 @@ namespace VelocityStatic {
 		}
 	}
 
-	function pause(args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string) {
+	function pause(args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) {
 		handlePauseResume(args, elements, true);
 	}
 
-	function resume(args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string) {
+	function resume(args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) {
 		handlePauseResume(args, elements, false);
 	}
 

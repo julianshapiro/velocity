@@ -25,6 +25,7 @@ namespace VelocityStatic {
 		mobileHA: true
 	};
 
+	// IMPORTANT: Make sure any new defaults get added to the actions/set.ts list
 	Object.defineProperties(defaults, {
 		cache: {
 			get: (function(): boolean {

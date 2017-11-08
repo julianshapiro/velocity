@@ -81,7 +81,7 @@ namespace VelocityStatic {
 			return [endValue || 0, easing, startValue];
 		};
 
-		State.firstNew = activeCall.next;
+		State.firstNew = activeCall._next;
 		/* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
 		if (isNode(element)) {
 			let data = Data(element),

@@ -30,7 +30,7 @@ namespace VelocityStatic {
 			console.warn("VelocityJS: Trying to set 'registerAction' name to an invalid value:", name);
 		} else if (!isFunction(callback)) {
 			console.warn("VelocityJS: Trying to set 'registerAction' callback to an invalid value:", callback);
-		} else if (Actions[name] && !Actions.hasOwnProperty(name)) {
+		} else if (Actions[name] && !propertyIsEnumerable(Actions, name)) {
 			console.warn("VelocityJS: Trying to override internal 'registerAction' callback");
 		} else if (internal === true) {
 			defineProperty(Actions, name, callback);
