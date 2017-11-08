@@ -15,19 +15,12 @@
 function parseDuration(duration: "fast" | "normal" | "slow" | number, def?: "fast" | "normal" | "slow" | number): number {
 	if (isNumber(duration)) {
 		return duration;
-	} else if (isString(duration)) {
-		switch (duration.toLowerCase()) {
-			case "fast":
-				return DURATION_FAST;
-			case "normal":
-				return DURATION_NORMAL;
-			case "slow":
-				return DURATION_SLOW;
-			default:
-				// TODO: Correct this to handle "0.1s" formatting
-				return parseFloat(duration.replace("ms", "").replace("s", "000"));
-		}
 	}
+
+	if(isString(duration)){
+		return Duration[duration.toLowerCase()] || parseFloat(duration.replace("ms", "").replace("s", "000"));
+	}
+
 	return def == null ? undefined : parseDuration(def);
 }
 
@@ -36,7 +29,7 @@ function parseDuration(duration: "fast" | "normal" | "slow" | number, def?: "fas
  * @private
  */
 function validateCache(value: boolean): boolean {
-	if (value === true || value === false) {
+	if (isBoolean(value)) {
 		return value;
 	}
 	if (value != null) {
@@ -188,7 +181,7 @@ function validateProgress(value: VelocityProgress): VelocityProgress {
  * @private
  */
 function validatePromise(value: boolean): boolean {
-	if (value === true || value === false) {
+	if (isBoolean(value)) {
 		return value;
 	}
 	if (value != null) {
@@ -201,7 +194,7 @@ function validatePromise(value: boolean): boolean {
  * @private
  */
 function validatePromiseRejectEmpty(value: boolean): boolean {
-	if (value === true || value === false) {
+	if (isBoolean(value)) {
 		return value;
 	}
 	if (value != null) {

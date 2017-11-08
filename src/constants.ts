@@ -25,3 +25,9 @@ const DEFAULT_PROMISE = true;
 const DEFAULT_PROMISE_REJECT_EMPTY = true;
 const DEFAULT_QUEUE = "";
 const DEFAULT_REPEAT = 0;
+
+const Duration = {
+	"fast": DURATION_FAST,
+	"normal": DURATION_NORMAL,
+	"slow": DURATION_SLOW,
+}

@@ -32,7 +32,7 @@ namespace VelocityStatic {
 	/**
 	 * Add an item to an animation queue.
 	 */
-	export function queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: string | boolean): void {
+	export function queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: string | false): void {
 
 		if (queue === false) {
 			animate(animation);
@@ -62,7 +62,7 @@ namespace VelocityStatic {
 
 	/**
 	 * Start the next animation on this element's queue (named or default).
-	 * 
+	 *
 	 * @returns the next animation that is starting.
 	 */
 	export function dequeue(element: HTMLorSVGElement, queue?: string | boolean, skip?: boolean): AnimationCall {

@@ -67,12 +67,12 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 		 * alternative syntax in which "elements" (or "e"), "properties" (or
 		 * "p"), and "options" (or "o") objects are defined on a container
 		 * object that's passed in as Velocity's sole argument.
-		 * 
+		 *
 		 * Note: Some browsers automatically populate arguments with a
 		 * "properties" object. We detect it by checking for its default
 		 * "names" property.
 		 */
-		// TODO: Confirm which browsers - if <=IE8 the we can drop completely
+			// TODO: Confirm which browsers - if <=IE8 the we can drop completely
 		syntacticSugar = (args0 && args0.p || ((isPlainObject(args0.properties) && !(args0.properties as any).names) || isString(args0.properties))),
 		/**
 		 * Whether Velocity was called via the utility function (as opposed to
@@ -104,7 +104,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 		 */
 		optionsMap: VelocityOptions,
 		/**
-		 * The options for this set of animations. 
+		 * The options for this set of animations.
 		 */
 		options: StrictVelocityOptions,
 		/**
@@ -171,7 +171,6 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 				let complete = validateComplete(arguments[argumentIndex + offset]);
 
 				if (complete !== undefined) {
-					offset++;
 					options.complete = complete;
 				}
 			}
@@ -231,10 +230,10 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 	}
 	// Create the promise if supported and wanted.
 	if (Promise && getValue(optionsMap && optionsMap.promise, defaults.promise)) {
-		promise = new Promise(function(resolve, reject) {
+		promise = new Promise(function (resolve, reject) {
 			rejecter = reject;
 			if (options) {
-				defineProperty(options, "_resolver", function(args) {
+				defineProperty(options, "_resolver", function (args) {
 					// IMPORTANT:
 					// If a resolver tries to run on a Promise then it will
 					// wait until that Promise resolves - but in this case we're
@@ -242,7 +241,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 					// seen as one. Setting these values to
 					// <code>undefined</code> for the duration of the resolve.
 					// Due to being an async call, they should be back to
-					// "normal" before the <vode>.then()</code> function gets
+					// "normal" before the <code>.then()</code> function gets
 					// called.
 					let _then = args.then;
 
@@ -284,7 +283,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 
 		/* Velocity's behavior is categorized into "actions": Elements can either be specially scrolled into view,
 		 or they can be started, stopped, paused, resumed, or reversed . If a literal or referenced properties map is passed in as Velocity's
-		 first argument, the associated action is "start". Alternatively, "scroll", "reverse", "pause", "resume" or "stop" can be passed in 
+		 first argument, the associated action is "start". Alternatively, "scroll", "reverse", "pause", "resume" or "stop" can be passed in
 		 instead of a properties map. */
 		let action;
 
@@ -297,93 +296,23 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 				action = "reverse";
 				break;
 
-			case "pause":
-				{
-					/*******************
-					 Action: Pause
-					 *******************/
+			case "pause": {
 
-					/* Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a 
-					 single element will cause any calls that contain tweens for that element to be paused/resumed
-					 as well. */
-					let queueName = getValue(validateQueue(options as any), defaults.queue),
-						activeCall = VelocityStatic.State.first,
-						nextCall: AnimationCall;
+				VelocityStatic.Actions.handlePauseResume(elements, options, true);
+				/* Since pause creates no new tweens, exit out of Velocity. */
+				return getChain();
+			}
 
-					/* Iterate through all calls and pause any that contain any of our elements */
-					for (; activeCall; activeCall = nextCall) {
-						nextCall = activeCall.next;
-						if (activeCall.paused !== true) {
-							/* Iterate through the active call's targeted elements. */
-							activeCall.elements.some(function(activeElement) {
-								let queue = getValue(activeCall.queue, activeCall.options.queue);
+			case "resume": {
 
-								if (queueName !== true && (queue !== queueName) && !(options === undefined && queue === false)) {
-									return true;
-								}
-								if (elements.indexOf(activeElement) >= 0) {
-									return activeCall.paused = true;
-								}
-							});
-						}
-					}
-					/* Since pause creates no new tweens, exit out of Velocity. */
-					return getChain();
-				}
-
-			case "resume":
-				{
-					/*******************
-					 Action: Resume
-					 *******************/
-
-					/* Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a 
-					 single element will cause any calls that containt tweens for that element to be paused/resumed
-					 as well. */
-
-					/* Iterate through all calls and pause any that contain any of our elements */
-					let queueName = getValue(validateQueue(options as any), defaults.queue),
-						activeCall = VelocityStatic.State.first,
-						nextCall: AnimationCall;
-
-					/* Iterate through all calls and pause any that contain any of our elements */
-					for (; activeCall; activeCall = nextCall) {
-						nextCall = activeCall.next;
-						if (activeCall.paused !== false) {
-							/* Iterate through the active call's targeted elements. */
-							activeCall.elements.some(function(activeElement) {
-								let queue = getValue(activeCall.queue, activeCall.options.queue);
-
-								if (queueName !== true && (queue !== queueName) && !(options === undefined && queue === false)) {
-									return true;
-								}
-								if (elements.indexOf(activeElement) >= 0) {
-									activeCall.paused = false;
-									return true;
-								}
-							});
-						}
-					}
-					/* Since resume creates no new tweens, exit out of Velocity. */
-					return getChain();
-				}
+				VelocityStatic.Actions.handlePauseResume(elements, options, false);
+				/* Since resume creates no new tweens, exit out of Velocity. */
+				return getChain();
+			}
 
 			case "finishAll":
-				/* Clear the currently-active delay on each targeted element. */
-				if (options === true || isString(options)) {
-					elements.forEach(function(element) {
-						/* If we want to finish everything in the queue, we have to iterate through it
-						 and call each function. This will make them active calls below, which will
-						 cause them to be applied via the duration setting. */
-						/* Iterate through the items in the element's queue. */
-						let animation: AnimationCall;
 
-						while ((animation = VelocityStatic.dequeue(element, isString(options) ? options : undefined))) {
-							animation.queue = false;
-							VelocityStatic.expandTween(animation);
-						}
-					});
-				}
+				VelocityStatic.Actions.finishAll(elements);
 			// deliberate fallthrough
 			case "finish":
 			case "stop":
@@ -391,90 +320,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 				 Action: Stop
 				 *******************/
 
-				let callsToStop: AnimationCall[] = [];
-
-				/* When the stop action is triggered, the elements' currently active call is immediately stopped. The active call might have
-				 been applied to multiple elements, in which case all of the call's elements will be stopped. When an element
-				 is stopped, the next item in its animation queue is immediately triggered. */
-				/* An additional argument may be passed in to clear an element's remaining queued calls. Either true (which defaults to the "fx" queue)
-				 or a custom queue string can be passed in. */
-				/* Note: The stop command runs prior to Velocity's Queueing phase since its behavior is intended to take effect *immediately*,
-				 regardless of the element's current queue state. */
-
-				/* Iterate through every active call. */
-				let queueName = (options === undefined) ? "" : options,
-					activeCall = VelocityStatic.State.first,
-					nextCall: AnimationCall;
-
-				/* Iterate through all calls and pause any that contain any of our elements */
-				for (; activeCall; activeCall = nextCall) {
-					nextCall = activeCall.next;
-					/* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
-					 clear calls associated with the relevant queue. */
-					/* Call stopping logic works as follows:
-					 - options === true --> stop current default queue calls (and queue:false calls), including remaining queued ones.
-					 - options === undefined --> stop current queue:"" call and all queue:false calls.
-					 - options === false --> stop only queue:false calls.
-					 - options === "custom" --> stop current queue:"custom" call, including remaining queued ones (there is no functionality to only clear the currently-running queue:"custom" call). */
-					let queueName = options === undefined ? defaults.queue : options;
-
-					if (queueName !== true && activeCall.queue !== queueName && !(options === undefined && activeCall.queue === false)) {
-						continue;
-					}
-
-					/* Iterate through the calls targeted by the stop command. */
-					for (let i = 0; i < elementsLength; i++) {
-						let element = elements[i];
-
-						/* Check that this call was applied to the target element. */
-						if (element === activeCall.element) {
-							/* Make sure it can't be delayed */
-							activeCall.started = true;
-							/* Remove the queue so this can't trigger any newly added animations when it finishes */
-							activeCall.queue = false;
-							/* Optionally clear the remaining queued calls. If we're doing "finishAll" this won't find anything,
-							 due to the queue-clearing above. */
-							if (options === true || isString(options)) {
-								let animation: AnimationCall;
-
-								/* Iterate through the items in the element's queue. */
-								while ((animation = VelocityStatic.dequeue(element, isString(options) ? options : undefined, true))) {
-									let resolver = options._resolver;
-
-									if (resolver) {
-										resolver(animation.elements);
-										delete options._resolver;
-									}
-								}
-							}
-							if (propertiesMap === "stop") {
-								/* Since "reverse" uses cached start values (the previous call's endValues), these values must be
-								 changed to reflect the final value that the elements were actually tweened to. */
-								/* Note: If only queue:false animations are currently running on an element, it won't have a tweensContainer
-								 object. Also, queue:false animations can't be reversed. */
-								activeCall.timeStart = -1;
-								callsToStop.push(activeCall);
-							} else if (propertiesMap === "finish" || propertiesMap === "finishAll") {
-								/* To get active tweens to finish immediately, we forcefully change the start time so that
-								 they finish upon the next rAf tick then proceed with normal call completion logic. */
-								activeCall.timeStart = -1;
-							}
-						}
-					}
-				}
-
-				/* Prematurely call completeCall() on each matched active call. Pass an additional flag for "stop" to indicate
-				 that the complete callback and display:none setting should be skipped since we're completing prematurely. */
-				if (propertiesMap === "stop") {
-					callsToStop.forEach(function(activeCall) {
-						VelocityStatic.completeCall(activeCall, true);
-					});
-
-					if (promise && resolver) {
-						/* Immediately resolve the promise associated with this stop call since stop runs synchronously. */
-						resolver(elements);
-					}
-				}
+				VelocityStatic.Actions.stop(elements, options, promise, resolver);
 
 				/* Since we're stopping, and not proceeding with queueing, exit out of Velocity. */
 				return getChain();
@@ -483,64 +329,12 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 				/* Treat a non-empty plain object as a literal properties map. */
 				if (isPlainObject(propertiesMap) && !isEmptyObject(propertiesMap)) {
 					action = "start";
-
-					/****************
-					 Redirects
-					 ****************/
-
-					/* Check if a string matches a registered redirect (see Redirects above). */
-				} else if (isString(propertiesMap) && VelocityStatic.Redirects[propertiesMap]) {
-					let opts = {...options},
-						durationOriginal = parseFloat(options.duration as any),
-						delayOriginal = parseFloat(options.delay as any) || 0;
-
-					/* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first. */
-					if (opts.backwards === true) {
-						elements = elements.reverse();
-					}
-
-					/* Individually trigger the redirect for each element in the set to prevent users from having to handle iteration logic in their redirect. */
-					elements.forEach(function(element, elementIndex) {
-
-						/* If the stagger option was passed in, successively delay each element by the stagger value (in ms). Retain the original delay value. */
-						if (parseFloat(opts.stagger as string)) {
-							opts.delay = delayOriginal + (parseFloat(opts.stagger as string) * elementIndex);
-						} else if (isFunction(opts.stagger)) {
-							opts.delay = delayOriginal + opts.stagger.call(element, elementIndex, elementsLength);
-						}
-
-						/* If the drag option was passed in, successively increase/decrease (depending on the presense of opts.backwards)
-						 the duration of each element's animation, using floors to prevent producing very short durations. */
-						if (opts.drag) {
-							/* Default the duration of UI pack effects (callouts and transitions) to 1000ms instead of the usual default duration of 400ms. */
-							opts.duration = durationOriginal || (/^(callout|transition)/.test(propertiesMap as string) ? 1000 : DEFAULT_DURATION);
-
-							/* For each element, take the greater duration of: A) animation completion percentage relative to the original duration,
-							 B) 75% of the original duration, or C) a 200ms fallback (in case duration is already set to a low value).
-							 The end result is a baseline of 75% of the redirect's duration that increases/decreases as the end of the element set is approached. */
-							opts.duration = Math.max(opts.duration * (opts.backwards ? 1 - elementIndex / elementsLength : (elementIndex + 1) / elementsLength), opts.duration * 0.75, 200);
-						}
-
-						/* Pass in the call's opts object so that the redirect can optionally extend it. It defaults to an empty object instead of null to
-						 reduce the opts checking logic required inside the redirect. */
-						VelocityStatic.Redirects[propertiesMap as string].call(element, element, opts, elementIndex, elementsLength, elements, resolver);
-					});
-
-					/* Since the animation logic resides within the redirect's own code, abort the remainder of this call.
-					 (The performance overhead up to this point is virtually non-existant.) */
-					/* Note: The jQuery call chain is kept intact by returning the complete element set. */
-					return getChain();
-				} else {
-					let abortError = "Velocity: First argument (" + propertiesMap + ") was not a property map, a known action, or a registered redirect. Aborting.";
-
-					if (promise) {
-						rejecter(new Error(abortError));
-					} else if (window.console) {
-						console.log(abortError);
-					}
-
-					return getChain();
+					break;
 				}
+
+				VelocityStatic.Actions.defaultAction(elements, propertiesMap, options, promise, resolver, rejecter)
+
+				return getChain();
 		}
 	}
 	/************************
@@ -664,7 +458,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
  *********************/
 
 /* IE detection. Gist: https://gist.github.com/julianshapiro/9098609 */
-var IE = (function() {
+var IE = (function () {
 	if (document.documentMode) {
 		return document.documentMode;
 	} else {
@@ -714,8 +508,8 @@ if (IE <= 8) {
 global.Velocity = VelocityFn;
 
 interface Window {
-	jQuery: {fn?: any};
-	Zepto: {fn?: any};
+	jQuery: { fn?: any };
+	Zepto: { fn?: any };
 	Velocity: any;
 }
 
