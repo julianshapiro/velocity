@@ -1,3 +1,4 @@
+///<reference path="actions.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -20,4 +21,8 @@ namespace VelocityStatic {
 			}
 		}
 	}
+
+	registerAction(["resumeAll", function(args: any[], elements: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string) {
+		resumeAll(args[0]);
+	}], true);
 };

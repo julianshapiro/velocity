@@ -1,3 +1,4 @@
+///<reference path="actions.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -6,7 +7,7 @@
  * Default action.
  */
 
-namespace VelocityStatic.Actions {
+namespace VelocityStatic {
 
 	/**
 	 * When the stop action is triggered, the elements' currently active call is immediately stopped. The active call might have
@@ -16,15 +17,17 @@ namespace VelocityStatic.Actions {
 	 * or a custom queue string can be passed in.
 	 * Note: The stop command runs prior to Velocity's Queueing phase since its behavior is intended to take effect *immediately*,
 	 * regardless of the element's current queue state.
+	 * 
 	 * @param {HTMLorSVGElement[]} elements The collection of HTML or SVG elements
 	 * @param {StrictVelocityOptions} The strict Velocity options
 	 * @param {Promise<HTMLorSVGElement[]>} An optional promise if the user uses promises
 	 * @param {(value?: (HTMLorSVGElement[] | VelocityResult)) => void} resolver The resolve method of the promise
 	 */
-	export function defaultAction(elements: HTMLorSVGElement[], propertiesMap: string, options: StrictVelocityOptions, promise?: Promise<HTMLorSVGElement[]>, resolver?: (value?: HTMLorSVGElement[] | VelocityResult) => void, rejecter?: (reason: any) => void): void {
+	function defaultAction(args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string): void {
 		// TODO: default is wrong, should be runSequence based, and needs all arguments
-		if (isString(propertiesMap) && VelocityStatic.Redirects[propertiesMap]) {
-			let opts = {...options},
+		if (isString(action) && VelocityStatic.Redirects[action]) {
+			let options = isPlainObject(args[0]) ? args[0] as VelocityOptions : {},
+				opts = {...options},
 				durationOriginal = parseFloat(options.duration as any),
 				delayOriginal = parseFloat(options.delay as any) || 0;
 
@@ -47,7 +50,7 @@ namespace VelocityStatic.Actions {
                  the duration of each element's animation, using floors to prevent producing very short durations. */
 				if (opts.drag) {
 					/* Default the duration of UI pack effects (callouts and transitions) to 1000ms instead of the usual default duration of 400ms. */
-					opts.duration = durationOriginal || (/^(callout|transition)/.test(propertiesMap) ? 1000 : DEFAULT_DURATION);
+					opts.duration = durationOriginal || (/^(callout|transition)/.test(action) ? 1000 : DEFAULT_DURATION);
 
 					/* For each element, take the greater duration of: A) animation completion percentage relative to the original duration,
                      B) 75% of the original duration, or C) a 200ms fallback (in case duration is already set to a low value).
@@ -57,20 +60,22 @@ namespace VelocityStatic.Actions {
 
 				/* Pass in the call's opts object so that the redirect can optionally extend it. It defaults to an empty object instead of null to
                  reduce the opts checking logic required inside the redirect. */
-				VelocityStatic.Redirects[propertiesMap].call(element, element, opts, elementIndex, elements.length, elements, resolver);
+				VelocityStatic.Redirects[action].call(element, element, opts, elementIndex, elements.length, elements, promiseHandler && promiseHandler._resolver);
 			});
 
 			/* Since the animation logic resides within the redirect's own code, abort the remainder of this call.
              (The performance overhead up to this point is virtually non-existant.) */
 			/* Note: The jQuery call chain is kept intact by returning the complete element set. */
 		} else {
-			let abortError = "Velocity: First argument (" + propertiesMap + ") was not a property map, a known action, or a registered redirect. Aborting.";
+			let abortError = "Velocity: First argument (" + action + ") was not a property map, a known action, or a registered redirect. Aborting.";
 
-			if (promise) {
-				rejecter(new Error(abortError));
+			if (promiseHandler) {
+				promiseHandler._rejecter(new Error(abortError));
 			} else if (window.console) {
 				console.log(abortError);
 			}
 		}
 	}
+
+	registerAction(["default", defaultAction], true);
 }

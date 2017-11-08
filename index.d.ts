@@ -15,6 +15,11 @@ type HTMLorSVGElement = HTMLElement | SVGElement;
 type VelocityEasingFn = (percentComplete: number, startValue: number, endValue: number, property?: string) => number;
 
 /**
+ * Used for action callbacks.
+ */
+type VelocityActionFn = (args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string) => void;
+
+/**
  * List of all easing types for easy code completion in TypeScript
  */
 type VelocityEasingType = VelocityEasingFn
@@ -226,11 +231,36 @@ interface VelocityOptions {
 }
 
 /**
+ * Used internally for storing the Promise if used.
+ */
+interface VelocityPromise {
+	/**
+	 * A saved copy of the Promise.
+	 * @private
+	 */
+	_promise?: Promise<HTMLorSVGElement[]>;
+	/**
+	 * This method is called at most once to signify that the animation has
+	 * completed. Currently a loop:true animation will never complete. This
+	 * allows .then(fn) to run (see Promise support).
+	 * @private
+	 */
+	_resolver?: (value?: HTMLorSVGElement[] | PromiseLike<HTMLorSVGElement[]>) => void;
+	/**
+	 * This method is called at most once to signify that the animation has
+	 * completed. Currently a loop:true animation will never complete. This
+	 * allows .then(fn) to run (see Promise support).
+	 * @private
+	 */
+	_rejecter?: (reason?: any) => void;
+}
+
+/**
  * After correcting the options so they are usable internally, they will be of
  * this type. The base VelocityOptions includes human readable and shortcuts,
  * which this doesn't.
  */
-interface StrictVelocityOptions extends VelocityOptions {
+interface StrictVelocityOptions extends VelocityOptions, VelocityPromise {
 	/**
 	 * Begin handler. Only the first element to check this callback gets to use
 	 * it. Cleared after calling
@@ -291,11 +321,6 @@ interface StrictVelocityOptions extends VelocityOptions {
 	 */
 	_first?: AnimationCall;
 	/**
-	 * A saved copy of the Promise.
-	 * @private
-	 */
-	_promise?: Promise<HTMLorSVGElement[]>;
-	/**
 	 * The total number of AnimationCalls that are pointing at this.
 	 * @private
 	 */
@@ -310,13 +335,6 @@ interface StrictVelocityOptions extends VelocityOptions {
 	 * @private
 	 */
 	_completed?: number;
-	/**
-	 * This method is called at most once to signify that the animation has
-	 * completed. Currently a loop:true animation will never complete. This
-	 * allows .then(fn) to run (see Promise support).
-	 * @private
-	 */
-	_resolver?: (value?: HTMLorSVGElement[] | PromiseLike<HTMLorSVGElement[]>) => void;
 }
 
 /**

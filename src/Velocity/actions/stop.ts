@@ -1,3 +1,4 @@
+///<reference path="actions.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -6,7 +7,7 @@
  * Stop animation.
  */
 
-namespace VelocityStatic.Actions {
+namespace VelocityStatic {
 
 	/**
 	 * When the stop action is triggered, the elements' currently active call is immediately stopped. The active call might have
@@ -21,12 +22,11 @@ namespace VelocityStatic.Actions {
 	 * @param {Promise<HTMLorSVGElement[]>} An optional promise if the user uses promises
 	 * @param {(value?: (HTMLorSVGElement[] | VelocityResult)) => void} resolver The resolve method of the promise
 	 */
-	export function stop(elements: HTMLorSVGElement[], queue: string, promise?: Promise<HTMLorSVGElement[]>, resolver?: (value?: HTMLorSVGElement[] | VelocityResult) => void): void {
-
+	function stop(args: any[], elements: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string): void {
 		let callsToStop: AnimationCall[] = [],
 			/* Iterate through every active call. */
 			activeCall = State.first,
-			queueName = getValue(validateQueue(queue), defaults.queue);
+			queueName = getValue(validateQueue(args[0]), defaults.queue);
 
 		/* Iterate through all calls and pause any that contain any of our elements */
 		while (activeCall) {
@@ -64,7 +64,7 @@ namespace VelocityStatic.Actions {
 				let animation: AnimationCall;
 
 				/* Iterate through the items in the element's queue. */
-				while ((animation = dequeue(element, queue, true))) {
+				while ((animation = dequeue(element, queueName, true))) {
 					let options = animation.options,
 						resolver = options._resolver;
 
@@ -86,12 +86,15 @@ namespace VelocityStatic.Actions {
 		/* Prematurely call completeCall() on each matched active call. Pass an additional flag for "stop" to indicate
          that the complete callback and display:none setting should be skipped since we're completing prematurely. */
 		callsToStop.forEach((activeCall) => {
-			completeCall(activeCall, true);
+			completeCall(activeCall, action === "stop");
 		});
 
-		if (promise && resolver) {
+		if (promiseHandler) {
 			/* Immediately resolve the promise associated with this stop call since stop runs synchronously. */
-			resolver(elements);
+			promiseHandler._resolver(elements);
 		}
 	}
+
+	registerAction(["finish", stop], true);
+	registerAction(["stop", stop], true);
 }

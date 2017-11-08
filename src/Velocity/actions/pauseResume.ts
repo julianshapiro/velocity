@@ -1,3 +1,4 @@
+///<reference path="actions.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -6,7 +7,7 @@
  * Pause and resume animation.
  */
 
-namespace VelocityStatic.Actions {
+namespace VelocityStatic {
 
 	/**
 	 * Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a
@@ -16,9 +17,8 @@ namespace VelocityStatic.Actions {
 	 * @param {StrictVelocityOptions} queue The internal Velocity options
 	 * @param {boolean} isPaused A flag to check whether we call this method from pause or resume case
 	 */
-	export function handlePauseResume(elements: HTMLorSVGElement[], queue: string, isPaused: boolean): void {
-
-		let queueName = getValue(validateQueue(queue), defaults.queue),
+	function handlePauseResume(args: any[], elements: HTMLorSVGElement[], isPaused: boolean): void {
+		let queueName = getValue(validateQueue(args[0]), defaults.queue),
 			activeCall = VelocityStatic.State.first;
 
 		/* Iterate through all calls and pause any that contain any of our elements */
@@ -40,4 +40,15 @@ namespace VelocityStatic.Actions {
 			}
 		}
 	}
+
+	function pause(args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string) {
+		handlePauseResume(args, elements, true);
+	}
+
+	function resume(args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string) {
+		handlePauseResume(args, elements, false);
+	}
+
+	registerAction(["pause", pause], true);
+	registerAction(["resume", resume], true);
 }

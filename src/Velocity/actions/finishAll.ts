@@ -1,3 +1,4 @@
+///<reference path="actions.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -6,14 +7,13 @@
  * Finish all animation.
  */
 
-namespace VelocityStatic.Actions {
+namespace VelocityStatic {
 
 	/**
 	 * Clear the currently-active delay on each targeted element.
 	 * @param {HTMLorSVGElement[]} elements The velocity elements
 	 */
-	export function finishAll(elements: HTMLorSVGElement[]): void {
-
+	function finishAll(args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string): void {
 		let activeCall = VelocityStatic.State.first;
 		/* Clear the currently-active delay on each targeted element. */
 		elements.forEach((element) => {
@@ -28,5 +28,8 @@ namespace VelocityStatic.Actions {
 				VelocityStatic.expandTween(animation);
 			}
 		});
+		VelocityStatic.Actions["stop"].call(this, arguments);
 	}
+
+	registerAction(["finishAll", finishAll], true);
 }

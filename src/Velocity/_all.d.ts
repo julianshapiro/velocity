@@ -8,11 +8,9 @@
 ///<reference path="hook.ts" />
 ///<reference path="init.ts" />
 ///<reference path="mock.ts" />
-///<reference path="pauseAll.ts" />
 ///<reference path="queue.ts" />
 ///<reference path="redirects.ts" />
 ///<reference path="registereffect.ts" />
-///<reference path="resumeAll.ts" />
 ///<reference path="runsequence.ts" />
 ///<reference path="state.ts" />
 ///<reference path="tick.ts" />

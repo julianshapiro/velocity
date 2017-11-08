@@ -59,9 +59,13 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 	 *************************/
 
 	/**
-	 * Cache of the first argument - this is used often enough to be saved.
+	 * Shortcut to arguments for file size.
 	 */
-	let args0 = arguments[0] as VelocityObjectArgs,
+	let _arguments = arguments,
+		/**
+		 * Cache of the first argument - this is used often enough to be saved.
+		 */
+		args0 = _arguments[0] as VelocityObjectArgs,
 		/**
 		 * To allow for expressive CoffeeScript code, Velocity supports an
 		 * alternative syntax in which "elements" (or "e"), "properties" (or
@@ -126,7 +130,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 		// Used when there was an issue with one or more of the Velocity arguments
 		rejecter: (reason: any) => void;
 
-	//console.log("Velocity", arguments)
+	//console.log("Velocity", _arguments)
 	// First get the elements, and the animations connected to the last call if
 	// this is chained.
 	if (isUtility) {
@@ -147,28 +151,29 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 			}
 		}
 	} else {
-		propertiesMap = arguments[argumentIndex++] as string | VelocityProperties;
+		// TODO: Should be possible to call Velocity("pauseAll") - currently not possible
+		propertiesMap = _arguments[argumentIndex++] as string | VelocityProperties;
 		if (isPlainObject(propertiesMap)) {
-			let opts = arguments[argumentIndex];
+			let opts = _arguments[argumentIndex];
 
 			options = {};
 			if (isPlainObject(opts)) {
 				optionsMap = opts;
 			} else {
 				let offset = 0,
-					duration = validateDuration(arguments[argumentIndex + offset]);
+					duration = validateDuration(_arguments[argumentIndex + offset]);
 
 				if (duration !== undefined) {
 					offset++;
 					options.duration = duration;
 				}
-				let easing = validateEasing(arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration) as number);
+				let easing = validateEasing(_arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration) as number);
 
 				if (easing !== undefined) {
 					offset++;
 					options.easing = easing;
 				}
-				let complete = validateComplete(arguments[argumentIndex + offset]);
+				let complete = validateComplete(_arguments[argumentIndex + offset]);
 
 				if (complete !== undefined) {
 					options.complete = complete;
@@ -232,7 +237,9 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 	if (Promise && getValue(optionsMap && optionsMap.promise, defaults.promise)) {
 		promise = new Promise(function(resolve, reject) {
 			rejecter = reject;
+			resolver = resolve;
 			if (options) {
+				defineProperty(options, "_rejecter", reject);
 				defineProperty(options, "_resolver", function(args) {
 					// IMPORTANT:
 					// If a resolver tries to run on a Promise then it will
@@ -277,58 +284,31 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 	let elementsLength = elements.length;
 
 	if (isString(propertiesMap)) {
-		// TODO: Allow more options
-		let arg1 = arguments[argumentIndex];
+		let args: any[] = [],
+			promiseHandler: VelocityPromise = promise && {
+				_promise: promise,
+				_resolver: resolver,
+				_rejecter: rejecter
+			};
 
-		/*********************
-		 Action Detection
-		 *********************/
-
-		/* Velocity's behavior is categorized into "actions": Elements can either be specially scrolled into view,
-		 or they can be started, stopped, paused, resumed, or reversed . If a literal or referenced properties map is passed in as Velocity's
-		 first argument, the associated action is "start". Alternatively, "scroll", "reverse", "pause", "resume" or "stop" can be passed in
-		 instead of a properties map. */
-		let action;
-
-		switch (propertiesMap) {
-			//			case "scroll":
-			//				action = "scroll";
-			//				break;
-
-			case "reverse":
-				action = "reverse";
-				break;
-
-			case "pause": {
-				VelocityStatic.Actions.handlePauseResume(elements, arg1, true);
-				/* Since pause creates no new tweens, exit out of Velocity. */
-				return getChain();
-			}
-
-			case "resume": {
-				VelocityStatic.Actions.handlePauseResume(elements, arg1, false);
-				/* Since resume creates no new tweens, exit out of Velocity. */
-				return getChain();
-			}
-
-			case "finishAll":
-				VelocityStatic.Actions.finishAll(elements);
-			// deliberate fallthrough
-			case "finish":
-			case "stop":
-				VelocityStatic.Actions.stop(elements, arg1, promise, resolver);
-				/* Since we're stopping, and not proceeding with queueing, exit out of Velocity. */
-				return getChain();
-
-			default:
-				/* Treat a non-empty plain object as a literal properties map. */
-				if (isPlainObject(propertiesMap) && !isEmptyObject(propertiesMap)) {
-					action = "start";
-					break;
-				}
-				VelocityStatic.Actions.defaultAction(elements, propertiesMap, arg1, promise, resolver, rejecter)
-				return getChain();
+		while (argumentIndex < _arguments.length) {
+			args.push(_arguments[argumentIndex++]);
 		}
+
+		// Velocity's behavior is categorized into "actions". If a string is
+		// passed in instead of a propertiesMap then that will call a function
+		// to do something special to the animation linked.
+		// There is one special case - "reverse" - which is handled differently,
+		// by being stored on the animation and then expanded when the animation
+		// starts.
+		let callback = VelocityStatic.Actions[propertiesMap] || VelocityStatic.Actions["default"];
+
+		if (callback) {
+			callback(args, elements, promiseHandler, propertiesMap);
+		} else {
+			console.warn("VelocityJS: Unknown action:", propertiesMap);
+		}
+		return getChain();
 	}
 	/************************
 	 Element Processing
