@@ -12,7 +12,11 @@ QUnit.test('Global Fps Limit', async assert => {
 		/**
 		 * Test if the frame rate is assigned succesfully
 		 */
-		assert.equal(frameRate, Velocity.defaults.fpsLimit);
+		assert.equal(
+			frameRate,
+			Velocity.defaults.fpsLimit,
+			`Setting global fps limit to ${frameRate}`
+		);
 		return Velocity($target, defaultProperties, {
 			duration: asyncCheckDuration,
 			progress: () => {
@@ -25,9 +29,9 @@ QUnit.test('Global Fps Limit', async assert => {
 	/**
 	 * Test if the limit is working for 60, 30, 15 and 5 fps
 	 */
-	assert.close(await testFrame(60), 8, 2, 'Testing 60fps');
-	assert.close(await testFrame(30), 6, 1, 'Testing 30fps');
-	assert.close(await testFrame(15), 4, 1, 'Testing 15fps');
+	assert.close(await testFrame(60), 7, 3, 'Testing 60fps');
+	assert.close(await testFrame(30), 5, 1, 'Testing 30fps');
+	assert.close(await testFrame(15), 3, 1, 'Testing 15fps');
 	assert.close(await testFrame(5), 1, 1, 'Testing 5fps');
 	Velocity.defaults.fpsLimit = 60;
 });
