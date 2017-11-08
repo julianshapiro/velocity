@@ -13,12 +13,12 @@ namespace VelocityStatic.Actions {
 	 * single element will cause any calls that contain tweens for that element to be paused/resumed
 	 * as well.
 	 * @param {HTMLorSVGElement[]} elements The velocity elements
-	 * @param {StrictVelocityOptions} options The internal Velocity options
+	 * @param {StrictVelocityOptions} queue The internal Velocity options
 	 * @param {boolean} isPaused A flag to check whether we call this method from pause or resume case
 	 */
-	export function handlePauseResume(elements: HTMLorSVGElement[], options: StrictVelocityOptions, isPaused: boolean): void {
+	export function handlePauseResume(elements: HTMLorSVGElement[], queue: string, isPaused: boolean): void {
 
-		let queueName = getValue(validateQueue(options as any), defaults.queue),
+		let queueName = getValue(validateQueue(queue), defaults.queue),
 			activeCall = VelocityStatic.State.first;
 
 		/* Iterate through all calls and pause any that contain any of our elements */
@@ -29,7 +29,7 @@ namespace VelocityStatic.Actions {
 				activeCall.elements.some((activeElement) => {
 					let queue = getValue(activeCall.queue, activeCall.options.queue);
 
-					if (queueName !== true && (queue !== queueName) && !(options === undefined && queue === false)) {
+					if (queueName !== true && (queue !== queueName) && !(queue === undefined && queue === false)) {
 						return true;
 					}
 					if (elements.indexOf(activeElement) >= 0) {

@@ -1892,6 +1892,7 @@ var VelocityStatic;
          * @param {(value?: (HTMLorSVGElement[] | VelocityResult)) => void} resolver The resolve method of the promise
          */
         function defaultAction(elements, propertiesMap, options, promise, resolver, rejecter) {
+            // TODO: default is wrong, should be runSequence based, and needs all arguments
             if (isString(propertiesMap) && VelocityStatic.Redirects[propertiesMap]) {
                 var opts_1 = __assign({}, options), durationOriginal_1 = parseFloat(options.duration), delayOriginal_1 = parseFloat(options.delay) || 0;
                 /* If the backwards option was passed in, reverse the element set so that elements animate from the last to the first. */
@@ -1986,11 +1987,11 @@ var VelocityStatic;
          * single element will cause any calls that contain tweens for that element to be paused/resumed
          * as well.
          * @param {HTMLorSVGElement[]} elements The velocity elements
-         * @param {StrictVelocityOptions} options The internal Velocity options
+         * @param {StrictVelocityOptions} queue The internal Velocity options
          * @param {boolean} isPaused A flag to check whether we call this method from pause or resume case
          */
-        function handlePauseResume(elements, options, isPaused) {
-            var queueName = getValue(validateQueue(options), VelocityStatic.defaults.queue), activeCall = VelocityStatic.State.first;
+        function handlePauseResume(elements, queue, isPaused) {
+            var queueName = getValue(validateQueue(queue), VelocityStatic.defaults.queue), activeCall = VelocityStatic.State.first;
             /* Iterate through all calls and pause any that contain any of our elements */
             while (activeCall && !activeCall.paused) {
                 activeCall = activeCall.next;
@@ -1998,7 +1999,7 @@ var VelocityStatic;
                     /* Iterate through the active call's targeted elements. */
                     activeCall.elements.some(function(activeElement) {
                         var queue = getValue(activeCall.queue, activeCall.options.queue);
-                        if (queueName !== true && queue !== queueName && !(options === undefined && queue === false)) {
+                        if (queueName !== true && queue !== queueName && !(queue === undefined && queue === false)) {
                             return true;
                         }
                         if (elements.indexOf(activeElement) >= 0) {
@@ -2038,14 +2039,13 @@ var VelocityStatic;
          * @param {Promise<HTMLorSVGElement[]>} An optional promise if the user uses promises
          * @param {(value?: (HTMLorSVGElement[] | VelocityResult)) => void} resolver The resolve method of the promise
          */
-        function stop(elements, options, promise, resolver) {
-            var callsToStop = [];
-            /* Iterate through every active call. */
-            var activeCall = VelocityStatic.State.first;
-            var queueName = VelocityStatic.defaults.queue;
+        function stop(elements, queue, promise, resolver) {
+            var callsToStop = [], /* Iterate through every active call. */
+            activeCall = VelocityStatic.State.first, queueName = getValue(validateQueue(queue), VelocityStatic.defaults.queue);
             /* Iterate through all calls and pause any that contain any of our elements */
             while (activeCall) {
                 activeCall = activeCall.next;
+                var options = activeCall.options;
                 /* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
                  clear calls associated with the relevant queue. */
                 /* Call stopping logic works as follows:
@@ -2053,7 +2053,7 @@ var VelocityStatic;
                  - options === undefined --> stop current queue:"" call and all queue:false calls.
                  - options === false --> stop only queue:false calls.
                  - options === "custom" --> stop current queue:"custom" call, including remaining queued ones (there is no functionality to only clear the currently-running queue:"custom" call). */
-                if (queueName !== true && activeCall.queue !== queueName && !(options === undefined && activeCall.queue === false)) {
+                if (getValue(activeCall.queue, options.queue) !== queueName) {
                     continue;
                 }
                 /* Iterate through the calls targeted by the stop command. */
@@ -2072,11 +2072,11 @@ var VelocityStatic;
                      due to the queue-clearing above. */
                     var animation = void 0;
                     /* Iterate through the items in the element's queue. */
-                    while (animation = VelocityStatic.dequeue(element, VelocityStatic.defaults.queue, true)) {
-                        var resolver_1 = options._resolver;
+                    while (animation = VelocityStatic.dequeue(element, queue, true)) {
+                        var options_1 = animation.options, resolver_1 = options_1._resolver;
                         if (resolver_1) {
                             resolver_1(animation.elements);
-                            delete options._resolver;
+                            delete options_1._resolver;
                         }
                     }
                     /* Since "reverse" uses cached start values (the previous call's endValues), these values must be
@@ -4481,6 +4481,8 @@ function VelocityFn() {
      single raw DOM element is passed in (which doesn't contain a length property). */
     var elementsLength = elements.length;
     if (isString(propertiesMap)) {
+        // TODO: Allow more options
+        var arg1 = arguments[argumentIndex];
         /*********************
          Action Detection
          *********************/
@@ -4490,24 +4492,23 @@ function VelocityFn() {
          instead of a properties map. */
         var action = void 0;
         switch (propertiesMap) {
-          case "scroll":
-            action = "scroll";
-            break;
-
-          case "reverse":
+          //			case "scroll":
+            //				action = "scroll";
+            //				break;
+            case "reverse":
             action = "reverse";
             break;
 
           case "pause":
             {
-                VelocityStatic.Actions.handlePauseResume(elements, options, true);
+                VelocityStatic.Actions.handlePauseResume(elements, arg1, true);
                 /* Since pause creates no new tweens, exit out of Velocity. */
                 return getChain();
             }
 
           case "resume":
             {
-                VelocityStatic.Actions.handlePauseResume(elements, options, false);
+                VelocityStatic.Actions.handlePauseResume(elements, arg1, false);
                 /* Since resume creates no new tweens, exit out of Velocity. */
                 return getChain();
             }
@@ -4518,10 +4519,7 @@ function VelocityFn() {
           // deliberate fallthrough
             case "finish":
           case "stop":
-            /*******************
-                 Action: Stop
-                 *******************/
-            VelocityStatic.Actions.stop(elements, options, promise, resolver);
+            VelocityStatic.Actions.stop(elements, arg1, promise, resolver);
             /* Since we're stopping, and not proceeding with queueing, exit out of Velocity. */
             return getChain();
 
@@ -4531,7 +4529,7 @@ function VelocityFn() {
                 action = "start";
                 break;
             }
-            VelocityStatic.Actions.defaultAction(elements, propertiesMap, options, promise, resolver, rejecter);
+            VelocityStatic.Actions.defaultAction(elements, propertiesMap, arg1, promise, resolver, rejecter);
             return getChain();
         }
     }

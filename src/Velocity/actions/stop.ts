@@ -21,17 +21,18 @@ namespace VelocityStatic.Actions {
 	 * @param {Promise<HTMLorSVGElement[]>} An optional promise if the user uses promises
 	 * @param {(value?: (HTMLorSVGElement[] | VelocityResult)) => void} resolver The resolve method of the promise
 	 */
-	export function stop(elements: HTMLorSVGElement[], options: StrictVelocityOptions, promise?: Promise<HTMLorSVGElement[]>, resolver?: (value?: HTMLorSVGElement[] | VelocityResult) => void): void {
+	export function stop(elements: HTMLorSVGElement[], queue: string, promise?: Promise<HTMLorSVGElement[]>, resolver?: (value?: HTMLorSVGElement[] | VelocityResult) => void): void {
 
-		let callsToStop: AnimationCall[] = [];
-
-		/* Iterate through every active call. */
-		let activeCall = VelocityStatic.State.first;
-		let queueName = VelocityStatic.defaults.queue;
+		let callsToStop: AnimationCall[] = [],
+			/* Iterate through every active call. */
+			activeCall = State.first,
+			queueName = getValue(validateQueue(queue), defaults.queue);
 
 		/* Iterate through all calls and pause any that contain any of our elements */
 		while (activeCall) {
 			activeCall = activeCall.next;
+			let options = activeCall.options;
+
 			/* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
              clear calls associated with the relevant queue. */
 			/* Call stopping logic works as follows:
@@ -40,7 +41,7 @@ namespace VelocityStatic.Actions {
              - options === false --> stop only queue:false calls.
              - options === "custom" --> stop current queue:"custom" call, including remaining queued ones (there is no functionality to only clear the currently-running queue:"custom" call). */
 
-			if (queueName !== true && activeCall.queue !== queueName && !(options === undefined && activeCall.queue === false)) {
+			if (getValue(activeCall.queue, options.queue) !== queueName) {
 				continue;
 			}
 
@@ -63,8 +64,9 @@ namespace VelocityStatic.Actions {
 				let animation: AnimationCall;
 
 				/* Iterate through the items in the element's queue. */
-				while ((animation = VelocityStatic.dequeue(element, VelocityStatic.defaults.queue, true))) {
-					let resolver = options._resolver;
+				while ((animation = dequeue(element, queue, true))) {
+					let options = animation.options,
+						resolver = options._resolver;
 
 					if (resolver) {
 						resolver(animation.elements);
@@ -84,7 +86,7 @@ namespace VelocityStatic.Actions {
 		/* Prematurely call completeCall() on each matched active call. Pass an additional flag for "stop" to indicate
          that the complete callback and display:none setting should be skipped since we're completing prematurely. */
 		callsToStop.forEach((activeCall) => {
-			VelocityStatic.completeCall(activeCall, true);
+			completeCall(activeCall, true);
 		});
 
 		if (promise && resolver) {

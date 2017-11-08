@@ -21,8 +21,8 @@ namespace VelocityStatic.Actions {
 	 * @param {Promise<HTMLorSVGElement[]>} An optional promise if the user uses promises
 	 * @param {(value?: (HTMLorSVGElement[] | VelocityResult)) => void} resolver The resolve method of the promise
 	 */
-	export function defaultAction(elements: HTMLorSVGElement[], propertiesMap:string,options: StrictVelocityOptions, promise?: Promise<HTMLorSVGElement[]>, resolver?: (value?: HTMLorSVGElement[] | VelocityResult) => void, rejecter?:(reason: any) => void): void {
-
+	export function defaultAction(elements: HTMLorSVGElement[], propertiesMap: string, options: StrictVelocityOptions, promise?: Promise<HTMLorSVGElement[]>, resolver?: (value?: HTMLorSVGElement[] | VelocityResult) => void, rejecter?: (reason: any) => void): void {
+		// TODO: default is wrong, should be runSequence based, and needs all arguments
 		if (isString(propertiesMap) && VelocityStatic.Redirects[propertiesMap]) {
 			let opts = {...options},
 				durationOriginal = parseFloat(options.duration as any),
@@ -34,7 +34,7 @@ namespace VelocityStatic.Actions {
 			}
 
 			/* Individually trigger the redirect for each element in the set to prevent users from having to handle iteration logic in their redirect. */
-			elements.forEach(function (element, elementIndex) {
+			elements.forEach(function(element, elementIndex) {
 
 				/* If the stagger option was passed in, successively delay each element by the stagger value (in ms). Retain the original delay value. */
 				if (parseFloat(opts.stagger as string)) {

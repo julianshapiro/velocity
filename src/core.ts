@@ -72,7 +72,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 		 * "properties" object. We detect it by checking for its default
 		 * "names" property.
 		 */
-			// TODO: Confirm which browsers - if <=IE8 the we can drop completely
+		// TODO: Confirm which browsers - if <=IE8 the we can drop completely
 		syntacticSugar = (args0 && args0.p || ((isPlainObject(args0.properties) && !(args0.properties as any).names) || isString(args0.properties))),
 		/**
 		 * Whether Velocity was called via the utility function (as opposed to
@@ -230,10 +230,10 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 	}
 	// Create the promise if supported and wanted.
 	if (Promise && getValue(optionsMap && optionsMap.promise, defaults.promise)) {
-		promise = new Promise(function (resolve, reject) {
+		promise = new Promise(function(resolve, reject) {
 			rejecter = reject;
 			if (options) {
-				defineProperty(options, "_resolver", function (args) {
+				defineProperty(options, "_resolver", function(args) {
 					// IMPORTANT:
 					// If a resolver tries to run on a Promise then it will
 					// wait until that Promise resolves - but in this case we're
@@ -277,6 +277,9 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 	let elementsLength = elements.length;
 
 	if (isString(propertiesMap)) {
+		// TODO: Allow more options
+		let arg1 = arguments[argumentIndex];
+
 		/*********************
 		 Action Detection
 		 *********************/
@@ -288,40 +291,32 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 		let action;
 
 		switch (propertiesMap) {
-			case "scroll":
-				action = "scroll";
-				break;
+			//			case "scroll":
+			//				action = "scroll";
+			//				break;
 
 			case "reverse":
 				action = "reverse";
 				break;
 
 			case "pause": {
-
-				VelocityStatic.Actions.handlePauseResume(elements, options, true);
+				VelocityStatic.Actions.handlePauseResume(elements, arg1, true);
 				/* Since pause creates no new tweens, exit out of Velocity. */
 				return getChain();
 			}
 
 			case "resume": {
-
-				VelocityStatic.Actions.handlePauseResume(elements, options, false);
+				VelocityStatic.Actions.handlePauseResume(elements, arg1, false);
 				/* Since resume creates no new tweens, exit out of Velocity. */
 				return getChain();
 			}
 
 			case "finishAll":
-
 				VelocityStatic.Actions.finishAll(elements);
 			// deliberate fallthrough
 			case "finish":
 			case "stop":
-				/*******************
-				 Action: Stop
-				 *******************/
-
-				VelocityStatic.Actions.stop(elements, options, promise, resolver);
-
+				VelocityStatic.Actions.stop(elements, arg1, promise, resolver);
 				/* Since we're stopping, and not proceeding with queueing, exit out of Velocity. */
 				return getChain();
 
@@ -331,9 +326,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 					action = "start";
 					break;
 				}
-
-				VelocityStatic.Actions.defaultAction(elements, propertiesMap, options, promise, resolver, rejecter)
-
+				VelocityStatic.Actions.defaultAction(elements, propertiesMap, arg1, promise, resolver, rejecter)
 				return getChain();
 		}
 	}
@@ -458,7 +451,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
  *********************/
 
 /* IE detection. Gist: https://gist.github.com/julianshapiro/9098609 */
-var IE = (function () {
+var IE = (function() {
 	if (document.documentMode) {
 		return document.documentMode;
 	} else {
@@ -508,8 +501,8 @@ if (IE <= 8) {
 global.Velocity = VelocityFn;
 
 interface Window {
-	jQuery: { fn?: any };
-	Zepto: { fn?: any };
+	jQuery: {fn?: any};
+	Zepto: {fn?: any};
 	Velocity: any;
 }
 
