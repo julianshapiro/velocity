@@ -30,7 +30,6 @@ namespace VelocityStatic {
 
 		/* Iterate through all calls and pause any that contain any of our elements */
 		while (activeCall) {
-			activeCall = activeCall._next;
 			let options = activeCall.options;
 
 			/* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
@@ -42,6 +41,7 @@ namespace VelocityStatic {
              - options === "custom" --> stop current queue:"custom" call, including remaining queued ones (there is no functionality to only clear the currently-running queue:"custom" call). */
 
 			if (getValue(activeCall.queue, options.queue) !== queueName) {
+				activeCall = activeCall._next;
 				continue;
 			}
 
@@ -81,6 +81,7 @@ namespace VelocityStatic {
 				activeCall.timeStart = -1;
 				callsToStop.push(activeCall);
 			}
+			activeCall = activeCall._next;
 		}
 
 		/* Prematurely call completeCall() on each matched active call. Pass an additional flag for "stop" to indicate

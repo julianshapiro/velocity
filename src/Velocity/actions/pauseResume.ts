@@ -23,7 +23,6 @@ namespace VelocityStatic {
 
 		/* Iterate through all calls and pause any that contain any of our elements */
 		while (activeCall && !activeCall.paused) {
-			activeCall = activeCall._next;
 			if (activeCall.paused !== isPaused) {
 				/* Iterate through the active call's targeted elements. */
 				activeCall.elements.some((activeElement) => {
@@ -38,6 +37,7 @@ namespace VelocityStatic {
 					}
 				});
 			}
+			activeCall = activeCall._next;
 		}
 	}
 
