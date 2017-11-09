@@ -66,29 +66,17 @@ let _now = Date.now ? Date.now : function() {
 };
 
 /**
- * Shim for [].includes, can fallback to .indexOf and even manual search for
- * IE < 9
+ * Get the index of an element
  */
-let _inArray = (function() {
-	if ((Array.prototype as any).includes) { // ES6
-		return function(arr: any[], val) {
-			return (arr as any).includes(val);
-		};
+let _indexOf = Array.prototype.indexOf;
+
+/**
+ * Shim for [].includes, can fallback to indexOf
+ */
+let _inArray =
+	(Array.prototype as any).includes || function(value) {
+		return _indexOf.call(this,value) > -1
 	}
-	if (Array.prototype.indexOf) {
-		return function(arr: any[], val) {
-			return arr.indexOf(val) >= 0;
-		};
-	}
-	return function(arr: any[], val) {
-		for (let i = 0; i < arr.length; i++) {
-			if (arr[i] === val) {
-				return true;
-			}
-		}
-		return false;
-	};
-}) as any as ((arr: any[], val: any) => boolean);
 
 /**
  * Convert an element or array-like element list into an actual array

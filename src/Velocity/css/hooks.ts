@@ -115,8 +115,7 @@ namespace VelocityStatic {
 
 			export function getUnit(str: string, start?: number): string {
 				let unit = (str.substr(start || 0, 5).match(/^[a-z%]+/) || [])[0] || "";
-
-				if (unit && _inArray(CSS.Lists.units, unit)) {
+				if (unit && _inArray.call(CSS.Lists.units, unit)) {
 					return unit;
 				}
 				return "";

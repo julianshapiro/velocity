@@ -27,7 +27,7 @@ function isNode(variable): variable is HTMLorSVGElement {
 }
 
 function isVelocityResult(variable): variable is VelocityResult {
-	return variable && variable.length && (variable as VelocityResult).velocity === VelocityFn;
+	return variable && isNumber(variable.length) && (variable as VelocityResult).velocity === VelocityFn;
 }
 
 function propertyIsEnumerable(object: Object, property: string): boolean {
