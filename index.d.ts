@@ -200,6 +200,13 @@ interface VelocityOptions {
 	 * @default 0
 	 */
 	repeat?: boolean | number;
+	/**
+	 * The speed to play the animation back at. This number can change while
+	 * running, in order to vary the playback rate.
+	 * 
+	 * @default 0
+	 */
+	speed?: number;
 	stagger?: string | number;
 
 	/**

@@ -244,14 +244,23 @@ namespace VelocityStatic {
 						}
 					}
 
-					/* The tween's completion percentage is relative to the tween's start time, not the tween's start value
-					 (which would result in unpredictable tween durations since JavaScript's timers are not particularly accurate).
-					 Accordingly, we ensure that percentComplete does not exceed 1. */
-					let tweens = activeCall.tweens,
+					let speed = getValue(activeCall.speed, options.speed, defaults.speed),
+						duration = getValue(activeCall.duration, options.duration, defaults.duration);
+
+					if (!speed) {
+						// If we're freezing the animation then don't let the
+						// time change
+						activeCall.timeStart = timeStart -= deltaTime;
+					} else if (speed !== 1) {
+						activeCall.timeStart = timeStart -= deltaTime * speed;
+						duration /= speed;
+					}
+
+					let activeEasing = getValue(activeCall.easing, options.easing, defaults.easing),
 						millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart,
-						property: string,
-						transformPropertyExists = false,
-						percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / getValue(activeCall.duration, options.duration, defaults.duration), 1);
+						percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / duration, 1),
+						tweens = activeCall.tweens,
+						transformPropertyExists = false;
 
 					if (percentComplete === 1) {
 						activeCall._nextComplete = undefined;
@@ -266,10 +275,8 @@ namespace VelocityStatic {
 					 Property Iteration
 					 ************************/
 
-					let activeEasing = getValue(activeCall.easing, options.easing, defaults.easing);
-
 					/* For every element, iterate through each property. */
-					for (property in tweens) {
+					for (let property in tweens) {
 						let currentValue: string | number,
 							tween = tweens[property],
 							/* Easing can either be a pre-genereated function or a string that references a pre-registered easing

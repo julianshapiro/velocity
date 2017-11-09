@@ -14,17 +14,19 @@ const DURATION_FAST = 200;
 const DURATION_NORMAL = 400;
 const DURATION_SLOW = 600;
 
+const FUZZY_MS_PER_SECOND = 980;
+
 const DEFAULT_CACHE = true;
 const DEFAULT_DELAY = 0;
 const DEFAULT_DURATION = DURATION_NORMAL;
 const DEFAULT_EASING = "swing";
 const DEFAULT_FPSLIMIT = 60;
 const DEFAULT_LOOP = 0;
-const FUZZY_MS_PER_SECOND = 980;
 const DEFAULT_PROMISE = true;
 const DEFAULT_PROMISE_REJECT_EMPTY = true;
 const DEFAULT_QUEUE = "";
 const DEFAULT_REPEAT = 0;
+const DEFAULT_SPEED = 1;
 
 const Duration = {
 	"fast": DURATION_FAST,

@@ -23,7 +23,7 @@ function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProper
 function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
 function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
 function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
-function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResult {
+function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityResult {
 
 	/**
 	 * Logic for determining what to return to the call stack when exiting out
@@ -207,9 +207,16 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 		// Need the extra fallback here in case it supplies an invalid
 		// easing that we need to overrride with the default.
 		options.easing = validateEasing(getValue(optionsMap.easing, defaults.easing), options.duration) || validateEasing(defaults.easing, options.duration);
-		options.loop = validateLoop(optionsMap.loop) || 0;
-		options.repeat = validateRepeat(optionsMap.repeat) || 0;
-		options.repeatAgain = validateRepeat(optionsMap.repeat) || 0;
+		if (options.loop !== undefined) {
+			options.loop = validateLoop(optionsMap.loop) || 0;
+		}
+		if (options.repeat !== undefined) {
+			options.repeat = validateRepeat(optionsMap.repeat) || 0;
+			options.repeatAgain = validateRepeat(optionsMap.repeat) || 0;
+		}
+		if (optionsMap.speed !== undefined) {
+			options.speed = validateSpeed(optionsMap.speed) || 0;
+		}
 		options.queue = getValue(validateQueue(optionsMap.queue), defaults.queue);
 		if (optionsMap.mobileHA && !VelocityStatic.State.isGingerbread) {
 			/* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack)

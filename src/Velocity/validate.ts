@@ -17,7 +17,7 @@ function parseDuration(duration: "fast" | "normal" | "slow" | number, def?: "fas
 		return duration;
 	}
 
-	if(isString(duration)){
+	if (isString(duration)) {
 		return Duration[duration.toLowerCase()] || parseFloat(duration.replace("ms", "").replace("s", "000"));
 	}
 
@@ -233,5 +233,18 @@ function validateRepeat(value: number | boolean): number | true {
 	}
 	if (value != null) {
 		console.warn("VelocityJS: Trying to set 'repeat' to an invalid value:", value);
+	}
+}
+
+/**
+ * Validate a <code>delay</code> option.
+ * @private
+ */
+function validateSpeed(value: number): number {
+	if (isNumber(value)) {
+		return value;
+	}
+	if (value != null) {
+		console.error("VelocityJS: Trying to set 'speed' to an invalid value:", value);
 	}
 }

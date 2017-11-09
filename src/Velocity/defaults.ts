@@ -19,7 +19,8 @@ namespace VelocityStatic {
 		_promise: boolean = DEFAULT_PROMISE,
 		_promiseRejectEmpty: boolean = DEFAULT_PROMISE_REJECT_EMPTY,
 		_queue: string | false = DEFAULT_QUEUE,
-		_repeat: number | true = DEFAULT_REPEAT;
+		_repeat: number | true = DEFAULT_REPEAT,
+		_speed: number = DEFAULT_SPEED;
 
 	export let defaults: StrictVelocityOptions = {
 		mobileHA: true
@@ -162,6 +163,17 @@ namespace VelocityStatic {
 				value = validateRepeat(value);
 				if (value !== undefined) {
 					_repeat = value;
+				}
+			})
+		},
+		speed: {
+			get: (function(): number {
+				return _speed;
+			}),
+			set: (function(value: number) {
+				value = validateSpeed(value);
+				if (value !== undefined) {
+					_speed = value;
 				}
 			})
 		}

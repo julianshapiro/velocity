@@ -73,22 +73,15 @@ let _indexOf = Array.prototype.indexOf;
 /**
  * Shim for [].includes, can fallback to indexOf
  */
-let _inArray =
+let _inArray: (searchElement: any) => boolean =
 	(Array.prototype as any).includes || function(value) {
-		return _indexOf.call(this,value) > -1
+		return _indexOf.call(this, value) > -1;
 	}
 
 /**
- * Convert an element or array-like element list into an actual array
+ * Convert an element or array-like element list into an array if needed.
  */
 function sanitizeElements(elements: HTMLorSVGElement | HTMLorSVGElement[]): HTMLorSVGElement[] {
-	/* Unwrap jQuery/Zepto objects. */
-	if (isVelocityResult(elements)) {
-		return elements;
-	}
-	if (isWrapped(elements)) {
-		return Array.from(elements);
-	}
 	if (isNode(elements)) {
 		return [elements];
 	}
