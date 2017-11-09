@@ -1992,14 +1992,13 @@ var VelocityStatic;
              and call each function. This will make them active calls below, which will
              cause them to be applied via the duration setting. */
             /* Iterate through the items in the element's queue. */
-            var animation;
-            var queue = getValue(activeCall.queue, activeCall.options.queue);
+            var animation, queue = getValue(activeCall.queue, activeCall.options.queue);
             while (animation = VelocityStatic.dequeue(element, queue)) {
                 animation.queue = false;
                 VelocityStatic.expandTween(animation);
             }
         });
-        VelocityStatic.Actions["stop"].call(this, arguments);
+        VelocityStatic.Actions["stop"].apply(this, arguments);
     }
     VelocityStatic.registerAction([ "finishAll", finishAll ], true);
 })(VelocityStatic || (VelocityStatic = {}));
@@ -2699,6 +2698,12 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
+    /**
+     * In mock mode, all animations are forced to complete immediately upon the
+     * next rAF tick. If there are further animations queued then they will each
+     * take one single frame in turn. Loops and repeats will be disabled while
+     * <code>mock = true</code>.
+     */
     VelocityStatic.mock = false;
 })(VelocityStatic || (VelocityStatic = {}));
 
@@ -3337,7 +3342,7 @@ var VelocityStatic;
                         activeCall.timeStart = timeStart -= deltaTime * speed;
                         duration /= speed;
                     }
-                    var activeEasing = getValue(activeCall.easing, options.easing, VelocityStatic.defaults.easing), millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / duration, 1), tweens = activeCall.tweens, transformPropertyExists = false;
+                    var activeEasing = getValue(activeCall.easing, options.easing, VelocityStatic.defaults.easing), millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, percentComplete = activeCall.percentComplete = VelocityStatic.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1), tweens = activeCall.tweens, transformPropertyExists = false;
                     if (percentComplete === 1) {
                         activeCall._nextComplete = undefined;
                         if (lastComplete) {
@@ -4462,7 +4467,7 @@ function validateQueue(value) {
     if (value === false || isString(value)) {
         return value;
     }
-    if (value != null) {
+    if (value != null && value !== true) {
         console.warn("VelocityJS: Trying to set 'queue' to an invalid value:", value);
     }
 }
@@ -4669,23 +4674,9 @@ function VelocityFn() {
         defineProperty(options, "_completed", 0);
         defineProperty(options, "_total", 0);
     }
-    if (optionsMap) {
-        // In mock mode, all animations are forced to 1ms so that they occur
-        // immediately upon the next rAF tick. Alternatively, a multiplier can
-        // be passed in to time remap all delays and durations.
-        if (VelocityStatic.mock === true) {
-            options.delay = 0;
-            options.duration = 1;
-        } else {
-            options.duration = getValue(validateDuration(optionsMap.duration), defaults.duration);
-            options.delay = getValue(validateDelay(optionsMap.delay), defaults.delay);
-            // TODO: Put mock in the main tick loop - so we can change the speed
-            if (VelocityStatic.mock) {
-                var mock = parseFloat(VelocityStatic.mock) || 1;
-                options.delay *= mock;
-                options.duration *= mock;
-            }
-        }
+    if (isPlainObject(optionsMap)) {
+        options.duration = getValue(validateDuration(optionsMap.duration), defaults.duration);
+        options.delay = getValue(validateDelay(optionsMap.delay), defaults.delay);
         // Need the extra fallback here in case it supplies an invalid
         // easing that we need to overrride with the default.
         options.easing = validateEasing(getValue(optionsMap.easing, defaults.easing), options.duration) || validateEasing(defaults.easing, options.duration);

@@ -7,5 +7,11 @@
  */
 
 namespace VelocityStatic {
+	/**
+	 * In mock mode, all animations are forced to complete immediately upon the
+	 * next rAF tick. If there are further animations queued then they will each
+	 * take one single frame in turn. Loops and repeats will be disabled while
+	 * <code>mock = true</code>.
+	 */
 	export let mock: boolean = false;
 };

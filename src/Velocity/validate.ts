@@ -210,7 +210,7 @@ function validateQueue(value: string | false): string | false {
 	if (value === false || isString(value)) {
 		return value;
 	}
-	if (value != null) {
+	if (value != null && value !== true) {
 		console.warn("VelocityJS: Trying to set 'queue' to an invalid value:", value);
 	}
 }

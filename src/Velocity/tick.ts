@@ -258,7 +258,7 @@ namespace VelocityStatic {
 
 					let activeEasing = getValue(activeCall.easing, options.easing, defaults.easing),
 						millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart,
-						percentComplete = activeCall.percentComplete = Math.min(millisecondsEllapsed / duration, 1),
+						percentComplete = activeCall.percentComplete = mock ? 1 : Math.min(millisecondsEllapsed / duration, 1),
 						tweens = activeCall.tweens,
 						transformPropertyExists = false;
 

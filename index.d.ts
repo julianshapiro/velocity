@@ -110,7 +110,18 @@ type VelocityProgress = (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[]
 // TODO: Clean this up, add comments, remove deprecated options
 interface VelocityOptions {
 	backwards?: boolean;
+	/**
+	 * Begin handler. Only the first element to check this callback gets to use
+	 * it.
+	 * 
+	 * @default: undefined
+	 */
 	begin?: VelocityCallback;
+	/**
+	 * Complete handler (only the last element in a set gets this).
+	 * 
+	 * @default: undefined
+	 */
 	complete?: VelocityCallback;
 	/**
 	 * How long the animation should delay after becoming active and before it
@@ -149,6 +160,7 @@ interface VelocityOptions {
 	easing?: VelocityEasingType;
 	/**
 	 * Maximum number of frames to render on each second for all animations
+	 * 
 	 * @default 60
 	 */
 	fpsLimit?: number;
@@ -163,10 +175,16 @@ interface VelocityOptions {
 	loop?: boolean | number;
 	/**
 	 * The minimum frame time to achieve, the value is calculated based on fpsLimit
-	 * @default 16,33333333
+	 * 
+	 * @default 16.33333333 (1000ms / 60fps)
 	 */
 	minFrameTime?: number;
 	mobileHA?: boolean;
+	/**
+	 * Progress handler (only the last element in a set gets this)
+	 * 
+	 * @default: undefined
+	 */
 	progress?: VelocityProgress;
 	/**
 	 * If this should return a Promise with everything else. If promises are not
@@ -243,6 +261,7 @@ interface VelocityOptions {
 interface VelocityPromise {
 	/**
 	 * A saved copy of the Promise.
+	 * 
 	 * @private
 	 */
 	_promise?: Promise<HTMLorSVGElement[]>;
@@ -250,6 +269,7 @@ interface VelocityPromise {
 	 * This method is called at most once to signify that the animation has
 	 * completed. Currently a loop:true animation will never complete. This
 	 * allows .then(fn) to run (see Promise support).
+	 * 
 	 * @private
 	 */
 	_resolver?: (value?: HTMLorSVGElement[] | PromiseLike<HTMLorSVGElement[]>) => void;
@@ -257,6 +277,7 @@ interface VelocityPromise {
 	 * This method is called at most once to signify that the animation has
 	 * completed. Currently a loop:true animation will never complete. This
 	 * allows .then(fn) to run (see Promise support).
+	 * 
 	 * @private
 	 */
 	_rejecter?: (reason?: any) => void;
@@ -271,11 +292,13 @@ interface StrictVelocityOptions extends VelocityOptions, VelocityPromise {
 	/**
 	 * Begin handler. Only the first element to check this callback gets to use
 	 * it. Cleared after calling
+	 * 
 	 * @private
 	 */
 	begin?: VelocityCallback;
 	/**
 	 * Complete handler (only the last element in a set gets this)
+	 * 
 	 * @private
 	 */
 	complete?: VelocityCallback;
@@ -301,6 +324,7 @@ interface StrictVelocityOptions extends VelocityOptions, VelocityPromise {
 	mobileHA?: boolean;
 	/**
 	 * Progress handler (only the last element in a set gets this)
+	 * 
 	 * @private
 	 */
 	progress?: VelocityProgress;
@@ -324,21 +348,25 @@ interface StrictVelocityOptions extends VelocityOptions, VelocityPromise {
 	//interface ExtendedVelocityOptions extends StrictVelocityOptions {
 	/**
 	 * The first AnimationCall to get this - used for the progress callback.
+	 * 
 	 * @private
 	 */
 	_first?: AnimationCall;
 	/**
 	 * The total number of AnimationCalls that are pointing at this.
+	 * 
 	 * @private
 	 */
 	_total?: number;
 	/**
 	 * The number of AnimationCalls that have started.
+	 * 
 	 * @private
 	 */
 	_started?: number;
 	/**
 	 * The number of AnimationCalls that have finished.
+	 * 
 	 * @private
 	 */
 	_completed?: number;

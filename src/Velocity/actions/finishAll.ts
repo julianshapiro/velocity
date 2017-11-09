@@ -21,14 +21,15 @@ namespace VelocityStatic {
              and call each function. This will make them active calls below, which will
              cause them to be applied via the duration setting. */
 			/* Iterate through the items in the element's queue. */
-			let animation: AnimationCall;
-			let queue = getValue(activeCall.queue, activeCall.options.queue);
+			let animation: AnimationCall,
+				queue = getValue(activeCall.queue, activeCall.options.queue);
+
 			while (animation = VelocityStatic.dequeue(element, queue)) {
 				animation.queue = false;
 				VelocityStatic.expandTween(animation);
 			}
 		});
-		VelocityStatic.Actions["stop"].call(this, arguments);
+		VelocityStatic.Actions["stop"].apply(this, arguments);
 	}
 
 	registerAction(["finishAll", finishAll], true);

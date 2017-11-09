@@ -186,24 +186,9 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		defineProperty(options, "_completed", 0);
 		defineProperty(options, "_total", 0);
 	}
-	if (optionsMap) {
-		// In mock mode, all animations are forced to 1ms so that they occur
-		// immediately upon the next rAF tick. Alternatively, a multiplier can
-		// be passed in to time remap all delays and durations.
-		if (VelocityStatic.mock === true) {
-			options.delay = 0;
-			options.duration = 1;
-		} else {
-			options.duration = getValue(validateDuration(optionsMap.duration), defaults.duration);
-			options.delay = getValue(validateDelay(optionsMap.delay), defaults.delay);
-			// TODO: Put mock in the main tick loop - so we can change the speed
-			if (VelocityStatic.mock) {
-				let mock = parseFloat(VelocityStatic.mock) || 1;
-
-				options.delay *= mock;
-				options.duration *= mock;
-			}
-		}
+	if (isPlainObject(optionsMap)) {
+		options.duration = getValue(validateDuration(optionsMap.duration), defaults.duration);
+		options.delay = getValue(validateDelay(optionsMap.delay), defaults.delay);
 		// Need the extra fallback here in case it supplies an invalid
 		// easing that we need to overrride with the default.
 		options.easing = validateEasing(getValue(optionsMap.easing, defaults.easing), options.duration) || validateEasing(defaults.easing, options.duration);
