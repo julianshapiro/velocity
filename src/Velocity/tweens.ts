@@ -9,7 +9,7 @@
 namespace VelocityStatic {
 	/**
 	 * Expand all queued animations that haven't gone yet
-	 * 
+	 *
 	 * This will automatically expand the properties map for any recently added
 	 * animations so that the start and end values are correct
 	 */
@@ -18,7 +18,7 @@ namespace VelocityStatic {
 			options = activeCall.options,
 			elementsLength = elements.length,
 			element = activeCall.element,
-			elementArrayIndex = elements.indexOf(element);
+			elementArrayIndex = _indexOf.call(elements, element);
 
 		/***************************
 		 Tween Data Calculation
