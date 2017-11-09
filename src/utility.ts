@@ -95,10 +95,14 @@ let _inArray = (function() {
  */
 function sanitizeElements(elements: HTMLorSVGElement | HTMLorSVGElement[]): HTMLorSVGElement[] {
 	/* Unwrap jQuery/Zepto objects. */
+	if (isVelocityResult(elements)) {
+		return elements;
+	}
 	if (isWrapped(elements)) {
-		elements = [...elements];
-	} else if (isNode(elements)) {
-		elements = [elements];
+		return Array.from(elements);
+	}
+	if (isNode(elements)) {
+		return [elements];
 	}
 	return elements as HTMLorSVGElement[];
 }

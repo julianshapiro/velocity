@@ -222,10 +222,14 @@ var _inArray = function() {
  */
 function sanitizeElements(elements) {
     /* Unwrap jQuery/Zepto objects. */
+    if (isVelocityResult(elements)) {
+        return elements;
+    }
     if (isWrapped(elements)) {
-        elements = elements.slice();
-    } else if (isNode(elements)) {
-        elements = [ elements ];
+        return Array.from(elements);
+    }
+    if (isNode(elements)) {
+        return [ elements ];
     }
     return elements;
 }

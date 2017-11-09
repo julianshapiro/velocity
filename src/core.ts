@@ -195,7 +195,7 @@ function VelocityFn(this: VelocityElements | void, ...args: any[]): VelocityResu
 			options.duration = 1;
 		} else {
 			options.duration = getValue(validateDuration(optionsMap.duration), defaults.duration);
-			options.delay = getValue(validateDuration(optionsMap.delay), defaults.delay);
+			options.delay = getValue(validateDelay(optionsMap.delay), defaults.delay);
 			// TODO: Put mock in the main tick loop - so we can change the speed
 			if (VelocityStatic.mock) {
 				let mock = parseFloat(VelocityStatic.mock) || 1;
