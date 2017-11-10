@@ -6,7 +6,7 @@
 		"forceConsistentCasingInFileNames": true,
 		"noEmitOnError": true,
 		"noImplicitAny": false,
-		"outFile": "velocity.js",
+		"outFile": "build/velocity.js",
 		"preserveConstEnums": true,
 		"removeComments": false,
 		"sourceMap": true,
