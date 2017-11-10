@@ -3,7 +3,7 @@
 ///<reference path="hooks.ts" />
 ///<reference path="lists.ts" />
 ///<reference path="names.ts" />
-///<reference path="normalizations.ts" />
+///<reference path="normalizations/_all.d.ts" />
 ///<reference path="regex.ts" />
 ///<reference path="setPropertyValue.ts" />
 ///<reference path="values.ts" />

@@ -20,6 +20,11 @@ type VelocityEasingFn = (percentComplete: number, startValue: number, endValue: 
 type VelocityActionFn = (args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) => any;
 
 /**
+ * Used for normalization callbacks.
+ */
+type VelocityNormalizationsFn = ((type: "name" | "extract" | "inject", element?: HTMLorSVGElement, propertyValue?) => any);
+
+/**
  * List of all easing types for easy code completion in TypeScript
  */
 type VelocityEasingType = VelocityEasingFn
@@ -71,7 +76,7 @@ type VelocityObjectArgs = {
 
 /**
  * The various formats of Element argument for Velocity. Some libraries such as
- * jQuery and Zepto provide an array-like 
+ * jQuery and Zepto provide an array-like
  */
 type VelocityElements = HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult;
 
@@ -113,13 +118,13 @@ interface VelocityOptions {
 	/**
 	 * Begin handler. Only the first element to check this callback gets to use
 	 * it.
-	 * 
+	 *
 	 * @default: undefined
 	 */
 	begin?: VelocityCallback;
 	/**
 	 * Complete handler (only the last element in a set gets this).
-	 * 
+	 *
 	 * @default: undefined
 	 */
 	complete?: VelocityCallback;
@@ -132,7 +137,7 @@ interface VelocityOptions {
 	 * <code>"slow"</code> = 600ms
 	 * NOTE: If passing a negative number then this will allow you to start with
 	 * the animation partially complete from the start.
-	 * 
+	 *
 	 * @default 0
 	 */
 	delay?: "fast" | "normal" | "slow" | number;
@@ -143,7 +148,7 @@ interface VelocityOptions {
 	 * <code>"fast"</code> = 200ms
 	 * <code>"normal"</code> = 400ms (default)
 	 * <code>"slow"</code> = 600ms
-	 * 
+	 *
 	 * @default 400
 	 */
 	duration?: "fast" | "normal" | "slow" | number;
@@ -152,15 +157,15 @@ interface VelocityOptions {
 	 * would simply be 1% of the time to 1% of the animation. This allows you
 	 * to specify how that rate of change should be. There are various named
 	 * easings, but you can also supply your own.
-	 * 
+	 *
 	 * TODO: Copy more of the original description
-	 * 
+	 *
 	 * @default "swing"
 	 */
 	easing?: VelocityEasingType;
 	/**
 	 * Maximum number of frames to render on each second for all animations
-	 * 
+	 *
 	 * @default 60
 	 */
 	fpsLimit?: number;
@@ -169,34 +174,34 @@ interface VelocityOptions {
 	 * start values", so it will run, then reverse. This counts as a single
 	 * loop. Setting <code>loop:4</code> will cause the animation to take the
 	 * same time as <code>4n+1</code> iterations.
-	 * 
+	 *
 	 * @default 0
 	 */
 	loop?: boolean | number;
 	/**
 	 * The minimum frame time to achieve, the value is calculated based on fpsLimit
-	 * 
+	 *
 	 * @default 16.33333333 (1000ms / 60fps)
 	 */
 	minFrameTime?: number;
 	mobileHA?: boolean;
 	/**
 	 * Progress handler (only the last element in a set gets this)
-	 * 
+	 *
 	 * @default: undefined
 	 */
 	progress?: VelocityProgress;
 	/**
 	 * If this should return a Promise with everything else. If promises are not
 	 * required at all, then simply setting it globally will turn them off.
-	 * 
+	 *
 	 * @default true
 	 */
 	promise?: boolean;
 	/**
 	 * If promises are turned on, then the promise can reject if there are no
 	 * elements supplied (an empty array is still valid).
-	 * 
+	 *
 	 * @default false
 	 */
 	promiseRejectEmpty?: boolean;
@@ -205,7 +210,7 @@ interface VelocityOptions {
 	 * it will be added immediately ignoring any other queues running. Queues
 	 * start playing automatically (unlike jQuery, this doesn't need a queue to
 	 * be manually started).
-	 * 
+	 *
 	 * @default ""
 	 */
 	queue?: false | string;
@@ -214,14 +219,14 @@ interface VelocityOptions {
 	 * initial values and animate once. This is most useful for rotating
 	 * animations where <code>0deg === 360deg</code>. If you are after a more
 	 * "bounce" effect then look at <code>loop</code>.
-	 * 
+	 *
 	 * @default 0
 	 */
 	repeat?: boolean | number;
 	/**
 	 * The speed to play the animation back at. This number can change while
 	 * running, in order to vary the playback rate.
-	 * 
+	 *
 	 * @default 0
 	 */
 	speed?: number;
@@ -248,7 +253,7 @@ interface VelocityOptions {
 	 * Should the cache be used for the tweens. Turning this off can improve
 	 * memory usage slightly, but will also make things slower when creating
 	 * animations.
-	 * 
+	 *
 	 * @private
 	 * @default true
 	 */
@@ -261,7 +266,7 @@ interface VelocityOptions {
 interface VelocityPromise {
 	/**
 	 * A saved copy of the Promise.
-	 * 
+	 *
 	 * @private
 	 */
 	_promise?: Promise<HTMLorSVGElement[]>;
@@ -269,7 +274,7 @@ interface VelocityPromise {
 	 * This method is called at most once to signify that the animation has
 	 * completed. Currently a loop:true animation will never complete. This
 	 * allows .then(fn) to run (see Promise support).
-	 * 
+	 *
 	 * @private
 	 */
 	_resolver?: (value?: HTMLorSVGElement[] | PromiseLike<HTMLorSVGElement[]>) => void;
@@ -277,7 +282,7 @@ interface VelocityPromise {
 	 * This method is called at most once to signify that the animation has
 	 * completed. Currently a loop:true animation will never complete. This
 	 * allows .then(fn) to run (see Promise support).
-	 * 
+	 *
 	 * @private
 	 */
 	_rejecter?: (reason?: any) => void;
@@ -292,13 +297,13 @@ interface StrictVelocityOptions extends VelocityOptions, VelocityPromise {
 	/**
 	 * Begin handler. Only the first element to check this callback gets to use
 	 * it. Cleared after calling
-	 * 
+	 *
 	 * @private
 	 */
 	begin?: VelocityCallback;
 	/**
 	 * Complete handler (only the last element in a set gets this)
-	 * 
+	 *
 	 * @private
 	 */
 	complete?: VelocityCallback;
@@ -324,7 +329,7 @@ interface StrictVelocityOptions extends VelocityOptions, VelocityPromise {
 	mobileHA?: boolean;
 	/**
 	 * Progress handler (only the last element in a set gets this)
-	 * 
+	 *
 	 * @private
 	 */
 	progress?: VelocityProgress;
@@ -348,25 +353,25 @@ interface StrictVelocityOptions extends VelocityOptions, VelocityPromise {
 	//interface ExtendedVelocityOptions extends StrictVelocityOptions {
 	/**
 	 * The first AnimationCall to get this - used for the progress callback.
-	 * 
+	 *
 	 * @private
 	 */
 	_first?: AnimationCall;
 	/**
 	 * The total number of AnimationCalls that are pointing at this.
-	 * 
+	 *
 	 * @private
 	 */
 	_total?: number;
 	/**
 	 * The number of AnimationCalls that have started.
-	 * 
+	 *
 	 * @private
 	 */
 	_started?: number;
 	/**
 	 * The number of AnimationCalls that have finished.
-	 * 
+	 *
 	 * @private
 	 */
 	_completed?: number;
@@ -390,7 +395,7 @@ interface ElementData {
 	/**
 	 * A local cache of the current style values we're using, this is 80x faster
 	 * than <code>element.style</code> access.
-	 * 
+	 *
 	 * Empty strings are set to null to get the value from getComputedStyle
 	 * instead. If getComputedStyle returns an empty string then that is saved.
 	 */
@@ -419,7 +424,7 @@ interface ElementData {
 	 * queue is empty (but still running) the key will still exist with a value
 	 * of "null". When the queue is empty and the next entry is pulled from it
 	 * then it will be set to "undefined".
-	 * 
+	 *
 	 * The default queue is an empty string - ""
 	 */
 	queueList: {[name: string]: AnimationCall};
@@ -493,26 +498,26 @@ interface Tween {
 interface AnimationCall extends StrictVelocityOptions {
 	/**
 	 * Used to store the next AnimationCell in this list.
-	 * 
+	 *
 	 * @private
 	 */
 	_next?: AnimationCall;
 	/**
 	 * Used to store the previous AnimationCell in this list. Used to make
 	 * removing items from the list significantly easier.
-	 * 
+	 *
 	 * @private
 	 */
 	_prev?: AnimationCall;
 	/**
 	 * Used to store the next call with a Progress callback.
-	 * 
+	 *
 	 * @private
 	 */
 	_nextProgress?: AnimationCall;
 	/**
 	 * Used to store the next call with a Complete callback.
-	 * 
+	 *
 	 * @private
 	 */
 	_nextComplete?: AnimationCall;
@@ -568,13 +573,13 @@ interface AnimationCall extends StrictVelocityOptions {
 	percentComplete?: number;
 	/**
 	 * TODO: Remove this so it's a normal property
-	 * 
+	 *
 	 * @deprecated
 	 */
 	display?: boolean | string;
 	/**
 	 * TODO: Remove this so it's a normal property
-	 * 
+	 *
 	 * @deprecated
 	 */
 	visibility?: boolean | string;
