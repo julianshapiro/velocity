@@ -92,15 +92,17 @@ function applyStartValues(element, startValues) {
 }
 
 function Data(element) { // TODO: :ElementData
-	return element.jquery ? (Velocity as any).data.get(element[0]) : (Velocity as any).data.get(element);
+	return (Velocity as any).data.get(element.jquery ? element[0] : element);
 }
 
 function getNow(): number {
 	return performance && performance.now ? performance.now() : Date.now();
 }
 
+let targets: HTMLDivElement[] = [];
+
 function getTarget() {
-	var div = document.createElement("div") as HTMLElement;
+	var div = document.createElement("div") as HTMLDivElement;
 
 	div.className = "target";
 	div.style.opacity = String(defaultStyles.opacity);
@@ -110,7 +112,14 @@ function getTarget() {
 	div.style.marginBottom = defaultStyles.marginBottom + "px";
 	div.style.textShadow = "0px 0px " + defaultStyles.textShadowBlur + "px red";
 	$qunitStage.appendChild(div);
+	targets.push(div);
 	return div;
+}
+
+function freeTargets() {
+	while (targets.length) {
+		$qunitStage.removeChild(targets.pop());
+	}
 }
 
 function once(func) {
@@ -124,6 +133,13 @@ function once(func) {
 		return result;
 	};
 }
+
+QUnit.testDone(function() {
+	try {
+		document.querySelectorAll(".velocity-animating").velocity("stop");
+	} catch (e) {}
+	freeTargets();
+});
 
 /* Cleanup */
 QUnit.done(function(details) {

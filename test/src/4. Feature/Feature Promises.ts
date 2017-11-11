@@ -6,46 +6,71 @@
  */
 
 QUnit.test("Promises", function(assert) {
-	var done = assert.async(4),
-		$target1 = getTarget();
+	let done = assert.async(9),
+		result: VelocityResult,
+		start = getNow();
 
-	assert.expect(5);
-	Velocity($target1, defaultProperties, 100)
-		.then(function(elements) {
-			assert.deepEqual(elements, [$target1], "Active call fulfilled.");
+	assert.expect(9);
 
-			done();
-		});
+	/**********************
+	 Invalid Arguments
+	 **********************/
 
-	Velocity($target1, defaultProperties, 100)
-		.then(function(elements) {
-			assert.deepEqual(elements, [$target1], "Queued call fulfilled.");
+	Velocity().then(function() {
+		assert.notOk(true, "Calling with no arguments should reject a Promise");
+	}, function() {
+		assert.ok(true, "Calling with no arguments should reject a Promise");
+	}).then(done);
 
-			done();
-		});
+	Velocity(getTarget() as any).then(function() {
+		assert.notOk(true, "Calling with no properties should reject a Promise");
+	}, function() {
+		assert.ok(true, "Calling with no properties should reject a Promise");
+	}).then(done);
 
-	// TODO: re-enable
-	//	Velocity($target1, "stop", true).then(function(elements) {
-	//		assert.deepEqual(elements, [$target1], "Stop call fulfilled.");
-	//
-	//		done();
-	//	});
+	Velocity(getTarget(), {}).then(function() {
+		assert.ok(true, "Calling with empty properties should not reject a Promise");
+	}, function() {
+		assert.notOk(true, "Calling with empty properties should not reject a Promise");
+	}).then(done);
 
-	var $target2 = getTarget(),
-		$target3 = getTarget();
+	Velocity(getTarget(), {}, defaultOptions.duration).then(function() {
+		assert.ok(true, "Calling with empty properties + duration should not reject a Promise");
+	}, function() {
+		assert.notOk(true, "Calling with empty properties + duration should not reject a Promise");
+	}).then(done);
 
-	Velocity([$target2, $target3], "invalid", defaultOptions)
-		.catch(function(error) {
-			assert.equal(error instanceof Error, true, "Invalid command caused promise rejection.");
+	/* Invalid arguments: Ensure an error isn't thrown. */
+	Velocity(getTarget(), {}, "fakeArg1", "fakeArg2").then(function() {
+		assert.ok(true, "Calling with invalid arguments should reject a Promise");
+	}, function() {
+		assert.notOk(true, "Calling with invalid arguments should reject a Promise");
+	}).then(done);
 
-			done();
-		});
+	result = Velocity(getTarget(), defaultProperties, defaultOptions);
+	result.then(function(elements) {
+		assert.equal(elements.length, 1, "Calling with a single element fulfills with a single element array");
+	}, function() {
+		assert.ok(false, "Calling with a single element fulfills with a single element array");
+	}).then(done);
+	result.velocity(defaultProperties).then(function(elements) {
+		assert.ok(getNow() - start > 2 * (defaultOptions.duration as number), "Queued call fulfilled after correct delay.");
+	}, function() {
+		assert.ok(false, "Queued call fulfilled after correct delay.");
+	}).then(done);
 
-	Velocity([$target2, $target3], defaultProperties, defaultOptions)
-		.then(function(elements) {
-			assert.ok(elements && elements.length, "Array of Elements passed back into resolved promise.");
-			assert.deepEqual(elements, [$target2, $target3], "Elements passed back into resolved promise.");
+	result = Velocity([getTarget(), getTarget()], defaultProperties, defaultOptions);
+	result.then(function(elements) {
+		assert.equal(elements.length, 2, "Calling with multiple elements fulfills with a multiple element array");
+	}, function() {
+		assert.ok(false, "Calling with multiple elements fulfills with a multiple element array");
+	}).then(done);
 
-			done();
-		});
+	Velocity(getTarget(), defaultProperties, defaultOptions)
+		.velocity("stop")
+		.then(function() {
+			assert.ok(getNow() - start < (defaultOptions.duration as number), "Stop call fulfilled after correct delay.");
+		}, function() {
+			assert.ok(false, "Stop call fulfilled after correct delay");
+		}).then(done);
 });

@@ -90,7 +90,7 @@ function isFunction(variable) {
 }
 
 function isNode(variable) {
-    return variable && variable.nodeType;
+    return !!(variable && variable.nodeType);
 }
 
 function isVelocityResult(variable) {
@@ -4316,11 +4316,11 @@ function validateBegin(value) {
  * Validate a <code>complete</code> option.
  * @private
  */
-function validateComplete(value) {
+function validateComplete(value, noError) {
     if (isFunction(value)) {
         return value;
     }
-    if (value != null) {
+    if (value != null && !noError) {
         console.warn("VelocityJS: Trying to set 'complete' to an invalid value:", value);
     }
 }
@@ -4343,12 +4343,12 @@ function validateDelay(value) {
  * Validate a <code>duration</code> option.
  * @private
  */
-function validateDuration(value) {
+function validateDuration(value, noError) {
     var parsed = parseDuration(value);
     if (!isNaN(parsed) && parsed >= 0) {
         return parsed;
     }
-    if (value != null) {
+    if (value != null && !noError) {
         console.error("VelocityJS: Trying to set 'duration' to an invalid value:", value);
     }
 }
@@ -4357,7 +4357,7 @@ function validateDuration(value) {
  * Validate a <code>easing</code> option.
  * @private
  */
-function validateEasing(value, duration) {
+function validateEasing(value, duration, noError) {
     if (isString(value)) {
         // Named easing
         return VelocityStatic.Easings[value];
@@ -4377,7 +4377,7 @@ function validateEasing(value, duration) {
             return Easing.generateBezier.apply(null, value) || false;
         }
     }
-    if (value != null) {
+    if (value != null && !noError) {
         console.error("VelocityJS: Trying to set 'easing' to an invalid value:", value);
     }
 }
@@ -4536,40 +4536,15 @@ function VelocityFn() {
     for (var _i = 0; _i < arguments.length; _i++) {
         __args[_i] = arguments[_i];
     }
-    /**
-     * Logic for determining what to return to the call stack when exiting out
-     * of Velocity.
-     * If we are using the utility function, attempt to return this call's
-     * promise. If no promise library was detected, default to null instead of
-     * returning the targeted elements so that utility function's return value
-     * is standardized.
-     */
-    function getChain() {
-        if (elements) {
-            var velocity = VelocityFn.bind(elements);
-            defineProperty(elements, "velocity", velocity);
-            if (animations) {
-                defineProperty(velocity, "animations", animations);
-            }
-            if (promise) {
-                defineProperty(elements, "then", promise.then.bind(promise));
-                defineProperty(elements, "catch", promise.catch.bind(promise));
-                if (promise.finally) {
-                    // Semi-standard
-                    defineProperty(elements, "finally", promise.finally.bind(promise));
-                }
-            }
-            return elements;
-        }
-        return promise || null;
-    }
-    /*************************
-     Arguments Assignment
-     *************************/
-    /**
+    var /**
      * Shortcut to arguments for file size.
      */
-    var _arguments = arguments, /**
+    _arguments = arguments, /**
+     *  When Velocity is called via the utility function (Velocity()),
+     * elements are explicitly passed in as the first parameter. Thus,
+     * argument positioning varies.
+     */
+    argumentIndex = 0, /**
      * Cache of the first argument - this is used often enough to be saved.
      */
     args0 = _arguments[0], /**
@@ -4583,17 +4558,8 @@ function VelocityFn() {
      * "names" property.
      */
     // TODO: Confirm which browsers - if <=IE8 the we can drop completely
-    syntacticSugar = args0 && args0.p || (isPlainObject(args0.properties) && !args0.properties.names || isString(args0.properties)), /**
-     * Whether Velocity was called via the utility function (as opposed to
-     * on a jQuery/Zepto/Array-like object).
-     */
-    isUtility = !isNode(this) && !isWrapped(this), /**
-     *  When Velocity is called via the utility function (Velocity()),
-     * elements are explicitly passed in as the first parameter. Thus,
-     * argument positioning varies.
-     */
-    argumentIndex = isUtility ? 1 : 0, /**
-     * The list of elements.
+    syntacticSugar = isPlainObject(args0) && (args0.p || (isPlainObject(args0.properties) && !args0.properties.names || isString(args0.properties))), /**
+     * The list of elements, extended with Promise and Velocity.
      */
     elements, /**
      * The properties being animated. This can be a string, in which case it
@@ -4608,9 +4574,6 @@ function VelocityFn() {
      * <code>options</code>.
      */
     optionsMap, /**
-     * The options for this set of animations.
-     */
-    options, /**
      * If called via a chain then this contains the <b>last</b> calls
      * animations. If this does not have a value then any access to the
      * element's animations needs to be to the currently-running ones.
@@ -4627,136 +4590,96 @@ function VelocityFn() {
     //console.log("Velocity", _arguments)
     // First get the elements, and the animations connected to the last call if
     // this is chained.
-    if (isUtility) {
-        elements = syntacticSugar ? args0.elements || args0.e : args0;
-    } else {
-        elements = isNode(this) ? [ this ] : this;
-        animations = this && this.velocity && this.velocity.animations;
+    // TODO: Clean this up a bit
+    if (isNode(this)) {
+        // This is from a chain such as document.getElementById("").velocity(...)
+        elements = [ this ];
+    } else if (isWrapped(this)) {
+        // This might be a chain from something else, but if chained from a
+        // previous Velocity() call then grab the animations it's related to.
+        elements = Object.assign([], this);
+        if (isVelocityResult(this)) {
+            animations = this.velocity.animations;
+        }
+    } else if (syntacticSugar) {
+        elements = Object.assign([], args0.elements || args0.e);
+        argumentIndex++;
+    } else if (isNode(args0)) {
+        elements = Object.assign([], [ args0 ]);
+        argumentIndex++;
+    } else if (isWrapped(args0)) {
+        elements = Object.assign([], args0);
+        argumentIndex++;
+    }
+    // Allow elements to be chained.
+    if (elements) {
+        defineProperty(elements, "velocity", VelocityFn.bind(elements));
     }
     // Next get the propertiesMap and options.
     if (syntacticSugar) {
         propertiesMap = getValue(args0.properties, args0.p);
-        if (isPlainObject(propertiesMap)) {
-            var opts = getValue(args0.options, args0.o);
-            options = {};
-            if (isPlainObject(opts)) {
-                optionsMap = opts;
-            }
-        }
     } else {
         // TODO: Should be possible to call Velocity("pauseAll") - currently not possible
         propertiesMap = _arguments[argumentIndex++];
-        if (isPlainObject(propertiesMap)) {
-            var opts = _arguments[argumentIndex];
-            options = {};
-            if (isPlainObject(opts)) {
-                optionsMap = opts;
-            } else {
-                var offset = 0, duration = validateDuration(_arguments[argumentIndex + offset]);
-                if (duration !== undefined) {
-                    offset++;
-                    options.duration = duration;
-                }
-                var easing = validateEasing(_arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration));
-                if (easing !== undefined) {
-                    offset++;
-                    options.easing = easing;
-                }
-                var complete = validateComplete(_arguments[argumentIndex + offset]);
-                if (complete !== undefined) {
-                    options.complete = complete;
-                }
-            }
-        }
     }
-    if (options) {
-        defineProperty(options, "_started", 0);
-        defineProperty(options, "_completed", 0);
-        defineProperty(options, "_total", 0);
-    }
-    if (isPlainObject(optionsMap)) {
-        options.duration = getValue(validateDuration(optionsMap.duration), defaults.duration);
-        options.delay = getValue(validateDelay(optionsMap.delay), defaults.delay);
-        // Need the extra fallback here in case it supplies an invalid
-        // easing that we need to overrride with the default.
-        options.easing = validateEasing(getValue(optionsMap.easing, defaults.easing), options.duration) || validateEasing(defaults.easing, options.duration);
-        if (options.loop !== undefined) {
-            options.loop = validateLoop(optionsMap.loop) || 0;
-        }
-        if (options.repeat !== undefined) {
-            options.repeat = validateRepeat(optionsMap.repeat) || 0;
-            options.repeatAgain = validateRepeat(optionsMap.repeat) || 0;
-        }
-        if (optionsMap.speed !== undefined) {
-            options.speed = validateSpeed(optionsMap.speed) || 0;
-        }
-        options.queue = getValue(validateQueue(optionsMap.queue), defaults.queue);
-        if (optionsMap.mobileHA && !VelocityStatic.State.isGingerbread) {
-            /* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack)
-             on animating elements. HA is removed from the element at the completion of its animation. */
-            /* Note: Android Gingerbread doesn't support HA. If a null transform hack (mobileHA) is in fact set, it will prevent other tranform subproperties from taking effect. */
-            /* Note: You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
-            options.mobileHA = true;
-        }
-        // TODO: Allow functional options for different options per element
-        var optionsBegin = validateBegin(optionsMap.begin), optionsComplete = validateComplete(optionsMap.complete), optionsProgress = validateProgress(optionsMap.progress);
-        if (optionsBegin !== undefined) {
-            options.begin = optionsBegin;
-        }
-        if (optionsComplete !== undefined) {
-            options.complete = optionsComplete;
-        }
-        if (optionsProgress !== undefined) {
-            options.progress = optionsProgress;
-        }
+    // Get any options map passed in as arguments first, expand any direct
+    // options if possible.
+    var opts = syntacticSugar ? getValue(args0.options, args0.o) : _arguments[argumentIndex];
+    if (isPlainObject(opts)) {
+        optionsMap = opts;
     }
     // Create the promise if supported and wanted.
     if (Promise && getValue(optionsMap && optionsMap.promise, defaults.promise)) {
-        promise = new Promise(function(resolve, reject) {
-            rejecter = reject;
-            resolver = resolve;
-            if (options) {
-                defineProperty(options, "_rejecter", reject);
-                defineProperty(options, "_resolver", function(args) {
-                    // IMPORTANT:
-                    // If a resolver tries to run on a Promise then it will
-                    // wait until that Promise resolves - but in this case we're
-                    // running on our own Promise, so need to make sure it's not
-                    // seen as one. Setting these values to
-                    // <code>undefined</code> for the duration of the resolve.
-                    // Due to being an async call, they should be back to
-                    // "normal" before the <code>.then()</code> function gets
-                    // called.
-                    var _then = args.then;
-                    if (_then) {
-                        args.then = undefined;
-                        resolve(args);
-                        args.then = _then;
-                    } else {
-                        resolve(args);
-                    }
-                });
-            }
+        promise = new Promise(function(_resolve, _reject) {
+            rejecter = _reject;
+            // IMPORTANT:
+            // If a resolver tries to run on a Promise then it will wait until
+            // that Promise resolves - but in this case we're running on our own
+            // Promise, so need to make sure it's not seen as one. Setting these
+            // values to <code>undefined</code> for the duration of the resolve.
+            // Due to being an async call, they should be back to "normal"
+            // before the <code>.then()</code> function gets called.
+            resolver = function(args) {
+                var _then = args && args.then;
+                // TODO: We need to safely tell if this is *this* VelocityResult and not a user-supplied Promise
+                if (_then) {
+                    args.then = undefined;
+                    // Preserve, don't delete
+                    _resolve(args);
+                    args.then = _then;
+                } else {
+                    _resolve(args);
+                }
+            };
         });
-        if (options) {
-            defineProperty(options, "_promise", promise);
-        }
-    }
-    // Make sure the elements are actually a usable array of some sort.
-    elements = sanitizeElements(elements);
-    if (!elements) {
-        if (promise) {
-            if (!propertiesMap || getValue(options && options.promiseRejectEmpty, defaults.promiseRejectEmpty)) {
-                rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
-            } else {
-                resolver();
+        if (elements) {
+            defineProperty(elements, "then", promise.then.bind(promise));
+            defineProperty(elements, "catch", promise.catch.bind(promise));
+            if (promise.finally) {
+                // Semi-standard
+                defineProperty(elements, "finally", promise.finally.bind(promise));
             }
         }
-        return getChain();
     }
-    /* The length of the element set (in the form of a nodeList or an array of elements) is defaulted to 1 in case a
-     single raw DOM element is passed in (which doesn't contain a length property). */
-    var elementsLength = elements.length;
+    var promiseRejectEmpty = getValue(optionsMap && optionsMap.promiseRejectEmpty, defaults.promiseRejectEmpty);
+    if (!elements && promise) {
+        if (promiseRejectEmpty) {
+            rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+        } else {
+            resolver();
+        }
+    }
+    if (!propertiesMap && promise) {
+        if (promiseRejectEmpty) {
+            rejecter("Velocity: No properties supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+        } else {
+            resolver();
+        }
+    }
+    if (!elements || !propertiesMap) {
+        return promise;
+    }
+    // TODO: exception for the special "reverse" property
     if (isString(propertiesMap)) {
         var args = [], promiseHandler = promise && {
             _promise: promise,
@@ -4781,87 +4704,150 @@ function VelocityFn() {
         } else {
             console.warn("VelocityJS: Unknown action:", propertiesMap);
         }
-        return getChain();
-    }
-    /************************
-     Element Processing
-     ************************/
-    /* Element processing consists of three parts -- data processing that cannot go stale and data processing that *can* go stale (i.e. third-party style modifications):
-     1) Pre-Queueing: Element-wide variables, including the element's data storage, are instantiated. Call options are prepared. If triggered, the Stop action is executed.
-     2) Queueing: The logic that runs once this call has reached its point of execution in the element's queue stack. Most logic is placed here to avoid risking it becoming stale.
-     3) Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
-     `elementArrayIndex` allows passing index of the element in the original array to value functions.
-     If `elementsIndex` were used instead the index would be determined by the elements' per-element queue.
-     */
-    /*************************
-     Part I: Pre-Queueing
-     *************************/
-    /*********************************
-     Option: Display & Visibility
-     *********************************/
-    /* Refer to Velocity's documentation (VelocityJS.org/#displayAndVisibility) for a description of the display and visibility options' behavior. */
-    /* Note: We strictly check for undefined instead of falsiness because display accepts an empty string value. */
-    var optionsDisplay;
-    if (options.display !== undefined && options.display !== null) {
-        optionsDisplay = options.display.toString().toLowerCase();
-        /* Users can pass in a special "auto" value to instruct Velocity to set the element to its default display value. */
-        if (optionsDisplay === "auto") {}
-    }
-    var optionsVisibility;
-    if (options.visibility !== undefined && options.visibility !== null) {
-        optionsVisibility = options.visibility.toString().toLowerCase();
-    }
-    /***********************
-     Part II: Queueing
-     ***********************/
-    /* When a set of elements is targeted by a Velocity call, the set is broken up and each element has the current Velocity call individually queued onto it.
-     In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
-    /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
-     the call array is pushed to VelocityStatic.State.calls for live processing by the requestAnimationFrame tick. */
-    var rootAnimation = {
-        _prev: undefined,
-        _next: undefined,
-        options: options,
-        started: false,
-        percentComplete: 0,
-        //element: element,
-        elements: elements,
-        ellapsedTime: 0,
-        properties: propertiesMap,
-        timeStart: 0,
-        display: optionsDisplay,
-        visibility: optionsVisibility
-    };
-    animations = [];
-    for (var i = 0, length_1 = elementsLength; i < length_1; i++) {
-        var element = elements[i];
-        if (isNode(element)) {
-            var data = Data(element) || VelocityStatic.init(element), animation = Object.assign({
-                element: element,
-                tweens: {}
-            }, rootAnimation);
-            options._total++;
-            // TODO: Remove this and provide better tests
-            data.opts = {
-                duration: animation.duration,
-                easing: animation.easing,
-                complete: options.complete
-            };
-            animations.push(animation);
-            VelocityStatic.queue(element, animation, animation.queue);
+    } else if (isPlainObject(propertiesMap)) {
+        /**
+         * The options for this set of animations.
+         */
+        var options = {};
+        // Private options first - set as non-enumerable, and starting with an
+        // underscore so we can filter them out.
+        if (promise) {
+            defineProperty(options, "_promise", promise);
+            defineProperty(options, "_rejecter", rejecter);
+            defineProperty(options, "_resolver", resolver);
         }
-    }
-    /* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */
-    if (VelocityStatic.State.isTicking === false) {
-        VelocityStatic.State.isTicking = true;
-        /* Start the tick loop. */
-        VelocityStatic.tick();
+        defineProperty(options, "_started", 0);
+        defineProperty(options, "_completed", 0);
+        defineProperty(options, "_total", 0);
+        // Now check the optionsMap
+        if (isPlainObject(optionsMap)) {
+            options.duration = getValue(validateDuration(optionsMap.duration), defaults.duration);
+            options.delay = getValue(validateDelay(optionsMap.delay), defaults.delay);
+            // Need the extra fallback here in case it supplies an invalid
+            // easing that we need to overrride with the default.
+            options.easing = validateEasing(getValue(optionsMap.easing, defaults.easing), options.duration) || validateEasing(defaults.easing, options.duration);
+            if (options.loop !== undefined) {
+                options.loop = validateLoop(optionsMap.loop) || 0;
+            }
+            if (options.repeat !== undefined) {
+                options.repeat = validateRepeat(optionsMap.repeat) || 0;
+                options.repeatAgain = validateRepeat(optionsMap.repeat) || 0;
+            }
+            if (optionsMap.speed !== undefined) {
+                options.speed = validateSpeed(optionsMap.speed) || 0;
+            }
+            if (isBoolean(optionsMap.promise)) {
+                options.promise = optionsMap.promise;
+            }
+            options.queue = getValue(validateQueue(optionsMap.queue), defaults.queue);
+            if (optionsMap.mobileHA && !VelocityStatic.State.isGingerbread) {
+                /* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack)
+                 on animating elements. HA is removed from the element at the completion of its animation. */
+                /* Note: Android Gingerbread doesn't support HA. If a null transform hack (mobileHA) is in fact set, it will prevent other tranform subproperties from taking effect. */
+                /* Note: You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
+                options.mobileHA = true;
+            }
+            // TODO: Allow functional options for different options per element
+            var optionsBegin = validateBegin(optionsMap.begin), optionsComplete = validateComplete(optionsMap.complete), optionsProgress = validateProgress(optionsMap.progress);
+            if (optionsBegin !== undefined) {
+                options.begin = optionsBegin;
+            }
+            if (optionsComplete !== undefined) {
+                options.complete = optionsComplete;
+            }
+            if (optionsProgress !== undefined) {
+                options.progress = optionsProgress;
+            }
+        } else if (!syntacticSugar) {
+            // Expand any direct options if possible.
+            var offset = 0, duration = validateDuration(_arguments[argumentIndex + offset], true);
+            if (duration !== undefined) {
+                offset++;
+                options.duration = duration;
+            }
+            var easing = validateEasing(_arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration), true);
+            if (easing !== undefined) {
+                offset++;
+                options.easing = easing;
+            }
+            var complete = validateComplete(_arguments[argumentIndex + offset], true);
+            if (complete !== undefined) {
+                options.complete = complete;
+            }
+        }
+        /*************************
+         Part I: Pre-Queueing
+         *************************/
+        /*********************************
+         Option: Display & Visibility
+         *********************************/
+        /* Refer to Velocity's documentation (VelocityJS.org/#displayAndVisibility) for a description of the display and visibility options' behavior. */
+        /* Note: We strictly check for undefined instead of falsiness because display accepts an empty string value. */
+        var optionsDisplay = void 0;
+        if (options.display !== undefined && options.display !== null) {
+            optionsDisplay = options.display.toString().toLowerCase();
+            /* Users can pass in a special "auto" value to instruct Velocity to set the element to its default display value. */
+            if (optionsDisplay === "auto") {}
+        }
+        var optionsVisibility = void 0;
+        if (options.visibility !== undefined && options.visibility !== null) {
+            optionsVisibility = options.visibility.toString().toLowerCase();
+        }
+        /***********************
+         Part II: Queueing
+         ***********************/
+        /* When a set of elements is targeted by a Velocity call, the set is broken up and each element has the current Velocity call individually queued onto it.
+         In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
+        /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
+         the call array is pushed to VelocityStatic.State.calls for live processing by the requestAnimationFrame tick. */
+        var rootAnimation = {
+            _prev: undefined,
+            _next: undefined,
+            options: options,
+            started: false,
+            percentComplete: 0,
+            //element: element,
+            elements: elements,
+            ellapsedTime: 0,
+            properties: propertiesMap,
+            timeStart: 0,
+            display: optionsDisplay,
+            visibility: optionsVisibility
+        };
+        animations = [];
+        for (var i = 0, length_1 = elements.length; i < length_1; i++) {
+            var element = elements[i];
+            if (isNode(element)) {
+                var data = Data(element) || VelocityStatic.init(element), animation = Object.assign({
+                    element: element,
+                    tweens: {}
+                }, rootAnimation);
+                options._total++;
+                // TODO: Remove this and provide better tests
+                data.opts = {
+                    duration: options.duration,
+                    easing: options.easing,
+                    complete: options.complete
+                };
+                animations.push(animation);
+                VelocityStatic.queue(element, animation, animation.queue);
+            }
+        }
+        /* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */
+        if (VelocityStatic.State.isTicking === false) {
+            VelocityStatic.State.isTicking = true;
+            /* Start the tick loop. */
+            VelocityStatic.tick();
+        }
+        if (animations) {
+            defineProperty(elements.velocity, "animations", animations);
+        }
     }
     /***************
      Chaining
      ***************/
     /* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
-    return getChain();
+    return elements || promise;
 }
 
 /***************

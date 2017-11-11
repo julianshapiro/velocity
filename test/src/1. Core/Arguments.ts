@@ -5,103 +5,64 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.todo("Arguments", function(assert) {
-	var done = assert.async(9),
-		testComplete = function() {}, // Do nothing
+QUnit.test("Arguments", function(assert) {
+	let testComplete = function() {}, // Do nothing
 		testDuration = 1000,
-		testEasing = "easeInSine";
+		testEasing = "easeInSine",
+		result: VelocityResult,
+		testOptions: VelocityOptions = {
+			duration: 123,
+			easing: testEasing,
+			complete: testComplete,
+			display: "block"
+		};
 
-	assert.expect(17);
-
-	/**********************
-	 Invalid Arguments
-	 **********************/
-
-	var $target1 = getTarget();
-	/* No arguments: Ensure an error isn't thrown and that the $targeted elements are returned to the chain. */
-	Velocity()
-		.then(function() {
-			assert.notOk(true, "Calling with no arguments should reject a Promise");
-		}, function() {
-			assert.notOk(false, "Calling with no arguments should reject a Promise");
-		})
-		.then(done);
-	Velocity($target1 as any)
-		.then(function() {
-			assert.notOk(true, "Calling with no properties should reject a Promise");
-		}, function() {
-			assert.notOk(false, "Calling with no properties should reject a Promise");
-		})
-		.then(done);
-	Velocity($target1, {})
-		.then(function() {
-			assert.notOk(true, "Calling with empty properties should reject a Promise");
-		}, function() {
-			assert.notOk(false, "Calling with empty properties should reject a Promise");
-		})
-		.then(done);
-	Velocity($target1, {}, testDuration)
-		.then(function() {
-			assert.notOk(true, "Calling with empty properties + duration should reject a Promise");
-		}, function() {
-			assert.notOk(false, "Calling with empty properties + duration should reject a Promise");
-		})
-		.then(done);
-	/* Invalid arguments: Ensure an error isn't thrown. */
-	Velocity($target1, "fakeArg1", "fakeArg2")
-		.then(function() {
-			assert.notOk(true, "Calling with invalid arguments should reject a Promise");
-		}, function() {
-			assert.notOk(false, "Calling with invalid arguments should reject a Promise");
-		})
-		.then(done);
+	assert.expect(18);
 
 	/****************
 	 Overloading
 	 ****************/
 
-	var $target3 = getTarget();
-	Velocity($target3, defaultProperties, testDuration).catch().then(function() {
-		assert.equal(Data($target4).opts.duration, testDuration, "Overload variation #2: Velocity(element, properties, duration)");
-	}).then(done);
+	result = Velocity(getTarget(), defaultProperties);
+	assert.ok(result.length, "Overload variation #1a: Velocity(ELEMENT, {properties})");
+	assert.ok(result.velocity.animations.length, "Overload variation #1b: Velocity(element, {PROPERTIES})");
 
-	var $target4 = getTarget();
-	Velocity($target4, defaultProperties, testEasing).catch().then(function() {
-		assert.equal(typeof Data($target4).opts.easing, "function", "Overload variation #3: Velocity(element, properties, easing)");
-	}).then(done);
+	result = Velocity(getTarget(), defaultProperties, testDuration);
+	assert.equal(result.velocity.animations[0].options.duration, testDuration, "Overload variation #2a: Velocity(element, {properties}, DURATION<number>)");
+	result = Velocity(getTarget(), defaultProperties, "slow");
+	assert.equal(result.velocity.animations[0].options.duration, 600, "Overload variation #2a: Velocity(element, {properties}, DURATION<slow>)");
+	result = Velocity(getTarget(), defaultProperties, "normal");
+	assert.equal(result.velocity.animations[0].options.duration, 400, "Overload variation #2a: Velocity(element, {properties}, DURATION<normal>)");
+	result = Velocity(getTarget(), defaultProperties, "fast");
+	assert.equal(result.velocity.animations[0].options.duration, 200, "Overload variation #2a: Velocity(element, {properties}, DURATION<fast>)");
 
-	var $target5 = getTarget();
-	Velocity($target5, defaultProperties, function() {
-		assert.ok(true, "Overload variation #4: Velocity(element, properties, complete)");
-	}).then(done);
+	result = Velocity(getTarget(), defaultProperties, testEasing);
+	assert.equal(typeof result.velocity.animations[0].options.easing, "function", "Overload variation #3: Velocity(element, {properties}, EASING)");
 
-	var $target6 = getTarget();
-	Velocity($target6, defaultProperties, testDuration, [0.42, 0, 0.58, 1]);
-	assert.equal(Data($target6).opts.duration, testDuration, "Overload variation #5a.");
-	assert.equal(Data($target6).opts.easing(0.2, 0, 1), 0.0816598562658975, "Overload variation #5b.");
+	result = Velocity(getTarget(), defaultProperties, testComplete);
+	assert.equal(typeof result.velocity.animations[0].options.complete, "function", "Overload variation #4: Velocity(element, {properties}, COMPLETE)");
 
-	var $target7 = getTarget();
-	Velocity($target7, defaultProperties, testDuration, testComplete);
-	assert.equal(Data($target7).opts.duration, testDuration, "Overload variation #6a.");
-	assert.equal(Data($target7).opts.complete, testComplete, "Overload variation #6b.");
+	result = Velocity(getTarget(), defaultProperties, testDuration, [0.42, 0, 0.58, 1]);
+	assert.equal(result.velocity.animations[0].options.duration, testDuration, "Overload variation #5a: Velocity(element, {properties}, DURATION, easing)");
+	assert.equal(result.velocity.animations[0].options.easing(0.2, 0, 1), 0.0816598562658975, "Overload variation #5b: Velocity(element, {properties}, duration, EASING)");
 
-	var $target8 = getTarget();
-	Velocity($target8, defaultProperties, testDuration, testEasing, testComplete);
-	assert.equal(Data($target8).opts.duration, testDuration, "Overload variation #7a.");
-	assert.equal(typeof Data($target8).opts.easing, "function", "Overload variation #7b.");
-	assert.equal(Data($target8).opts.complete, testComplete, "Overload variation #7c.");
+	result = Velocity(getTarget(), defaultProperties, testDuration, testComplete);
+	assert.equal(result.velocity.animations[0].options.duration, testDuration, "Overload variation #6a: Velocity(element, {properties}, DURATION, complete)");
+	assert.equal(result.velocity.animations[0].options.complete, testComplete, "Overload variation #6b: Velocity(element, {properties}, duration, COMPLETE)");
 
-	//	var $target9 = getTarget();
-	//	Velocity($target9, defaultProperties, testOptions);
-	//	assert.deepEqual(Data($target9).opts, testOptions, "Overload variation #8: options object.");
+	result = Velocity(getTarget(), defaultProperties, testDuration, testEasing, testComplete);
+	assert.equal(result.velocity.animations[0].options.duration, testDuration, "Overload variation #7a: Velocity(element, {properties}, DURATION, easing, complete)");
+	assert.equal(typeof result.velocity.animations[0].options.easing, "function", "Overload variation #7b: Velocity(element, {properties}, duration, EASING, complete)");
+	assert.equal(result.velocity.animations[0].options.complete, testComplete, "Overload variation #7c: Velocity(element, {properties}, duration, easing, COMPLETE)");
 
-	//	var $target10 = getTarget();
-	//	Velocity({elements: $target10, properties: defaultProperties, options: testOptions});
-	//	assert.deepEqual(Data($target10).opts, testOptions, "Overload variation #9: single object w/ map.");
+	result = Velocity(getTarget(), defaultProperties, testOptions);
+	assert.equal(result.velocity.animations[0].options.duration, testOptions.duration, "Overload variation #8: Velocity(element, {properties}, {OPTIONS})");
 
-	//	var $target11 = getTarget();
-	//	Velocity({elements: $target11, properties: "fadeOut", options: testOptions});
-	//	assert.strictEqual(Data($target11).style.opacity.endValue, 0, "Overload variation #9: single object w/ redirect.");
+	Velocity({elements: [getTarget()], properties: defaultProperties, options: testOptions});
+	assert.equal(result.velocity.animations[0].options.duration, testOptions.duration, "Overload variation #9: Velocity({elements:elements, properties:{properties}, options:{OPTIONS})");
+
+	Velocity({elements: [getTarget()], properties: "stop", options: testOptions});
+	assert.equal(result.velocity.animations[0].options.duration, testOptions.duration, "Overload variation #10: Velocity({elements:elements, properties:\"ACTION\", options:{OPTIONS})");
 
 	//	var $target12 = getTarget();
 	//	Velocity($target12, {opacity: [0.75, "spring", 0.25]}, testDuration);
@@ -118,14 +79,6 @@ QUnit.todo("Arguments", function(assert) {
 	//	Velocity($target14, {opacity: [0.75, "spring"]}, testDuration);
 	//	assert.equal(Data($target14).style.opacity.endValue, 0.75, "Overload variation #12a.");
 	//	assert.equal(Data($target14).style.opacity.easing, "spring", "Overload variation #12b.");
-
-	var $target15 = getTarget();
-	Velocity($target15, defaultProperties, "fast", testEasing);
-	assert.equal(Data($target15).opts.duration, 200, "Overload variation #13a.");
-
-	var $target16 = getTarget();
-	Velocity($target16, defaultProperties, "normal");
-	assert.equal(Data($target16).opts.duration, 400, "Overload variation #13b.");
 
 	//	if ($) {
 	//		var $target17 = getTarget();
@@ -146,5 +99,4 @@ QUnit.todo("Arguments", function(assert) {
 	//		assert.equal($($target20).length, $($target20).velocity(defaultProperties, testDuration, testEasing, testComplete).velocity(defaultProperties, testDuration, testEasing, testComplete).length, "$.fn.: Elements passed back to the call stack.");
 	//		// TODO: Should check in a better way - but the prototype chain is now extended with a Promise so a standard (non-length) comparison *will* fail
 	//	}
-	done();
 });

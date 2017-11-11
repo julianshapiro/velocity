@@ -23,7 +23,7 @@ function isFunction(variable): variable is Function {
 }
 
 function isNode(variable): variable is HTMLorSVGElement {
-	return variable && variable.nodeType;
+	return !!(variable && variable.nodeType);
 }
 
 function isVelocityResult(variable): variable is VelocityResult {

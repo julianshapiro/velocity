@@ -32,10 +32,28 @@ type VelocityEasingType = VelocityEasingFn
 	| "easeInCirc" | "easeOutCirc" | "easeInOutCirc"
 	| "ease-in" | "ease-out" | "ease-in-out"
 	| "at-start" | "at-end" | "during"
+	| string
 	| [number]
 	| [number, number]
 	| [number, number, number, number]
 	| VelocityEasingFn;
+
+/**
+ * Chaining Velocity calls from various sources.
+ */
+interface VelocityExtended<TNode extends Node = HTMLorSVGElement> {
+	velocity: Velocity & {
+		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
+		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, easing?: VelocityEasingType, complete?: () => void): VelocityResult;
+		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: VelocityEasingType, complete?: () => void): VelocityResult;
+		/**
+		 * TODO: Decide if this should be public
+		 * @private
+		 */
+		animations: AnimationCall[]
+	}
+}
 
 /**
  * The return type of any velocity call. If this is called via a "utility"
@@ -45,19 +63,7 @@ type VelocityEasingType = VelocityEasingFn
  * into the array in such a way as to not interfere with other methods unless
  * they are specifically overwriting them.
  */
-type VelocityResult = Promise<HTMLorSVGElement[]> & HTMLorSVGElement[] & {
-	velocity: Velocity & {
-		(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-		(this: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-		(this: VelocityElements, propertyMap: string | VelocityProperties, easing?: VelocityEasingType, complete?: () => void): VelocityResult;
-		(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: VelocityEasingType, complete?: () => void): VelocityResult;
-		/**
-		 * TODO: Decide if this should be public
-		 * @private
-		 */
-		animations: AnimationCall[]
-	}
-};
+type VelocityResult = Promise<HTMLorSVGElement[]> & HTMLorSVGElement[] & VelocityExtended;
 
 // TODO: I don't like having two of these - need to merge into a type or similar
 type VelocityObjectArgs = {
@@ -698,5 +704,11 @@ interface Velocity {
 		firstNew: AnimationCall;
 	};
 }
+
+/**
+ * Extend the return value from <code>document.querySelectorAll()</code>.
+ */
+interface NodeListOf<TNode extends Node> extends NodeList, VelocityExtended<TNode> {}
+
 
 declare const Velocity: Velocity;

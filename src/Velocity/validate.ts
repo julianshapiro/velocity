@@ -54,11 +54,11 @@ function validateBegin(value: VelocityCallback): VelocityCallback {
  * Validate a <code>complete</code> option.
  * @private
  */
-function validateComplete(value: VelocityCallback): VelocityCallback {
+function validateComplete(value: VelocityCallback, noError?: true): VelocityCallback {
 	if (isFunction(value)) {
 		return value;
 	}
-	if (value != null) {
+	if (value != null && !noError) {
 		console.warn("VelocityJS: Trying to set 'complete' to an invalid value:", value);
 	}
 }
@@ -82,13 +82,13 @@ function validateDelay(value: "fast" | "normal" | "slow" | number): number {
  * Validate a <code>duration</code> option.
  * @private
  */
-function validateDuration(value: "fast" | "normal" | "slow" | number): number {
+function validateDuration(value: "fast" | "normal" | "slow" | number, noError?: true): number {
 	let parsed = parseDuration(value);
 
 	if (!isNaN(parsed) && parsed >= 0) {
 		return parsed;
 	}
-	if (value != null) {
+	if (value != null && !noError) {
 		console.error("VelocityJS: Trying to set 'duration' to an invalid value:", value);
 	}
 }
@@ -97,7 +97,7 @@ function validateDuration(value: "fast" | "normal" | "slow" | number): number {
  * Validate a <code>easing</code> option.
  * @private
  */
-function validateEasing(value: VelocityEasingType, duration: number): VelocityEasingFn {
+function validateEasing(value: VelocityEasingType, duration: number, noError?: true): VelocityEasingFn {
 	if (isString(value)) {
 		// Named easing
 		return VelocityStatic.Easings[value];
@@ -117,7 +117,7 @@ function validateEasing(value: VelocityEasingType, duration: number): VelocityEa
 			return Easing.generateBezier.apply(null, value) || false;
 		}
 	}
-	if (value != null) {
+	if (value != null && !noError) {
 		console.error("VelocityJS: Trying to set 'easing' to an invalid value:", value);
 	}
 }
