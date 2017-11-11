@@ -20,6 +20,11 @@ type VelocityEasingFn = (percentComplete: number, startValue: number, endValue: 
 type VelocityActionFn = (args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) => any;
 
 /**
+ * Used for normalization callbacks.
+ */
+type VelocityNormalizationsFn = ((type: "name" | "extract" | "inject", element?: HTMLorSVGElement, propertyValue?) => any);
+
+/**
  * List of all easing types for easy code completion in TypeScript
  */
 type VelocityEasingType = VelocityEasingFn
@@ -712,3 +717,4 @@ interface NodeListOf<TNode extends Node> extends NodeList, VelocityExtended<TNod
 
 
 declare const Velocity: Velocity;
+

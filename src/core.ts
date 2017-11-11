@@ -438,7 +438,6 @@ let global: any = this as Window;
 
 /* Register hooks and normalizations. */
 VelocityStatic.CSS.Hooks.register();
-VelocityStatic.CSS.Normalizations.register();
 
 /******************
  Unsupported
