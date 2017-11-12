@@ -336,7 +336,7 @@ namespace VelocityStatic {
 					 Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
 					/* Note: Since SVG elements have some of their properties directly applied as HTML attributes,
 					 there is no way to check for their explicit browser support, and so we skip skip this check for them. */
-					if ((!data || !data.isSVG) && rootProperty !== "tween" && CSS.Names.prefixCheck(rootProperty)[1] === false && CSS.Normalizations.registered[rootProperty] === undefined) {
+					if ((!data || !data.isSVG) && rootProperty !== "tween" && CSS.Names.prefixCheck(rootProperty)[1] === false && CSS.Normalizations[rootProperty] === undefined) {
 						if (debug) {
 							console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
 						}

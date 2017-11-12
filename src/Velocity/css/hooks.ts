@@ -96,11 +96,13 @@ namespace VelocityStatic {
 					}
 				}
 			}
+
 			/*****************************
 			 Injection and Extraction
 			 *****************************/
 
 			/* Look up the root property associated with the hook (e.g. return "textShadow" for "textShadowBlur"). */
+
 			/* Since a hook cannot be set directly (the browser won't recognize it), style updating for hooks is routed through the hook's root property. */
 			export function getRoot(property: string): string {
 				let hookData = registered[property];
@@ -126,7 +128,7 @@ namespace VelocityStatic {
 			 * the name within an "rgba(blue, 0.4)" string this way.
 			 */
 			export function fixColors(str: string): string {
-				return str.replace(/(rgba?\(\s*)?(\b[a-z]+\b)/g, function($0, $1, $2) {
+				return str.replace(/(rgba?\(\s*)?(\b[a-z]+\b)/g, function ($0, $1, $2) {
 					if (CSS.Lists.colorNames.hasOwnProperty($2)) {
 						return ($1 ? $1 : "rgba(") + CSS.Lists.colorNames[$2] + ($1 ? "" : ",1)");
 					}
@@ -196,6 +198,6 @@ namespace VelocityStatic {
 					return rootPropertyValue;
 				}
 			}
-		};
-	};
-};
+		}
+	}
+}

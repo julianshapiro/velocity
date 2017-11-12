@@ -1608,6 +1608,67 @@ QUnit.test("RunSequence", function (assert) {
     assert.expect(3);
     Velocity.RunSequence(mySequence);
 });
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+QUnit.module("Normalizations");
+///<reference path="_module.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+QUnit.test("GenericReordering", function (assert) {
+    var tests = [
+        {
+            test: "hsl(16, 100%, 66%) 1px 1px 1px",
+            result: "1px 1px 1px hsl(16, 100%, 66%)",
+        },
+        {
+            test: "-webkit-linear-gradient(red, yellow) 1px 1px 1px",
+            result: "1px 1px 1px -webkit-linear-gradient(red, yellow)",
+        },
+        {
+            test: "-o-linear-gradient(red, yellow) 1px 1px 1px",
+            result: "1px 1px 1px -o-linear-gradient(red, yellow)",
+        },
+        {
+            test: "-moz-linear-gradient(red, yellow) 1px 1px 1px",
+            result: "1px 1px 1px -moz-linear-gradient(red, yellow)",
+        },
+        {
+            test: "linear-gradient(red, yellow) 1px 1px 1px",
+            result: "1px 1px 1px linear-gradient(red, yellow)",
+        },
+        {
+            test: "red 1px 1px 1px",
+            result: "1px 1px 1px red",
+        },
+        {
+            test: "#000000 1px 1px 1px",
+            result: "1px 1px 1px #000000",
+        },
+        {
+            test: "rgb(0, 0, 0) 1px 1px 1px",
+            result: "1px 1px 1px rgb(0, 0, 0)",
+        },
+        {
+            test: "rgba(0, 0, 0) 1px 1px 1px",
+            result: "1px 1px 1px rgba(0, 0, 0)",
+        },
+        {
+            test: "1px 1px 1px rgb(0, 0, 0)",
+            result: "1px 1px 1px rgb(0, 0, 0)",
+        },
+    ];
+    for (var _i = 0, tests_1 = tests; _i < tests_1.length; _i++) {
+        var test = tests_1[_i];
+        var result = Velocity.CSS.Normalizations.textShadow(null, test.test);
+        assert.equal(test.result, result);
+    }
+});
 ///<reference types="qunit" />
 ///<reference path="../../index.d.ts" />
 ///<reference path="1. Core/_all.d.ts" />
@@ -1615,6 +1676,7 @@ QUnit.test("RunSequence", function (assert) {
 ///<reference path="3. Command/_all.d.ts" />
 ///<reference path="4. Feature/_all.d.ts" />
 ///<reference path="5. UI Pack/_all.d.ts" />
+///<reference path="6. Normalizations/_all.d.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *

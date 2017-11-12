@@ -2,4 +2,5 @@
 ///<reference path="blur.ts" />
 ///<reference path="opacity.ts" />
 ///<reference path="clip.ts" />
+///<reference path="genericReordering.ts" />
 

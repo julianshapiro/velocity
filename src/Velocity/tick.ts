@@ -357,8 +357,8 @@ namespace VelocityStatic {
 							/* Now that we have the hook's updated rootPropertyValue (the post-processed value provided by adjustedSetData), cache it onto the element. */
 							if (CSS.Hooks.registered[property]) {
 								/* Since adjustedSetData contains normalized data ready for DOM updating, the rootPropertyValue needs to be re-extracted from its normalized form. ?? */
-								if (CSS.Normalizations.registered[hookRoot]) {
-									data.rootPropertyValueCache[hookRoot] = CSS.Normalizations.registered[hookRoot]("extract", null, adjustedSetData[1]);
+								if (CSS.Normalizations[hookRoot]) {
+									data.rootPropertyValueCache[hookRoot] = CSS.Normalizations[hookRoot](null, adjustedSetData[1]);
 								} else {
 									data.rootPropertyValueCache[hookRoot] = adjustedSetData[1];
 								}

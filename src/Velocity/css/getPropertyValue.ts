@@ -110,8 +110,8 @@ namespace VelocityStatic {
 				}
 
 				/* If this root has a normalization registered, peform the associated normalization extraction. */
-				if (Normalizations.registered[hookRoot]) {
-					rootPropertyValue = Normalizations.registered[hookRoot]("extract", element, rootPropertyValue);
+				if (Normalizations[hookRoot]) {
+					rootPropertyValue = Normalizations[hookRoot](element, rootPropertyValue);
 				}
 
 				/* Extract the hook's value. */
@@ -121,8 +121,8 @@ namespace VelocityStatic {
 				 normalize the property's name and value, and handle the special case of transforms. */
 				/* Note: Normalizing a property is mutually exclusive from hooking a property since hook-extracted values are strictly
 				 numerical and therefore do not require normalization extraction. */
-			} else if (Normalizations.registered[property]) {
-				let normalizedPropertyName = Normalizations.registered[property]("name", element),
+			} else if (Normalizations[property]) {
+				let normalizedPropertyName = Normalizations[property](element),
 					normalizedPropertyValue;
 
 				/* Transform values are calculated via normalization extraction (see below), which checks against the element's transformCache.
@@ -138,7 +138,7 @@ namespace VelocityStatic {
 					}
 				}
 
-				propertyValue = Normalizations.registered[property]("extract", element, normalizedPropertyValue);
+				propertyValue = Normalizations[property](element, normalizedPropertyValue);
 			}
 
 			/* If a (numeric) value wasn't produced via hook extraction or normalization, query the DOM. */

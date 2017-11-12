@@ -5,6 +5,7 @@
 ///<reference path="3. Command/_all.d.ts" />
 ///<reference path="4. Feature/_all.d.ts" />
 ///<reference path="5. UI Pack/_all.d.ts" />
+///<reference path="6. Normalizations/_all.d.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *

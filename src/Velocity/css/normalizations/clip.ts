@@ -7,29 +7,24 @@
 namespace VelocityStatic {
 
 	export namespace CSS {
-		export function clip(type, propertyValue) {
-			switch (type) {
-				case "name":
-					return "clip";
-				/* Clip needs to be unwrapped and stripped of its commas during extraction. */
-				case "extract":
-					let extracted;
+		export function clip(element, propertyValue) {
+			if (propertyValue === undefined) {
+				let extracted;
 
-					/* If Velocity also extracted this value, skip extraction. */
-					if (CSS.RegEx.wrappedValueAlreadyExtracted.test(propertyValue)) {
-						extracted = propertyValue;
-					} else {
-						/* Remove the "rect()" wrapper. */
-						extracted = propertyValue.toString().match(CSS.RegEx.valueUnwrap);
+				/* If Velocity also extracted this value, skip extraction. */
+				if (CSS.RegEx.wrappedValueAlreadyExtracted.test(propertyValue)) {
+					extracted = propertyValue;
+				} else {
+					/* Remove the "rect()" wrapper. */
+					extracted = propertyValue.toString().match(CSS.RegEx.valueUnwrap);
 
-						/* Strip off commas. */
-						extracted = extracted ? extracted[1].replace(/,(\s+)?/g, " ") : propertyValue;
-					}
+					/* Strip off commas. */
+					extracted = extracted ? extracted[1].replace(/,(\s+)?/g, " ") : propertyValue;
+				}
 
-					return extracted;
-				/* Clip needs to be re-wrapped during injection. */
-				case "inject":
-					return "rect(" + propertyValue + ")";
+				return extracted;
+			}else{
+				return "rect(" + propertyValue + ")";
 			}
 		}
 

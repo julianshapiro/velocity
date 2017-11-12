@@ -45,10 +45,10 @@ namespace VelocityStatic {
 			} else {
 				/* Transforms (translateX, rotateZ, etc.) are applied to a per-element transformCache object, which is manually flushed via flushTransformCache().
 				 Thus, for now, we merely cache transforms being SET. */
-				if (Normalizations[property] && Normalizations[property]("name", element) === "transform") {
+				if (Normalizations[property] && Normalizations[property](element) === "transform") {
 					/* Perform a normalization injection. */
 					/* Note: The normalization logic handles the transformCache updating. */
-					Normalizations[property]("inject", element, propertyValue);
+					Normalizations[property]( element, propertyValue);
 
 					propertyName = "transform";
 					propertyValue = Data(element).transformCache[property];
@@ -67,8 +67,7 @@ namespace VelocityStatic {
 
 					/* Normalize names and values. */
 					if (Normalizations[property]) {
-						propertyValue = Normalizations[property]("inject", element, propertyValue);
-						property = Normalizations[property]("name", element);
+						propertyValue = Normalizations[property](element, propertyValue);
 					}
 
 					/* Assign the appropriate vendor prefix before performing an official style update. */
