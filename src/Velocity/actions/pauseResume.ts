@@ -17,26 +17,25 @@ namespace VelocityStatic {
 	 * @param {StrictVelocityOptions} queue The internal Velocity options
 	 * @param {boolean} isPaused A flag to check whether we call this method from pause or resume case
 	 */
+
+	//TODO Do we need elements arguments?
 	function handlePauseResume(args: any[], elements: HTMLorSVGElement[], isPaused: boolean): void {
-		let queueName = getValue(validateQueue(args[0]), defaults.queue),
-			activeCall = VelocityStatic.State.first;
+		let queueName = args[0] === undefined ? undefined : validateQueue(args[0]),
+			activeCall = VelocityStatic.State.first,
+			defaultQueue = defaults.queue;
 
 		/* Iterate through all calls and pause any that contain any of our elements */
-		while (activeCall && !activeCall.paused) {
-			if (activeCall.paused !== isPaused) {
-				/* Iterate through the active call's targeted elements. */
-				activeCall.elements.some((activeElement) => {
-					let queue = getValue(activeCall.queue, activeCall.options.queue);
+		while (activeCall) {
 
-					if (queueName !== true && (queue !== queueName) && !(queue === undefined && queue === false)) {
-						return true;
-					}
-					if (elements.indexOf(activeElement) >= 0) {
-						activeCall.paused = isPaused;
-						return true;
-					}
-				});
+			if (activeCall.paused !== isPaused) {
+
+				let queue = getValue(activeCall.queue, activeCall.options.queue, defaultQueue);
+
+				if (queueName === undefined || (queueName !== undefined && queue === queueName)) {
+					activeCall.paused = isPaused;
+				}
 			}
+
 			activeCall = activeCall._next;
 		}
 	}

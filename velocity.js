@@ -535,13 +535,13 @@ var VelocityStatic;
                     rootPropertyValue = getPropertyValue(element, CSS.Names.prefixCheck(hookRoot)[0]);
                 }
                 /* If this root has a normalization registered, peform the associated normalization extraction. */
-                if (CSS.Normalizations.registered[hookRoot]) {
-                    rootPropertyValue = CSS.Normalizations.registered[hookRoot]("extract", element, rootPropertyValue);
+                if (CSS.Normalizations[hookRoot]) {
+                    rootPropertyValue = CSS.Normalizations[hookRoot](element, rootPropertyValue);
                 }
                 /* Extract the hook's value. */
                 propertyValue = CSS.Hooks.extractValue(hook_1, rootPropertyValue);
-            } else if (CSS.Normalizations.registered[property]) {
-                var normalizedPropertyName = CSS.Normalizations.registered[property]("name", element), normalizedPropertyValue = void 0;
+            } else if (CSS.Normalizations[property]) {
+                var normalizedPropertyName = CSS.Normalizations[property](element), normalizedPropertyValue = void 0;
                 /* Transform values are calculated via normalization extraction (see below), which checks against the element's transformCache.
                  At no point do transform GETs ever actually query the DOM; initial stylesheet values are never processed.
                  This is because parsing 3D transform matrices is not always accurate and would bloat our codebase;
@@ -554,7 +554,7 @@ var VelocityStatic;
                         normalizedPropertyValue = CSS.Hooks.templates[property][1];
                     }
                 }
-                propertyValue = CSS.Normalizations.registered[property]("extract", element, normalizedPropertyValue);
+                propertyValue = CSS.Normalizations[property](element, normalizedPropertyValue);
             }
             /* If a (numeric) value wasn't produced via hook extraction or normalization, query the DOM. */
             if (!/^[\d-]/.test(propertyValue)) {
@@ -1149,91 +1149,6 @@ var VelocityStatic;
         registerNormalization([ "outerHeight", function() {
             return getDimension("height");
         } ]);
-        //TODO check if needed
-        /*****************************
-         Batched Registrations
-         *****************************/
-        /*****************
-         Transforms
-         *****************/
-        /* Transforms are the subproperties contained by the CSS "transform" property. Transforms must undergo normalization
-         so that they can be referenced in a properties map by their individual names. */
-        /* Note: When transforms are "set", they are actually assigned to a per-element transformCache. When all transform
-         setting is complete complete, vCSS.flushTransformCache() must be manually called to flush the values to the DOM.
-         Transform setting is batched in this way to improve performance: the transform style only needs to be updated
-         once when multiple transform subproperties are being animated simultaneously. */
-        /* Note: IE9 and Android Gingerbread have support for 2D -- but not 3D -- transforms. Since animating unsupported
-         transform properties results in the browser ignoring the *entire* transform string, we prevent these 3D values
-         from being normalized for these browsers so that tweening skips these properties altogether
-         (since it will ignore them as being unsupported by the browser.) */
-        if ((!IE || IE > 9) && !VelocityStatic.State.isGingerbread) {
-            /* Note: Since the standalone CSS "perspective" property and the CSS transform "perspective" subproperty
-             share the same name, the latter is given a unique token within Velocity: "transformPerspective". */
-            CSS.Lists.transformsBase = CSS.Lists.transformsBase.concat(CSS.Lists.transforms3D);
-        }
-        var _loop_1 = function(i) {
-            /* Wrap the dynamically generated normalization function in a new scope so that transformName's value is
-             paired with its respective function. (Otherwise, all functions would take the final for loop's transformName.) */
-            var transformName = CSS.Lists.transformsBase[i];
-            var genericMethod = function(type, element, propertyValue) {
-                switch (type) {
-                  /* The normalized property name is the parent "transform" property -- the property that is actually set in vCSS. */
-                    case "name":
-                    return "transform";
-
-                  /* Transform values are cached onto a per-element transformCache object. */
-                    case "extract":
-                    /* If this transform has yet to be assigned a value, return its null value. */
-                    if (Data(element) === undefined || Data(element).transformCache[transformName] === undefined) {
-                        /* Scale vCSS.Lists.transformsBase default to 1 whereas all other transform properties default to 0. */
-                        return /^scale/i.test(transformName) ? 1 : 0;
-                    }
-                    return Data(element).transformCache[transformName].replace(/[()]/g, "");
-
-                  case "inject":
-                    var invalid = false;
-                    /* If an individual transform property contains an unsupported unit type, the browser ignores the *entire* transform property.
-                         Thus, protect users from themselves by skipping setting for transform values supplied with invalid unit types. */
-                    /* Switch on the base transform type; ignore the axis by removing the last letter from the transform's name. */
-                    switch (transformName.substr(0, transformName.length - 1)) {
-                      /* Whitelist unit types for each transform. */
-                        case "translate":
-                        invalid = !/(%|px|em|rem|vw|vh|\d)$/i.test(propertyValue);
-                        break;
-
-                      /* Since an axis-free "scale" property is supported as well, a little hack is used here to detect it by chopping off its last letter. */
-                        case "scal":
-                      case "scale":
-                        /* Chrome on Android has a bug in which scaled elements blur if their initial scale
-                                 value is below 1 (which can happen with forcefeeding). Thus, we detect a yet-unset scale property
-                                 and ensure that its first value is always 1. More info: http://stackoverflow.com/questions/10417890/css3-animations-with-transform-causes-blurred-elements-on-webkit/10417962#10417962 */
-                        if (VelocityStatic.State.isAndroid && Data(element).transformCache[transformName] === undefined && propertyValue < 1) {
-                            propertyValue = 1;
-                        }
-                        invalid = !/(\d)$/i.test(propertyValue);
-                        break;
-
-                      case "skew":
-                        invalid = !/(deg|\d)$/i.test(propertyValue);
-                        break;
-
-                      case "rotate":
-                        invalid = !/(deg|\d)$/i.test(propertyValue);
-                        break;
-                    }
-                    if (!invalid) {
-                        /* As per the CSS spec, wrap the value in parentheses. */
-                        Data(element).transformCache[transformName] = "(" + propertyValue + ")";
-                    }
-                    /* Although the value is set on the transformCache object, return the newly-updated value for the calling code to process as normal. */
-                    return Data(element).transformCache[transformName];
-                }
-            };
-            registerNormalization([ transformName, genericMethod ]);
-        };
-        for (var i = 0; i < CSS.Lists.transformsBase.length; i++) {
-            _loop_1(i);
-        }
     })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
 })(VelocityStatic || (VelocityStatic = {}));
 
@@ -1247,12 +1162,8 @@ var VelocityStatic;
 (function(VelocityStatic) {
     var CSS;
     (function(CSS) {
-        function blur(type, propertyValue) {
-            switch (type) {
-              case "name":
-                return VelocityStatic.State.isFirefox ? "filter" : "-webkit-filter";
-
-              case "extract":
+        function blur(element, propertyValue) {
+            if (propertyValue === undefined) {
                 var extracted = parseFloat(propertyValue);
                 /* If extracted is NaN, meaning the value isn't already extracted. */
                 if (!(extracted || extracted === 0)) {
@@ -1265,9 +1176,7 @@ var VelocityStatic;
                     }
                 }
                 return extracted;
-
-              /* Blur needs to be re-wrapped during injection. */
-                case "inject":
+            } else {
                 /* For the blur effect to be fully de-applied, it needs to be set to "none" instead of 0. */
                 if (!parseFloat(propertyValue)) {
                     return "none";
@@ -1291,31 +1200,29 @@ var VelocityStatic;
 (function(VelocityStatic) {
     var CSS;
     (function(CSS) {
-        function opacity(type, element, propertyValue) {
-            if (IE <= 8) {
-                switch (type) {
-                  case "name":
-                    return "filter";
-
-                  case "extract":
+        function opacity(element, propertyValue) {
+            if (propertyValue === undefined) {
+                var returnedValue = element.style.opacity;
+                if (IE <= 8) {
                     /* <=IE8 return a "filter" value of "alpha(opacity=\d{1,3})".
-                        Extract the value and convert it to a decimal value to match the standard CSS opacity property's formatting. */
-                    var extracted = propertyValue.toString().match(/alpha\(opacity=(.*)\)/i);
+                            Extract the value and convert it to a decimal value to match the standard CSS opacity property's formatting. */
+                    var extracted = returnedValue.toString().match(/alpha\(opacity=(.*)\)/i);
                     if (extracted) {
                         /* Convert to decimal value. */
-                        propertyValue = extracted[1] / 100;
+                        returnedValue = Number(extracted[1]) / 100;
                     } else {
                         /* When extracting opacity, default to 1 since a null value means opacity hasn't been set. */
-                        propertyValue = 1;
+                        returnedValue = 1;
                     }
-                    return propertyValue;
-
-                  case "inject":
+                }
+                return returnedValue;
+            } else {
+                if (IE <= 8) {
                     /* Opacified elements are required to have their zoom property set to a non-zero value. */
                     element.style.zoom = "1";
                     /* Setting the filter property on elements with certain font property combinations can result in a
-                        highly unappealing ultra-bolding effect. There's no way to remedy this throughout a tween, but dropping the
-                        value altogether (when opacity hits 1) at leasts ensures that the glitch is gone post-tweening. */
+                    highly unappealing ultra-bolding effect. There's no way to remedy this throughout a tween, but dropping the
+                    value altogether (when opacity hits 1) at leasts ensures that the glitch is gone post-tweening. */
                     if (parseFloat(propertyValue) >= 1) {
                         return "";
                     } else {
@@ -1323,17 +1230,7 @@ var VelocityStatic;
                         return "alpha(opacity=" + parseInt(parseFloat(propertyValue) * 100, 10) + ")";
                     }
                 }
-            } else {
-                switch (type) {
-                  case "name":
-                    return "opacity";
-
-                  case "extract":
-                    return propertyValue;
-
-                  case "inject":
-                    return propertyValue;
-                }
+                return propertyValue;
             }
         }
         CSS.opacity = opacity;
@@ -1351,13 +1248,8 @@ var VelocityStatic;
 (function(VelocityStatic) {
     var CSS;
     (function(CSS) {
-        function clip(type, propertyValue) {
-            switch (type) {
-              case "name":
-                return "clip";
-
-              /* Clip needs to be unwrapped and stripped of its commas during extraction. */
-                case "extract":
+        function clip(element, propertyValue) {
+            if (propertyValue === undefined) {
                 var extracted = void 0;
                 /* If Velocity also extracted this value, skip extraction. */
                 if (CSS.RegEx.wrappedValueAlreadyExtracted.test(propertyValue)) {
@@ -1369,14 +1261,46 @@ var VelocityStatic;
                     extracted = extracted ? extracted[1].replace(/,(\s+)?/g, " ") : propertyValue;
                 }
                 return extracted;
-
-              /* Clip needs to be re-wrapped during injection. */
-                case "inject":
+            } else {
                 return "rect(" + propertyValue + ")";
             }
         }
         CSS.clip = clip;
         CSS.registerNormalization([ "clip", clip ]);
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        function genericReordering(element, propertyValue) {
+            if (propertyValue && propertyValue.length > 0) {
+                var newString = "";
+                var splittedPropertyValue = propertyValue.split(/\s/g);
+                var firstSplittedElement = splittedPropertyValue[0];
+                if (CSS.Lists.colorNames[firstSplittedElement]) {
+                    splittedPropertyValue.shift();
+                    splittedPropertyValue.push(firstSplittedElement);
+                    newString = splittedPropertyValue.join(" ");
+                } else if (firstSplittedElement.match(/#|hsl|rgb|.*gradient/)) {
+                    var matchedString = propertyValue.match(/(hsl.*\)|#\d+|rgb.*\)|.*gradient.*\))\s/g)[0];
+                    newString = propertyValue.replace(matchedString, "");
+                    newString += " " + matchedString.trim();
+                } else {
+                    newString = propertyValue;
+                }
+                return newString;
+            }
+        }
+        CSS.genericReordering = genericReordering;
+        CSS.registerNormalization([ "textShadow", genericReordering ]);
     })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
 })(VelocityStatic || (VelocityStatic = {}));
 
@@ -1449,10 +1373,10 @@ var VelocityStatic;
             } else {
                 /* Transforms (translateX, rotateZ, etc.) are applied to a per-element transformCache object, which is manually flushed via flushTransformCache().
                  Thus, for now, we merely cache transforms being SET. */
-                if (CSS.Normalizations[property] && CSS.Normalizations[property]("name", element) === "transform") {
+                if (CSS.Normalizations[property] && CSS.Normalizations[property](element) === "transform") {
                     /* Perform a normalization injection. */
                     /* Note: The normalization logic handles the transformCache updating. */
-                    CSS.Normalizations[property]("inject", element, propertyValue);
+                    CSS.Normalizations[property](element, propertyValue);
                     propertyName = "transform";
                     propertyValue = Data(element).transformCache[property];
                 } else {
@@ -1467,8 +1391,7 @@ var VelocityStatic;
                     }
                     /* Normalize names and values. */
                     if (CSS.Normalizations[property]) {
-                        propertyValue = CSS.Normalizations[property]("inject", element, propertyValue);
-                        property = CSS.Normalizations[property]("name", element);
+                        propertyValue = CSS.Normalizations[property](element, propertyValue);
                     }
                     /* Assign the appropriate vendor prefix before performing an official style update. */
                     propertyName = CSS.Names.prefixCheck(property)[0];
@@ -2171,22 +2094,16 @@ var VelocityStatic;
      * @param {StrictVelocityOptions} queue The internal Velocity options
      * @param {boolean} isPaused A flag to check whether we call this method from pause or resume case
      */
+    //TODO Do we need elements arguments?
     function handlePauseResume(args, elements, isPaused) {
-        var queueName = getValue(validateQueue(args[0]), VelocityStatic.defaults.queue), activeCall = VelocityStatic.State.first;
+        var queueName = args[0] === undefined ? undefined : validateQueue(args[0]), activeCall = VelocityStatic.State.first, defaultQueue = VelocityStatic.defaults.queue;
         /* Iterate through all calls and pause any that contain any of our elements */
-        while (activeCall && !activeCall.paused) {
+        while (activeCall) {
             if (activeCall.paused !== isPaused) {
-                /* Iterate through the active call's targeted elements. */
-                activeCall.elements.some(function(activeElement) {
-                    var queue = getValue(activeCall.queue, activeCall.options.queue);
-                    if (queueName !== true && queue !== queueName && !(queue === undefined && queue === false)) {
-                        return true;
-                    }
-                    if (elements.indexOf(activeElement) >= 0) {
-                        activeCall.paused = isPaused;
-                        return true;
-                    }
-                });
+                var queue_1 = getValue(activeCall.queue, activeCall.options.queue, defaultQueue);
+                if (queueName === undefined || queueName !== undefined && queue_1 === queueName) {
+                    activeCall.paused = isPaused;
+                }
             }
             activeCall = activeCall._next;
         }
@@ -3038,7 +2955,7 @@ var VelocityStatic;
                 }
             }
             var shareDuration = totalDuration >= 1 ? 0 : properties.calls.length ? (1 - totalDuration) / properties.calls.length : 1;
-            var _loop_2 = function(callIndex) {
+            var _loop_1 = function(callIndex) {
                 var call = properties.calls[callIndex], propertyMap = call[0], redirectDuration = 1e3, durationPercentage = call[1], callOptions = call[2] || {}, opts = {};
                 if (redirectOptions.duration !== undefined) {
                     redirectDuration = redirectOptions.duration;
@@ -3145,7 +3062,7 @@ var VelocityStatic;
             };
             /* Iterate through each effect's call array. */
             for (var callIndex = 0; callIndex < properties.calls.length; callIndex++) {
-                _loop_2(callIndex);
+                _loop_1(callIndex);
             }
         };
         /* Return the Velocity object so that RegisterUI calls can be chained. */
@@ -3296,7 +3213,7 @@ var VelocityStatic;
                 while (activeCall = VelocityStatic.State.firstNew) {
                     VelocityStatic.expandTween(activeCall);
                 }
-                var _loop_3 = function() {
+                var _loop_2 = function() {
                     nextCall = activeCall._next;
                     /************************
                      Call-Wide Variables
@@ -3318,10 +3235,10 @@ var VelocityStatic;
                      first tick iteration isn't wasted by animating at 0% tween completion, which would produce the
                      same style value as the element's current value. */
                     if (firstTick) {
-                        var queue_1 = getValue(activeCall.queue, options.queue);
+                        var queue_2 = getValue(activeCall.queue, options.queue);
                         timeStart = timeCurrent - deltaTime;
-                        if (queue_1 !== false) {
-                            timeStart = Math.max(timeStart, data_7.lastFinishList[queue_1] || 0);
+                        if (queue_2 !== false) {
+                            timeStart = Math.max(timeStart, data_7.lastFinishList[queue_2] || 0);
                         }
                         activeCall.timeStart = timeStart;
                     }
@@ -3472,8 +3389,8 @@ var VelocityStatic;
                             /* Now that we have the hook's updated rootPropertyValue (the post-processed value provided by adjustedSetData), cache it onto the element. */
                             if (VelocityStatic.CSS.Hooks.registered[property]) {
                                 /* Since adjustedSetData contains normalized data ready for DOM updating, the rootPropertyValue needs to be re-extracted from its normalized form. ?? */
-                                if (VelocityStatic.CSS.Normalizations.registered[hookRoot]) {
-                                    data_7.rootPropertyValueCache[hookRoot] = VelocityStatic.CSS.Normalizations.registered[hookRoot]("extract", null, adjustedSetData[1]);
+                                if (VelocityStatic.CSS.Normalizations[hookRoot]) {
+                                    data_7.rootPropertyValueCache[hookRoot] = VelocityStatic.CSS.Normalizations[hookRoot](null, adjustedSetData[1]);
                                 } else {
                                     data_7.rootPropertyValueCache[hookRoot] = adjustedSetData[1];
                                 }
@@ -3506,7 +3423,7 @@ var VelocityStatic;
                 };
                 /* Iterate through each active call. */
                 for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
-                    _loop_3();
+                    _loop_2();
                 }
                 /* Callbacks and things that might read the DOM again */
                 // Progress callback
@@ -3796,13 +3713,13 @@ var VelocityStatic;
             /* The per-element isAnimating flag is used to indicate whether it's safe (i.e. the data isn't stale)
              to transfer over end values to use as start values. If it's set to true and there is a previous
              Velocity call to pull values from, do so. */
-            var queue_2 = getValue(activeCall.queue, options.queue, VelocityStatic.defaults.queue);
-            if (data_8 && data_8.isAnimating && queue_2 !== false) {
-                lastAnimation = data_8.lastAnimationList[queue_2];
+            var queue_3 = getValue(activeCall.queue, options.queue, VelocityStatic.defaults.queue);
+            if (data_8 && data_8.isAnimating && queue_3 !== false) {
+                lastAnimation = data_8.lastAnimationList[queue_3];
             }
             /* Create a tween out of each property, and append its associated data to tweensContainer. */
             if (propertiesMap) {
-                var _loop_4 = function(property) {
+                var _loop_3 = function(property) {
                     if (!propertiesMap.hasOwnProperty(property)) {
                         return "continue";
                     }
@@ -3852,7 +3769,7 @@ var VelocityStatic;
                      Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
                     /* Note: Since SVG elements have some of their properties directly applied as HTML attributes,
                      there is no way to check for their explicit browser support, and so we skip skip this check for them. */
-                    if ((!data_8 || !data_8.isSVG) && rootProperty !== "tween" && VelocityStatic.CSS.Names.prefixCheck(rootProperty)[1] === false && VelocityStatic.CSS.Normalizations.registered[rootProperty] === undefined) {
+                    if ((!data_8 || !data_8.isSVG) && rootProperty !== "tween" && VelocityStatic.CSS.Names.prefixCheck(rootProperty)[1] === false && VelocityStatic.CSS.Normalizations[rootProperty] === undefined) {
                         if (VelocityStatic.debug) {
                             console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
                         }
@@ -4304,7 +4221,7 @@ var VelocityStatic;
                     }
                 };
                 for (var property in propertiesMap) {
-                    var state_1 = _loop_4(property);
+                    var state_1 = _loop_3(property);
                     if (typeof state_1 === "object") return state_1.value;
                 }
                 activeCall.properties = undefined;
@@ -4315,8 +4232,8 @@ var VelocityStatic;
              *****************/
             if (data_8) {
                 /* Store the tweensContainer and options if we're working on the default effects queue, so that they can be used by the reverse or repeat commands. */
-                if (queue_2 !== false) {
-                    data_8.lastAnimationList[queue_2] = activeCall;
+                if (queue_3 !== false) {
+                    data_8.lastAnimationList[queue_3] = activeCall;
                 }
                 /* Switch on the element's animating flag. */
                 data_8.isAnimating = true;
@@ -4991,7 +4908,7 @@ if (window === global) {
 /* The CSS spec mandates that the translateX/Y/Z transforms are %-relative to the element itself -- not its parent.
  Velocity, however, doesn't make this distinction. Thus, converting to or from the % unit with these subproperties
  will produce an inaccurate conversion value. The same issue exists with the cx/cy attributes of SVG circles and ellipses. */
-var _loop_5 = function(key) {
+var _loop_4 = function(key) {
     Object.defineProperty(VelocityFn, key, {
         enumerable: PUBLIC_MEMBERS.indexOf(key) >= 0,
         get: function() {
@@ -5016,7 +4933,7 @@ var _loop_5 = function(key) {
  * be allowed.
  */
 for (var key in VelocityStatic) {
-    _loop_5(key);
+    _loop_4(key);
 }
 //# sourceMappingURL=velocity.js.map
 	return VelocityFn;
