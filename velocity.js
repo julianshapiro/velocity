@@ -4605,6 +4605,9 @@ function VelocityFn() {
     // Allow elements to be chained.
     if (elements) {
         defineProperty(elements, "velocity", VelocityFn.bind(elements));
+        if (animations) {
+            defineProperty(elements.velocity, "animations", animations);
+        }
     }
     // Next get the propertiesMap and options.
     if (syntacticSugar) {
