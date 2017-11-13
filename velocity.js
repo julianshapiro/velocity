@@ -2090,22 +2090,33 @@ var VelocityStatic;
      * Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a
      * single element will cause any calls that contain tweens for that element to be paused/resumed
      * as well.
+     *
      * @param {HTMLorSVGElement[]} elements The velocity elements
      * @param {StrictVelocityOptions} queue The internal Velocity options
      * @param {boolean} isPaused A flag to check whether we call this method from pause or resume case
      */
-    //TODO Do we need elements arguments?
     function handlePauseResume(args, elements, isPaused) {
-        var queueName = args[0] === undefined ? undefined : validateQueue(args[0]), activeCall = VelocityStatic.State.first, defaultQueue = VelocityStatic.defaults.queue;
-        /* Iterate through all calls and pause any that contain any of our elements */
-        while (activeCall) {
-            if (activeCall.paused !== isPaused) {
-                var queue_1 = getValue(activeCall.queue, activeCall.options.queue, defaultQueue);
-                if (queueName === undefined || queueName !== undefined && queue_1 === queueName) {
-                    activeCall.paused = isPaused;
+        var queueName = args[0] === undefined ? undefined : validateQueue(args[0]), defaultQueue = VelocityStatic.defaults.queue;
+        if (isVelocityResult(elements) && elements.velocity.animations) {
+            for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
+                var activeCall = animations[i];
+                if (activeCall.paused !== isPaused) {
+                    if (queueName === undefined || queueName !== undefined && queueName === getValue(activeCall.queue, activeCall.options.queue, defaultQueue)) {
+                        activeCall.paused = isPaused;
+                    }
                 }
             }
-            activeCall = activeCall._next;
+        } else {
+            // TODO: Check for only animations on these specific elements
+            var activeCall = VelocityStatic.State.first;
+            while (activeCall) {
+                if (activeCall.paused !== isPaused) {
+                    if (queueName === undefined || queueName !== undefined && queueName === getValue(activeCall.queue, activeCall.options.queue, defaultQueue)) {
+                        activeCall.paused = isPaused;
+                    }
+                }
+                activeCall = activeCall._next;
+            }
         }
     }
     function pause(args, elements, promiseHandler, action) {
@@ -3235,10 +3246,10 @@ var VelocityStatic;
                      first tick iteration isn't wasted by animating at 0% tween completion, which would produce the
                      same style value as the element's current value. */
                     if (firstTick) {
-                        var queue_2 = getValue(activeCall.queue, options.queue);
+                        var queue_1 = getValue(activeCall.queue, options.queue);
                         timeStart = timeCurrent - deltaTime;
-                        if (queue_2 !== false) {
-                            timeStart = Math.max(timeStart, data_7.lastFinishList[queue_2] || 0);
+                        if (queue_1 !== false) {
+                            timeStart = Math.max(timeStart, data_7.lastFinishList[queue_1] || 0);
                         }
                         activeCall.timeStart = timeStart;
                     }
@@ -3713,9 +3724,9 @@ var VelocityStatic;
             /* The per-element isAnimating flag is used to indicate whether it's safe (i.e. the data isn't stale)
              to transfer over end values to use as start values. If it's set to true and there is a previous
              Velocity call to pull values from, do so. */
-            var queue_3 = getValue(activeCall.queue, options.queue, VelocityStatic.defaults.queue);
-            if (data_8 && data_8.isAnimating && queue_3 !== false) {
-                lastAnimation = data_8.lastAnimationList[queue_3];
+            var queue_2 = getValue(activeCall.queue, options.queue, VelocityStatic.defaults.queue);
+            if (data_8 && data_8.isAnimating && queue_2 !== false) {
+                lastAnimation = data_8.lastAnimationList[queue_2];
             }
             /* Create a tween out of each property, and append its associated data to tweensContainer. */
             if (propertiesMap) {
@@ -4232,8 +4243,8 @@ var VelocityStatic;
              *****************/
             if (data_8) {
                 /* Store the tweensContainer and options if we're working on the default effects queue, so that they can be used by the reverse or repeat commands. */
-                if (queue_3 !== false) {
-                    data_8.lastAnimationList[queue_3] = activeCall;
+                if (queue_2 !== false) {
+                    data_8.lastAnimationList[queue_2] = activeCall;
                 }
                 /* Switch on the element's animating flag. */
                 data_8.isAnimating = true;
