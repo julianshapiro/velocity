@@ -2090,43 +2090,32 @@ var VelocityStatic;
      * Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a
      * single element will cause any calls that contain tweens for that element to be paused/resumed
      * as well.
-     *
-     * @param {HTMLorSVGElement[]} elements The velocity elements
-     * @param {StrictVelocityOptions} queue The internal Velocity options
-     * @param {boolean} isPaused A flag to check whether we call this method from pause or resume case
      */
-    function handlePauseResume(args, elements, isPaused) {
-        var queueName = args[0] === undefined ? undefined : validateQueue(args[0]), defaultQueue = VelocityStatic.defaults.queue;
-        if (isVelocityResult(elements) && elements.velocity.animations) {
-            for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-                var activeCall = animations[i];
-                if (activeCall.paused !== isPaused) {
-                    if (queueName === undefined || queueName !== undefined && queueName === getValue(activeCall.queue, activeCall.options.queue, defaultQueue)) {
-                        activeCall.paused = isPaused;
-                    }
+    function pauseResume(args, elements, promiseHandler, action) {
+        var isPaused = action.indexOf("pause") === 0, queueName = args[0] === undefined ? undefined : validateQueue(args[0]), activeCall, defaultQueue = VelocityStatic.defaults.queue, checkAnimation = function(animation) {
+            if (animation.paused !== isPaused) {
+                if (queueName === undefined || queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
+                    animation.paused = isPaused;
                 }
             }
+        };
+        if (isVelocityResult(elements) && elements.velocity.animations) {
+            for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
+                checkAnimation(animations[i]);
+            }
         } else {
-            // TODO: Check for only animations on these specific elements
-            var activeCall = VelocityStatic.State.first;
+            activeCall = VelocityStatic.State.first;
             while (activeCall) {
-                if (activeCall.paused !== isPaused) {
-                    if (queueName === undefined || queueName !== undefined && queueName === getValue(activeCall.queue, activeCall.options.queue, defaultQueue)) {
-                        activeCall.paused = isPaused;
-                    }
+                if (!elements || _inArray.call(elements, activeCall.element)) {
+                    checkAnimation(activeCall);
                 }
                 activeCall = activeCall._next;
             }
         }
+        promiseHandler && promiseHandler._resolver(elements);
     }
-    function pause(args, elements, promiseHandler, action) {
-        handlePauseResume(args, elements, true);
-    }
-    function resume(args, elements, promiseHandler, action) {
-        handlePauseResume(args, elements, false);
-    }
-    VelocityStatic.registerAction([ "pause", pause ], true);
-    VelocityStatic.registerAction([ "resume", resume ], true);
+    VelocityStatic.registerAction([ "pause", pauseResume ], true);
+    VelocityStatic.registerAction([ "resume", pauseResume ], true);
 })(VelocityStatic || (VelocityStatic = {}));
 
 ///<reference path="actions.ts" />
@@ -4675,10 +4664,16 @@ function VelocityFn() {
     }
     // TODO: exception for the special "reverse" property
     if (isString(propertiesMap)) {
-        var args = [], promiseHandler = promise && {
+        var args = [], fulfilled_1, promiseHandler = promise && {
             _promise: promise,
-            _resolver: resolver,
-            _rejecter: rejecter
+            _resolver: function(args) {
+                fulfilled_1 = true;
+                resolver(args);
+            },
+            _rejecter: function(reason) {
+                fulfilled_1 = true;
+                rejecter(reason);
+            }
         };
         while (argumentIndex < _arguments.length) {
             args.push(_arguments[argumentIndex++]);
@@ -4694,6 +4689,9 @@ function VelocityFn() {
             var result = callback(args, elements, promiseHandler, propertiesMap);
             if (result !== undefined) {
                 return result;
+            }
+            if (!fulfilled_1) {
+                resolver(elements);
             }
         } else {
             console.warn("VelocityJS: Unknown action:", propertiesMap);

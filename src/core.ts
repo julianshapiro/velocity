@@ -189,10 +189,17 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	// TODO: exception for the special "reverse" property
 	if (isString(propertiesMap)) {
 		let args: any[] = [],
+			fulfilled: boolean,
 			promiseHandler: VelocityPromise = promise && {
 				_promise: promise,
-				_resolver: resolver,
-				_rejecter: rejecter
+				_resolver: function(args?: any) {
+					fulfilled = true;
+					resolver(args);
+				},
+				_rejecter: function(reason?: any) {
+					fulfilled = true;
+					rejecter(reason);
+				}
 			};
 
 		while (argumentIndex < _arguments.length) {
@@ -213,6 +220,9 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 
 			if (result !== undefined) {
 				return result;
+			}
+			if (!fulfilled) {
+				resolver(elements);
 			}
 		} else {
 			console.warn("VelocityJS: Unknown action:", propertiesMap);
