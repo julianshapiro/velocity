@@ -2112,7 +2112,6 @@ var VelocityStatic;
                 activeCall = activeCall._next;
             }
         }
-        promiseHandler && promiseHandler._resolver(elements);
     }
     VelocityStatic.registerAction([ "pause", pauseResume ], true);
     VelocityStatic.registerAction([ "resume", pauseResume ], true);
@@ -4607,7 +4606,7 @@ function VelocityFn() {
     }
     // Get any options map passed in as arguments first, expand any direct
     // options if possible.
-    var opts = syntacticSugar ? getValue(args0.options, args0.o) : _arguments[argumentIndex];
+    var isAction = isString(propertiesMap), opts = syntacticSugar ? getValue(args0.options, args0.o) : _arguments[argumentIndex];
     if (isPlainObject(opts)) {
         optionsMap = opts;
     }
@@ -4645,24 +4644,27 @@ function VelocityFn() {
         }
     }
     var promiseRejectEmpty = getValue(optionsMap && optionsMap.promiseRejectEmpty, defaults.promiseRejectEmpty);
-    if (!elements && promise) {
-        if (promiseRejectEmpty) {
-            rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
-        } else {
-            resolver();
+    if (promise) {
+        if (!elements && !isAction) {
+            if (promiseRejectEmpty) {
+                rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+            } else {
+                resolver();
+            }
+        } else if (!propertiesMap) {
+            if (promiseRejectEmpty) {
+                rejecter("Velocity: No properties supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+            } else {
+                resolver();
+            }
         }
     }
-    if (!propertiesMap && promise) {
-        if (promiseRejectEmpty) {
-            rejecter("Velocity: No properties supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
-        } else {
-            resolver();
-        }
-    }
-    if (!elements || !propertiesMap) {
+    if (!elements && !isAction || !propertiesMap) {
         return promise;
     }
     // TODO: exception for the special "reverse" property
+    // NOTE: Can't use isAction here due to type inference - there are callbacks
+    // between so the type isn't considered safe.
     if (isString(propertiesMap)) {
         var args = [], fulfilled_1, promiseHandler = promise && {
             _promise: promise,

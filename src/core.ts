@@ -128,7 +128,8 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	}
 	// Get any options map passed in as arguments first, expand any direct
 	// options if possible.
-	let opts = syntacticSugar ? getValue(args0.options, args0.o) : _arguments[argumentIndex];
+	let isAction = isString(propertiesMap),
+		opts = syntacticSugar ? getValue(args0.options, args0.o) : _arguments[argumentIndex];
 
 	if (isPlainObject(opts)) {
 		optionsMap = opts;
@@ -168,25 +169,28 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	}
 	let promiseRejectEmpty: boolean = getValue(optionsMap && optionsMap.promiseRejectEmpty, defaults.promiseRejectEmpty);
 
-	if (!elements && promise) {
-		if (promiseRejectEmpty) {
-			rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
-		} else {
-			resolver();
+	if (promise) {
+		if (!elements && !isAction) {
+			if (promiseRejectEmpty) {
+				rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+			} else {
+				resolver();
+			}
+		} else if (!propertiesMap) {
+			if (promiseRejectEmpty) {
+				rejecter("Velocity: No properties supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+			} else {
+				resolver();
+			}
 		}
 	}
-	if (!propertiesMap && promise) {
-		if (promiseRejectEmpty) {
-			rejecter("Velocity: No properties supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
-		} else {
-			resolver();
-		}
-	}
-	if (!elements || !propertiesMap) {
+	if ((!elements && !isAction) || !propertiesMap) {
 		return promise as VelocityResult;
 	}
 
 	// TODO: exception for the special "reverse" property
+	// NOTE: Can't use isAction here due to type inference - there are callbacks
+	// between so the type isn't considered safe.
 	if (isString(propertiesMap)) {
 		let args: any[] = [],
 			fulfilled: boolean,

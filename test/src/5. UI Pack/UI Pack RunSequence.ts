@@ -5,7 +5,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.test("RunSequence", function(assert) {
+QUnit.skip("RunSequence", function(assert) {
 
 	var done = assert.async(1),
 		$target1 = getTarget(),

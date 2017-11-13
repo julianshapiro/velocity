@@ -1588,7 +1588,7 @@ QUnit.test("RegisterEffect", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.test("RunSequence", function (assert) {
+QUnit.skip("RunSequence", function (assert) {
     var done = assert.async(1), $target1 = getTarget(), $target2 = getTarget(), $target3 = getTarget(), mySequence = [
         { elements: $target1, properties: { opacity: defaultProperties.opacity } },
         { elements: $target2, properties: { height: defaultProperties.height } },
