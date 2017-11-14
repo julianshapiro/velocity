@@ -1,10 +1,7 @@
 ///<reference path="actions.ts" />
 ///<reference path="defaultAction.ts" />
 ///<reference path="finishAll.ts" />
-///<reference path="get.ts" />
-///<reference path="pauseAll.ts" />
+///<reference path="option.ts" />
 ///<reference path="pauseResume.ts" />
-///<reference path="resumeAll.ts" />
 ///<reference path="reverse.ts" />
-///<reference path="set.ts" />
 ///<reference path="stop.ts" />

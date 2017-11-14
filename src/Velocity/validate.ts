@@ -206,11 +206,11 @@ function validatePromiseRejectEmpty(value: boolean): boolean {
  * Validate a <code>queue</code> option.
  * @private
  */
-function validateQueue(value: string | false): string | false {
+function validateQueue(value: string | false, noError?: true): string | false {
 	if (value === false || isString(value)) {
 		return value;
 	}
-	if (value != null && value !== true) {
+	if (value != null && !noError) {
 		console.warn("VelocityJS: Trying to set 'queue' to an invalid value:", value);
 	}
 }

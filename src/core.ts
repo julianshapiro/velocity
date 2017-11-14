@@ -193,17 +193,10 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	// between so the type isn't considered safe.
 	if (isString(propertiesMap)) {
 		let args: any[] = [],
-			fulfilled: boolean,
 			promiseHandler: VelocityPromise = promise && {
 				_promise: promise,
-				_resolver: function(args?: any) {
-					fulfilled = true;
-					resolver(args);
-				},
-				_rejecter: function(reason?: any) {
-					fulfilled = true;
-					rejecter(reason);
-				}
+				_resolver: resolver,
+				_rejecter: rejecter
 			};
 
 		while (argumentIndex < _arguments.length) {
@@ -224,9 +217,6 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 
 			if (result !== undefined) {
 				return result;
-			}
-			if (!fulfilled) {
-				resolver(elements);
 			}
 		} else {
 			console.warn("VelocityJS: Unknown action:", propertiesMap);

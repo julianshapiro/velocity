@@ -2000,185 +2000,17 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
-    function get(args, elements, promiseHandler, action) {
-        var key = args[0], queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined, queueName = queue === "false" ? false : getValue(queue && validateQueue(queue), VelocityStatic.defaults.queue), animations;
-        if (!key) {
-            console.warn("VelocityJS: Trying to get a non-existant key:", key);
-            return null;
-        }
-        // If we're chaining the return value from Velocity then we are only
-        // interested in the values related to that call
-        if (isVelocityResult(elements) && elements.velocity.animations) {
-            animations = elements.velocity.animations;
-        } else {
-            animations = [];
-            for (var activeCall = VelocityStatic.State.first; activeCall; activeCall = activeCall._next) {
-                if (elements.indexOf(activeCall.element) >= 0 && getValue(activeCall.queue, activeCall.options.queue) === queueName) {
-                    animations.push(activeCall);
-                }
-            }
-            // If we're dealing with multiple elements that are pointing at a
-            // single running animation, then instead treat them as a single
-            // animation.
-            if (elements.length > 1 && animations.length > 1) {
-                var i_1 = 1, options = animations[0].options;
-                while (i_1 < animations.length) {
-                    if (animations[i_1].options !== options) {
-                        options = null;
-                        break;
-                    }
-                }
-                // TODO: this needs to check that they're actually a sync:true animation to merge the results, otherwise the individual values may be different
-                if (options) {
-                    animations = [ animations[0] ];
-                }
-            }
-        }
-        // If only a single animation is found and we're only targetting a
-        // single element, then return the value directly
-        if (elements.length === 1 && animations.length === 1) {
-            return getValue(animations[0][key], animations[0].options[key]);
-        }
-        var i = 0, result = [];
-        for (;i < animations.length; i++) {
-            result.push(getValue(animations[i][key], animations[i].options[key]));
-        }
-        return result;
-    }
-    VelocityStatic.registerAction([ "get", get ], true);
-})(VelocityStatic || (VelocityStatic = {}));
-
-///<reference path="actions.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Pause all animations.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    function pauseAll(queueName) {
-        for (var activeCall = VelocityStatic.State.first; activeCall; activeCall = activeCall._next) {
-            /* If we have a queueName and this call is not on that queue, skip */
-            if (queueName !== undefined && (activeCall.queue !== queueName || activeCall.queue === false)) {
-                continue;
-            }
-            /* Set call to paused */
-            activeCall.paused = true;
-        }
-    }
-    VelocityStatic.pauseAll = pauseAll;
-    VelocityStatic.registerAction([ "pauseAll", function(args, elements, promiseHandler, action) {
-        pauseAll(args[0]);
-    } ], true);
-})(VelocityStatic || (VelocityStatic = {}));
-
-///<reference path="actions.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Pause and resume animation.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    var checkAnimation = function(animation, queueName, defaultQueue, isPaused) {
-        if (animation.paused !== isPaused) {
-            if (queueName === undefined || queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
-                animation.paused = isPaused;
-            }
-        }
-    };
     /**
-     * Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a
-     * single element will cause any calls that contain tweens for that element to be paused/resumed
-     * as well.
+     * Get or set an option or running AnimationCall data value. If there is no
+     * value passed then it will get, otherwise we will set.
+     *
+     * NOTE: When using "get" this will not touch the Promise as it is never
+     * returned to the user.
      */
-    function pauseResume(args, elements, promiseHandler, action) {
-        var isPaused = action.indexOf("pause") === 0, queueName = args[0] === undefined ? undefined : validateQueue(args[0]), activeCall, defaultQueue = VelocityStatic.defaults.queue;
-        if (isVelocityResult(elements) && elements.velocity.animations) {
-            for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-                checkAnimation(animations[i], queueName, defaultQueue, isPaused);
-            }
-        } else {
-            activeCall = VelocityStatic.State.first;
-            while (activeCall) {
-                if (!elements || _inArray.call(elements, activeCall.element)) {
-                    checkAnimation(activeCall, queueName, defaultQueue, isPaused);
-                }
-                activeCall = activeCall._next;
-            }
-        }
-    }
-    VelocityStatic.registerAction([ "pause", pauseResume ], true);
-    VelocityStatic.registerAction([ "resume", pauseResume ], true);
-})(VelocityStatic || (VelocityStatic = {}));
-
-///<reference path="actions.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Resume all animations.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    function resumeAll(queueName) {
-        for (var activeCall = VelocityStatic.State.first; activeCall; activeCall = activeCall._next) {
-            /* If we have a queueName and this call is not on that queue, skip */
-            if (queueName !== undefined && (activeCall.queue !== queueName || activeCall.queue === false)) {
-                continue;
-            }
-            /* Set call to resumed if it was paused */
-            if (activeCall.paused === true) {
-                activeCall.paused = false;
-            }
-        }
-    }
-    VelocityStatic.resumeAll = resumeAll;
-    VelocityStatic.registerAction([ "resumeAll", function(args, elements, promiseHandler, action) {
-        resumeAll(args[0]);
-    } ], true);
-})(VelocityStatic || (VelocityStatic = {}));
-
-///<reference path="actions.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Actions that can be performed by passing a string instead of a propertiesMap.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    VelocityStatic.registerAction([ "reverse", function(args, elements, promiseHandler, action) {
-        // TODO: Code needs to split out before here - but this is needed to prevent it being overridden
-        throw new SyntaxError("The 'reverse' action is private.");
-    } ], true);
-})(VelocityStatic || (VelocityStatic = {}));
-
-///<reference path="actions.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Get a value from one or more running animations.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    function set(args, elements, promiseHandler, action) {
-        var key = args[0], value = args[1], queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined, queueName = queue === "false" ? false : getValue(queue && validateQueue(queue), VelocityStatic.defaults.queue), animations;
+    function option(args, elements, promiseHandler, action) {
+        var key = args[0], value = args[1], queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined, queueName = queue === "false" ? false : validateQueue(queue, true), animations;
         if (!key) {
-            console.warn("VelocityJS: Trying to set a non-existant key:", key);
+            console.warn("VelocityJS: Cannot access a non-existant key!");
             return null;
         }
         // If we're chaining the return value from Velocity then we are only
@@ -2209,6 +2041,20 @@ var VelocityStatic;
                 }
             }
         }
+        // GET
+        if (value === undefined) {
+            // If only a single animation is found and we're only targetting a
+            // single element, then return the value directly
+            if (elements.length === 1 && animations.length === 1) {
+                return getValue(animations[0][key], animations[0].options[key]);
+            }
+            var i = 0, result = [];
+            for (;i < animations.length; i++) {
+                result.push(getValue(animations[i][key], animations[i].options[key]));
+            }
+            return result;
+        }
+        // SET
         switch (key) {
           case "cache":
             value = validateCache(value);
@@ -2280,8 +2126,83 @@ var VelocityStatic;
         for (var i = 0; i < animations.length; i++) {
             animations[i][key] = value;
         }
+        if (promiseHandler) {
+            if (elements && elements.then) {
+                elements.then(promiseHandler._resolver);
+            } else {
+                promiseHandler._resolver(elements);
+            }
+        }
     }
-    VelocityStatic.registerAction([ "set", set ], true);
+    VelocityStatic.registerAction([ "option", option ], true);
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="actions.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Pause and resume animation.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    /**
+     * Check if an animation should be paused / resumed.
+     */
+    function checkAnimation(animation, queueName, defaultQueue, isPaused) {
+        if (queueName === undefined || queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
+            animation.paused = isPaused;
+        }
+    }
+    /**
+     * Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a
+     * single element will cause any calls that contain tweens for that element to be paused/resumed
+     * as well.
+     */
+    function pauseResume(args, elements, promiseHandler, action) {
+        var isPaused = action.indexOf("pause") === 0, queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined, queueName = queue === "false" ? false : validateQueue(args[0]), activeCall, defaultQueue = VelocityStatic.defaults.queue;
+        if (isVelocityResult(elements) && elements.velocity.animations) {
+            for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
+                checkAnimation(animations[i], queueName, defaultQueue, isPaused);
+            }
+        } else {
+            activeCall = VelocityStatic.State.first;
+            while (activeCall) {
+                if (!elements || _inArray.call(elements, activeCall.element)) {
+                    checkAnimation(activeCall, queueName, defaultQueue, isPaused);
+                }
+                activeCall = activeCall._next;
+            }
+        }
+        if (promiseHandler) {
+            if (elements && elements.then) {
+                elements.then(promiseHandler._resolver);
+            } else {
+                promiseHandler._resolver(elements);
+            }
+        }
+    }
+    VelocityStatic.registerAction([ "pause", pauseResume ], true);
+    VelocityStatic.registerAction([ "resume", pauseResume ], true);
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="actions.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Actions that can be performed by passing a string instead of a propertiesMap.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    VelocityStatic.registerAction([ "reverse", function(args, elements, promiseHandler, action) {
+        // TODO: Code needs to split out before here - but this is needed to prevent it being overridden
+        throw new SyntaxError("The 'reverse' action is private.");
+    } ], true);
 })(VelocityStatic || (VelocityStatic = {}));
 
 ///<reference path="actions.ts" />
@@ -4484,11 +4405,11 @@ function validatePromiseRejectEmpty(value) {
  * Validate a <code>queue</code> option.
  * @private
  */
-function validateQueue(value) {
+function validateQueue(value, noError) {
     if (value === false || isString(value)) {
         return value;
     }
-    if (value != null && value !== true) {
+    if (value != null && !noError) {
         console.warn("VelocityJS: Trying to set 'queue' to an invalid value:", value);
     }
 }
@@ -4708,16 +4629,10 @@ function VelocityFn() {
     // NOTE: Can't use isAction here due to type inference - there are callbacks
     // between so the type isn't considered safe.
     if (isString(propertiesMap)) {
-        var args = [], fulfilled_1, promiseHandler = promise && {
+        var args = [], promiseHandler = promise && {
             _promise: promise,
-            _resolver: function(args) {
-                fulfilled_1 = true;
-                resolver(args);
-            },
-            _rejecter: function(reason) {
-                fulfilled_1 = true;
-                rejecter(reason);
-            }
+            _resolver: resolver,
+            _rejecter: rejecter
         };
         while (argumentIndex < _arguments.length) {
             args.push(_arguments[argumentIndex++]);
@@ -4733,9 +4648,6 @@ function VelocityFn() {
             var result = callback(args, elements, promiseHandler, propertiesMap);
             if (result !== undefined) {
                 return result;
-            }
-            if (!fulfilled_1) {
-                resolver(elements);
             }
         } else {
             console.warn("VelocityJS: Unknown action:", propertiesMap);

@@ -9,11 +9,13 @@
 
 namespace VelocityStatic {
 
-	let checkAnimation = function (animation: AnimationCall, queueName, defaultQueue, isPaused) {
-		if (animation.paused !== isPaused) {
-			if (queueName === undefined || (queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue))) {
-				animation.paused = isPaused;
-			}
+	/**
+	 * Check if an animation should be paused / resumed.
+	 */
+	function checkAnimation(animation: AnimationCall, queueName: false | string, defaultQueue: false | string, isPaused: boolean) {
+		if (queueName === undefined
+			|| (queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue))) {
+			animation.paused = isPaused;
 		}
 	};
 
@@ -22,9 +24,10 @@ namespace VelocityStatic {
 	 * single element will cause any calls that contain tweens for that element to be paused/resumed
 	 * as well.
 	 */
-	function pauseResume(args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) {
+	function pauseResume(args?: any[], elements?: VelocityResult, promiseHandler?: VelocityPromise, action?: string) {
 		let isPaused = action.indexOf("pause") === 0,
-			queueName = args[0] === undefined ? undefined : validateQueue(args[0]),
+			queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined,
+			queueName = queue === "false" ? false : validateQueue(args[0]),
 			activeCall: AnimationCall,
 			defaultQueue = defaults.queue
 
@@ -39,6 +42,13 @@ namespace VelocityStatic {
 					checkAnimation(activeCall, queueName, defaultQueue, isPaused);
 				}
 				activeCall = activeCall._next;
+			}
+		}
+		if (promiseHandler) {
+			if (elements && elements.then) {
+				elements.then(promiseHandler._resolver);
+			} else {
+				promiseHandler._resolver(elements);
 			}
 		}
 	}

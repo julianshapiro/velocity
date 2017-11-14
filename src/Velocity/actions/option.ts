@@ -9,15 +9,22 @@
 
 namespace VelocityStatic {
 
-	function set(args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string): any {
+	/**
+	 * Get or set an option or running AnimationCall data value. If there is no
+	 * value passed then it will get, otherwise we will set.
+	 * 
+	 * NOTE: When using "get" this will not touch the Promise as it is never
+	 * returned to the user.
+	 */
+	function option(args?: any[], elements?: VelocityResult, promiseHandler?: VelocityPromise, action?: string): any {
 		let key = args[0],
 			value = args[1],
 			queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined,
-			queueName = queue === "false" ? false : getValue(queue && validateQueue(queue), defaults.queue),
+			queueName = queue === "false" ? false : validateQueue(queue, true),
 			animations: AnimationCall[];
 
 		if (!key) {
-			console.warn("VelocityJS: Trying to set a non-existant key:", key);
+			console.warn("VelocityJS: Cannot access a non-existant key!");
 			return null;
 		}
 		// If we're chaining the return value from Velocity then we are only
@@ -51,6 +58,22 @@ namespace VelocityStatic {
 				}
 			}
 		}
+		// GET
+		if (value === undefined) {
+			// If only a single animation is found and we're only targetting a
+			// single element, then return the value directly
+			if (elements.length === 1 && animations.length === 1) {
+				return getValue(animations[0][key], animations[0].options[key]);
+			}
+			let i = 0,
+				result = [];
+
+			for (; i < animations.length; i++) {
+				result.push(getValue(animations[i][key], animations[i].options[key]));
+			}
+			return result;
+		}
+		// SET
 		switch (key) {
 			case "cache":
 				value = validateCache(value);
@@ -108,7 +131,14 @@ namespace VelocityStatic {
 		for (let i = 0; i < animations.length; i++) {
 			animations[i][key] = value;
 		}
+		if (promiseHandler) {
+			if (elements && elements.then) {
+				elements.then(promiseHandler._resolver);
+			} else {
+				promiseHandler._resolver(elements);
+			}
+		}
 	}
 
-	registerAction(["set", set], true);
+	registerAction(["option", option], true);
 }

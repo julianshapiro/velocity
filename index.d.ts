@@ -17,7 +17,7 @@ type VelocityEasingFn = (percentComplete: number, startValue: number, endValue: 
 /**
  * Used for action callbacks.
  */
-type VelocityActionFn = (args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) => any;
+type VelocityActionFn = (args?: any[], elements?: VelocityResult, promiseHandler?: VelocityPromise, action?: string) => any;
 
 /**
  * Used for normalization callbacks.
