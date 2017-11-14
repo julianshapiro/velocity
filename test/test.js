@@ -63,11 +63,11 @@ QUnit.test("Arguments", function (assert) {
     result = Velocity(getTarget(), defaultProperties, testDuration);
     assert.equal(result.velocity.animations[0].options.duration, testDuration, "Overload variation #2a: Velocity(element, {properties}, DURATION<number>)");
     result = Velocity(getTarget(), defaultProperties, "slow");
-    assert.equal(result.velocity.animations[0].options.duration, 600, "Overload variation #2a: Velocity(element, {properties}, DURATION<slow>)");
+    assert.equal(result.velocity.animations[0].options.duration, 600, "Overload variation #2b: Velocity(element, {properties}, DURATION<slow>)");
     result = Velocity(getTarget(), defaultProperties, "normal");
-    assert.equal(result.velocity.animations[0].options.duration, 400, "Overload variation #2a: Velocity(element, {properties}, DURATION<normal>)");
+    assert.equal(result.velocity.animations[0].options.duration, 400, "Overload variation #2c: Velocity(element, {properties}, DURATION<normal>)");
     result = Velocity(getTarget(), defaultProperties, "fast");
-    assert.equal(result.velocity.animations[0].options.duration, 200, "Overload variation #2a: Velocity(element, {properties}, DURATION<fast>)");
+    assert.equal(result.velocity.animations[0].options.duration, 200, "Overload variation #2d: Velocity(element, {properties}, DURATION<fast>)");
     result = Velocity(getTarget(), defaultProperties, testEasing);
     assert.equal(typeof result.velocity.animations[0].options.easing, "function", "Overload variation #3: Velocity(element, {properties}, EASING)");
     result = Velocity(getTarget(), defaultProperties, testComplete);
@@ -85,9 +85,9 @@ QUnit.test("Arguments", function (assert) {
     result = Velocity(getTarget(), defaultProperties, testOptions);
     assert.equal(result.velocity.animations[0].options.duration, testOptions.duration, "Overload variation #8: Velocity(element, {properties}, {OPTIONS})");
     Velocity({ elements: [getTarget()], properties: defaultProperties, options: testOptions });
-    assert.equal(result.velocity.animations[0].options.duration, testOptions.duration, "Overload variation #9: Velocity({elements:elements, properties:{properties}, options:{OPTIONS})");
+    assert.equal(result.velocity.animations[0].options.duration, testOptions.duration, "Overload variation #9: Velocity({elements:[elements], properties:{properties}, options:{OPTIONS})");
     Velocity({ elements: [getTarget()], properties: "stop", options: testOptions });
-    assert.equal(result.velocity.animations[0].options.duration, testOptions.duration, "Overload variation #10: Velocity({elements:elements, properties:\"ACTION\", options:{OPTIONS})");
+    assert.equal(result.velocity.animations[0].options.duration, testOptions.duration, "Overload variation #10: Velocity({elements:[elements], properties:\"ACTION\", options:{OPTIONS})");
     //	var $target12 = getTarget();
     //	Velocity($target12, {opacity: [0.75, "spring", 0.25]}, testDuration);
     //	assert.equal(Data($target12).style.opacity.startValue, 0.25, "Overload variation #10a.");
