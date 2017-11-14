@@ -94,7 +94,7 @@ function isNode(variable) {
 }
 
 function isVelocityResult(variable) {
-    return variable && isNumber(variable.length) && variable.velocity === VelocityFn;
+    return variable && isNumber(variable.length) && isFunction(variable.velocity);
 }
 
 function propertyIsEnumerable(object, property) {
