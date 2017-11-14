@@ -2086,28 +2086,29 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
+    var checkAnimation = function(animation, queueName, defaultQueue, isPaused) {
+        if (animation.paused !== isPaused) {
+            if (queueName === undefined || queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
+                animation.paused = isPaused;
+            }
+        }
+    };
     /**
      * Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a
      * single element will cause any calls that contain tweens for that element to be paused/resumed
      * as well.
      */
     function pauseResume(args, elements, promiseHandler, action) {
-        var isPaused = action.indexOf("pause") === 0, queueName = args[0] === undefined ? undefined : validateQueue(args[0]), activeCall, defaultQueue = VelocityStatic.defaults.queue, checkAnimation = function(animation) {
-            if (animation.paused !== isPaused) {
-                if (queueName === undefined || queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
-                    animation.paused = isPaused;
-                }
-            }
-        };
+        var isPaused = action.indexOf("pause") === 0, queueName = args[0] === undefined ? undefined : validateQueue(args[0]), activeCall, defaultQueue = VelocityStatic.defaults.queue;
         if (isVelocityResult(elements) && elements.velocity.animations) {
             for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-                checkAnimation(animations[i]);
+                checkAnimation(animations[i], queueName, defaultQueue, isPaused);
             }
         } else {
             activeCall = VelocityStatic.State.first;
             while (activeCall) {
                 if (!elements || _inArray.call(elements, activeCall.element)) {
-                    checkAnimation(activeCall);
+                    checkAnimation(activeCall, queueName, defaultQueue, isPaused);
                 }
                 activeCall = activeCall._next;
             }
@@ -2309,53 +2310,94 @@ var VelocityStatic;
      */
     function stop(args, elements, promiseHandler, action) {
         var callsToStop = [], /* Iterate through every active call. */
-        activeCall = VelocityStatic.State.first, queueName = getValue(validateQueue(args[0]), VelocityStatic.defaults.queue);
-        /* Iterate through all calls and pause any that contain any of our elements */
+        queueName = args[0] === undefined ? undefined : validateQueue(args[0]), activeCall, defaultQueue = VelocityStatic.defaults.queue;
+        if (isVelocityResult(elements) && elements.velocity.animations) {
+            for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {}
+        } else {
+            activeCall = VelocityStatic.State.first;
+            while (activeCall) {
+                if (!elements || _inArray.call(elements, activeCall.element)) {
+                    /* Check that this call was applied to the target element. */
+                    /* Make sure it can't be delayed */
+                    activeCall.started = true;
+                    /* Remove the queue so this can't trigger any newly added animations when it finishes */
+                    activeCall.queue = false;
+                    /* Optionally clear the remaining queued calls. If we're doing "finishAll" this won't find anything,
+                     due to the queue-clearing above. */
+                    var animation = void 0;
+                    /* Iterate through the items in the element's queue. */
+                    while (animation = VelocityStatic.dequeue(activeCall.element, queueName, true)) {
+                        var options = animation.options, resolver = options._resolver;
+                        if (resolver) {
+                            resolver(animation.elements);
+                            delete options._resolver;
+                        }
+                    }
+                    /* Since "reverse" uses cached start values (the previous call's endValues), these values must be
+                     changed to reflect the final value that the elements were actually tweened to. */
+                    /* Note: If only queue:false animations are currently running on an element, it won't have a tweensContainer
+                     object. Also, queue:false animations can't be reversed. */
+                    activeCall.timeStart = -1;
+                    callsToStop.push(activeCall);
+                }
+                activeCall = activeCall._next;
+            }
+        }
+        /*/!* Iterate through all calls and pause any that contain any of our elements *!/
         while (activeCall) {
-            var options = activeCall.options;
-            /* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
-             clear calls associated with the relevant queue. */
-            /* Call stopping logic works as follows:
+            let options = activeCall.options;
+
+            /!* If true was passed in as a secondary argument, clear absolutely all calls on this element. Otherwise, only
+             clear calls associated with the relevant queue. *!/
+            /!* Call stopping logic works as follows:
              - options === true --> stop current default queue calls (and queue:false calls), including remaining queued ones.
              - options === undefined --> stop current queue:"" call and all queue:false calls.
              - options === false --> stop only queue:false calls.
-             - options === "custom" --> stop current queue:"custom" call, including remaining queued ones (there is no functionality to only clear the currently-running queue:"custom" call). */
+             - options === "custom" --> stop current queue:"custom" call, including remaining queued ones (there is no functionality to only clear the currently-running queue:"custom" call). *!/
+
             if (getValue(activeCall.queue, options.queue) !== queueName) {
                 activeCall = activeCall._next;
                 continue;
             }
-            /* Iterate through the calls targeted by the stop command. */
-            for (var i = 0, elementsLength = elements.length; i < elementsLength; i++) {
-                var element = elements[i];
-                /* Check that this call was applied to the target element. */
+
+            /!* Iterate through the calls targeted by the stop command. *!/
+            for (let i = 0, elementsLength = elements.length; i < elementsLength; i++) {
+                let element = elements[i];
+
+                /!* Check that this call was applied to the target element. *!/
                 if (element !== activeCall.element) {
                     continue;
                 }
-                /* Check that this call was applied to the target element. */
-                /* Make sure it can't be delayed */
+
+                /!* Check that this call was applied to the target element. *!/
+                /!* Make sure it can't be delayed *!/
                 activeCall.started = true;
-                /* Remove the queue so this can't trigger any newly added animations when it finishes */
+                /!* Remove the queue so this can't trigger any newly added animations when it finishes *!/
                 activeCall.queue = false;
-                /* Optionally clear the remaining queued calls. If we're doing "finishAll" this won't find anything,
-                 due to the queue-clearing above. */
-                var animation = void 0;
-                /* Iterate through the items in the element's queue. */
-                while (animation = VelocityStatic.dequeue(element, queueName, true)) {
-                    var options_1 = animation.options, resolver = options_1._resolver;
+                /!* Optionally clear the remaining queued calls. If we're doing "finishAll" this won't find anything,
+                 due to the queue-clearing above. *!/
+                let animation: AnimationCall;
+
+                /!* Iterate through the items in the element's queue. *!/
+                while ((animation = dequeue(element, queueName, true))) {
+                    let options = animation.options,
+                        resolver = options._resolver;
+
                     if (resolver) {
                         resolver(animation.elements);
-                        delete options_1._resolver;
+                        delete options._resolver;
                     }
                 }
-                /* Since "reverse" uses cached start values (the previous call's endValues), these values must be
-                 changed to reflect the final value that the elements were actually tweened to. */
-                /* Note: If only queue:false animations are currently running on an element, it won't have a tweensContainer
-                 object. Also, queue:false animations can't be reversed. */
+
+                /!* Since "reverse" uses cached start values (the previous call's endValues), these values must be
+                 changed to reflect the final value that the elements were actually tweened to. *!/
+                /!* Note: If only queue:false animations are currently running on an element, it won't have a tweensContainer
+                 object. Also, queue:false animations can't be reversed. *!/
                 activeCall.timeStart = -1;
                 callsToStop.push(activeCall);
             }
             activeCall = activeCall._next;
-        }
+        }*/
         /* Prematurely call completeCall() on each matched active call. Pass an additional flag for "stop" to indicate
          that the complete callback and display:none setting should be skipped since we're completing prematurely. */
         callsToStop.forEach(function(activeCall) {

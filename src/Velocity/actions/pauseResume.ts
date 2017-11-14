@@ -9,6 +9,14 @@
 
 namespace VelocityStatic {
 
+	let checkAnimation = function (animation: AnimationCall, queueName, defaultQueue, isPaused) {
+		if (animation.paused !== isPaused) {
+			if (queueName === undefined || (queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue))) {
+				animation.paused = isPaused;
+			}
+		}
+	};
+
 	/**
 	 * Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a
 	 * single element will cause any calls that contain tweens for that element to be paused/resumed
@@ -18,24 +26,17 @@ namespace VelocityStatic {
 		let isPaused = action.indexOf("pause") === 0,
 			queueName = args[0] === undefined ? undefined : validateQueue(args[0]),
 			activeCall: AnimationCall,
-			defaultQueue = defaults.queue,
-			checkAnimation = function(animation: AnimationCall) {
-				if (animation.paused !== isPaused) {
-					if (queueName === undefined || (queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue))) {
-						animation.paused = isPaused;
-					}
-				}
-			};
+			defaultQueue = defaults.queue
 
 		if (isVelocityResult(elements) && elements.velocity.animations) {
 			for (let i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-				checkAnimation(animations[i]);
+				checkAnimation(animations[i], queueName, defaultQueue, isPaused);
 			}
 		} else {
-			activeCall = VelocityStatic.State.first;
+			activeCall = State.first;
 			while (activeCall) {
 				if (!elements || _inArray.call(elements, activeCall.element)) {
-					checkAnimation(activeCall);
+					checkAnimation(activeCall, queueName, defaultQueue, isPaused);
 				}
 				activeCall = activeCall._next;
 			}
