@@ -1,41 +1,36 @@
+///<reference path="normalizations.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-namespace VelocityStatic {
+namespace VelocityStatic.CSS {
+	function genericReordering(element: HTMLorSVGElement): string;
+	function genericReordering(element: HTMLorSVGElement, propertyValue: string): boolean;
+	function genericReordering(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
+		if (propertyValue === undefined) {
+			propertyValue = getPropertyValue(element, "textShadow", true);
 
-	export namespace CSS {
+			let newValue = "",
+				split = propertyValue.split(/\s/g),
+				firstPart = split[0];
 
-		export function genericReordering(element, propertyValue) {
-			if (propertyValue && propertyValue.length > 0) {
+			if (Lists.colorNames[firstPart]) {
+				split.shift();
+				split.push(firstPart);
+				newValue = split.join(" ");
+			} else if (firstPart.match(/^#|^hsl|^rgb|-gradient/)) {
+				let matchedString = propertyValue.match(/(hsl.*\)|#[\da-fA-F]+|rgb.*\)|.*gradient.*\))\s/g)[0];
 
-				let newString = "";
-
-				const splittedPropertyValue = propertyValue.split(/\s/g);
-
-				const firstSplittedElement = splittedPropertyValue[0];
-
-				if (Lists.colorNames[firstSplittedElement]) {
-					splittedPropertyValue.shift();
-					splittedPropertyValue.push(firstSplittedElement);
-					newString = splittedPropertyValue.join(" ");
-				} else if (firstSplittedElement.match(/#|hsl|rgb|.*gradient/)) {
-
-					let matchedString = propertyValue.match(/(hsl.*\)|#\d+|rgb.*\)|.*gradient.*\))\s/g)[0];
-
-					newString = propertyValue.replace(matchedString, "");
-					newString += ` ${matchedString.trim()}`
-				} else {
-					newString = propertyValue;
-				}
-
-				return newString;
+				newValue = propertyValue.replace(matchedString, "") + " " + matchedString.trim();
+			} else {
+				newValue = propertyValue;
 			}
+			return newValue;
 		}
-
-		registerNormalization(["textShadow", genericReordering]);
+		return false;
 	}
-}
 
+	registerNormalization(["textShadow", genericReordering]);
+}

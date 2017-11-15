@@ -55,50 +55,18 @@ namespace VelocityStatic {
 			/* Note: display:none isn't set when calls are manually stopped (via Velocity("stop"). */
 			/* Note: Display gets ignored with "reverse" calls and infinite loops, since this behavior would be undesirable. */
 			if (activeCall.display === "none") {
-				CSS.setPropertyValue(element, "display", activeCall.display, 1);
+				CSS.setPropertyValue(element, "display", activeCall.display);
 			}
 
 			if (activeCall.visibility === "hidden") {
-				CSS.setPropertyValue(element, "visibility", activeCall.visibility, 1);
+				CSS.setPropertyValue(element, "visibility", activeCall.visibility);
 			}
 
-			/* If the element's queue is empty (if only the "inprogress" item is left at position 0) or if its queue is about to run
-			 a non-Velocity-initiated entry, turn off the isAnimating flag. A non-Velocity-initiatied queue entry's logic might alter
-			 an element's CSS values and thereby cause Velocity's cached value data to go stale. To detect if a queue entry was initiated by Velocity,
-			 we check for the existence of our special Velocity.queueEntryFlag declaration, which minifiers won't rename since the flag
-			 is assigned to jQuery's global $ object and thus exists out of Velocity's own scope. */
+			// TODO: Need to check that there's no other animations running on this element
 			if (isStopped && data && (queue === false || data.queueList[queue])) {
-				/* The element may have been deleted. Ensure that its data cache still exists before acting on it. */
 				data.isAnimating = false;
-				/* Clear the element's rootPropertyValueCache, which will become stale. */
-				data.rootPropertyValueCache = {};
-
-				let transformHAPropertyExists = false;
-				/* If any 3D transform subproperty is at its default value (regardless of unit type), remove it. */
-				CSS.Lists.transforms3D.forEach(function(transformName) {
-					let defaultValue = /^scale/.test(transformName) ? 1 : 0,
-						currentValue = data.transformCache[transformName];
-
-					if (data.transformCache[transformName] !== undefined && new RegExp("^\\(" + defaultValue + "[^.]").test(currentValue)) {
-						transformHAPropertyExists = true;
-
-						delete data.transformCache[transformName];
-					}
-				});
-
-				/* Mobile devices have hardware acceleration removed at the end of the animation in order to avoid hogging the GPU's memory. */
-				if (getValue(activeCall.mobileHA, options.mobileHA, defaults.mobileHA)) {
-					transformHAPropertyExists = true;
-					delete data.transformCache.translate3d;
-				}
-
-				/* Flush the subproperty removals to the DOM. */
-				if (transformHAPropertyExists) {
-					CSS.flushTransformCache(element);
-				}
 			}
-
-			/* Remove the "velocity-animating" indicator class. */
+			// Remove the "velocity-animating" indicator class.
 			CSS.Values.removeClass(element, "velocity-animating");
 
 			/*********************

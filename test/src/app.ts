@@ -92,7 +92,7 @@ function applyStartValues(element, startValues) {
 	});
 }
 
-function Data(element) { // TODO: :ElementData
+function Data(element): ElementData { // TODO: :ElementData
 	return (Velocity as any).data.get(element.jquery ? element[0] : element);
 }
 
@@ -119,7 +119,9 @@ function getTarget() {
 
 function freeTargets() {
 	while (targets.length) {
-		$qunitStage.removeChild(targets.pop());
+		try {
+			$qunitStage.removeChild(targets.pop());
+		} catch (e) {}
 	}
 }
 

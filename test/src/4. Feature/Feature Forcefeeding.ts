@@ -13,7 +13,7 @@ QUnit.todo("Forcefeeding", function(assert) {
 	var $target = getTarget();
 	Velocity($target, {width: [100, "linear", testStartWidth], height: [100, testStartHeight], opacity: [defaultProperties.opacity as any, "easeInQuad"]});
 
-	assert.equal(Data($target).style.width.startValue, parseFloat(testStartWidthToPx), "Forcefed value #1 passed to tween.");
-	assert.equal(Data($target).style.height.startValue, parseFloat(testStartHeight), "Forcefed value #2 passed to tween.");
-	assert.equal(Data($target).style.opacity.startValue, defaultStyles.opacity, "Easing was misinterpreted as forcefed value.");
+	assert.equal(Data($target).cache.width, parseFloat(testStartWidthToPx), "Forcefed value #1 passed to tween.");
+	assert.equal(Data($target).cache.height, parseFloat(testStartHeight), "Forcefed value #2 passed to tween.");
+	assert.equal(Data($target).cache.opacity, defaultStyles.opacity, "Easing was misinterpreted as forcefed value.");
 });

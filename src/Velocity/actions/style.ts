@@ -13,7 +13,7 @@ namespace VelocityStatic {
 
 		/* Hooks allow a subproperty (e.g. "boxShadowBlur") of a compound-value CSS property
 		 (e.g. "boxShadow: X Y Blur Spread Color") to be animated as if it were a discrete property. */
-		export namespace Hooks {
+		namespace Hooks {
 			/********************
 			 Registration
 			 ********************/
@@ -113,27 +113,6 @@ namespace VelocityStatic {
 					/* If there was no hook match, return the property name untouched. */
 					return property;
 				}
-			}
-
-			export function getUnit(str: string, start?: number): string {
-				let unit = (str.substr(start || 0, 5).match(/^[a-z%]+/) || [])[0] || "";
-				if (unit && _inArray.call(CSS.Lists.units, unit)) {
-					return unit;
-				}
-				return "";
-			}
-
-			/**
-			 * Replace any css colour name with its rgba() value. It is possible to use
-			 * the name within an "rgba(blue, 0.4)" string this way.
-			 */
-			export function fixColors(str: string): string {
-				return str.replace(/(rgba?\(\s*)?(\b[a-z]+\b)/g, function ($0, $1, $2) {
-					if (CSS.Lists.colorNames.hasOwnProperty($2)) {
-						return ($1 ? $1 : "rgba(") + CSS.Lists.colorNames[$2] + ($1 ? "" : ",1)");
-					}
-					return $1 + $2;
-				});
 			}
 
 			/* Convert any rootPropertyValue, null or otherwise, into a space-delimited list of hook values so that

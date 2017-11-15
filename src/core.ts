@@ -439,13 +439,6 @@ var IE = (function() {
 
 let global: any = this as Window;
 
-/*****************
- CSS Stack
- *****************/
-
-/* Register hooks and normalizations. */
-VelocityStatic.CSS.Hooks.register();
-
 /******************
  Unsupported
  ******************/

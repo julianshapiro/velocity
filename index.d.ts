@@ -22,7 +22,7 @@ type VelocityActionFn = (args?: any[], elements?: VelocityResult, promiseHandler
 /**
  * Used for normalization callbacks.
  */
-type VelocityNormalizationsFn = ((element?: HTMLorSVGElement, propertyValue?) => any);
+type VelocityNormalizationsFn = ((element: HTMLorSVGElement, propertyValue: string) => boolean) & ((element: HTMLorSVGElement) => string);
 
 /**
  * List of all easing types for easy code completion in TypeScript
@@ -395,31 +395,23 @@ interface ElementData {
 	 */
 	isSVG?: boolean;
 	/**
-	 * @deprecated
-	 */
-	transformCache?: any;
-	/**
 	 * A local cache of the current style values we're using, this is 80x faster
 	 * than <code>element.style</code> access.
 	 *
 	 * Empty strings are set to null to get the value from getComputedStyle
 	 * instead. If getComputedStyle returns an empty string then that is saved.
 	 */
-	style: CSSStyleDeclaration;
+	cache: CSSStyleDeclaration;
 	/**
 	 * A cached copy of getComputedStyle, this is 50% the speed of
 	 * <code>element.style</code> access.
 	 */
 	computedStyle?: CSSStyleDeclaration;
+	/**
+	 * TODO: Remove this, only here for obsolete tests
+	 * @deprecated
+	 */
 	opts?: VelocityOptions;
-	/**
-	 * @deprecated
-	 */
-	rootPropertyValueCache?: {};
-	/**
-	 * @deprecated
-	 */
-	rootPropertyValue?: {};
 	/**
 	 * Set when this Element has a running animation on it.
 	 */
@@ -466,9 +458,17 @@ interface ScrollData {
 }
 
 interface Tween {
-	rootPropertyValue?: string | number;
+	/**
+	 * The start values for this tween.
+	 */
 	startValue?: number | number[];
+	/*
+	 * The current value for this tween.
+	 */
 	currentValue?: string | number;
+	/**
+	 * The end values for this tween.
+	 */
 	endValue?: number | number[];
 	/**
 	 * @deprecated
@@ -612,14 +612,15 @@ interface Velocity {
 
 	CSS: {
 		getPropertyValue(element: HTMLorSVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean): string | number;
-		Hooks: {
-			getRoot(property: string): string;
-			getUnit(str: string, start?: number): string;
-			fixColors(str: string): string;
-			cleanRootPropertyValue(rootProperty: string, rootPropertyValue: string): string;
-			extractValue(fullHookName: string, rootPropertyValue: string): string;
-			injectValue(fullHookName: string, hookValue: string, rootPropertyValue: string): string;
-		};
+		getUnit(str: string, start?: number): string;
+		fixColors(str: string): string;
+		Normalizations: {[name: string]: VelocityNormalizationsFn};
+		//		Hooks: {
+		//			getRoot(property: string): string;
+		//			cleanRootPropertyValue(rootProperty: string, rootPropertyValue: string): string;
+		//			extractValue(fullHookName: string, rootPropertyValue: string): string;
+		//			injectValue(fullHookName: string, hookValue: string, rootPropertyValue: string): string;
+		//		};
 		Names: {
 			camelCase(property: string): string;
 			SVGAttribute(property: string): boolean;

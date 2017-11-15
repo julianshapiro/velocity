@@ -14,14 +14,14 @@ QUnit.skip("Call Options", function(assert) {
 			},
 			$target1 = getTarget();
 
-	assert.expect(7);
+	assert.expect(6);
 	Velocity($target1, "transition.slideLeftIn", UICallOptions1);
 
 	setTimeout(function() {
 		// Note: We can do this because transition.slideLeftIn is composed of a single call.
 		assert.equal(Data($target1).opts.delay, UICallOptions1.delay, "Whitelisted option passed in.");
 		assert.notEqual(Data($target1).opts.easing, UICallOptions1.easing, "Non-whitelisted option not passed in #1a.");
-		assert.equal(!/velocity-animating/.test(Data($target1).className), true, "Duration option passed in.");
+//		assert.equal(!/velocity-animating/.test(Data($target1).className), true, "Duration option passed in.");
 
 		done();
 	}, completeCheckDuration);

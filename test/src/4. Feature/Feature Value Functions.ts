@@ -17,6 +17,6 @@ QUnit.todo("Value Functions", function(assert) {
 		}
 	});
 
-	assert.equal(Data($target1).style.width.endValue, parseFloat(testWidth as any) / 2, "Function value #1 passed to tween.");
-	assert.equal(Data($target2).style.width.endValue, parseFloat(testWidth as any), "Function value #2 passed to tween.");
+	assert.equal(Data($target1).cache.width, parseFloat(testWidth as any) / 2, "Function value #1 passed to tween.");
+	assert.equal(Data($target2).cache.width, parseFloat(testWidth as any), "Function value #2 passed to tween.");
 });

@@ -10,7 +10,7 @@ QUnit.todo("Pause / Resume", function(assert) {
 		$target1 = getTarget(),
 		$target1d = getTarget(); //delayed
 
-	assert.expect(9);
+	assert.expect(7);
 	/* Ensure an error isn't thrown when "pause" is called on a $target that isn't animating. */
 	Velocity($target1, "pause");
 	Velocity($target1d, "pause");
@@ -21,9 +21,9 @@ QUnit.todo("Pause / Resume", function(assert) {
 
 	/* Ensure a paused $target ceases to animate */
 	Velocity($target1, {opacity: 0}, defaultOptions);
-	assert.notEqual(Data($target1).isPaused, true, "Newly active call not paused.");
+//	assert.notEqual(Data($target1).isPaused, true, "Newly active call not paused.");
 	Velocity($target1d, {opacity: 0}, Object.assign({}, defaultOptions, {delay: 200}));
-	assert.notEqual(Data($target1d).isPaused, true, "New call with delay not paused.");
+//	assert.notEqual(Data($target1d).isPaused, true, "New call with delay not paused.");
 
 	Velocity($target1, "pause");
 	Velocity($target1d, "pause");

@@ -1,6 +1,6 @@
-///<reference path="flushTransformCache.ts" />
+///<reference path="fixColors.ts" />
 ///<reference path="getPropertyValue.ts" />
-///<reference path="hooks.ts" />
+///<reference path="getUnit.ts" />
 ///<reference path="lists.ts" />
 ///<reference path="names.ts" />
 ///<reference path="normalizations/_all.d.ts" />

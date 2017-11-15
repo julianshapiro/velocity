@@ -107,7 +107,7 @@ namespace VelocityStatic {
 							 and the first RAF tick. */
 							if ((direction && direction[0] === "In") && propertyMap.opacity !== undefined) {
 								(elements.nodeType ? [elements] : elements).forEach(function(element) {
-									CSS.setPropertyValue(element, "opacity", 0, 1);
+									CSS.setPropertyValue(element, "opacity", 0);
 								});
 							}
 
@@ -140,7 +140,7 @@ namespace VelocityStatic {
 					let injectFinalCallbacks = function() {
 						if ((redirectOptions.display === undefined || redirectOptions.display === "none") && /Out$/.test(effectName)) {
 							(elements.nodeType ? [elements] : elements).forEach(function(element) {
-								CSS.setPropertyValue(element, "display", "none", 1);
+								CSS.setPropertyValue(element, "display", "none");
 							});
 						}
 						if (redirectOptions.complete) {
@@ -165,9 +165,10 @@ namespace VelocityStatic {
 								/* Format each non-array value in the reset property map to [ value, value ] so that changes apply
 								 immediately and DOM querying is avoided (via forcefeeding). */
 								/* Note: Don't forcefeed hooks, otherwise their hook roots will be defaulted to their null values. */
-								if (CSS.Hooks.registered[resetProperty] === undefined && (typeof resetValue === "string" || typeof resetValue === "number")) {
-									properties.reset[resetProperty] = [properties.reset[resetProperty], properties.reset[resetProperty]];
-								}
+								// TODO: Fix this
+								//								if (CSS.Hooks.registered[resetProperty] === undefined && (typeof resetValue === "string" || typeof resetValue === "number")) {
+								//									properties.reset[resetProperty] = [properties.reset[resetProperty], properties.reset[resetProperty]];
+								//								}
 							}
 
 							/* So that the reset values are applied instantly upon the next rAF tick, use a zero duration and parallel queueing. */

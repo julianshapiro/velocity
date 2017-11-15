@@ -20,7 +20,7 @@ QUnit.todo("Finish / FinishAll", function(assert) {
 	setTimeout(function() {
 		/* Ensure "finish" has removed all queued animations. */
 		/* We're using the element's queue length as a proxy. 0 and 1 both mean that the element's queue has been cleared -- a length of 1 just indicates that the animation is in progress. */
-		assert.equal(!Data($target1).defaultQueue, true, "Queue cleared.");
+		assert.equal(!Data($target1).queueList, true, "Queue cleared.");
 
 		/* End result of the animation should be applied */
 		assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "width") as string), defaultProperties.width, "Standard end value #1 was set.");
@@ -47,13 +47,13 @@ QUnit.todo("Finish / FinishAll", function(assert) {
 	Velocity($target4, "finishAll", true);
 
 	setTimeout(function() {
-		assert.equal(Data($target2).style.opacity, undefined, "Active call stopped.");
-		assert.notEqual(Data($target2).style.width, undefined, "Next queue item started.");
+		assert.equal(Data($target2).cache.opacity, undefined, "Active call stopped.");
+		assert.notEqual(Data($target2).cache.width, undefined, "Next queue item started.");
 
-		assert.equal(!Data($target3) || !Data($target3).defaultQueue, true, "Full queue array cleared.");
+		assert.equal(!Data($target3) || !Data($target3).queueList, true, "Full queue array cleared.");
 		assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target3, "width") as string), 50, "Just the first call's width was applied.");
 
-		assert.equal(!Data($target4) || !Data($target4).defaultQueue, true, "Full queue array cleared.");
+		assert.equal(!Data($target4) || !Data($target4).queueList, true, "Full queue array cleared.");
 		assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target4, "width") as string), 100, "The last call's width was applied.");
 
 		done();

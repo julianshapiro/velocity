@@ -14,7 +14,7 @@ namespace VelocityStatic {
 	 * All external method calls should be using actions rather than sub-calls
 	 * of Velocity itself.
 	 */
-	export let Actions: {[name: string]: VelocityActionFn} = Object.create(null);
+	export const Actions: {[name: string]: VelocityActionFn} = Object.create(null);
 
 	/**
 	 * Used to register an action. This should never be called by users

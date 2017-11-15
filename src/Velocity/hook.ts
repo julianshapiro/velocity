@@ -6,7 +6,7 @@
 
 namespace VelocityStatic {
 	/* A parallel to jQuery's $.css(), used for getting/setting Velocity's hooked CSS properties. */
-	export function hook(elements: HTMLorSVGElement[], arg2, arg3) {
+	function style(elements: HTMLorSVGElement[], arg2, arg3) {
 		let value;
 
 		elements = sanitizeElements(elements);
@@ -25,14 +25,7 @@ namespace VelocityStatic {
 				/* Set property value. */
 			} else {
 				/* sPV returns an array of the normalized propertyName/propertyValue pair used to update the DOM. */
-				let adjustedSet = VelocityStatic.CSS.setPropertyValue(element, arg2, arg3, 1);
-
-				/* Transform properties don't automatically set. They have to be flushed to the DOM. */
-				if (adjustedSet[0] === "transform") {
-					VelocityStatic.CSS.flushTransformCache(element);
-				}
-
-				value = adjustedSet;
+				VelocityStatic.CSS.setPropertyValue(element, arg2, arg3);
 			}
 		});
 

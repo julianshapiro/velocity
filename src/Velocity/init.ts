@@ -6,8 +6,8 @@
 
 namespace VelocityStatic {
 	/* A design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying. Accordingly, each element has a data cache. */
-	export function init(element: HTMLorSVGElement) {
-		let data = {
+	export function init(element: HTMLorSVGElement): ElementData {
+		let data: ElementData = {
 			/**
 			 * Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements.
 			 */
@@ -24,21 +24,7 @@ namespace VelocityStatic {
 			/**
 			 * Cached current value as set
 			 */
-			style: Object.create(null),
-			/**
-			 * The full root property values of each CSS hook being animated on this element are cached so that:
-			 * 1) Concurrently-animating hooks sharing the same root can have their root values' merged into one while tweening.
-			 * 2) Post-hook-injection root values can be transferred over to consecutively chained Velocity calls as starting root values.
-			 * 
-			 * @deprecated
-			 */
-			rootPropertyValueCache: Object.create(null),
-			/**
-			 * A cache for transform updates, which must be manually flushed via VelocityStatic.CSS.flushTransformCache().
-			 * 
-			 * @deprecated
-			 */
-			transformCache: Object.create(null),
+			cache: Object.create(null),
 			/**
 			 * The queues and their animations
 			 */

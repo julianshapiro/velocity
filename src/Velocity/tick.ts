@@ -202,17 +202,17 @@ namespace VelocityStatic {
 								let flexValues = ["-webkit-box", "-moz-box", "-ms-flexbox", "-webkit-flex"];
 
 								flexValues.forEach(function(flexValue) {
-									CSS.setPropertyValue(element, "display", flexValue, 0);
+									CSS.setPropertyValue(element, "display", flexValue);
 								});
 							}
 
-							CSS.setPropertyValue(element, "display", activeCall.display, 0);
+							CSS.setPropertyValue(element, "display", activeCall.display);
 							activeCall.display = false;
 						}
 
 						/* Same goes with the visibility option, but its "none" equivalent is "hidden". */
 						if (activeCall.visibility !== undefined && activeCall.visibility !== "hidden") {
-							CSS.setPropertyValue(element, "visibility", activeCall.visibility, 0);
+							CSS.setPropertyValue(element, "visibility", activeCall.visibility);
 							activeCall.visibility = false;
 						}
 
@@ -259,8 +259,7 @@ namespace VelocityStatic {
 					let activeEasing = getValue(activeCall.easing, options.easing, defaults.easing),
 						millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart,
 						percentComplete = activeCall.percentComplete = mock ? 1 : Math.min(millisecondsEllapsed / duration, 1),
-						tweens = activeCall.tweens,
-						transformPropertyExists = false;
+						tweens = activeCall.tweens;
 
 					if (percentComplete === 1) {
 						activeCall._nextComplete = undefined;
@@ -308,95 +307,24 @@ namespace VelocityStatic {
 								? 1 - easing(1 - percentComplete, tween.endValue as number, tween.startValue as number, property)
 								: easing(percentComplete, tween.startValue as number, tween.endValue as number, property);
 						}
-						/* If no value change is occurring, don't proceed with DOM updating. */
+						// If no value change is occurring, don't proceed with
+						// DOM updating.
 						if (!firstTick && tween.currentValue === currentValue) {
 							continue;
 						}
 
 						tween.currentValue = currentValue;
 
-						/* Skip the fake 'tween' property as that is only passed into the progress callback. */
+						// Skip the fake 'tween' property as that is only passed
+						// into the progress callback.
 						if (property !== "tween") {
-							/******************
-							 Hooks: Part I
-							 ******************/
-							let hookRoot;
-
-							/* For hooked properties, the newly-updated rootPropertyValueCache is cached onto the element so that it can be used
-							 for subsequent hooks in this call that are associated with the same root property. If we didn't cache the updated
-							 rootPropertyValue, each subsequent update to the root property in this tick pass would reset the previous hook's
-							 updates to rootPropertyValue prior to injection. A nice performance byproduct of rootPropertyValue caching is that
-							 subsequently chained animations using the same hookRoot but a different hook can use this cached rootPropertyValue. */
-							if (CSS.Hooks.registered[property]) {
-								hookRoot = CSS.Hooks.getRoot(property);
-
-								let rootPropertyValueCache = data.rootPropertyValueCache[hookRoot];
-
-								if (rootPropertyValueCache) {
-									tween.rootPropertyValue = rootPropertyValueCache;
-								}
-							}
-
-							/*****************
-							 DOM Update
-							 *****************/
-
-							/* setPropertyValue() returns an array of the property name and property value post any normalization that may have been performed. */
-							/* Note: To solve an IE<=8 positioning bug, the unit type is dropped when setting a property value of 0. */
-							let adjustedSetData = CSS.setPropertyValue(element, /* SET */
-								property,
-								tween.currentValue + (IE < 9 && parseFloat(currentValue as string) === 0 ? "" : tween.unitType),
-								percentComplete,
-								tween.rootPropertyValue,
-								tween.scrollData);
-
-							/*******************
-							 Hooks: Part II
-							 *******************/
-
-							/* Now that we have the hook's updated rootPropertyValue (the post-processed value provided by adjustedSetData), cache it onto the element. */
-							if (CSS.Hooks.registered[property]) {
-								/* Since adjustedSetData contains normalized data ready for DOM updating, the rootPropertyValue needs to be re-extracted from its normalized form. ?? */
-								if (CSS.Normalizations[hookRoot]) {
-									data.rootPropertyValueCache[hookRoot] = CSS.Normalizations[hookRoot](null, adjustedSetData[1]);
-								} else {
-									data.rootPropertyValueCache[hookRoot] = adjustedSetData[1];
-								}
-							}
-
-							/***************
-							 Transforms
-							 ***************/
-
-							/* Flag whether a transform property is being animated so that flushTransformCache() can be triggered once this tick pass is complete. */
-							if (adjustedSetData[0] === "transform") {
-								transformPropertyExists = true;
-							}
-						}
-
-						/****************
-						 mobileHA
-						 ****************/
-
-						/* If mobileHA is enabled, set the translate3d transform to null to force hardware acceleration.
-						 It's safe to override this property since Velocity doesn't actually support its animation (hooks are used in its place). */
-						if (getValue(activeCall.mobileHA, options.mobileHA, defaults.mobileHA)) {
-							/* Don't set the null transform hack if we've already done so. */
-							if (data.transformCache.translate3d === undefined) {
-								/* All entries on the transformCache object are later concatenated into a single transform string via flushTransformCache(). */
-								data.transformCache.translate3d = "(0px, 0px, 0px)";
-
-								transformPropertyExists = true;
-							}
-						}
-
-						if (transformPropertyExists) {
-							CSS.flushTransformCache(element);
+							// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
+							CSS.setPropertyValue(element, property, tween.currentValue);
 						}
 					}
 				}
 
-				/* Callbacks and things that might read the DOM again */
+				// Callbacks and complete that might read the DOM again.
 
 				// Progress callback
 				for (activeCall = firstProgress; activeCall; activeCall = nextCall) {

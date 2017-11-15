@@ -317,11 +317,8 @@ namespace VelocityStatic {
 					//						continue;
 					//					}
 					//				}
-					/* In case this property is a hook, there are circumstances where we will intend to work on the hook's root property and not the hooked subproperty. */
-					let rootProperty = CSS.Hooks.getRoot(propertyName),
-						rootPropertyValue: string | number,
-						/* Parse out endValue, easing, and startValue from the property's data. */
-						endValue = valueData[0],
+					/* Parse out endValue, easing, and startValue from the property's data. */
+					let endValue = valueData[0],
 						easing = valueData[1],
 						startValue = valueData[2],
 						pattern: (string | number)[],
@@ -336,9 +333,9 @@ namespace VelocityStatic {
 					 Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
 					/* Note: Since SVG elements have some of their properties directly applied as HTML attributes,
 					 there is no way to check for their explicit browser support, and so we skip skip this check for them. */
-					if ((!data || !data.isSVG) && rootProperty !== "tween" && CSS.Names.prefixCheck(rootProperty)[1] === false && CSS.Normalizations[rootProperty] === undefined) {
+					if ((!data || !data.isSVG) && propertyName !== "tween" && CSS.Names.prefixCheck(propertyName)[1] === false && CSS.Normalizations[propertyName] === undefined) {
 						if (debug) {
-							console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
+							console.log("Skipping [" + propertyName + "] due to a lack of browser support.");
 						}
 						return;
 					}
@@ -355,34 +352,11 @@ namespace VelocityStatic {
 					/* Note: Value transferring can optionally be disabled by the user via the _cacheValues option. */
 					if (lastAnimation && lastAnimation.tweens[propertyName]) {
 						if (startValue === undefined) {
-							startValue = lastAnimation.tweens[propertyName].endValue + lastAnimation.tweens[propertyName].unitType;
+							startValue = lastAnimation.tweens[propertyName].currentValue;
 						}
-
-						/* The previous call's rootPropertyValue is extracted from the element's data cache since that's the
-						 instance of rootPropertyValue that gets freshly updated by the tweening process, whereas the rootPropertyValue
-						 attached to the incoming lastTweensContainer is equal to the root property's value prior to any tweening. */
-						rootPropertyValue = data.rootPropertyValueCache[rootProperty];
 						/* If values were not transferred from a previous Velocity call, query the DOM as needed. */
 					} else {
-						/* Handle hooked properties. */
-						if (CSS.Hooks.registered[propertyName]) {
-							if (startValue === undefined) {
-								rootPropertyValue = CSS.getPropertyValue(element, rootProperty) as string; /* GET */
-								/* Note: The following getPropertyValue() call does not actually trigger a DOM query;
-								 getPropertyValue() will extract the hook from rootPropertyValue. */
-								startValue = CSS.getPropertyValue(element, propertyName, rootPropertyValue);
-								/* If startValue is already defined via forcefeeding, do not query the DOM for the root property's value;
-								 just grab rootProperty's zero-value template from vCSS.Hooks. This overwrites the element's actual
-								 root property value (if one is set), but this is acceptable since the primary reason users forcefeed is
-								 to avoid DOM queries, and thus we likewise avoid querying the DOM for the root property's value. */
-							} else {
-								/* Grab this hook's zero-value template, e.g. "0px 0px 0px black". */
-								rootPropertyValue = CSS.Hooks.templates[rootProperty][1];
-							}
-							/* Handle non-hooked properties that haven't already been defined via forcefeeding. */
-						} else if (startValue === undefined) {
-							startValue = CSS.getPropertyValue(element, propertyName); /* GET */
-						}
+						startValue = CSS.getPropertyValue(element, propertyName); /* GET */
 					}
 
 					/**************************
@@ -438,8 +412,8 @@ namespace VelocityStatic {
 							inRGBA = 0, // Keep track of being inside an RGBA as we must pass fractional for the alpha channel
 							lastPattern = ""; // The last part of the pattern, push out into pattern when it changes
 
-						startValue = CSS.Hooks.fixColors(startValue);
-						endValue = CSS.Hooks.fixColors(endValue);
+						startValue = CSS.fixColors(startValue);
+						endValue = CSS.fixColors(endValue);
 						while (iStart < startValue.length && iEnd < endValue.length) {
 							let cStart = startValue[iStart],
 								cEnd = endValue[iEnd];
@@ -468,8 +442,8 @@ namespace VelocityStatic {
 									}
 									tEnd += cEnd;
 								}
-								let uStart = CSS.Hooks.getUnit(startValue, iStart), // temporary unit type
-									uEnd = CSS.Hooks.getUnit(endValue, iEnd); // temporary unit type
+								let uStart = CSS.getUnit(startValue, iStart), // temporary unit type
+									uEnd = CSS.getUnit(endValue, iEnd); // temporary unit type
 
 								iStart += uStart.length;
 								iEnd += uEnd.length;
@@ -830,7 +804,6 @@ namespace VelocityStatic {
 
 					/* Construct the per-property tween object. */
 					activeCall.tweens[propertyName] = {
-						rootPropertyValue: rootPropertyValue,
 						startValue: startValue,
 						currentValue: startValue,
 						endValue: endValue,

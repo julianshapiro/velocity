@@ -36,8 +36,8 @@ QUnit.todo("Stop", function(assert) {
 	Velocity($target3, "stop", true);
 
 	setTimeout(function() {
-		assert.equal(Data($target2).style.opacity, undefined, "Active call stopped.");
-		assert.notEqual(Data($target2).style.width, undefined, "Next queue item started.");
+		assert.equal(Data($target2).cache.opacity, undefined, "Active call stopped.");
+		assert.notEqual(Data($target2).cache.width, undefined, "Next queue item started.");
 
 		assert.equal(!Data($target3).queueList || !Object.keys(Data($target3).queueList), true, "Full queue array cleared.");
 
