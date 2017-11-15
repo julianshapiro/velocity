@@ -76,7 +76,7 @@ namespace VelocityStatic.CSS {
 				computedValue = _position(element)[property] + "px"; /* GET */
 			}
 		}
-		return String(computedValue);
+		return computedValue !== undefined ? String(computedValue) : undefined;
 	}
 
 	/**

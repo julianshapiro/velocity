@@ -610,6 +610,23 @@ interface Velocity {
 	RunSequence(originalSequence): void;
 	RegisterEffect(effectName: string, properties): Velocity;
 
+	/**
+	 * Expose a style shortcut - can't be used with chaining, but might be of
+	 * use to people.
+	 */
+	style(elements: VelocityResult, property: {[property: string]: string}): VelocityResult;
+	style(elements: VelocityResult, property: string): string | string[];
+	style(elements: VelocityResult, property: string, value: string): VelocityResult;
+
+	/**
+	 * Available to be able to check what version you're running against.
+	 */
+	version: {
+		major: number;
+		minor: number;
+		patch: number;
+	}
+
 	CSS: {
 		getPropertyValue(element: HTMLorSVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean): string | number;
 		getUnit(str: string, start?: number): string;

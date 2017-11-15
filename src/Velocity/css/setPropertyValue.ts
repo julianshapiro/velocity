@@ -10,8 +10,10 @@ namespace VelocityStatic.CSS {
 	export function setPropertyValue(element: HTMLorSVGElement, propertyName: string, propertyValue: any) {
 		let data = Data(element);
 
-		if (data.cache[propertyName] !== propertyValue) {
-			data.cache[propertyName] = propertyValue;
+		if (!data || data.cache[propertyName] !== propertyValue) {
+			if (data) {
+				data.cache[propertyName] = propertyValue;
+			}
 			//			if (IE <= 8) {
 			//				try {
 			//					/* A try/catch is used for IE<=8, which throws an error when "invalid" CSS values are set, e.g. a negative width.
@@ -29,7 +31,7 @@ namespace VelocityStatic.CSS {
 			//			} else {
 			if (Normalizations[propertyName] && Normalizations[propertyName](element, propertyValue) !== false) {
 				// Skip if this has been handled
-			} else if (data.isSVG && Names.SVGAttribute(propertyName)) {
+			} else if (data && data.isSVG && Names.SVGAttribute(propertyName)) {
 				// TODO: Add this as Normalisations
 				/* Note: For SVG attributes, vendor-prefixed property names are never used. */
 				/* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */

@@ -8,7 +8,7 @@
  */
 
 //["completeCall", "CSS", "State", "getEasing", "Easings", "data", "debug", "defaults", "hook", "init", "mock", "pauseAll", "queue", "dequeue", "freeAnimationCall", "Redirects", "RegisterEffect", "resumeAll", "RunSequence", "lastTick", "tick", "timestamp", "expandTween", "version"]
-const PUBLIC_MEMBERS = ["version", "RegisterEffect", "resumeAll", "pauseAll"];
+const PUBLIC_MEMBERS = ["version", "RegisterEffect", "style"];
 
 const DURATION_FAST = 200;
 const DURATION_NORMAL = 400;

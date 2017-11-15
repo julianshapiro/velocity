@@ -4,7 +4,7 @@
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
- * Get a value from one or more running animations.
+ * Get or set a value from one or more running animations.
  */
 
 namespace VelocityStatic {

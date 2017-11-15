@@ -28,7 +28,7 @@ var __assign = this && this.__assign || Object.assign || function(t) {
  * version bump.
  */
 //["completeCall", "CSS", "State", "getEasing", "Easings", "data", "debug", "defaults", "hook", "init", "mock", "pauseAll", "queue", "dequeue", "freeAnimationCall", "Redirects", "RegisterEffect", "resumeAll", "RunSequence", "lastTick", "tick", "timestamp", "expandTween", "version"]
-var PUBLIC_MEMBERS = [ "version", "RegisterEffect", "resumeAll", "pauseAll" ];
+var PUBLIC_MEMBERS = [ "version", "RegisterEffect", "style" ];
 
 var DURATION_FAST = 200;
 
@@ -430,7 +430,7 @@ var VelocityStatic;
                     computedValue = _position(element)[property] + "px";
                 }
             }
-            return String(computedValue);
+            return computedValue !== undefined ? String(computedValue) : undefined;
         }
         /**
          * Get a property value. This will grab via the cache if it exists, then
@@ -972,8 +972,10 @@ var VelocityStatic;
         /* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
         function setPropertyValue(element, propertyName, propertyValue) {
             var data = Data(element);
-            if (data.cache[propertyName] !== propertyValue) {
-                data.cache[propertyName] = propertyValue;
+            if (!data || data.cache[propertyName] !== propertyValue) {
+                if (data) {
+                    data.cache[propertyName] = propertyValue;
+                }
                 //			if (IE <= 8) {
                 //				try {
                 //					/* A try/catch is used for IE<=8, which throws an error when "invalid" CSS values are set, e.g. a negative width.
@@ -989,7 +991,7 @@ var VelocityStatic;
                 //					}
                 //				}
                 //			} else {
-                if (CSS.Normalizations[propertyName] && CSS.Normalizations[propertyName](element, propertyValue) !== false) {} else if (data.isSVG && CSS.Names.SVGAttribute(propertyName)) {
+                if (CSS.Normalizations[propertyName] && CSS.Normalizations[propertyName](element, propertyValue) !== false) {} else if (data && data.isSVG && CSS.Names.SVGAttribute(propertyName)) {
                     // TODO: Add this as Normalisations
                     /* Note: For SVG attributes, vendor-prefixed property names are never used. */
                     /* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
@@ -1573,7 +1575,7 @@ var VelocityStatic;
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
- * Get a value from one or more running animations.
+ * Get or set a value from one or more running animations.
  */
 var VelocityStatic;
 
@@ -1911,158 +1913,87 @@ var VelocityStatic;
     VelocityStatic.registerAction([ "stop", stop ], true);
 })(VelocityStatic || (VelocityStatic = {}));
 
+///<reference path="actions.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Get or set a property from one or more elements.
  */
 var VelocityStatic;
 
 (function(VelocityStatic) {
-    var CSS;
-    (function(CSS) {
-        /************
-         Hooks
-         ************/
-        /* Hooks allow a subproperty (e.g. "boxShadowBlur") of a compound-value CSS property
-         (e.g. "boxShadow: X Y Blur Spread Color") to be animated as if it were a discrete property. */
-        var Hooks;
-        (function(Hooks) {
-            /********************
-             Registration
-             ********************/
-            /* Templates are a concise way of indicating which subproperties must be individually registered for each compound-value CSS property. */
-            /* Each template consists of the compound-value's base name, its constituent subproperty names, and those subproperties' default values. */
-            Hooks.templates = {
-                textShadow: [ "Color X Y Blur", "black 0px 0px 0px" ],
-                boxShadow: [ "Color X Y Blur Spread", "black 0px 0px 0px 0px" ],
-                clip: [ "Top Right Bottom Left", "0px 0px 0px 0px" ],
-                backgroundPosition: [ "X Y", "0% 0%" ],
-                transformOrigin: [ "X Y Z", "50% 50% 0px" ],
-                perspectiveOrigin: [ "X Y", "50% 50%" ]
-            };
-            /* A "registered" hook is one that has been converted from its template form into a live,
-             tweenable property. It contains data to associate it with its root property. */
-            /* Note: A registered hook looks like this ==> textShadowBlur: [ "textShadow", 3 ],
-             which consists of the subproperty's name, the associated root property's name,
-             and the subproperty's position in the root's value. */
-            Hooks.registered = Object.create(null);
-            /* Convert the templates into individual hooks then append them to the registered object above. */
-            function register() {
-                /* Color hooks registration: Colors are defaulted to white -- as opposed to black -- since colors that are
-                 currently set to "transparent" default to their respective template below when color-animated,
-                 and white is typically a closer match to transparent than black is. An exception is made for text ("color"),
-                 which is almost always set closer to black than white. */
-                for (var i = 0; i < CSS.Lists.colors.length; i++) {
-                    var rgbComponents = CSS.Lists.colors[i] === "color" ? "0 0 0 1" : "255 255 255 1";
-                    Hooks.templates[CSS.Lists.colors[i]] = [ "Red Green Blue Alpha", rgbComponents ];
-                }
-                var rootProperty, hookTemplate, hookNames;
-                /* In IE, color values inside compound-value properties are positioned at the end the value instead of at the beginning.
-                 Thus, we re-arrange the templates accordingly. */
-                if (IE) {
-                    for (rootProperty in Hooks.templates) {
-                        if (!Hooks.templates.hasOwnProperty(rootProperty)) {
-                            continue;
-                        }
-                        hookTemplate = Hooks.templates[rootProperty];
-                        hookNames = hookTemplate[0].split(" ");
-                        var defaultValues = hookTemplate[1].match(CSS.RegEx.valueSplit);
-                        if (hookNames[0] === "Color") {
-                            /* Reposition both the hook's name and its default value to the end of their respective strings. */
-                            hookNames.push(hookNames.shift());
-                            defaultValues.push(defaultValues.shift());
-                            /* Replace the existing template for the hook's root property. */
-                            Hooks.templates[rootProperty] = [ hookNames.join(" "), defaultValues.join(" ") ];
-                        }
-                    }
-                }
-                /* Hook registration. */
-                for (rootProperty in Hooks.templates) {
-                    if (!Hooks.templates.hasOwnProperty(rootProperty)) {
-                        continue;
-                    }
-                    hookTemplate = Hooks.templates[rootProperty];
-                    hookNames = hookTemplate[0].split(" ");
-                    for (var j in hookNames) {
-                        if (!hookNames.hasOwnProperty(j)) {
-                            continue;
-                        }
-                        var fullHookName = rootProperty + hookNames[j], hookPosition = j;
-                        /* For each hook, register its full name (e.g. textShadowBlur) with its root property (e.g. textShadow)
-                         and the hook's position in its template's default value string. */
-                        Hooks.registered[fullHookName] = [ rootProperty, hookPosition ];
+    function style(elements, property, value) {
+        return styleAction([ property, value ], elements);
+    }
+    VelocityStatic.style = style;
+    /**
+     * Get or set a style of Nomralised property value on one or more elements.
+     * If there is no value passed then it will get, otherwise we will set.
+     *
+     * NOTE: When using "get" this will not touch the Promise as it is never
+     * returned to the user.
+     *
+     * This can fail to set, and will reject the Promise if it does so.
+     *
+     * Velocity(elements, "style", "property", "value") => elements;
+     * Velocity(elements, "style", {"property": "value", ...}) => elements;
+     * Velocity(element, "style", "property") => "value";
+     * Velocity(elements, "style", "property") => ["value", ...];
+     */
+    function styleAction(args, elements, promiseHandler, action) {
+        var property = args[0], value = args[1];
+        if (!property) {
+            console.warn("VelocityJS: Cannot access a non-existant property!");
+            return null;
+        }
+        // GET
+        if (value === undefined && !isPlainObject(property)) {
+            // If only a single animation is found and we're only targetting a
+            // single element, then return the value directly
+            if (elements.length === 1) {
+                return VelocityStatic.CSS.getPropertyValue(elements[0], property);
+            }
+            var i = 0, result = [];
+            for (;i < elements.length; i++) {
+                result.push(VelocityStatic.CSS.getPropertyValue(elements[i], property));
+            }
+            return result;
+        }
+        // SET
+        var error;
+        if (isPlainObject(property)) {
+            for (var propertyName in property) {
+                for (var i = 0; i < elements.length; i++) {
+                    var value_1 = property[propertyName];
+                    if (isString(value_1) || isNumber(value_1)) {
+                        VelocityStatic.CSS.setPropertyValue(elements[i], propertyName, property[propertyName]);
+                    } else {
+                        error = (error ? error + ", " : "") + "Cannot set a property '" + propertyName + "' to an unknown type: " + typeof value_1;
+                        console.warn("VelocityJS: Cannot set a property '" + propertyName + "' to an unknown type:", value_1);
                     }
                 }
             }
-            Hooks.register = register;
-            /*****************************
-             Injection and Extraction
-             *****************************/
-            /* Look up the root property associated with the hook (e.g. return "textShadow" for "textShadowBlur"). */
-            /* Since a hook cannot be set directly (the browser won't recognize it), style updating for hooks is routed through the hook's root property. */
-            function getRoot(property) {
-                var hookData = Hooks.registered[property];
-                if (hookData) {
-                    return hookData[0];
-                } else {
-                    /* If there was no hook match, return the property name untouched. */
-                    return property;
-                }
+        } else if (isString(value) || isNumber(value)) {
+            for (var i = 0; i < elements.length; i++) {
+                VelocityStatic.CSS.setPropertyValue(elements[i], property, String(value));
             }
-            Hooks.getRoot = getRoot;
-            /* Convert any rootPropertyValue, null or otherwise, into a space-delimited list of hook values so that
-             the targeted hook can be injected or extracted at its standard position. */
-            function cleanRootPropertyValue(rootProperty, rootPropertyValue) {
-                /* If the rootPropertyValue is wrapped with "rgb()", "clip()", etc., remove the wrapping to normalize the value before manipulation. */
-                if (CSS.RegEx.valueUnwrap.test(rootPropertyValue)) {
-                    rootPropertyValue = rootPropertyValue.match(CSS.RegEx.valueUnwrap)[1];
-                }
-                /* If rootPropertyValue is a CSS null-value (from which there's inherently no hook value to extract),
-                 default to the root's default value as defined in vtemplates. */
-                /* Note: CSS null-values include "none", "auto", and "transparent". They must be converted into their
-                 zero-values (e.g. textShadow: "none" ==> textShadow: "0px 0px 0px black") for hook manipulation to proceed. */
-                if (CSS.Values.isCSSNullValue(rootPropertyValue)) {
-                    rootPropertyValue = Hooks.templates[rootProperty][1];
-                }
-                return rootPropertyValue;
+        } else {
+            error = "Cannot set a property '" + property + "' to an unknown type: " + typeof value;
+            console.warn("VelocityJS: Cannot set a property '" + property + "' to an unknown type:", value);
+        }
+        if (promiseHandler) {
+            if (error) {
+                promiseHandler._rejecter(error);
+            } else if (elements && elements.then) {
+                elements.then(promiseHandler._resolver);
+            } else {
+                promiseHandler._resolver(elements);
             }
-            Hooks.cleanRootPropertyValue = cleanRootPropertyValue;
-            /* Extracted the hook's value from its root property's value. This is used to get the starting value of an animating hook. */
-            function extractValue(fullHookName, rootPropertyValue) {
-                var hookData = Hooks.registered[fullHookName];
-                if (hookData) {
-                    var hookRoot = hookData[0], hookPosition = hookData[1];
-                    rootPropertyValue = cleanRootPropertyValue(hookRoot, rootPropertyValue);
-                    /* Split rootPropertyValue into its constituent hook values then grab the desired hook at its standard position. */
-                    return rootPropertyValue.toString().match(CSS.RegEx.valueSplit)[hookPosition];
-                } else {
-                    /* If the provided fullHookName isn't a registered hook, return the rootPropertyValue that was passed in. */
-                    return rootPropertyValue;
-                }
-            }
-            Hooks.extractValue = extractValue;
-            /* Inject the hook's value into its root property's value. This is used to piece back together the root property
-             once Velocity has updated one of its individually hooked values through tweening. */
-            function injectValue(fullHookName, hookValue, rootPropertyValue) {
-                var hookData = Hooks.registered[fullHookName];
-                if (hookData) {
-                    var hookRoot = hookData[0], hookPosition = hookData[1], rootPropertyValueParts = void 0, rootPropertyValueUpdated = void 0;
-                    rootPropertyValue = cleanRootPropertyValue(hookRoot, rootPropertyValue);
-                    /* Split rootPropertyValue into its individual hook values, replace the targeted value with hookValue,
-                     then reconstruct the rootPropertyValue string. */
-                    rootPropertyValueParts = rootPropertyValue.toString().match(CSS.RegEx.valueSplit);
-                    rootPropertyValueParts[hookPosition] = hookValue;
-                    rootPropertyValueUpdated = rootPropertyValueParts.join(" ");
-                    return rootPropertyValueUpdated;
-                } else {
-                    /* If the provided fullHookName isn't a registered hook, return the rootPropertyValue that was passed in. */
-                    return rootPropertyValue;
-                }
-            }
-            Hooks.injectValue = injectValue;
-        })(Hooks || (Hooks = {}));
-    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+        }
+    }
+    VelocityStatic.registerAction([ "style", styleAction ], true);
 })(VelocityStatic || (VelocityStatic = {}));
 
 /*
