@@ -34,7 +34,7 @@ namespace VelocityStatic {
 
 			/* If we have a function as the main argument then resolve it first, in case it returns an array that needs to be split */
 			if (isFunction(valueData)) {
-				valueData = valueData.call(element, elementArrayIndex, elementsLength);
+				valueData = valueData.call(element, elementArrayIndex, elementsLength, elements);
 			}
 
 			/* Handle the array format, which can be structured as one of three potential overloads:
