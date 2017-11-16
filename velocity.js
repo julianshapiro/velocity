@@ -30,6 +30,12 @@ var __assign = this && this.__assign || Object.assign || function(t) {
 //["completeCall", "CSS", "State", "getEasing", "Easings", "data", "debug", "defaults", "hook", "init", "mock", "pauseAll", "queue", "dequeue", "freeAnimationCall", "Redirects", "RegisterEffect", "resumeAll", "RunSequence", "lastTick", "tick", "timestamp", "expandTween", "version"]
 var PUBLIC_MEMBERS = [ "version", "RegisterEffect", "style" ];
 
+/**
+ * Without this it will only un-prefix properties that have a valid "normal"
+ * version.
+ */
+var ALL_VENDOR_PREFIXES = true;
+
 var DURATION_FAST = 200;
 
 var DURATION_NORMAL = 400;
@@ -224,6 +230,74 @@ function getValue(args) {
         }
     }
 }
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    /**
+     * Container for page-wide Velocity state data.
+     */
+    var State;
+    (function(State) {
+        /**
+         * Detect if this is a NodeJS or web browser
+         */
+        State.isClient = window && window === window.window, /**
+         * Detect mobile devices to determine if mobileHA should be turned
+         * on.
+         */
+        State.isMobile = State.isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), 
+        /**
+         * The mobileHA option's behavior changes on older Android devices
+         * (Gingerbread, versions 2.3.3-2.3.7).
+         */
+        State.isAndroid = State.isClient && /Android/i.test(navigator.userAgent), /**
+         * The mobileHA option's behavior changes on older Android devices
+         * (Gingerbread, versions 2.3.3-2.3.7).
+         */
+        State.isGingerbread = State.isClient && /Android 2\.3\.[3-7]/i.test(navigator.userAgent), 
+        /**
+         * Chrome browser
+         */
+        State.isChrome = State.isClient && window.chrome, /**
+         * Firefox browser
+         */
+        State.isFirefox = State.isClient && /Firefox/i.test(navigator.userAgent), /**
+         * Create a cached element for re-use when checking for CSS property
+         * prefixes.
+         */
+        State.prefixElement = State.isClient && document.createElement("div"), /**
+         * Cache every prefix match to avoid repeating lookups.
+         */
+        State.prefixMatches = {}, /**
+         * Retrieve the appropriate scroll anchor and property name for the
+         * browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY
+         */
+        State.windowScrollAnchor = State.isClient && window.pageYOffset !== undefined, /**
+         * Cache the anchor used for animating window scrolling.
+         */
+        State.scrollAnchor = State.windowScrollAnchor ? window : !State.isClient || document.documentElement || document.body.parentNode || document.body, 
+        /**
+         * Cache the browser-specific property names associated with the
+         * scroll anchor.
+         */
+        State.scrollPropertyLeft = State.windowScrollAnchor ? "pageXOffset" : "scrollLeft", 
+        /**
+         * Cache the browser-specific property names associated with the
+         * scroll anchor.
+         */
+        State.scrollPropertyTop = State.windowScrollAnchor ? "pageYOffset" : "scrollTop", 
+        /**
+         * Keep track of whether our RAF tick is running.
+         */
+        State.isTicking = false;
+    })(State = VelocityStatic.State || (VelocityStatic.State = {}));
+})(VelocityStatic || (VelocityStatic = {}));
 
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -472,7 +546,7 @@ var VelocityStatic;
                 // be queried for a property's *computed* value. You can read
                 // more about getComputedStyle here:
                 // https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle
-                propertyValue = computePropertyValue(element, CSS.Names.prefixCheck(property)[0]);
+                propertyValue = computePropertyValue(element, property);
             }
             if (VelocityStatic.debug >= 2) {
                 console.info("Get " + property + ": " + propertyValue);
@@ -678,74 +752,6 @@ var VelocityStatic;
     })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
 })(VelocityStatic || (VelocityStatic = {}));
 
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    /**
-     * Container for page-wide Velocity state data.
-     */
-    var State;
-    (function(State) {
-        /**
-         * Detect if this is a NodeJS or web browser
-         */
-        State.isClient = window && window === window.window, /**
-         * Detect mobile devices to determine if mobileHA should be turned
-         * on.
-         */
-        State.isMobile = State.isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), 
-        /**
-         * The mobileHA option's behavior changes on older Android devices
-         * (Gingerbread, versions 2.3.3-2.3.7).
-         */
-        State.isAndroid = State.isClient && /Android/i.test(navigator.userAgent), /**
-         * The mobileHA option's behavior changes on older Android devices
-         * (Gingerbread, versions 2.3.3-2.3.7).
-         */
-        State.isGingerbread = State.isClient && /Android 2\.3\.[3-7]/i.test(navigator.userAgent), 
-        /**
-         * Chrome browser
-         */
-        State.isChrome = State.isClient && window.chrome, /**
-         * Firefox browser
-         */
-        State.isFirefox = State.isClient && /Firefox/i.test(navigator.userAgent), /**
-         * Create a cached element for re-use when checking for CSS property
-         * prefixes.
-         */
-        State.prefixElement = State.isClient && document.createElement("div"), /**
-         * Cache every prefix match to avoid repeating lookups.
-         */
-        State.prefixMatches = {}, /**
-         * Retrieve the appropriate scroll anchor and property name for the
-         * browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY
-         */
-        State.windowScrollAnchor = State.isClient && window.pageYOffset !== undefined, /**
-         * Cache the anchor used for animating window scrolling.
-         */
-        State.scrollAnchor = State.windowScrollAnchor ? window : !State.isClient || document.documentElement || document.body.parentNode || document.body, 
-        /**
-         * Cache the browser-specific property names associated with the
-         * scroll anchor.
-         */
-        State.scrollPropertyLeft = State.windowScrollAnchor ? "pageXOffset" : "scrollLeft", 
-        /**
-         * Cache the browser-specific property names associated with the
-         * scroll anchor.
-         */
-        State.scrollPropertyTop = State.windowScrollAnchor ? "pageYOffset" : "scrollTop", 
-        /**
-         * Keep track of whether our RAF tick is running.
-         */
-        State.isTicking = false;
-    })(State = VelocityStatic.State || (VelocityStatic.State = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
 ///<reference path="../state.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -936,6 +942,46 @@ var VelocityStatic;
     })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
 })(VelocityStatic || (VelocityStatic = {}));
 
+///<reference path="normalizations.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        /**
+         * Return a Normalisation that can be used to set / get the vendor prefixed
+         * real name for a propery.
+         */
+        function vendorPrefix(property, unprefixed) {
+            return function(element, propertyValue) {
+                if (propertyValue === undefined) {
+                    return element.style[unprefixed];
+                }
+                CSS.setPropertyValue(element, property, propertyValue);
+                return true;
+            };
+        }
+        var vendors = [ /^webkit[A-Z]/, /^moz[A-Z]/, /^ms[A-Z]/, /^o[A-Z]/ ], prefixElement = VelocityStatic.State.prefixElement, property, unprefixed, i;
+        for (property in prefixElement.style) {
+            for (i = 0; i < vendors.length; i++) {
+                if (vendors[i].test(property)) {
+                    unprefixed = property.replace(/^[a-z]+([A-Z])/, function($, letter) {
+                        return letter.toLowerCase();
+                    });
+                    if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
+                        CSS.registerNormalization([ unprefixed, vendorPrefix(property, unprefixed) ]);
+                    }
+                }
+            }
+        }
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -1001,7 +1047,7 @@ var VelocityStatic;
                 }
                 //			}
                 if (VelocityStatic.debug >= 2) {
-                    console.info("Set " + propertyName + " (" + propertyName + "): " + propertyValue);
+                    console.info("Set " + propertyName + ": " + propertyValue, element);
                 }
             }
         }
@@ -3314,7 +3360,7 @@ var VelocityStatic;
                      Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
                     /* Note: Since SVG elements have some of their properties directly applied as HTML attributes,
                      there is no way to check for their explicit browser support, and so we skip skip this check for them. */
-                    if ((!data_6 || !data_6.isSVG) && propertyName !== "tween" && VelocityStatic.CSS.Names.prefixCheck(propertyName)[1] === false && VelocityStatic.CSS.Normalizations[propertyName] === undefined) {
+                    if ((!data_6 || !data_6.isSVG) && propertyName !== "tween" && VelocityStatic.CSS.Normalizations[propertyName] === undefined && (!VelocityStatic.State.prefixElement || !isString(VelocityStatic.State.prefixElement.style[propertyName]))) {
                         if (VelocityStatic.debug) {
                             console.log("Skipping [" + propertyName + "] due to a lack of browser support.");
                         }

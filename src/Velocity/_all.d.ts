@@ -1,3 +1,4 @@
+///<reference path="state.ts" />
 ///<reference path="complete.ts" />
 ///<reference path="css/_all.d.ts" />
 ///<reference path="easing/_all.d.ts" />
@@ -12,7 +13,6 @@
 ///<reference path="redirects.ts" />
 ///<reference path="registereffect.ts" />
 ///<reference path="runsequence.ts" />
-///<reference path="state.ts" />
 ///<reference path="tick.ts" />
 ///<reference path="timestamp.ts" />
 ///<reference path="tweens.ts" />

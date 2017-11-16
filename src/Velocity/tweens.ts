@@ -333,7 +333,7 @@ namespace VelocityStatic {
 					 Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
 					/* Note: Since SVG elements have some of their properties directly applied as HTML attributes,
 					 there is no way to check for their explicit browser support, and so we skip skip this check for them. */
-					if ((!data || !data.isSVG) && propertyName !== "tween" && CSS.Names.prefixCheck(propertyName)[1] === false && CSS.Normalizations[propertyName] === undefined) {
+					if ((!data || !data.isSVG) && propertyName !== "tween" && CSS.Normalizations[propertyName] === undefined && (!State.prefixElement || !isString(State.prefixElement.style[propertyName]))) {
 						if (debug) {
 							console.log("Skipping [" + propertyName + "] due to a lack of browser support.");
 						}

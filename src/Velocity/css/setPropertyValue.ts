@@ -41,7 +41,7 @@ namespace VelocityStatic.CSS {
 			}
 			//			}
 			if (debug >= 2) {
-				console.info("Set " + propertyName + " (" + propertyName + "): " + propertyValue);
+				console.info("Set " + propertyName + ": " + propertyValue, element);
 			}
 		}
 	}

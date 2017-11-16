@@ -123,7 +123,7 @@ namespace VelocityStatic.CSS {
 			// be queried for a property's *computed* value. You can read
 			// more about getComputedStyle here:
 			// https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle
-			propertyValue = computePropertyValue(element, Names.prefixCheck(property)[0]);
+			propertyValue = computePropertyValue(element, property);
 		}
 		if (debug >= 2) {
 			console.info("Get " + property + ": " + propertyValue);
