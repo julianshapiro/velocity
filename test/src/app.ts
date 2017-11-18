@@ -125,7 +125,7 @@ function freeTargets() {
 	}
 }
 
-function once(func) {
+function once(func): typeof func {
 	var done, result;
 
 	return function() {

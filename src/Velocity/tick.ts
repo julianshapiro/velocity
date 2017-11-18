@@ -191,31 +191,6 @@ namespace VelocityStatic {
 						/* Apply the "velocity-animating" indicator class. */
 						CSS.Values.addClass(element, "velocity-animating");
 
-						/**********************************
-						 Display & Visibility Toggling
-						 **********************************/
-
-						/* If the display option is set to non-"none", set it upfront so that the element can become visible before tweening begins.
-						 (Otherwise, display's "none" value is set in completeCall() once the animation has completed.) */
-						if (activeCall.display !== undefined && activeCall.display !== null && activeCall.display !== "none") {
-							if (activeCall.display === "flex") {
-								let flexValues = ["-webkit-box", "-moz-box", "-ms-flexbox", "-webkit-flex"];
-
-								flexValues.forEach(function(flexValue) {
-									CSS.setPropertyValue(element, "display", flexValue);
-								});
-							}
-
-							CSS.setPropertyValue(element, "display", activeCall.display);
-							activeCall.display = false;
-						}
-
-						/* Same goes with the visibility option, but its "none" equivalent is "hidden". */
-						if (activeCall.visibility !== undefined && activeCall.visibility !== "hidden") {
-							CSS.setPropertyValue(element, "visibility", activeCall.visibility);
-							activeCall.visibility = false;
-						}
-
 						/* The begin callback is fired once per call -- not once per element -- and is passed the full raw DOM element set as both its context and its first argument. */
 						if (options && options._started++ === 0) {
 							options._first = activeCall;
@@ -270,56 +245,37 @@ namespace VelocityStatic {
 						}
 					}
 
-					/************************
-					 Property Iteration
-					 ************************/
-
-					/* For every element, iterate through each property. */
 					for (let property in tweens) {
-						let currentValue: string | number,
-							tween = tweens[property],
-							/* Easing can either be a pre-genereated function or a string that references a pre-registered easing
-							 on the Easings object. In either case, return the appropriate easing *function*. */
-							easing = tween.easing
-								? (isString(tween.easing) ? Easings[tween.easing] : tween.easing)
-								: activeEasing;
+						// For every element, iterate through each property.
+						let tween = tweens[property],
+							easing = tween.easing || activeEasing,
+							pattern = tween.pattern,
+							rounding = tween.rounding,
+							i = 0;
 
-						/******************************
-						 Current Value Calculation
-						 ******************************/
+						for (; i < pattern.length; i++) {
+							let startValue = tween.startValue[i];
 
-						if (tween.pattern) {
-							for (let pattern = tween.pattern, rounding = tween.rounding, i = 0, index = 0; i < pattern.length; i++) {
-								if (typeof pattern[i] === "number") {
-									let startValue = tween.startValue[index],
-										endValue = tween.endValue[index],
-										result = tween.reverse
-											? easing(percentComplete, endValue, startValue, property)
-											: easing(percentComplete, startValue, endValue, property);
+							if (startValue != null) {
+								// All easings must deal with numbers except for
+								// our internal ones
+								let result = easing(tween.reverse ? 1 - percentComplete : percentComplete, tween.endValue[i] as number, startValue as number, property)
 
-									pattern[i] = rounding && rounding[index] ? Math.round(result) : result;
-									index++;
-								}
+								pattern[i] = rounding && rounding[i] ? Math.round(result) : result;
 							}
-							currentValue = "".concat.apply("", tween.pattern);
-						} else {
-							currentValue = tween.reverse
-								? 1 - easing(1 - percentComplete, tween.endValue as number, tween.startValue as number, property)
-								: easing(percentComplete, tween.startValue as number, tween.endValue as number, property);
 						}
+						let currentValue = "".concat.apply("", tween.pattern);
+
 						// If no value change is occurring, don't proceed with
 						// DOM updating.
-						if (!firstTick && tween.currentValue === currentValue) {
-							continue;
-						}
-
-						tween.currentValue = currentValue;
-
-						// Skip the fake 'tween' property as that is only passed
-						// into the progress callback.
-						if (property !== "tween") {
-							// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-							CSS.setPropertyValue(element, property, tween.currentValue);
+						if (firstTick || tween.currentValue !== currentValue) {
+							tween.currentValue = currentValue;
+							// Skip the fake 'tween' property as that is only
+							// passed into the progress callback.
+							if (property !== "tween") {
+								// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
+								CSS.setPropertyValue(element, property, tween.currentValue);
+							}
 						}
 					}
 				}

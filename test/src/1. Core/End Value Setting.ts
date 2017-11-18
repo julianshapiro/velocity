@@ -62,7 +62,7 @@ QUnit.todo("End Value Setting (Note: Browser Tab Must Have Focus Due to rAF)", f
 			var $svgRoot = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
 				$svgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect"),
 				svgStartValues = {x: 100, y: 10, width: 250, height: "30%"},
-				svgEndValues = {x: 200, width: "50%", strokeDasharray: 10, height: "40%", rotateZ: "90deg", rotateX: "45deg"};
+				svgEndValues = {x: 200, width: "50%", strokeDasharray: 10, height: "40%"};
 
 			$svgRoot.setAttribute("width", String(1000));
 			$svgRoot.setAttribute("height", String(1000));

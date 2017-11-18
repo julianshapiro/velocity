@@ -292,7 +292,7 @@ QUnit.todo("End Value Setting (Note: Browser Tab Must Have Focus Due to rAF)", f
         //		}
         if (!Velocity.State.isGingerbread) {
             /* SVG. */
-            var $svgRoot = document.createElementNS("http://www.w3.org/2000/svg", "svg"), $svgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect"), svgStartValues = { x: 100, y: 10, width: 250, height: "30%" }, svgEndValues = { x: 200, width: "50%", strokeDasharray: 10, height: "40%", rotateZ: "90deg", rotateX: "45deg" };
+            var $svgRoot = document.createElementNS("http://www.w3.org/2000/svg", "svg"), $svgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect"), svgStartValues = { x: 100, y: 10, width: 250, height: "30%" }, svgEndValues = { x: 200, width: "50%", strokeDasharray: 10, height: "40%" };
             $svgRoot.setAttribute("width", String(1000));
             $svgRoot.setAttribute("height", String(1000));
             $svgRect.setAttribute("x", String(svgStartValues.x));
@@ -475,30 +475,30 @@ QUnit.test("Delay (Note: Browser Tab Must Have Focus Due to rAF)", function (ass
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 QUnit.todo("Display", function (assert) {
-    var done = assert.async(4), testDisplayBlock = "block", testDisplayNone = "none", testDisplayBlank = "";
-    var $target1 = getTarget();
-    /* Async checks are used since the display property is set inside processCallsTick(). */
-    Velocity($target1, defaultProperties, { display: testDisplayBlock });
-    setTimeout(function () {
-        assert.equal(Velocity.CSS.getPropertyValue($target1, "display"), testDisplayBlock, "Display:'block' was set immediately.");
+    var done = assert.async(3), testDisplayBlank = "";
+    Velocity(getTarget(), "style", "display", "none")
+        .velocity({ display: "block" }, {
+        progress: once(function (elements) {
+            assert.equal(elements.velocity("style", "display"), "block", "Display:'block' was set immediately.");
+            done();
+        })
+    });
+    Velocity(getTarget(), { display: "none" }, {
+        progress: once(function (elements) {
+            assert.notEqual(elements.velocity("style", "display"), 0, "Display:'none' was not set immediately.");
+            done();
+        })
+    }).then(function (elements) {
+        assert.equal(elements.velocity("style", "display"), "none", "Display:'none' was set upon completion.");
         done();
-    }, asyncCheckDuration);
-    var $target2 = getTarget();
-    Velocity($target2, defaultProperties, { display: testDisplayNone });
-    setTimeout(function () {
-        assert.notEqual(Velocity.CSS.getPropertyValue($target2, "display"), 0, "Display:'none' was not set immediately.");
-        done();
-    }, asyncCheckDuration);
-    setTimeout(function () {
-        assert.equal(Velocity.CSS.getPropertyValue($target2, "display"), 0, "Display:'none' was set upon completion.");
-        done();
-    }, completeCheckDuration);
-    var $target3 = getTarget();
-    Velocity($target3, defaultProperties, { display: testDisplayBlank });
-    setTimeout(function () {
-        assert.equal(Velocity.CSS.getPropertyValue($target3, "display"), "block", "Display:'' was set immediately.");
-        done();
-    }, completeCheckDuration);
+    });
+    //	var $target3 = getTarget();
+    //	Velocity($target3, {display: testDisplayBlank});
+    //	setTimeout(function() {
+    //		assert.equal(Velocity($target3, "style", "display"), "block", "Display:'' was set immediately.");
+    //
+    //		done();
+    //	}, completeCheckDuration);
 });
 ///<reference path="_module.ts" />
 /*

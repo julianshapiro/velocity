@@ -6,36 +6,35 @@
  */
 
 QUnit.todo("Display", function(assert) {
-	var done = assert.async(4),
-			testDisplayBlock = "block",
-			testDisplayNone = "none",
-			testDisplayBlank = "";
+	var done = assert.async(3),
+		testDisplayBlank = "";
 
-	var $target1 = getTarget();
-	/* Async checks are used since the display property is set inside processCallsTick(). */
-	Velocity($target1, defaultProperties, {display: testDisplayBlock});
-	setTimeout(function() {
-		assert.equal(Velocity.CSS.getPropertyValue($target1, "display"), testDisplayBlock, "Display:'block' was set immediately.");
-		done();
-	}, asyncCheckDuration);
+	Velocity(getTarget(), "style", "display", "none")
+		.velocity({display: "block"}, {
+			progress: once(function(elements: VelocityResult) {
+				assert.equal(elements.velocity("style", "display"), "block", "Display:'block' was set immediately.");
 
-	var $target2 = getTarget();
-	Velocity($target2, defaultProperties, {display: testDisplayNone});
-	setTimeout(function() {
-		assert.notEqual(Velocity.CSS.getPropertyValue($target2, "display"), 0, "Display:'none' was not set immediately.");
-		done();
-	}, asyncCheckDuration);
+				done();
+			})
+		});
 
-	setTimeout(function() {
-		assert.equal(Velocity.CSS.getPropertyValue($target2, "display"), 0, "Display:'none' was set upon completion.");
-		done();
-	}, completeCheckDuration);
+	Velocity(getTarget(), {display: "none"}, {
+		progress: once(function(elements: VelocityResult) {
+			assert.notEqual(elements.velocity("style", "display"), 0, "Display:'none' was not set immediately.");
 
-	var $target3 = getTarget();
-	Velocity($target3, defaultProperties, {display: testDisplayBlank});
-	setTimeout(function() {
-		assert.equal(Velocity.CSS.getPropertyValue($target3, "display"), "block", "Display:'' was set immediately.");
+			done();
+		})
+	}).then(function(elements) {
+		assert.equal(elements.velocity("style", "display"), "none", "Display:'none' was set upon completion.");
 
 		done();
-	}, completeCheckDuration);
+	});
+
+	//	var $target3 = getTarget();
+	//	Velocity($target3, {display: testDisplayBlank});
+	//	setTimeout(function() {
+	//		assert.equal(Velocity($target3, "style", "display"), "block", "Display:'' was set immediately.");
+	//
+	//		done();
+	//	}, completeCheckDuration);
 });

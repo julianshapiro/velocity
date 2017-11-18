@@ -338,18 +338,6 @@ var VelocityStatic;
             activeCall.started = false;
         } else {
             var elements = activeCall.elements, element = activeCall.element, data_1 = Data(element);
-            /*************************
-             Element Finalization
-             *************************/
-            /* If the user set display to "none" (intending to hide the element), set it now that the animation has completed. */
-            /* Note: display:none isn't set when calls are manually stopped (via Velocity("stop"). */
-            /* Note: Display gets ignored with "reverse" calls and infinite loops, since this behavior would be undesirable. */
-            if (activeCall.display === "none") {
-                VelocityStatic.CSS.setPropertyValue(element, "display", activeCall.display);
-            }
-            if (activeCall.visibility === "hidden") {
-                VelocityStatic.CSS.setPropertyValue(element, "visibility", activeCall.visibility);
-            }
             // TODO: Need to check that there's no other animations running on this element
             if (isStopped && data_1 && (queue === false || data_1.queueList[queue])) {
                 data_1.isAnimating = false;
@@ -423,7 +411,7 @@ var VelocityStatic;
                 if (CSS.Lists.colorNames.hasOwnProperty($2)) {
                     return ($1 ? $1 : "rgba(") + CSS.Lists.colorNames[$2] + ($1 ? "" : ",1)");
                 }
-                return $1 + $2;
+                return $0;
             });
         }
         CSS.fixColors = fixColors;
@@ -571,12 +559,21 @@ var VelocityStatic;
     var CSS;
     (function(CSS) {
         /**
-         * Get the default unit for this property.
+         * Get the current unit for this property. Only used when parsing tweens
+         * to check if the unit is changing between the start and end values.
          */
         function getUnit(property, start) {
-            var unit = (property.substr(start || 0, 5).match(/^[a-z%]+/) || [])[0] || "";
-            if (unit && _inArray.call(CSS.Lists.units, unit)) {
-                return unit;
+            start = start || 0;
+            for (var i = 0, units = CSS.Lists.units; i < units.length; i++) {
+                var j = 0, unit = units[i];
+                do {
+                    if (j >= unit.length) {
+                        return unit;
+                    }
+                    if (unit[j] !== property[start + j]) {
+                        break;
+                    }
+                } while (++j);
             }
             return "";
         }
@@ -1877,6 +1874,7 @@ var VelocityStatic;
                         var options = animation.options, resolver = options._resolver;
                         if (resolver) {
                             resolver(animation.elements);
+                            // TODO: This is wrong
                             delete options._resolver;
                         }
                     }
@@ -2083,7 +2081,7 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
-    var _cache = DEFAULT_CACHE, _begin, _complete, _delay = DEFAULT_DELAY, _duration = DEFAULT_DURATION, _easing = DEFAULT_EASING, _fpsLimit = DEFAULT_FPSLIMIT, _loop = DEFAULT_LOOP, _minFrameTime = FUZZY_MS_PER_SECOND / DEFAULT_FPSLIMIT, _promise = DEFAULT_PROMISE, _promiseRejectEmpty = DEFAULT_PROMISE_REJECT_EMPTY, _queue = DEFAULT_QUEUE, _repeat = DEFAULT_REPEAT, _speed = DEFAULT_SPEED;
+    var _cache = DEFAULT_CACHE, _begin, _complete, _delay = DEFAULT_DELAY, _duration = DEFAULT_DURATION, _easing = validateEasing(DEFAULT_EASING, DEFAULT_DURATION), _fpsLimit = DEFAULT_FPSLIMIT, _loop = DEFAULT_LOOP, _minFrameTime = FUZZY_MS_PER_SECOND / DEFAULT_FPSLIMIT, _promise = DEFAULT_PROMISE, _promiseRejectEmpty = DEFAULT_PROMISE_REJECT_EMPTY, _queue = DEFAULT_QUEUE, _repeat = DEFAULT_REPEAT, _speed = DEFAULT_SPEED;
     VelocityStatic.defaults = {
         mobileHA: true
     };
@@ -2858,7 +2856,8 @@ var VelocityStatic;
                 while (activeCall = VelocityStatic.State.firstNew) {
                     VelocityStatic.expandTween(activeCall);
                 }
-                var _loop_2 = function() {
+                /* Iterate through each active call. */
+                for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
                     nextCall = activeCall._next;
                     /************************
                      Call-Wide Variables
@@ -2868,7 +2867,7 @@ var VelocityStatic;
                      continued existence of its data cache. If it's gone then end this animation. */
                     if (!data_5) {
                         VelocityStatic.freeAnimationCall(activeCall);
-                        return "continue";
+                        continue;
                     }
                     var timeStart = activeCall.timeStart, options = activeCall.options, paused = activeCall.paused, delay = getValue(activeCall.delay, options.delay), started = activeCall.started, firstTick = !timeStart;
                     /* If timeStart is undefined, then this is the first time that this call has been processed by tick().
@@ -2891,7 +2890,7 @@ var VelocityStatic;
                     if (paused === true) {
                         /* Update the time start to accomodate the paused completion amount */
                         activeCall.timeStart += deltaTime;
-                        return "continue";
+                        continue;
                     } else if (paused === false) {
                         /* Remove pause key after processing */
                         delete activeCall.paused;
@@ -2904,7 +2903,7 @@ var VelocityStatic;
                         // There might still be an active delay after something has been un-paused
                         if (delay) {
                             if (timeStart + delay > timeCurrent) {
-                                return "continue";
+                                continue;
                             }
                             activeCall.timeStart = timeStart += delay;
                         }
@@ -2912,26 +2911,6 @@ var VelocityStatic;
                         activeCall.started = true;
                         /* Apply the "velocity-animating" indicator class. */
                         VelocityStatic.CSS.Values.addClass(element, "velocity-animating");
-                        /**********************************
-                         Display & Visibility Toggling
-                         **********************************/
-                        /* If the display option is set to non-"none", set it upfront so that the element can become visible before tweening begins.
-                         (Otherwise, display's "none" value is set in completeCall() once the animation has completed.) */
-                        if (activeCall.display !== undefined && activeCall.display !== null && activeCall.display !== "none") {
-                            if (activeCall.display === "flex") {
-                                var flexValues = [ "-webkit-box", "-moz-box", "-ms-flexbox", "-webkit-flex" ];
-                                flexValues.forEach(function(flexValue) {
-                                    VelocityStatic.CSS.setPropertyValue(element, "display", flexValue);
-                                });
-                            }
-                            VelocityStatic.CSS.setPropertyValue(element, "display", activeCall.display);
-                            activeCall.display = false;
-                        }
-                        /* Same goes with the visibility option, but its "none" equivalent is "hidden". */
-                        if (activeCall.visibility !== undefined && activeCall.visibility !== "hidden") {
-                            VelocityStatic.CSS.setPropertyValue(element, "visibility", activeCall.visibility);
-                            activeCall.visibility = false;
-                        }
                         /* The begin callback is fired once per call -- not once per element -- and is passed the full raw DOM element set as both its context and its first argument. */
                         if (options && options._started++ === 0) {
                             options._first = activeCall;
@@ -2976,46 +2955,31 @@ var VelocityStatic;
                             firstComplete = lastComplete = activeCall;
                         }
                     }
-                    /************************
-                     Property Iteration
-                     ************************/
-                    /* For every element, iterate through each property. */
                     for (var property in tweens) {
-                        var currentValue = void 0, tween = tweens[property], /* Easing can either be a pre-genereated function or a string that references a pre-registered easing
-                         on the Easings object. In either case, return the appropriate easing *function*. */
-                        easing = tween.easing ? isString(tween.easing) ? VelocityStatic.Easings[tween.easing] : tween.easing : activeEasing;
-                        /******************************
-                         Current Value Calculation
-                         ******************************/
-                        if (tween.pattern) {
-                            for (var pattern = tween.pattern, rounding = tween.rounding, i = 0, index = 0; i < pattern.length; i++) {
-                                if (typeof pattern[i] === "number") {
-                                    var startValue = tween.startValue[index], endValue = tween.endValue[index], result = tween.reverse ? easing(percentComplete, endValue, startValue, property) : easing(percentComplete, startValue, endValue, property);
-                                    pattern[i] = rounding && rounding[index] ? Math.round(result) : result;
-                                    index++;
-                                }
+                        // For every element, iterate through each property.
+                        var tween = tweens[property], easing = tween.easing || activeEasing, pattern = tween.pattern, rounding = tween.rounding, i = 0;
+                        for (;i < pattern.length; i++) {
+                            var startValue = tween.startValue[i];
+                            if (startValue != null) {
+                                // All easings must deal with numbers except for
+                                // our internal ones
+                                var result = easing(tween.reverse ? 1 - percentComplete : percentComplete, tween.endValue[i], startValue, property);
+                                pattern[i] = rounding && rounding[i] ? Math.round(result) : result;
                             }
-                            currentValue = "".concat.apply("", tween.pattern);
-                        } else {
-                            currentValue = tween.reverse ? 1 - easing(1 - percentComplete, tween.endValue, tween.startValue, property) : easing(percentComplete, tween.startValue, tween.endValue, property);
                         }
+                        var currentValue = "".concat.apply("", tween.pattern);
                         // If no value change is occurring, don't proceed with
                         // DOM updating.
-                        if (!firstTick && tween.currentValue === currentValue) {
-                            continue;
-                        }
-                        tween.currentValue = currentValue;
-                        // Skip the fake 'tween' property as that is only passed
-                        // into the progress callback.
-                        if (property !== "tween") {
-                            // TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-                            VelocityStatic.CSS.setPropertyValue(element, property, tween.currentValue);
+                        if (firstTick || tween.currentValue !== currentValue) {
+                            tween.currentValue = currentValue;
+                            // Skip the fake 'tween' property as that is only
+                            // passed into the progress callback.
+                            if (property !== "tween") {
+                                // TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
+                                VelocityStatic.CSS.setPropertyValue(element, property, tween.currentValue);
+                            }
                         }
                     }
-                };
-                /* Iterate through each active call. */
-                for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
-                    _loop_2();
                 }
                 // Callbacks and complete that might read the DOM again.
                 // Progress callback
@@ -3072,142 +3036,19 @@ var VelocityStatic;
      * Expand all queued animations that haven't gone yet
      *
      * This will automatically expand the properties map for any recently added
-     * animations so that the start and end values are correct
+     * animations so that the start and end values are correct.
      */
     function expandTween(activeCall) {
-        var elements = activeCall.elements, options = activeCall.options, elementsLength = elements.length, element = activeCall.element, elementArrayIndex = _indexOf.call(elements, element);
+        var elements = activeCall.elements, options = activeCall.options, elementsLength = elements.length, element = activeCall.element, elementArrayIndex = _indexOf.call(elements, element), duration = getValue(options.duration, VelocityStatic.defaults.duration);
         /***************************
          Tween Data Calculation
          ***************************/
-        /* This function parses property data and defaults endValue, easing, and startValue as appropriate. */
-        /* Property map values can either take the form of 1) a single value representing the end value,
-         or 2) an array in the form of [ endValue, [, easing] [, startValue] ].
-         The optional third parameter is a forcefed startValue to be used instead of querying the DOM for
-         the element's current value. Read Velocity's docmentation to learn more about forcefeeding: VelocityJS.org/#forcefeeding */
-        function parsePropertyValue(valueData, skipResolvingEasing) {
-            var endValue, easing, startValue;
-            /* If we have a function as the main argument then resolve it first, in case it returns an array that needs to be split */
-            if (isFunction(valueData)) {
-                valueData = valueData.call(element, elementArrayIndex, elementsLength, elements);
-            }
-            /* Handle the array format, which can be structured as one of three potential overloads:
-             A) [ endValue, easing, startValue ], B) [ endValue, easing ], or C) [ endValue, startValue ] */
-            if (Array.isArray(valueData)) {
-                /* endValue is always the first item in the array. Don't bother validating endValue's value now
-                 since the ensuing property cycling logic does that. */
-                endValue = valueData[0];
-                /* Two-item array format: If the second item is a number, function, or hex string, treat it as a
-                 start value since easings can only be non-hex strings or arrays. */
-                if (!Array.isArray(valueData[1]) && /^[\d-]/.test(valueData[1]) || isFunction(valueData[1]) || VelocityStatic.CSS.RegEx.isHex.test(valueData[1])) {
-                    startValue = valueData[1];
-                } else if (isString(valueData[1]) && !VelocityStatic.CSS.RegEx.isHex.test(valueData[1]) && VelocityStatic.Easings[valueData[1]] || Array.isArray(valueData[1])) {
-                    easing = skipResolvingEasing ? valueData[1] : validateEasing(valueData[1], getValue(activeCall.duration, options.duration));
-                    /* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
-                    startValue = valueData[2];
-                } else {
-                    startValue = valueData[1] || valueData[2];
-                }
-            } else {
-                endValue = valueData;
-            }
-            /* Default to the call's easing if a per-property easing type was not defined. */
-            if (!skipResolvingEasing) {
-                easing = getValue(easing, activeCall.easing, options.easing, VelocityStatic.defaults.easing);
-            }
-            /* If functions were passed in as values, pass the function the current element as its context,
-             plus the element's index and the element set's size as arguments. Then, assign the returned value. */
-            if (isFunction(endValue)) {
-                endValue = endValue.call(element, elementArrayIndex, elementsLength);
-            }
-            if (isFunction(startValue)) {
-                startValue = startValue.call(element, elementArrayIndex, elementsLength);
-            }
-            /* Allow startValue to be left as undefined to indicate to the ensuing code that its value was not forcefed. */
-            return [ endValue || 0, easing, startValue ];
-        }
         VelocityStatic.State.firstNew = activeCall._next;
         /* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
         if (isNode(element)) {
             var data_6 = Data(element), lastAnimation = void 0, /* A container for the processed data associated with each property in the propertyMap.
              (Each property in the map produces its own "tween".) */
             propertiesMap = activeCall.properties;
-            /*****************************************
-             Tween Data Construction (for Scroll)
-             *****************************************/
-            /* Note: In order to be subjected to chaining and animation options, scroll's tweening is routed through Velocity as if it were a standard CSS property animation. */
-            //			if (action === "scroll") {
-            //				/* The scroll action uniquely takes an optional "offset" option -- specified in pixels -- that offsets the targeted scroll position. */
-            //				let scrollDirection = (/^x$/i.test(opts.axis) ? "Left" : "Top"),
-            //					scrollOffset = parseFloat(opts.offset as any as string) || 0,
-            //					scrollPositionCurrent,
-            //					scrollPositionCurrentAlternate,
-            //					scrollPositionEnd;
-            //
-            //				/* Scroll also uniquely takes an optional "container" option, which indicates the parent element that should be scrolled --
-            //				 as opposed to the browser window itself. This is useful for scrolling toward an element that's inside an overflowing parent element. */
-            //				if (opts.container) {
-            //					/* Ensure that either a jQuery object or a raw DOM element was passed in. */
-            //					if (isWrapped(opts.container) || isNode(opts.container)) {
-            //						/* Extract the raw DOM element from the jQuery wrapper. */
-            //						opts.container = opts.container[0] || opts.container;
-            //						/* Note: Unlike other properties in Velocity, the browser's scroll position is never cached since it so frequently changes
-            //						 (due to the user's natural interaction with the page). */
-            //						scrollPositionCurrent = opts.container["scroll" + scrollDirection]; /* GET */
-            //
-            //						/* _position() values are relative to the viewport (without taking into account the container's true dimensions
-            //						 -- say, for example, if the container was not overflowing). Thus, the scroll end value is the sum of the child element's position *and*
-            //						 the scroll container's current scroll position. */
-            //						scrollPositionEnd = (scrollPositionCurrent + _position(element)[scrollDirection.toLowerCase()]) + scrollOffset; /* GET */
-            //						/* If a value other than a jQuery object or a raw DOM element was passed in, default to null so that this option is ignored. */
-            //					} else {
-            //						opts.container = null;
-            //					}
-            //				} else {
-            //					/* If the window itself is being scrolled -- not a containing element -- perform a live scroll position lookup using
-            //					 the appropriate cached property names (which differ based on browser type). */
-            //					scrollPositionCurrent = State.scrollAnchor[State["scrollProperty" + scrollDirection]]; /* GET */
-            //					/* When scrolling the browser window, cache the alternate axis's current value since window.scrollTo() doesn't let us change only one value at a time. */
-            //					scrollPositionCurrentAlternate = State.scrollAnchor[State["scrollProperty" + (scrollDirection === "Left" ? "Top" : "Left")]]; /* GET */
-            //
-            //					/* Unlike $.position(), $.offset() values are relative to the browser window's true dimensions -- not merely its currently viewable area --
-            //					 and therefore end values do not need to be compounded onto current values. */
-            //					scrollPositionEnd = _position(element)[scrollDirection.toLowerCase()] + scrollOffset; /* GET */
-            //				}
-            //
-            //				/* Since there's only one format that scroll's associated tweensContainer can take, we create it manually. */
-            //				tweensContainer = {
-            //					scroll: {
-            //						rootPropertyValue: false,
-            //						startValue: scrollPositionCurrent,
-            //						currentValue: scrollPositionCurrent,
-            //						endValue: scrollPositionEnd,
-            //						unitType: "",
-            //						easing: opts.easing,
-            //						scrollData: {
-            //							container: opts.container,
-            //							direction: scrollDirection,
-            //							alternateValue: scrollPositionCurrentAlternate
-            //						}
-            //					},
-            //					element: element
-            //				};
-            //
-            //				if (debug) {
-            //					console.log("tweensContainer (scroll): ", (tweensContainer as any).scroll, element);
-            //				}
-            //
-            //				/******************************************
-            //				 Tween Data Construction (for Reverse)
-            //				 ******************************************/
-            //
-            //				/* Reverse acts like a "start" action in that a property map is animated toward. The only difference is
-            //				 that the property map used for reverse is the inverse of the map used in the previous call. Thus, we manipulate
-            //				 the previous call to construct our new map: use the previous map's end values as our new map's start values. Copy over all other data. */
-            //				/* Note: Reverse can be directly called via the "reverse" parameter, or it can be indirectly triggered via the loop option. (Loops are composed of multiple reverses.) */
-            //				/* Note: Reverse calls do not need to be consecutively chained onto a currently-animating element in order to operate on cached values;
-            //				 there is no harm to reverse being called on a potentially stale data cache since reverse's behavior is simply defined
-            //				 as reverting to the element's values as they were prior to the previous *Velocity* call. */
-            //			} else
             //		if (action === "reverse") {
             //
             //			/* Abort if there is no prior animation data to reverse to. */
@@ -3287,11 +3128,7 @@ var VelocityStatic;
             //				tweensContainer = lastTweensContainer;
             //			}
             //
-            //			/*****************************************
-            //			 Tween Data Construction (for Start)
-            //			 *****************************************/
-            //
-            //		} else if (action === "start") {
+            //		}
             /*************************
              Value Transferring
              *************************/
@@ -3311,47 +3148,41 @@ var VelocityStatic;
             }
             /* Create a tween out of each property, and append its associated data to tweensContainer. */
             if (propertiesMap) {
-                var _loop_3 = function(property) {
+                for (var property in propertiesMap) {
                     if (!propertiesMap.hasOwnProperty(property)) {
-                        return "continue";
+                        continue;
                     }
-                    /* The original property name's format must be used for the parsePropertyValue() lookup,
-                     but we then use its camelCase styling to normalize it for manipulation. */
-                    var propertyName = VelocityStatic.CSS.Names.camelCase(property), valueData = parsePropertyValue(propertiesMap[property]);
-                    /* Find shorthand color properties that have been passed a hex string. */
-                    /* Would be quicker to use vCSS.Lists.colors.includes() if possible */
-                    //				if (_inArray(CSS.Lists.colors, propertyName)) {
-                    //					/* Parse the value data for each shorthand. */
-                    //					let endValue = valueData[0],
-                    //						easing = valueData[1],
-                    //						startValue = valueData[2];
-                    //
-                    //					if (CSS.RegEx.isHex.test(endValue)) {
-                    //						/* Convert the hex strings into their RGB component arrays. */
-                    //						let colorComponents = ["Red", "Green", "Blue"],
-                    //							endValueRGB = CSS.Values.hexToRgb(endValue),
-                    //							startValueRGB = startValue ? CSS.Values.hexToRgb(startValue) : undefined;
-                    //
-                    //						/* Inject the RGB component tweens into propertiesMap. */
-                    //						for (let i = 0; i < colorComponents.length; i++) {
-                    //							let dataArray = [endValueRGB[i]];
-                    //
-                    //							if (easing) {
-                    //								dataArray.push(easing);
-                    //							}
-                    //
-                    //							if (startValueRGB !== undefined) {
-                    //								dataArray.push(startValueRGB[i]);
-                    //							}
-                    //
-                    //							fixPropertyValue(propertyName + colorComponents[i], dataArray);
-                    //						}
-                    //						/* If we have replaced a shortcut color value then don't update the standard property name */
-                    //						continue;
-                    //					}
-                    //				}
-                    /* Parse out endValue, easing, and startValue from the property's data. */
-                    var endValue = valueData[0], easing = valueData[1], startValue = valueData[2], pattern = void 0, rounding = void 0;
+                    var propertyName = VelocityStatic.CSS.Names.camelCase(property), valueData = propertiesMap[property], endValue = void 0, easing = void 0, startValue = void 0, arrayStart = [ null ], arrayEnd = [ null ], pattern = [ "" ], rounding = void 0;
+                    if (isFunction(valueData)) {
+                        // If we have a function as the main argument then
+                        // resolve it first, in case it returns an array that
+                        // needs to be split.
+                        valueData = valueData.call(element, elementArrayIndex, elementsLength, elements);
+                    }
+                    if (Array.isArray(valueData)) {
+                        // valueData is an array in the form of
+                        // [ endValue, [, easing] [, startValue] ]
+                        var arr1 = valueData[1], arr2 = valueData[2];
+                        endValue = valueData[0];
+                        if (isString(arr1) && (/^[\d-]/.test(arr1) || VelocityStatic.CSS.RegEx.isHex.test(arr1)) || isFunction(arr1) || isNumber(arr1)) {
+                            startValue = arr1;
+                        } else if (isString(arr1) && VelocityStatic.Easings[arr1] || Array.isArray(arr1)) {
+                            easing = arr1;
+                            startValue = arr2;
+                        } else {
+                            startValue = arr1 || arr2;
+                        }
+                    } else {
+                        endValue = valueData;
+                    }
+                    /* If functions were passed in as values, pass the function the current element as its context,
+                     plus the element's index and the element set's size as arguments. Then, assign the returned value. */
+                    if (isFunction(endValue)) {
+                        endValue = endValue.call(element, elementArrayIndex, elementsLength);
+                    }
+                    if (isFunction(startValue)) {
+                        startValue = startValue.call(element, elementArrayIndex, elementsLength);
+                    }
                     /**************************
                      Start Value Sourcing
                      **************************/
@@ -3364,221 +3195,152 @@ var VelocityStatic;
                         if (VelocityStatic.debug) {
                             console.log("Skipping [" + propertyName + "] due to a lack of browser support.");
                         }
-                        return {
-                            value: void 0
-                        };
+                        continue;
                     }
                     /* If the display option is being set to a non-"none" (e.g. "block") and opacity (filter on IE<=8) is being
                      animated to an endValue of non-zero, the user's intention is to fade in from invisible, thus we forcefeed opacity
                      a startValue of 0 if its startValue hasn't already been sourced by value transferring or prior forcefeeding. */
-                    if ((activeCall.display !== undefined && activeCall.display !== null && activeCall.display !== "none" || activeCall.visibility !== undefined && activeCall.visibility !== "hidden") && /opacity|filter/.test(propertyName) && !startValue && endValue !== 0) {
-                        startValue = 0;
+                    //					if (((activeCall.visibility !== undefined && activeCall.visibility !== "hidden")) && /opacity|filter/.test(propertyName) && !startValue && endValue !== 0) {
+                    //						startValue = 0;
+                    //					}
+                    if (startValue === undefined) {
+                        // Get the start value if it's not been passed in
+                        startValue = VelocityStatic.CSS.getPropertyValue(element, propertyName) || 0;
                     }
-                    /* If values have been transferred from the previous Velocity call, extract the endValue and rootPropertyValue
-                     for all of the current call's properties that were *also* animated in the previous call. */
-                    /* Note: Value transferring can optionally be disabled by the user via the _cacheValues option. */
-                    if (lastAnimation && lastAnimation.tweens[propertyName]) {
-                        if (startValue === undefined) {
-                            startValue = lastAnimation.tweens[propertyName].currentValue;
-                        }
-                    } else {
-                        startValue = VelocityStatic.CSS.getPropertyValue(element, propertyName);
-                    }
-                    /**************************
-                     Value Data Extraction
-                     **************************/
-                    var separatedValue = void 0, endValueUnitType = void 0, startValueUnitType = void 0, operator = false;
-                    /* Separates a property value into its numeric value and its unit type. */
-                    var separateValue = function(property, value) {
-                        var unitType, numericValue;
-                        numericValue = (value || "0").toString().toLowerCase().replace(/[%a-z]+$/, function(match) {
-                            /* Grab the unit type. */
-                            unitType = match;
-                            /* Strip the unit type off of value. */
-                            return "";
-                        });
-                        /* If no unit type was supplied, assign one that is appropriate for this property (e.g. "deg" for rotateZ or "px" for width). */
-                        if (!unitType) {
-                            unitType = VelocityStatic.CSS.Values.getUnitType(property);
-                        }
-                        return [ numericValue, unitType ];
-                    };
                     if (isNumber(startValue)) {
+                        // Make sure we have the correct value.
                         startValue = String(startValue) + VelocityStatic.CSS.Values.getUnitType(property);
                     }
                     if (isNumber(endValue)) {
+                        // Make sure we have the correct value.
                         endValue = String(endValue) + VelocityStatic.CSS.Values.getUnitType(property);
                     }
-                    if (startValue !== endValue && isString(startValue) && isString(endValue)) {
-                        pattern = [];
-                        var iStart = 0, // index in startValue
-                        iEnd = 0, // index in endValue
-                        aStart = [], // array of startValue numbers
-                        aEnd = [], // array of endValue numbers
-                        inCalc = 0, // Keep track of being inside a "calc()" so we don't duplicate it
-                        inRGB = 0, // Keep track of being inside an RGB as we can't use fractional values
-                        inRGBA = 0, // Keep track of being inside an RGBA as we must pass fractional for the alpha channel
-                        lastPattern = "";
-                        // The last part of the pattern, push out into pattern when it changes
-                        startValue = VelocityStatic.CSS.fixColors(startValue);
-                        endValue = VelocityStatic.CSS.fixColors(endValue);
-                        while (iStart < startValue.length && iEnd < endValue.length) {
-                            var cStart = startValue[iStart], cEnd = endValue[iEnd];
-                            if (/[\d\.-]/.test(cStart) && /[\d\.-]/.test(cEnd)) {
-                                var tStart = cStart, // temporary character buffer
-                                tEnd = cEnd, // temporary character buffer
-                                dotStart = ".", // Make sure we can only ever match a single dot in a decimal
-                                dotEnd = ".";
-                                // Make sure we can only ever match a single dot in a decimal
-                                while (++iStart < startValue.length) {
-                                    cStart = startValue[iStart];
-                                    if (cStart === dotStart) {
-                                        dotStart = "..";
-                                    } else if (!/\d/.test(cStart)) {
-                                        break;
-                                    }
-                                    tStart += cStart;
+                    var indexStart = 0, // index in startValue
+                    indexEnd = 0, // index in endValue
+                    inCalc = 0, // Keep track of being inside a "calc()" so we don't duplicate it
+                    inRGB = 0, // Keep track of being inside an RGB as we can't use fractional values
+                    inRGBA = 0;
+                    // Keep track of being inside an RGBA as we must pass fractional for the alpha channel
+                    startValue = VelocityStatic.CSS.fixColors(startValue);
+                    endValue = VelocityStatic.CSS.fixColors(endValue);
+                    while (indexStart < startValue.length || indexEnd < endValue.length) {
+                        var charStart = startValue[indexStart], charEnd = endValue[indexEnd];
+                        // If they're both numbers, then parse them as a whole
+                        if (/[\d\.-]/.test(charStart) && /[\d\.-]/.test(charEnd)) {
+                            var tempStart = charStart, // temporary character buffer
+                            tempEnd = charEnd, // temporary character buffer
+                            dotStart = ".", // Make sure we can only ever match a single dot in a decimal
+                            dotEnd = ".";
+                            // Make sure we can only ever match a single dot in a decimal
+                            while (++indexStart < startValue.length) {
+                                charStart = startValue[indexStart];
+                                if (charStart === dotStart) {
+                                    dotStart = "..";
+                                } else if (!/\d/.test(charStart)) {
+                                    break;
                                 }
-                                while (++iEnd < endValue.length) {
-                                    cEnd = endValue[iEnd];
-                                    if (cEnd === dotEnd) {
-                                        dotEnd = "..";
-                                    } else if (!/\d/.test(cEnd)) {
-                                        break;
-                                    }
-                                    tEnd += cEnd;
+                                tempStart += charStart;
+                            }
+                            while (++indexEnd < endValue.length) {
+                                charEnd = endValue[indexEnd];
+                                if (charEnd === dotEnd) {
+                                    dotEnd = "..";
+                                } else if (!/\d/.test(charEnd)) {
+                                    break;
                                 }
-                                var uStart = VelocityStatic.CSS.getUnit(startValue, iStart), // temporary unit type
-                                uEnd = VelocityStatic.CSS.getUnit(endValue, iEnd);
-                                // temporary unit type
-                                iStart += uStart.length;
-                                iEnd += uEnd.length;
-                                if (uStart === uEnd) {
-                                    // Same units
-                                    if (tStart === tEnd) {
-                                        // Same numbers, so just copy over
-                                        lastPattern += tStart + uStart;
-                                    } else {
-                                        // Different numbers, so store them
-                                        if (lastPattern) {
-                                            pattern.push(lastPattern);
-                                            lastPattern = "";
-                                        }
-                                        if (inRGB) {
-                                            if (!rounding) {
-                                                rounding = [];
-                                            }
-                                            rounding[aStart.length] = true;
-                                        }
-                                        pattern.push(0);
-                                        lastPattern = uStart;
-                                        aStart.push(parseFloat(tStart));
-                                        aEnd.push(parseFloat(tEnd));
-                                    }
+                                tempEnd += charEnd;
+                            }
+                            var unitStart = VelocityStatic.CSS.getUnit(startValue, indexStart), // temporary unit type
+                            unitEnd = VelocityStatic.CSS.getUnit(endValue, indexEnd);
+                            // temporary unit type
+                            indexStart += unitStart.length;
+                            indexEnd += unitEnd.length;
+                            if (unitStart === unitEnd) {
+                                // Same units
+                                if (tempStart === tempEnd) {
+                                    // Same numbers, so just copy over
+                                    pattern[pattern.length - 1] += tempStart + unitStart;
                                 } else {
-                                    // Different units, so put into a "calc(from + to)" and animate each side to/from zero
-                                    var nStart = parseFloat(tStart), nEnd = parseFloat(tEnd);
-                                    pattern.push("calc(", nStart ? 0 : "0", uStart + " + ", nEnd ? 0 : "0", uEnd + ")");
-                                    if (nStart) {
-                                        aStart.push(nStart);
-                                        aEnd.push(0);
+                                    if (inRGB) {
+                                        if (!rounding) {
+                                            rounding = [];
+                                        }
+                                        rounding[arrayStart.length] = true;
                                     }
-                                    if (nEnd) {
-                                        aStart.push(0);
-                                        aEnd.push(nEnd);
-                                    }
+                                    pattern.push(0, unitStart);
+                                    arrayStart.push(parseFloat(tempStart), null);
+                                    arrayEnd.push(parseFloat(tempEnd), null);
                                 }
-                            } else if (cStart === cEnd) {
-                                if (!pattern.length) {
-                                    pattern.push("");
+                            } else {
+                                // Different units, so put into a "calc(from + to)" and animate each side to/from zero
+                                pattern[pattern.length - 1] += inCalc ? "+ (" : "calc(";
+                                pattern.push(0, unitStart + " + ", 0, unitEnd + ")");
+                                arrayStart.push(parseFloat(tempStart) || 0, null, 0, null);
+                                arrayEnd.push(0, null, parseFloat(tempEnd) || 0, null);
+                            }
+                        } else if (charStart === charEnd) {
+                            pattern[pattern.length - 1] += charStart;
+                            indexStart++;
+                            indexEnd++;
+                            // Keep track of being inside a calc()
+                            if (inCalc === 0 && charStart === "c" || inCalc === 1 && charStart === "a" || inCalc === 2 && charStart === "l" || inCalc === 3 && charStart === "c" || inCalc >= 4 && charStart === "(") {
+                                inCalc++;
+                            } else if (inCalc && inCalc < 5 || inCalc >= 4 && charStart === ")" && --inCalc < 5) {
+                                inCalc = 0;
+                            }
+                            // Keep track of being inside an rgb() / rgba()
+                            // Only the opacity is not rounded
+                            if (inRGB === 0 && charStart === "r" || inRGB === 1 && charStart === "g" || inRGB === 2 && charStart === "b" || inRGB === 3 && charStart === "a" || inRGB >= 3 && charStart === "(") {
+                                if (inRGB === 3 && charStart === "a") {
+                                    inRGBA = 1;
                                 }
-                                pattern[pattern.length - 1] += cStart;
-                                iStart++;
-                                iEnd++;
-                                // Keep track of being inside a calc()
-                                if (inCalc === 0 && cStart === "c" || inCalc === 1 && cStart === "a" || inCalc === 2 && cStart === "l" || inCalc === 3 && cStart === "c" || inCalc >= 4 && cStart === "(") {
-                                    inCalc++;
-                                } else if (inCalc && inCalc < 5 || inCalc >= 4 && cStart === ")" && --inCalc < 5) {
-                                    inCalc = 0;
-                                }
-                                // Keep track of being inside an rgb() / rgba()
-                                if (inRGB === 0 && cStart === "r" || inRGB === 1 && cStart === "g" || inRGB === 2 && cStart === "b" || inRGB === 3 && cStart === "a" || inRGB >= 3 && cStart === "(") {
-                                    if (inRGB === 3 && cStart === "a") {
-                                        inRGBA = 1;
-                                    }
-                                    inRGB++;
-                                } else if (inRGBA && cStart === ",") {
-                                    if (++inRGBA > 3) {
-                                        inRGB = inRGBA = 0;
-                                    }
-                                } else if (inRGBA && inRGB < (inRGBA ? 5 : 4) || inRGB >= (inRGBA ? 4 : 3) && cStart === ")" && --inRGB < (inRGBA ? 5 : 4)) {
+                                inRGB++;
+                            } else if (inRGBA && charStart === ",") {
+                                if (++inRGBA > 3) {
                                     inRGB = inRGBA = 0;
                                 }
-                            } else {
-                                inCalc = 0;
-                                // TODO: changing units, fixing colours
-                                break;
+                            } else if (inRGBA && inRGB < (inRGBA ? 5 : 4) || inRGB >= (inRGBA ? 4 : 3) && charStart === ")" && --inRGB < (inRGBA ? 5 : 4)) {
+                                inRGB = inRGBA = 0;
                             }
-                        }
-                        if (iStart !== startValue.length || iEnd !== endValue.length) {
-                            // TODO: change the tween to use a string type if they're different
-                            if (VelocityStatic.debug) {
-                                console.error('Trying to pattern match mis-matched strings ["' + endValue + '", "' + startValue + '"]');
+                        } else if (charStart || charEnd) {
+                            // Different letters, so we're going to push them into start and end until the next word
+                            if (!isString(arrayStart[arrayStart.length - 1])) {
+                                if (pattern.length === 1 && !pattern[0]) {
+                                    arrayStart[0] = arrayEnd[0] = "";
+                                } else {
+                                    pattern.push("");
+                                    arrayStart.push("");
+                                    arrayEnd.push("");
+                                }
                             }
-                            pattern = undefined;
-                        }
-                        if (pattern) {
-                            if (aStart.length) {
-                                if (VelocityStatic.debug) {
-                                    console.log("Pattern found:", pattern, " -> ", aStart, aEnd, "[" + startValue + "," + endValue + "]");
+                            while (indexStart < startValue.length) {
+                                charStart = startValue[indexStart++];
+                                if (charStart === " ") {
+                                    break;
+                                } else {
+                                    arrayStart[arrayStart.length - 1] += charStart;
                                 }
-                                if (lastPattern) {
-                                    pattern.push(lastPattern);
+                            }
+                            while (indexEnd < endValue.length) {
+                                charEnd = endValue[indexEnd++];
+                                if (charEnd === " ") {
+                                    break;
+                                } else {
+                                    arrayEnd[arrayEnd.length - 1] += charEnd;
                                 }
-                                startValue = aStart;
-                                endValue = aEnd;
-                                endValueUnitType = startValueUnitType = "";
-                            } else {
-                                pattern = undefined;
                             }
                         }
                     }
-                    if (!pattern) {
-                        /* Separate startValue. */
-                        separatedValue = separateValue(propertyName, startValue);
-                        startValue = separatedValue[0];
-                        startValueUnitType = separatedValue[1];
-                        /* Separate endValue, and extract a value operator (e.g. "+=", "-=") if one exists. */
-                        separatedValue = separateValue(propertyName, endValue);
-                        endValue = separatedValue[0].replace(/^([+-\/*])=/, function(match, subMatch) {
-                            operator = subMatch;
-                            /* Strip the operator off of the value. */
-                            return "";
-                        });
-                        endValueUnitType = separatedValue[1];
-                        /* Parse float values from endValue and startValue. Default to 0 if NaN is returned. */
-                        startValue = parseFloat(startValue) || 0;
-                        endValue = parseFloat(endValue) || 0;
-                        /***************************************
-                         Property-Specific Value Conversion
-                         ***************************************/
-                        /* Custom support for properties that don't actually accept the % unit type, but where pollyfilling is trivial and relatively foolproof. */
-                        if (endValueUnitType === "%") {
-                            /* A %-value fontSize/lineHeight is relative to the parent's fontSize (as opposed to the parent's dimensions),
-                             which is identical to the em unit's behavior, so we piggyback off of that. */
-                            if (/^(fontSize|lineHeight)$/.test(propertyName)) {
-                                /* Convert % into an em decimal value. */
-                                endValue = endValue / 100;
-                                endValueUnitType = "em";
-                            } else if (/^scale/.test(propertyName)) {
-                                endValue = endValue / 100;
-                                endValueUnitType = "";
-                            } else if (/(Red|Green|Blue)$/i.test(propertyName)) {
-                                endValue = endValue / 100 * 255;
-                                endValueUnitType = "";
-                            }
-                        }
+                    if (indexStart !== startValue.length || indexEnd !== endValue.length) {
+                        // TODO: change the tween to use a string type if they're different
+                        //							if (debug) {
+                        console.error("Trying to pattern match mis-matched strings " + propertyName + ':["' + endValue + '", "' + startValue + '"]');
                     }
+                    if (VelocityStatic.debug) {
+                        console.log("Pattern found:", pattern, " -> ", arrayStart, arrayEnd, "[" + startValue + "," + endValue + "]");
+                    }
+                    arrayStart = arrayStart;
+                    arrayEnd = arrayEnd;
                     /***************************
                      Unit Ratio Calculation
                      ***************************/
@@ -3758,43 +3520,50 @@ var VelocityStatic;
                     /* Note: Relative *percent values* do not behave how most people think; while one would expect "+=50%"
                      to increase the property 1.5x its current value, it in fact increases the percent units in absolute terms:
                      50 points is added on top of the current % value. */
-                    switch (operator) {
-                      case "+":
-                        endValue = startValue + endValue;
-                        break;
-
-                      case "-":
-                        endValue = startValue - endValue;
-                        break;
-
-                      case "*":
-                        endValue = startValue * endValue;
-                        break;
-
-                      case "/":
-                        endValue = startValue / endValue;
-                        break;
-                    }
-                    /**************************
-                     tweensContainer Push
-                     **************************/
-                    /* Construct the per-property tween object. */
-                    activeCall.tweens[propertyName] = {
-                        startValue: startValue,
+                    //					switch (operator as any as string) {
+                    //						case "+":
+                    //							endValue = startValue + endValue;
+                    //							break;
+                    //
+                    //						case "-":
+                    //							endValue = startValue - endValue;
+                    //							break;
+                    //
+                    //						case "*":
+                    //							endValue = startValue * endValue;
+                    //							break;
+                    //
+                    //						case "/":
+                    //							endValue = startValue / endValue;
+                    //							break;
+                    //					}
+                    var tween = activeCall.tweens[propertyName] = {
                         currentValue: startValue,
-                        endValue: endValue,
-                        unitType: endValueUnitType,
-                        easing: easing,
+                        endValue: arrayEnd,
                         pattern: pattern,
-                        rounding: rounding
+                        startValue: arrayStart
                     };
+                    if (propertyName === "display") {
+                        if (!/^(at-start|at-end|during)$/.test(easing)) {
+                            easing = endValue === "none" ? "at-end" : "at-start";
+                        }
+                    } else if (propertyName === "visibility") {
+                        if (!/^(at-start|at-end|during)$/.test(easing)) {
+                            easing = endValue === "hidden" ? "at-end" : "at-start";
+                        }
+                    }
+                    if (easing) {
+                        var validatedEasing = validateEasing(easing, duration);
+                        if (validatedEasing) {
+                            tween.easing = validatedEasing;
+                        }
+                    }
+                    if (rounding) {
+                        tween.rounding = rounding;
+                    }
                     if (VelocityStatic.debug) {
                         console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(activeCall.tweens[propertyName]), element);
                     }
-                };
-                for (var property in propertiesMap) {
-                    var state_1 = _loop_3(property);
-                    if (typeof state_1 === "object") return state_1.value;
                 }
                 activeCall.properties = undefined;
             }
@@ -3913,7 +3682,11 @@ function validateEasing(value, duration, noError) {
     if (isString(value)) {
         // Named easing
         return VelocityStatic.Easings[value];
-    } else if (Array.isArray(value)) {
+    }
+    if (isFunction(value)) {
+        return value;
+    }
+    if (Array.isArray(value)) {
         if (value.length === 1) {
             // Steps
             return Easing.generateStep(value[0]);
@@ -4323,10 +4096,13 @@ function VelocityFn() {
                 offset++;
                 options.duration = duration;
             }
-            var easing = validateEasing(_arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration), true);
-            if (easing !== undefined) {
-                offset++;
-                options.easing = easing;
+            if (!isFunction(_arguments[argumentIndex + offset])) {
+                // Despite coming before Complete, we can't pass a fn easing
+                var easing = validateEasing(_arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration), true);
+                if (easing !== undefined) {
+                    offset++;
+                    options.easing = easing;
+                }
             }
             var complete = validateComplete(_arguments[argumentIndex + offset], true);
             if (complete !== undefined) {
@@ -4341,12 +4117,14 @@ function VelocityFn() {
          *********************************/
         /* Refer to Velocity's documentation (VelocityJS.org/#displayAndVisibility) for a description of the display and visibility options' behavior. */
         /* Note: We strictly check for undefined instead of falsiness because display accepts an empty string value. */
+        // TODO: convert to property
         var optionsDisplay = void 0;
         if (options.display !== undefined && options.display !== null) {
             optionsDisplay = options.display.toString().toLowerCase();
             /* Users can pass in a special "auto" value to instruct Velocity to set the element to its default display value. */
             if (optionsDisplay === "auto") {}
         }
+        // TODO: convert to property
         var optionsVisibility = void 0;
         if (options.visibility !== undefined && options.visibility !== null) {
             optionsVisibility = options.visibility.toString().toLowerCase();
@@ -4368,9 +4146,7 @@ function VelocityFn() {
             elements: elements,
             ellapsedTime: 0,
             properties: propertiesMap,
-            timeStart: 0,
-            display: optionsDisplay,
-            visibility: optionsVisibility
+            timeStart: 0
         };
         animations = [];
         for (var i = 0, length_1 = elements.length; i < length_1; i++) {
@@ -4480,7 +4256,7 @@ if (window === global) {
 /* The CSS spec mandates that the translateX/Y/Z transforms are %-relative to the element itself -- not its parent.
  Velocity, however, doesn't make this distinction. Thus, converting to or from the % unit with these subproperties
  will produce an inaccurate conversion value. The same issue exists with the cx/cy attributes of SVG circles and ellipses. */
-var _loop_4 = function(key) {
+var _loop_2 = function(key) {
     Object.defineProperty(VelocityFn, key, {
         enumerable: PUBLIC_MEMBERS.indexOf(key) >= 0,
         get: function() {
@@ -4505,7 +4281,7 @@ var _loop_4 = function(key) {
  * be allowed.
  */
 for (var key in VelocityStatic) {
-    _loop_4(key);
+    _loop_2(key);
 }
 //# sourceMappingURL=velocity.js.map
 	return VelocityFn;

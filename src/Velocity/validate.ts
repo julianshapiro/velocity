@@ -101,7 +101,11 @@ function validateEasing(value: VelocityEasingType, duration: number, noError?: t
 	if (isString(value)) {
 		// Named easing
 		return VelocityStatic.Easings[value];
-	} else if (Array.isArray(value)) {
+	}
+	if (isFunction(value)) {
+		return value;
+	}
+	if (Array.isArray(value)) {
 		if (value.length === 1) {
 			// Steps
 			return Easing.generateStep(value[0]);

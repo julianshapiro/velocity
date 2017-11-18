@@ -52,6 +52,7 @@ interface VelocityExtended<TNode extends Node = HTMLorSVGElement> {
 		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
 		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, easing?: VelocityEasingType, complete?: () => void): VelocityResult;
 		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: VelocityEasingType, complete?: () => void): VelocityResult;
+		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, option?: VelocityOptions): VelocityResult;
 		/**
 		 * TODO: Decide if this should be public
 		 * @private
@@ -68,7 +69,7 @@ interface VelocityExtended<TNode extends Node = HTMLorSVGElement> {
  * into the array in such a way as to not interfere with other methods unless
  * they are specifically overwriting them.
  */
-type VelocityResult = Promise<HTMLorSVGElement[]> & HTMLorSVGElement[] & VelocityExtended;
+type VelocityResult = Promise<HTMLorSVGElement[] & VelocityExtended> & HTMLorSVGElement[] & VelocityExtended;
 
 // TODO: I don't like having two of these - need to merge into a type or similar
 type VelocityObjectArgs = {
@@ -111,12 +112,12 @@ type VelocityProperties = {
 /**
  * A callback used at the beginning or end of an animation.
  */
-type VelocityCallback = (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], activeCall?: AnimationCall) => void;
+type VelocityCallback = (this: VelocityExtended & HTMLorSVGElement[], elements?: VelocityExtended & HTMLorSVGElement[], activeCall?: AnimationCall) => void;
 
 /**
  * A callback used for progress tracking.
  */
-type VelocityProgress = (this: HTMLorSVGElement[], elements?: HTMLorSVGElement[], percentComplete?: number, remaining?: number, start?: number, tweenValue?: number) => void;
+type VelocityProgress = (this: VelocityExtended & HTMLorSVGElement[], elements?: VelocityExtended & HTMLorSVGElement[], percentComplete?: number, remaining?: number, start?: number, tweenValue?: number) => void;
 
 // TODO: Clean this up, add comments, remove deprecated options
 interface VelocityOptions {
@@ -275,7 +276,7 @@ interface VelocityPromise {
 	 *
 	 * @private
 	 */
-	_promise?: Promise<HTMLorSVGElement[]>;
+	_promise?: Promise<HTMLorSVGElement[] & VelocityExtended>;
 	/**
 	 * This method is called at most once to signify that the animation has
 	 * completed. Currently a loop:true animation will never complete. This
@@ -283,7 +284,7 @@ interface VelocityPromise {
 	 *
 	 * @private
 	 */
-	_resolver?: (value?: HTMLorSVGElement[] | PromiseLike<HTMLorSVGElement[]>) => void;
+	_resolver?: (value?: (HTMLorSVGElement[] & VelocityExtended) | PromiseLike<HTMLorSVGElement[] & VelocityExtended>) => void;
 	/**
 	 * This method is called at most once to signify that the animation has
 	 * completed. Currently a loop:true animation will never complete. This
@@ -458,40 +459,28 @@ interface ScrollData {
 }
 
 interface Tween {
-	/**
-	 * The start values for this tween.
-	 */
-	startValue?: number | number[];
 	/*
 	 * The current value for this tween.
 	 */
-	currentValue?: string | number;
-	/**
-	 * The end values for this tween.
-	 */
-	endValue?: number | number[];
-	/**
-	 * @deprecated
-	 */
-	unitType?: string;
+	currentValue?: string;
 	/**
 	 * Per property easing
 	 */
 	easing?: VelocityEasingFn;
 	/**
-	 * If an animation is reversed then the easing is also reversed.
+	 * The end values for this tween.
 	 */
-	reverse?: boolean;
-	/**
-	 * @deprecated
-	 */
-	scrollData?: ScrollData
+	endValue: (string | number)[];
 	/**
 	 * This is an array of string values interspaced with numbers that are
 	 * tweened from the startValue and endValue arrays. The final pattern is
 	 * joined into a single string to be set as the property value.
 	 */
-	pattern?: (string | number)[];
+	pattern: (string | number)[];
+	/**
+	 * If an animation is reversed then the easing is also reversed.
+	 */
+	reverse?: boolean;
 	/**
 	 * This is an array that matches in position the start and end values. When
 	 * a value is true then it means that the array index needs to be rounded to
@@ -499,6 +488,10 @@ interface Tween {
 	 * values are rounded then this array will not exist.
 	 */
 	rounding?: boolean[];
+	/**
+	 * The start values for this tween.
+	 */
+	startValue: (string | number)[];
 }
 
 interface AnimationCall extends StrictVelocityOptions {
@@ -582,13 +575,13 @@ interface AnimationCall extends StrictVelocityOptions {
 	 *
 	 * @deprecated
 	 */
-	display?: boolean | string;
+	display?: never;
 	/**
 	 * TODO: Remove this so it's a normal property
 	 *
 	 * @deprecated
 	 */
-	visibility?: boolean | string;
+	visibility?: never;
 }
 
 interface Velocity {

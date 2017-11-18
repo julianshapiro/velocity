@@ -48,20 +48,6 @@ namespace VelocityStatic {
 				element = activeCall.element,
 				data = Data(element);
 
-			/*************************
-			 Element Finalization
-			 *************************/
-			/* If the user set display to "none" (intending to hide the element), set it now that the animation has completed. */
-			/* Note: display:none isn't set when calls are manually stopped (via Velocity("stop"). */
-			/* Note: Display gets ignored with "reverse" calls and infinite loops, since this behavior would be undesirable. */
-			if (activeCall.display === "none") {
-				CSS.setPropertyValue(element, "display", activeCall.display);
-			}
-
-			if (activeCall.visibility === "hidden") {
-				CSS.setPropertyValue(element, "visibility", activeCall.visibility);
-			}
-
 			// TODO: Need to check that there's no other animations running on this element
 			if (isStopped && data && (queue === false || data.queueList[queue])) {
 				data.isAnimating = false;
@@ -99,7 +85,7 @@ namespace VelocityStatic {
 				let resolver = options._resolver;
 
 				if (resolver) {
-					resolver(elements);
+					resolver(elements as any);
 					delete options._resolver;
 				}
 			}

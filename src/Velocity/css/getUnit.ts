@@ -6,13 +6,23 @@
 
 namespace VelocityStatic.CSS {
 	/**
-	 * Get the default unit for this property.
+	 * Get the current unit for this property. Only used when parsing tweens
+	 * to check if the unit is changing between the start and end values.
 	 */
 	export function getUnit(property: string, start?: number): string {
-		let unit = (property.substr(start || 0, 5).match(/^[a-z%]+/) || [])[0] || "";
+		start = start || 0;
+		for (let i = 0, units = CSS.Lists.units; i < units.length; i++) {
+			let j = 0,
+				unit = units[i];
 
-		if (unit && _inArray.call(CSS.Lists.units, unit)) {
-			return unit;
+			do {
+				if (j >= unit.length) {
+					return unit;
+				}
+				if (unit[j] !== property[start + j]) {
+					break;
+				}
+			} while (++j);
 		}
 		return "";
 	}

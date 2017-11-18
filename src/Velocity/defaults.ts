@@ -12,7 +12,7 @@ namespace VelocityStatic {
 		_complete: VelocityCallback,
 		_delay: number = DEFAULT_DELAY,
 		_duration: number = DEFAULT_DURATION,
-		_easing: VelocityEasingType = DEFAULT_EASING,
+		_easing: VelocityEasingType = validateEasing(DEFAULT_EASING, DEFAULT_DURATION),
 		_fpsLimit: number = DEFAULT_FPSLIMIT,
 		_loop: number | true = DEFAULT_LOOP,
 		_minFrameTime: number = FUZZY_MS_PER_SECOND / DEFAULT_FPSLIMIT,

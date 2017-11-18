@@ -14,7 +14,7 @@ namespace VelocityStatic.CSS {
 			if (Lists.colorNames.hasOwnProperty($2)) {
 				return ($1 ? $1 : "rgba(") + CSS.Lists.colorNames[$2] + ($1 ? "" : ",1)");
 			}
-			return $1 + $2;
+			return $0;
 		});
 	}
 }

@@ -82,9 +82,9 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		/**
 		 * The promise that is returned.
 		 */
-		promise: Promise<HTMLorSVGElement[]>,
+		promise: Promise<VelocityResult>,
 		// Used when the animation is finished
-		resolver: (value?: HTMLorSVGElement[] | VelocityResult) => void,
+		resolver: (value?: VelocityResult) => void,
 		// Used when there was an issue with one or more of the Velocity arguments
 		rejecter: (reason: any) => void;
 
@@ -185,7 +185,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		}
 	}
 	if ((!elements && !isAction) || !propertiesMap) {
-		return promise as VelocityResult;
+		return promise as any;
 	}
 
 	// TODO: exception for the special "reverse" property
@@ -289,11 +289,14 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 				offset++;
 				options.duration = duration;
 			}
-			let easing = validateEasing(_arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration) as number, true);
+			if (!isFunction(_arguments[argumentIndex + offset])) {
+				// Despite coming before Complete, we can't pass a fn easing
+				let easing = validateEasing(_arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration) as number, true);
 
-			if (easing !== undefined) {
-				offset++;
-				options.easing = easing;
+				if (easing !== undefined) {
+					offset++;
+					options.easing = easing;
+				}
 			}
 			let complete = validateComplete(_arguments[argumentIndex + offset], true);
 
@@ -312,10 +315,10 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 
 		/* Refer to Velocity's documentation (VelocityJS.org/#displayAndVisibility) for a description of the display and visibility options' behavior. */
 		/* Note: We strictly check for undefined instead of falsiness because display accepts an empty string value. */
+		// TODO: convert to property
 		let optionsDisplay: string;
 		if (options.display !== undefined && options.display !== null) {
 			optionsDisplay = options.display.toString().toLowerCase();
-
 			/* Users can pass in a special "auto" value to instruct Velocity to set the element to its default display value. */
 			if (optionsDisplay === "auto") {
 				// TODO: put this on the element
@@ -323,6 +326,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			}
 		}
 
+		// TODO: convert to property
 		let optionsVisibility: string;
 		if (options.visibility !== undefined && options.visibility !== null) {
 			optionsVisibility = options.visibility.toString().toLowerCase();
@@ -347,9 +351,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			elements: elements,
 			ellapsedTime: 0,
 			properties: propertiesMap as VelocityProperties,
-			timeStart: 0,
-			display: optionsDisplay,
-			visibility: optionsVisibility
+			timeStart: 0
 		};
 		animations = [];
 		for (let i = 0, length = elements.length; i < length; i++) {

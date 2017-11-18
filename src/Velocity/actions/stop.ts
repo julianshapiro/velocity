@@ -54,7 +54,7 @@ namespace VelocityStatic {
 							resolver = options._resolver;
 
 						if (resolver) {
-							resolver(animation.elements);
+							resolver(animation.elements as any); // TODO: This is wrong
 							delete options._resolver;
 						}
 					}
@@ -136,7 +136,7 @@ namespace VelocityStatic {
 
 		if (promiseHandler) {
 			/* Immediately resolve the promise associated with this stop call since stop runs synchronously. */
-			promiseHandler._resolver(elements);
+			promiseHandler._resolver(elements as any);// TODO: This is wrong
 		}
 	}
 
