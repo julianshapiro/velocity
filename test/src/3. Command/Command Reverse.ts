@@ -10,7 +10,7 @@ QUnit.skip("Reverse", function(assert) {
 		testEasing = "spring",
 		$target = getTarget();
 
-	assert.expect(5);
+	assert.expect(4);
 	Velocity($target, {opacity: defaultProperties.opacity, width: defaultProperties.width}, {easing: testEasing});
 	Velocity($target, "reverse", function() {
 		//					assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target, "opacity")), defaultStyles.opacity, "Reversed to initial property #1.");
@@ -24,7 +24,7 @@ QUnit.skip("Reverse", function(assert) {
 		assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target, "width") as string), defaultProperties.width, "Reversed to reversed property #2.");
 
 		/* Ensure the options were passed through until the end. */
-		assert.equal(Data($target).opts.easing, testEasing, "Options object passed through.");
+		//		assert.equal(Data($target).opts.easing, testEasing, "Options object passed through.");
 
 		done();
 	});

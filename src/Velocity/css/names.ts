@@ -12,15 +12,21 @@ namespace VelocityStatic.CSS {
 
 	/* Certain browsers require an SVG transform to be applied as an attribute. (Otherwise, application via CSS is preferable due to 3D support.) */
 	let SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2" + (IE || (State.isAndroid && !State.isChrome) ? "|transform" : ""),
-		SVGAttributesRX = RegExp("^(" + SVGAttributes + ")$", "i");
+		SVGAttributesRX = RegExp("^(" + SVGAttributes + ")$", "i"),
+		camelCase: {[property: string]: string} = {};
 
 	export let Names = {
 		/* Camelcase a property name into its JavaScript notation (e.g. "background-color" ==> "backgroundColor").
 		 Camelcasing is used to normalize property names between and across calls. */
 		camelCase: function(property: string): string {
-			return property.replace(/-(\w)/g, function(match: string, subMatch: string) {
-				return subMatch.toUpperCase();
-			});
+			let fixed = camelCase[property];
+
+			if (!fixed) {
+				fixed = camelCase[property] = property.replace(/-([a-z])/g, function(match: string, subMatch: string) {
+					return subMatch.toUpperCase();
+				})
+			}
+			return fixed;
 		},
 		/* For SVG elements, some properties (namely, dimensional ones) are GET/SET via the element's HTML attributes (instead of via CSS styles). */
 		// TODO: Convert to Normalisations

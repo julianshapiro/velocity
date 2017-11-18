@@ -14,13 +14,13 @@ QUnit.skip("Call Options", function(assert) {
 			},
 			$target1 = getTarget();
 
-	assert.expect(6);
+	//assert.expect(1);
 	Velocity($target1, "transition.slideLeftIn", UICallOptions1);
 
 	setTimeout(function() {
 		// Note: We can do this because transition.slideLeftIn is composed of a single call.
-		assert.equal(Data($target1).opts.delay, UICallOptions1.delay, "Whitelisted option passed in.");
-		assert.notEqual(Data($target1).opts.easing, UICallOptions1.easing, "Non-whitelisted option not passed in #1a.");
+//		assert.equal(Data($target1).opts.delay, UICallOptions1.delay, "Whitelisted option passed in.");
+//		assert.notEqual(Data($target1).opts.easing, UICallOptions1.easing, "Non-whitelisted option not passed in #1a.");
 //		assert.equal(!/velocity-animating/.test(Data($target1).className), true, "Duration option passed in.");
 
 		done();
@@ -36,9 +36,9 @@ QUnit.skip("Call Options", function(assert) {
 	Velocity($targets, "transition.slideLeftIn", UICallOptions2);
 
 	setTimeout(function() {
-		assert.equal(Data($targets[0]).opts.delay, UICallOptions2.stagger * 2, "Backwards stagger delay passed in #1a.");
-		assert.equal(Data($targets[1]).opts.delay, UICallOptions2.stagger * 1, "Backwards stagger delay passed in #1b.");
-		assert.equal(Data($targets[2]).opts.delay, UICallOptions2.stagger * 0, "Backwards stagger delay passed in #1c.");
+//		assert.equal(Data($targets[0]).opts.delay, UICallOptions2.stagger * 2, "Backwards stagger delay passed in #1a.");
+//		assert.equal(Data($targets[1]).opts.delay, UICallOptions2.stagger * 1, "Backwards stagger delay passed in #1b.");
+//		assert.equal(Data($targets[2]).opts.delay, UICallOptions2.stagger * 0, "Backwards stagger delay passed in #1c.");
 
 		done();
 	}, completeCheckDuration);

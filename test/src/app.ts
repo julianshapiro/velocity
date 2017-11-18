@@ -92,8 +92,8 @@ function applyStartValues(element, startValues) {
 	});
 }
 
-function Data(element): ElementData { // TODO: :ElementData
-	return (Velocity as any).data.get(element.jquery ? element[0] : element);
+function Data(element): ElementData {
+	return (element.jquery ? element[0] : element).velocityData;
 }
 
 function getNow(): number {

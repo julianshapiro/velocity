@@ -409,11 +409,6 @@ interface ElementData {
 	 */
 	computedStyle?: CSSStyleDeclaration;
 	/**
-	 * TODO: Remove this, only here for obsolete tests
-	 * @deprecated
-	 */
-	opts?: VelocityOptions;
-	/**
 	 * Set when this Element has a running animation on it.
 	 */
 	isAnimating: boolean;

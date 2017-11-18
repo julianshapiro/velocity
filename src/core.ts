@@ -366,11 +366,6 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 
 				options._total++;
 				// TODO: Remove this and provide better tests
-				data.opts = {
-					duration: options.duration,
-					easing: options.easing,
-					complete: options.complete
-				} as any;
 				animations.push(animation);
 				VelocityStatic.queue(element, animation, animation.queue);
 			}

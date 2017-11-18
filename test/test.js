@@ -1054,7 +1054,7 @@ QUnit.todo("Global Pause / Resume", function (assert) {
  */
 QUnit.skip("Reverse", function (assert) {
     var done = assert.async(1), testEasing = "spring", $target = getTarget();
-    assert.expect(5);
+    assert.expect(4);
     Velocity($target, { opacity: defaultProperties.opacity, width: defaultProperties.width }, { easing: testEasing });
     Velocity($target, "reverse", function () {
         //					assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target, "opacity")), defaultStyles.opacity, "Reversed to initial property #1.");
@@ -1067,7 +1067,7 @@ QUnit.skip("Reverse", function (assert) {
         assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target, "opacity")), defaultProperties.opacity, "Reversed to reversed property #1.");
         assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target, "width")), defaultProperties.width, "Reversed to reversed property #2.");
         /* Ensure the options were passed through until the end. */
-        assert.equal(Data($target).opts.easing, testEasing, "Options object passed through.");
+        //		assert.equal(Data($target).opts.easing, testEasing, "Options object passed through.");
         done();
     });
 });
@@ -1487,12 +1487,12 @@ QUnit.skip("Call Options", function (assert) {
         duration: defaultOptions.duration,
         easing: "spring" // Should get ignored
     }, $target1 = getTarget();
-    assert.expect(6);
+    //assert.expect(1);
     Velocity($target1, "transition.slideLeftIn", UICallOptions1);
     setTimeout(function () {
         // Note: We can do this because transition.slideLeftIn is composed of a single call.
-        assert.equal(Data($target1).opts.delay, UICallOptions1.delay, "Whitelisted option passed in.");
-        assert.notEqual(Data($target1).opts.easing, UICallOptions1.easing, "Non-whitelisted option not passed in #1a.");
+        //		assert.equal(Data($target1).opts.delay, UICallOptions1.delay, "Whitelisted option passed in.");
+        //		assert.notEqual(Data($target1).opts.easing, UICallOptions1.easing, "Non-whitelisted option not passed in #1a.");
         //		assert.equal(!/velocity-animating/.test(Data($target1).className), true, "Duration option passed in.");
         done();
     }, completeCheckDuration);
@@ -1504,9 +1504,9 @@ QUnit.skip("Call Options", function (assert) {
     var $targets = [getTarget(), getTarget(), getTarget()];
     Velocity($targets, "transition.slideLeftIn", UICallOptions2);
     setTimeout(function () {
-        assert.equal(Data($targets[0]).opts.delay, UICallOptions2.stagger * 2, "Backwards stagger delay passed in #1a.");
-        assert.equal(Data($targets[1]).opts.delay, UICallOptions2.stagger * 1, "Backwards stagger delay passed in #1b.");
-        assert.equal(Data($targets[2]).opts.delay, UICallOptions2.stagger * 0, "Backwards stagger delay passed in #1c.");
+        //		assert.equal(Data($targets[0]).opts.delay, UICallOptions2.stagger * 2, "Backwards stagger delay passed in #1a.");
+        //		assert.equal(Data($targets[1]).opts.delay, UICallOptions2.stagger * 1, "Backwards stagger delay passed in #1b.");
+        //		assert.equal(Data($targets[2]).opts.delay, UICallOptions2.stagger * 0, "Backwards stagger delay passed in #1c.");
         done();
     }, completeCheckDuration);
 });
@@ -1734,7 +1734,7 @@ function applyStartValues(element, startValues) {
     });
 }
 function Data(element) {
-    return Velocity.data.get(element.jquery ? element[0] : element);
+    return (element.jquery ? element[0] : element).velocityData;
 }
 function getNow() {
     return performance && performance.now ? performance.now() : Date.now();

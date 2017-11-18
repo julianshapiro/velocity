@@ -337,10 +337,10 @@ var VelocityStatic;
             activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
             activeCall.started = false;
         } else {
-            var elements = activeCall.elements, element = activeCall.element, data_1 = Data(element);
+            var elements = activeCall.elements, element = activeCall.element, data = Data(element);
             // TODO: Need to check that there's no other animations running on this element
-            if (isStopped && data_1 && (queue === false || data_1.queueList[queue])) {
-                data_1.isAnimating = false;
+            if (isStopped && data && (queue === false || data.queueList[queue])) {
+                data.isAnimating = false;
             }
             // Remove the "velocity-animating" indicator class.
             VelocityStatic.CSS.Values.removeClass(element, "velocity-animating");
@@ -380,7 +380,7 @@ var VelocityStatic;
              which would have already caused the next call to fire. Note: Even if the end of the animation queue has been reached,
              dequeue() must still be called in order to completely clear jQuery's animation queue. */
             if (queue !== false) {
-                data_1.lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration);
+                data.lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration);
                 VelocityStatic.dequeue(element, queue);
             }
             /************************
@@ -764,14 +764,18 @@ var VelocityStatic;
          CSS Property Names
          ************************/
         /* Certain browsers require an SVG transform to be applied as an attribute. (Otherwise, application via CSS is preferable due to 3D support.) */
-        var SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2" + (IE || VelocityStatic.State.isAndroid && !VelocityStatic.State.isChrome ? "|transform" : ""), SVGAttributesRX = RegExp("^(" + SVGAttributes + ")$", "i");
+        var SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2" + (IE || VelocityStatic.State.isAndroid && !VelocityStatic.State.isChrome ? "|transform" : ""), SVGAttributesRX = RegExp("^(" + SVGAttributes + ")$", "i"), camelCase = {};
         CSS.Names = {
             /* Camelcase a property name into its JavaScript notation (e.g. "background-color" ==> "backgroundColor").
              Camelcasing is used to normalize property names between and across calls. */
             camelCase: function(property) {
-                return property.replace(/-(\w)/g, function(match, subMatch) {
-                    return subMatch.toUpperCase();
-                });
+                var fixed = camelCase[property];
+                if (!fixed) {
+                    fixed = camelCase[property] = property.replace(/-([a-z])/g, function(match, subMatch) {
+                        return subMatch.toUpperCase();
+                    });
+                }
+                return fixed;
             },
             /* For SVG elements, some properties (namely, dimensional ones) are GET/SET via the element's HTML attributes (instead of via CSS styles). */
             // TODO: Convert to Normalisations
@@ -2045,17 +2049,13 @@ var VelocityStatic;
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    VelocityStatic.data = new WeakMap();
-})(VelocityStatic || (VelocityStatic = {}));
-
 function Data(element, value) {
     if (value) {
-        VelocityStatic.data.set(element, value);
+        Object.defineProperty(element, "velocityData", {
+            value: value
+        });
     } else {
-        return VelocityStatic.data.get(element);
+        return element.velocityData;
     }
 }
 
@@ -2375,12 +2375,12 @@ var VelocityStatic;
             if (!isString(queue)) {
                 queue = "";
             }
-            var data_2 = Data(element), last = data_2.queueList[queue];
+            var data = Data(element), last = data.queueList[queue];
             if (!last) {
                 if (last === null) {
-                    data_2.queueList[queue] = animation;
+                    data.queueList[queue] = animation;
                 } else {
-                    data_2.queueList[queue] = null;
+                    data.queueList[queue] = null;
                     animate(animation);
                 }
             } else {
@@ -2403,14 +2403,14 @@ var VelocityStatic;
             if (!isString(queue)) {
                 queue = "";
             }
-            var data_3 = Data(element), animation = data_3.queueList[queue];
+            var data = Data(element), animation = data.queueList[queue];
             if (animation) {
-                data_3.queueList[queue] = animation._next || null;
+                data.queueList[queue] = animation._next || null;
                 if (!skip) {
                     animate(animation);
                 }
             } else if (animation === null) {
-                delete data_3.queueList[queue];
+                delete data.queueList[queue];
             }
             return animation;
         }
@@ -2435,9 +2435,9 @@ var VelocityStatic;
         }
         var queue = getValue(animation.queue, animation.options.queue, VelocityStatic.defaults.queue);
         if (queue !== false) {
-            var data_4 = Data(animation.element);
-            if (data_4) {
-                data_4.lastAnimationList[queue] = animation;
+            var data = Data(animation.element);
+            if (data) {
+                data.lastAnimationList[queue] = animation;
                 animation._next = animation._prev = undefined;
             }
         }
@@ -2769,6 +2769,29 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
+    /**
+     *
+     */
+    function callBegin(activeCall) {
+        try {
+            var elements = activeCall.elements;
+            activeCall.options.begin.call(elements, elements, activeCall);
+        } catch (error) {
+            setTimeout(function() {
+                throw error;
+            }, 1);
+        }
+    }
+    function callProgress(activeCall, timeCurrent) {
+        try {
+            var elements = activeCall.elements, percentComplete = activeCall.percentComplete, options = activeCall.options, tweenValue = activeCall.tweens["tween"];
+            activeCall.options.progress.call(elements, elements, percentComplete, Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, VelocityStatic.defaults.duration) - timeCurrent), activeCall.timeStart, tweenValue ? tweenValue.currentValue : String(percentComplete), activeCall);
+        } catch (error) {
+            setTimeout(function() {
+                throw error;
+            }, 1);
+        }
+    }
     /**************
      Timing
      **************/
@@ -2859,48 +2882,46 @@ var VelocityStatic;
                 /* Iterate through each active call. */
                 for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
                     nextCall = activeCall._next;
-                    /************************
-                     Call-Wide Variables
-                     ************************/
-                    var element = activeCall.element, data_5 = Data(element);
-                    /* Check to see if this element has been deleted midway through the animation by checking for the
-                     continued existence of its data cache. If it's gone then end this animation. */
-                    if (!data_5) {
+                    var element = activeCall.element, data = void 0;
+                    // Check to see if this element has been deleted midway
+                    // through the animation. If it's gone then end this
+                    // animation.
+                    if (!element.parentNode || !(data = Data(element))) {
+                        // TODO: Remove safely - decrease count, delete data, remove from arrays
                         VelocityStatic.freeAnimationCall(activeCall);
                         continue;
                     }
-                    var timeStart = activeCall.timeStart, options = activeCall.options, paused = activeCall.paused, delay = getValue(activeCall.delay, options.delay), started = activeCall.started, firstTick = !timeStart;
-                    /* If timeStart is undefined, then this is the first time that this call has been processed by tick().
-                     We assign timeStart now so that its value is as close to the real animation start time as possible.
-                     (Conversely, had timeStart been defined when this call was added to Velocity.State.calls, the delay
-                     between that time and now would cause the first few frames of the tween to be skipped since
-                     percentComplete is calculated relative to timeStart.) */
-                    /* Further, subtract 16ms (the approximate resolution of RAF) from the current time value so that the
-                     first tick iteration isn't wasted by animating at 0% tween completion, which would produce the
-                     same style value as the element's current value. */
+                    // Don't bother getting until we can use these.
+                    var timeStart = activeCall.timeStart, options = activeCall.options, paused = activeCall.paused, firstTick = !timeStart;
+                    // If this is the first time that this call has been
+                    // processed by tick() then we assign timeStart now so that
+                    // it's value is as close to the real animation start time
+                    // as possible.
                     if (firstTick) {
                         var queue_1 = getValue(activeCall.queue, options.queue);
                         timeStart = timeCurrent - deltaTime;
                         if (queue_1 !== false) {
-                            timeStart = Math.max(timeStart, data_5.lastFinishList[queue_1] || 0);
+                            timeStart = Math.max(timeStart, data.lastFinishList[queue_1] || 0);
                         }
                         activeCall.timeStart = timeStart;
                     }
-                    /* If a pause key is present, skip processing unless it has been set to resume */
+                    // If this animation is paused then skip processing unless
+                    // it has been set to resume.
                     if (paused === true) {
-                        /* Update the time start to accomodate the paused completion amount */
+                        // Update the time start to accomodate the paused
+                        // completion amount.
                         activeCall.timeStart += deltaTime;
                         continue;
                     } else if (paused === false) {
-                        /* Remove pause key after processing */
+                        // Remove pause key after processing.
                         delete activeCall.paused;
                     }
-                    /*******************
-                     Option: Begin
-                     *******************/
-                    if (!started) {
-                        // Make sure anything we've delayed doesn't start animating yet
-                        // There might still be an active delay after something has been un-paused
+                    // Don't bother getting until we can use these.
+                    var delay = getValue(activeCall.delay, options.delay);
+                    if (!activeCall.started) {
+                        // Make sure anything we've delayed doesn't start
+                        // animating yet, there might still be an active delay
+                        // after something has been un-paused
                         if (delay) {
                             if (timeStart + delay > timeCurrent) {
                                 continue;
@@ -2909,21 +2930,16 @@ var VelocityStatic;
                         }
                         // TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
                         activeCall.started = true;
-                        /* Apply the "velocity-animating" indicator class. */
+                        // Apply the "velocity-animating" indicator class.
                         VelocityStatic.CSS.Values.addClass(element, "velocity-animating");
-                        /* The begin callback is fired once per call -- not once per element -- and is passed the full raw DOM element set as both its context and its first argument. */
+                        // The begin callback is fired once per call, not once
+                        // per element, and is passed the full raw DOM element
+                        // set as both its context and its first argument.
                         if (options && options._started++ === 0) {
                             options._first = activeCall;
                             if (options.begin) {
-                                /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
-                                try {
-                                    var elements = activeCall.elements;
-                                    options.begin.call(elements, elements, activeCall);
-                                } catch (error) {
-                                    setTimeout(function() {
-                                        throw error;
-                                    }, 1);
-                                }
+                                // Pass to an external fn with a try/catch block for optimisation
+                                callBegin(activeCall);
                                 // Only called once, even if reversed or repeated
                                 options.begin = undefined;
                             }
@@ -2957,7 +2973,7 @@ var VelocityStatic;
                     }
                     for (var property in tweens) {
                         // For every element, iterate through each property.
-                        var tween = tweens[property], easing = tween.easing || activeEasing, pattern = tween.pattern, rounding = tween.rounding, i = 0;
+                        var tween = tweens[property], easing = tween.easing || activeEasing, pattern = tween.pattern, rounding = tween.rounding, currentValue = "", i = 0;
                         for (;i < pattern.length; i++) {
                             var startValue = tween.startValue[i];
                             if (startValue != null) {
@@ -2966,8 +2982,9 @@ var VelocityStatic;
                                 var result = easing(tween.reverse ? 1 - percentComplete : percentComplete, startValue, tween.endValue[i], property);
                                 pattern[i] = rounding && rounding[i] ? Math.round(result) : result;
                             }
+                            currentValue += pattern[i];
                         }
-                        var currentValue = "".concat.apply("", tween.pattern);
+                        //currentValue = "".concat.apply("", tween.pattern);
                         // If no value change is occurring, don't proceed with
                         // DOM updating.
                         if (firstTick || tween.currentValue !== currentValue) {
@@ -2985,9 +3002,8 @@ var VelocityStatic;
                 // Progress callback
                 for (activeCall = firstProgress; activeCall; activeCall = nextCall) {
                     nextCall = activeCall._nextProgress;
-                    var options = activeCall.options;
-                    /* Pass the elements and the timing data (percentComplete, msRemaining, timeStart, tweenDummyValue) into the progress callback. */
-                    activeCall.options.progress.call(activeCall.elements, activeCall.elements, activeCall.percentComplete, Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, VelocityStatic.defaults.duration) - timeCurrent), activeCall.timeStart, (activeCall.tweens["tween"] || {}).currentValue, activeCall);
+                    // Pass to an external fn with a try/catch block for optimisation
+                    callProgress(activeCall, timeCurrent);
                 }
                 // Complete animations, including complete callback or looping
                 for (activeCall = firstComplete; activeCall; activeCall = nextCall) {
@@ -3046,7 +3062,7 @@ var VelocityStatic;
         VelocityStatic.State.firstNew = activeCall._next;
         /* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
         if (isNode(element)) {
-            var data_6 = Data(element), lastAnimation = void 0, /* A container for the processed data associated with each property in the propertyMap.
+            var data = Data(element), lastAnimation = void 0, /* A container for the processed data associated with each property in the propertyMap.
              (Each property in the map produces its own "tween".) */
             propertiesMap = activeCall.properties;
             //		if (action === "reverse") {
@@ -3143,8 +3159,8 @@ var VelocityStatic;
              to transfer over end values to use as start values. If it's set to true and there is a previous
              Velocity call to pull values from, do so. */
             var queue_2 = getValue(activeCall.queue, options.queue, VelocityStatic.defaults.queue);
-            if (data_6 && data_6.isAnimating && queue_2 !== false) {
-                lastAnimation = data_6.lastAnimationList[queue_2];
+            if (data && data.isAnimating && queue_2 !== false) {
+                lastAnimation = data.lastAnimationList[queue_2];
             }
             /* Create a tween out of each property, and append its associated data to tweensContainer. */
             if (propertiesMap) {
@@ -3191,7 +3207,7 @@ var VelocityStatic;
                      Property support is determined via prefixCheck(), which returns a false flag when no supported is detected. */
                     /* Note: Since SVG elements have some of their properties directly applied as HTML attributes,
                      there is no way to check for their explicit browser support, and so we skip skip this check for them. */
-                    if ((!data_6 || !data_6.isSVG) && propertyName !== "tween" && VelocityStatic.CSS.Normalizations[propertyName] === undefined && (!VelocityStatic.State.prefixElement || !isString(VelocityStatic.State.prefixElement.style[propertyName]))) {
+                    if ((!data || !data.isSVG) && propertyName !== "tween" && VelocityStatic.CSS.Normalizations[propertyName] === undefined && (!VelocityStatic.State.prefixElement || !isString(VelocityStatic.State.prefixElement.style[propertyName]))) {
                         if (VelocityStatic.debug) {
                             console.log("Skipping [" + propertyName + "] due to a lack of browser support.");
                         }
@@ -3571,13 +3587,13 @@ var VelocityStatic;
             /*****************
              Call Push
              *****************/
-            if (data_6) {
+            if (data) {
                 /* Store the tweensContainer and options if we're working on the default effects queue, so that they can be used by the reverse or repeat commands. */
                 if (queue_2 !== false) {
-                    data_6.lastAnimationList[queue_2] = activeCall;
+                    data.lastAnimationList[queue_2] = activeCall;
                 }
                 /* Switch on the element's animating flag. */
-                data_6.isAnimating = true;
+                data.isAnimating = true;
             }
         }
     }

@@ -9,6 +9,42 @@
 
 namespace VelocityStatic {
 
+	/**
+	 * 
+	 */
+	function callBegin(activeCall: AnimationCall) {
+		try {
+			let elements = activeCall.elements;
+
+			activeCall.options.begin.call(elements, elements, activeCall);
+		} catch (error) {
+			setTimeout(function() {
+				throw error;
+			}, 1);
+		}
+	}
+
+	function callProgress(activeCall: AnimationCall, timeCurrent: number) {
+		try {
+			let elements = activeCall.elements,
+				percentComplete = activeCall.percentComplete,
+				options = activeCall.options,
+				tweenValue = activeCall.tweens["tween"];
+
+			activeCall.options.progress.call(elements,
+				elements,
+				percentComplete,
+				Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, defaults.duration) - timeCurrent),
+				activeCall.timeStart,
+				tweenValue ? tweenValue.currentValue : String(percentComplete),
+				activeCall);
+		} catch (error) {
+			setTimeout(function() {
+				throw error;
+			}, 1);
+		}
+	}
+
 	/**************
 	 Timing
 	 **************/
@@ -123,34 +159,27 @@ namespace VelocityStatic {
 				/* Iterate through each active call. */
 				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
 					nextCall = activeCall._next;
-					/************************
-					 Call-Wide Variables
-					 ************************/
 					let element = activeCall.element,
-						data = Data(element);
+						data: ElementData;
 
-					/* Check to see if this element has been deleted midway through the animation by checking for the
-					 continued existence of its data cache. If it's gone then end this animation. */
-					if (!data) {
+					// Check to see if this element has been deleted midway
+					// through the animation. If it's gone then end this
+					// animation.
+					if (!element.parentNode || !(data = Data(element))) {
+						// TODO: Remove safely - decrease count, delete data, remove from arrays
 						freeAnimationCall(activeCall);
 						continue;
 					}
-
+					// Don't bother getting until we can use these.
 					let timeStart = activeCall.timeStart,
 						options = activeCall.options,
 						paused = activeCall.paused,
-						delay = getValue(activeCall.delay, options.delay),
-						started = activeCall.started,
 						firstTick = !timeStart;
 
-					/* If timeStart is undefined, then this is the first time that this call has been processed by tick().
-					 We assign timeStart now so that its value is as close to the real animation start time as possible.
-					 (Conversely, had timeStart been defined when this call was added to Velocity.State.calls, the delay
-					 between that time and now would cause the first few frames of the tween to be skipped since
-					 percentComplete is calculated relative to timeStart.) */
-					/* Further, subtract 16ms (the approximate resolution of RAF) from the current time value so that the
-					 first tick iteration isn't wasted by animating at 0% tween completion, which would produce the
-					 same style value as the element's current value. */
+					// If this is the first time that this call has been
+					// processed by tick() then we assign timeStart now so that
+					// it's value is as close to the real animation start time
+					// as possible.
 					if (firstTick) {
 						let queue = getValue(activeCall.queue, options.queue);
 
@@ -160,24 +189,24 @@ namespace VelocityStatic {
 						}
 						activeCall.timeStart = timeStart;
 					}
-
-					/* If a pause key is present, skip processing unless it has been set to resume */
+					// If this animation is paused then skip processing unless
+					// it has been set to resume.
 					if (paused === true) {
-						/* Update the time start to accomodate the paused completion amount */
+						// Update the time start to accomodate the paused
+						// completion amount.
 						activeCall.timeStart += deltaTime;
 						continue;
 					} else if (paused === false) {
-						/* Remove pause key after processing */
+						// Remove pause key after processing.
 						delete activeCall.paused;
 					}
+					// Don't bother getting until we can use these.
+					let delay = getValue(activeCall.delay, options.delay);
 
-					/*******************
-					 Option: Begin
-					 *******************/
-
-					if (!started) {
-						// Make sure anything we've delayed doesn't start animating yet
-						// There might still be an active delay after something has been un-paused
+					if (!activeCall.started) {
+						// Make sure anything we've delayed doesn't start
+						// animating yet, there might still be an active delay
+						// after something has been un-paused
 						if (delay) {
 							if (timeStart + delay > timeCurrent) {
 								continue;
@@ -188,23 +217,16 @@ namespace VelocityStatic {
 						// TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
 
 						activeCall.started = true;
-						/* Apply the "velocity-animating" indicator class. */
+						// Apply the "velocity-animating" indicator class.
 						CSS.Values.addClass(element, "velocity-animating");
-
-						/* The begin callback is fired once per call -- not once per element -- and is passed the full raw DOM element set as both its context and its first argument. */
+						// The begin callback is fired once per call, not once
+						// per element, and is passed the full raw DOM element
+						// set as both its context and its first argument.
 						if (options && options._started++ === 0) {
 							options._first = activeCall;
 							if (options.begin) {
-								/* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
-								try {
-									let elements = activeCall.elements;
-
-									options.begin.call(elements, elements, activeCall);
-								} catch (error) {
-									setTimeout(function() {
-										throw error;
-									}, 1);
-								}
+								// Pass to an external fn with a try/catch block for optimisation
+								callBegin(activeCall);
 								// Only called once, even if reversed or repeated
 								options.begin = undefined;
 							}
@@ -251,6 +273,7 @@ namespace VelocityStatic {
 							easing = tween.easing || activeEasing,
 							pattern = tween.pattern,
 							rounding = tween.rounding,
+							currentValue = "",
 							i = 0;
 
 						for (; i < pattern.length; i++) {
@@ -263,8 +286,9 @@ namespace VelocityStatic {
 
 								pattern[i] = rounding && rounding[i] ? Math.round(result) : result;
 							}
+							currentValue += pattern[i];
 						}
-						let currentValue = "".concat.apply("", tween.pattern);
+						//currentValue = "".concat.apply("", tween.pattern);
 
 						// If no value change is occurring, don't proceed with
 						// DOM updating.
@@ -285,16 +309,8 @@ namespace VelocityStatic {
 				// Progress callback
 				for (activeCall = firstProgress; activeCall; activeCall = nextCall) {
 					nextCall = activeCall._nextProgress;
-					let options = activeCall.options;
-
-					/* Pass the elements and the timing data (percentComplete, msRemaining, timeStart, tweenDummyValue) into the progress callback. */
-					activeCall.options.progress.call(activeCall.elements,
-						activeCall.elements,
-						activeCall.percentComplete,
-						Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, defaults.duration) - timeCurrent),
-						activeCall.timeStart,
-						(activeCall.tweens["tween"] || {} as Tween).currentValue,
-						activeCall);
+					// Pass to an external fn with a try/catch block for optimisation
+					callProgress(activeCall, timeCurrent);
 				}
 				// Complete animations, including complete callback or looping
 				for (activeCall = firstComplete; activeCall; activeCall = nextCall) {
