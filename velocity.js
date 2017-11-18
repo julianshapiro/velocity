@@ -2963,7 +2963,7 @@ var VelocityStatic;
                             if (startValue != null) {
                                 // All easings must deal with numbers except for
                                 // our internal ones
-                                var result = easing(tween.reverse ? 1 - percentComplete : percentComplete, tween.endValue[i], startValue, property);
+                                var result = easing(tween.reverse ? 1 - percentComplete : percentComplete, startValue, tween.endValue[i], property);
                                 pattern[i] = rounding && rounding[i] ? Math.round(result) : result;
                             }
                         }

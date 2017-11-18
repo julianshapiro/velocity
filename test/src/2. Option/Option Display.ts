@@ -5,9 +5,8 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.todo("Display", function(assert) {
-	var done = assert.async(3),
-		testDisplayBlank = "";
+QUnit.test("Display", function(assert) {
+	var done = assert.async(3);
 
 	Velocity(getTarget(), "style", "display", "none")
 		.velocity({display: "block"}, {

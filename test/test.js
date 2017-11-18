@@ -474,8 +474,8 @@ QUnit.test("Delay (Note: Browser Tab Must Have Focus Due to rAF)", function (ass
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.todo("Display", function (assert) {
-    var done = assert.async(3), testDisplayBlank = "";
+QUnit.test("Display", function (assert) {
+    var done = assert.async(3);
     Velocity(getTarget(), "style", "display", "none")
         .velocity({ display: "block" }, {
         progress: once(function (elements) {
@@ -842,7 +842,7 @@ QUnit.todo("Finish / FinishAll", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.todo("Pause / Resume", function (assert) {
+QUnit.test("Pause / Resume", function (assert) {
     var done = assert.async(8), $target1 = getTarget(), $target1d = getTarget(); //delayed
     assert.expect(7);
     /* Ensure an error isn't thrown when "pause" is called on a $target that isn't animating. */
@@ -980,7 +980,7 @@ QUnit.todo("Pause / Resume", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.test("Global Pause / Resume", function (assert) {
+QUnit.todo("Global Pause / Resume", function (assert) {
     var done = assert.async(4), $target1 = getTarget(), $target2 = getTarget(), $target3 = getTarget(), $target4 = getTarget(), isPaused = false, hasProgressed2 = false;
     assert.expect(3);
     Velocity($target1, { opacity: 0 }, Object.assign({}, defaultOptions, {

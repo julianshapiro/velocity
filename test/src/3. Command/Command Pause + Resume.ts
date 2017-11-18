@@ -5,7 +5,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.todo("Pause / Resume", function(assert) {
+QUnit.test("Pause / Resume", function(assert) {
 	var done = assert.async(8),
 		$target1 = getTarget(),
 		$target1d = getTarget(); //delayed
@@ -21,9 +21,9 @@ QUnit.todo("Pause / Resume", function(assert) {
 
 	/* Ensure a paused $target ceases to animate */
 	Velocity($target1, {opacity: 0}, defaultOptions);
-//	assert.notEqual(Data($target1).isPaused, true, "Newly active call not paused.");
+	//	assert.notEqual(Data($target1).isPaused, true, "Newly active call not paused.");
 	Velocity($target1d, {opacity: 0}, Object.assign({}, defaultOptions, {delay: 200}));
-//	assert.notEqual(Data($target1d).isPaused, true, "New call with delay not paused.");
+	//	assert.notEqual(Data($target1d).isPaused, true, "New call with delay not paused.");
 
 	Velocity($target1, "pause");
 	Velocity($target1d, "pause");
