@@ -245,13 +245,8 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			// Need the extra fallback here in case it supplies an invalid
 			// easing that we need to overrride with the default.
 			options.easing = validateEasing(getValue(optionsMap.easing, defaults.easing), options.duration) || validateEasing(defaults.easing, options.duration);
-			if (optionsMap.loop !== undefined) {
-				options.loop = validateLoop(optionsMap.loop) || 0;
-			}
-			if (optionsMap.repeat !== undefined) {
-				options.repeat = validateRepeat(optionsMap.repeat) || 0;
-				options.repeatAgain = validateRepeat(optionsMap.repeat) || 0;
-			}
+			options.loop = getValue(validateLoop(optionsMap.loop), defaults.loop);
+			options.repeat = options.repeatAgain = getValue(validateRepeat(optionsMap.repeat), defaults.repeat);
 			if (optionsMap.speed !== undefined) {
 				options.speed = validateSpeed(optionsMap.speed) || 0;
 			}
@@ -303,6 +298,8 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			if (complete !== undefined) {
 				options.complete = complete;
 			}
+			options.loop = defaults.loop;
+			options.repeat = options.repeatAgain = defaults.repeat;
 		}
 
 		/*************************

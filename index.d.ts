@@ -453,41 +453,7 @@ interface ScrollData {
 	alternateValue?: number;
 }
 
-interface Tween {
-	/*
-	 * The current value for this tween.
-	 */
-	currentValue?: string;
-	/**
-	 * Per property easing
-	 */
-	easing?: VelocityEasingFn;
-	/**
-	 * The end values for this tween.
-	 */
-	endValue: (string | number)[];
-	/**
-	 * This is an array of string values interspaced with numbers that are
-	 * tweened from the startValue and endValue arrays. The final pattern is
-	 * joined into a single string to be set as the property value.
-	 */
-	pattern: (string | number)[];
-	/**
-	 * If an animation is reversed then the easing is also reversed.
-	 */
-	reverse?: boolean;
-	/**
-	 * This is an array that matches in position the start and end values. When
-	 * a value is true then it means that the array index needs to be rounded to
-	 * a whole number (currently only needed for RGB() style values). If no
-	 * values are rounded then this array will not exist.
-	 */
-	rounding?: boolean[];
-	/**
-	 * The start values for this tween.
-	 */
-	startValue: (string | number)[];
-}
+type VelocityTween = [(string | number)[], VelocityEasingFn, (string | number)[], (string | number)[], boolean[]];
 
 interface AnimationCall extends StrictVelocityOptions {
 	/**
@@ -516,9 +482,20 @@ interface AnimationCall extends StrictVelocityOptions {
 	 */
 	_nextComplete?: AnimationCall;
 	/**
+	 * If an animation is reversed such as for a loop.
+	 * 
+	 * @private
+	 */
+	_reverse?: boolean;
+	/**
 	 * Properties to be tweened
 	 */
-	tweens?: {[property: string]: Tween};
+	tweens?: {[property: string]: VelocityTween};
+	/**
+	 * The current value for the "tween" property, defaults to a percentage if
+	 * not used.
+	 */
+	tween?: string;
 	/**
 	 * Valocity call properties - before processing when the animation goes
 	 * live.

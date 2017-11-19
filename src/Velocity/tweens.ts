@@ -6,6 +6,14 @@
  * Tweens
  */
 
+const enum Tween {
+	END,
+	EASING,
+	START,
+	PATTERN,
+	ROUNDING
+};
+
 namespace VelocityStatic {
 	/**
 	 * Expand all queued animations that haven't gone yet
@@ -566,13 +574,6 @@ namespace VelocityStatic {
 					//							break;
 					//					}
 
-					let tween: Tween = activeCall.tweens[propertyName] = {
-						currentValue: startValue,
-						endValue: arrayEnd,
-						pattern: pattern,
-						startValue: arrayStart
-					};
-
 					if (propertyName === "display") {
 						if (!/^(at-start|at-end|during)$/.test(easing)) {
 							easing = endValue === "none" ? "at-end" : "at-start";
@@ -582,16 +583,13 @@ namespace VelocityStatic {
 							easing = endValue === "hidden" ? "at-end" : "at-start";
 						}
 					}
-					if (easing) {
-						let validatedEasing = validateEasing(easing, duration);
-
-						if (validatedEasing) {
-							tween.easing = validatedEasing;
-						}
-					}
-					if (rounding) {
-						tween.rounding = rounding;
-					}
+					activeCall.tweens[propertyName] = [
+						arrayEnd,
+						validateEasing(easing, duration),
+						arrayStart,
+						pattern,
+						rounding
+					];
 					if (debug) {
 						console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(activeCall.tweens[propertyName]), element);
 					}

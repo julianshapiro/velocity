@@ -7,6 +7,22 @@
  */
 
 namespace VelocityStatic {
+	/**
+	 * Call the complete method of an animation in a separate function so it can
+	 * benefit from JIT compiling while still having a try/catch block.
+	 */
+	function callComplete(activeCall: AnimationCall) {
+		try {
+			let elements = activeCall.elements;
+
+			activeCall.options.complete.call(elements, elements, activeCall);
+		} catch (error) {
+			setTimeout(function() {
+				throw error;
+			}, 1);
+		}
+	}
+
 
 	/* Note: Unlike tick(), which processes all active calls at once, call completion is handled on a per-call basis. */
 	export function completeCall(activeCall: AnimationCall, isStopped?: boolean) {
@@ -18,7 +34,7 @@ namespace VelocityStatic {
 		 ****************************/
 
 		let options = activeCall.options,
-			queue = getValue(activeCall.queue, options.queue, defaults.queue),
+			queue = getValue(activeCall.queue, options.queue),
 			isLoop = getValue(activeCall.loop, options.loop, defaults.loop),
 			isRepeat = getValue(activeCall.repeat, options.repeat, defaults.repeat);
 
@@ -32,11 +48,7 @@ namespace VelocityStatic {
 				activeCall.repeat = getValue(activeCall.repeatAgain, options.repeatAgain, defaults.repeatAgain);
 			}
 			if (isLoop) {
-				for (let propertyName in tweens) {
-					let tweenContainer = tweens[propertyName];
-
-					tweenContainer.reverse = !tweenContainer.reverse;
-				}
+				activeCall._reverse = !activeCall._reverse;
 			}
 			if (queue !== false) {
 				Data(activeCall.element).lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, defaults.duration);
@@ -65,14 +77,7 @@ namespace VelocityStatic {
 				let complete = options.complete;
 
 				if (!isStopped && complete) {
-					/* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
-					try {
-						complete.call(elements, elements, activeCall);
-					} catch (error) {
-						setTimeout(function() {
-							throw error;
-						}, 1);
-					}
+					callComplete(activeCall);
 					// Only called once, even if reversed or repeated
 					delete options.complete;
 				}

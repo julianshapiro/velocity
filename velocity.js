@@ -118,7 +118,7 @@ function isSVG(variable) {
 }
 
 function isPlainObject(variable) {
-    if (!variable || String(variable) !== "[object Object]") {
+    if (!variable || typeof variable !== "object" || variable.nodeType || Object.prototype.toString.call(variable) !== "[object Object]") {
         return false;
     }
     var proto = Object.getPrototypeOf(variable);
@@ -309,6 +309,20 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
+    /**
+     * Call the complete method of an animation in a separate function so it can
+     * benefit from JIT compiling while still having a try/catch block.
+     */
+    function callComplete(activeCall) {
+        try {
+            var elements = activeCall.elements;
+            activeCall.options.complete.call(elements, elements, activeCall);
+        } catch (error) {
+            setTimeout(function() {
+                throw error;
+            }, 1);
+        }
+    }
     /* Note: Unlike tick(), which processes all active calls at once, call completion is handled on a per-call basis. */
     function completeCall(activeCall, isStopped) {
         //		console.log("complete", activeCall)
@@ -316,7 +330,7 @@ var VelocityStatic;
         /****************************
          Option: Loop || Repeat
          ****************************/
-        var options = activeCall.options, queue = getValue(activeCall.queue, options.queue, VelocityStatic.defaults.queue), isLoop = getValue(activeCall.loop, options.loop, VelocityStatic.defaults.loop), isRepeat = getValue(activeCall.repeat, options.repeat, VelocityStatic.defaults.repeat);
+        var options = activeCall.options, queue = getValue(activeCall.queue, options.queue), isLoop = getValue(activeCall.loop, options.loop, VelocityStatic.defaults.loop), isRepeat = getValue(activeCall.repeat, options.repeat, VelocityStatic.defaults.repeat);
         if (!isStopped && (isLoop || isRepeat)) {
             var tweens = activeCall.tweens;
             if (isRepeat && isRepeat !== true) {
@@ -326,10 +340,7 @@ var VelocityStatic;
                 activeCall.repeat = getValue(activeCall.repeatAgain, options.repeatAgain, VelocityStatic.defaults.repeatAgain);
             }
             if (isLoop) {
-                for (var propertyName in tweens) {
-                    var tweenContainer = tweens[propertyName];
-                    tweenContainer.reverse = !tweenContainer.reverse;
-                }
+                activeCall._reverse = !activeCall._reverse;
             }
             if (queue !== false) {
                 Data(activeCall.element).lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration);
@@ -352,14 +363,7 @@ var VelocityStatic;
             if (options && ++options._completed === options._total) {
                 var complete = options.complete;
                 if (!isStopped && complete) {
-                    /* We throw callbacks in a setTimeout so that thrown errors don't halt the execution of Velocity itself. */
-                    try {
-                        complete.call(elements, elements, activeCall);
-                    } catch (error) {
-                        setTimeout(function() {
-                            throw error;
-                        }, 1);
-                    }
+                    callComplete(activeCall);
                     // Only called once, even if reversed or repeated
                     delete options.complete;
                 }
@@ -1016,29 +1020,15 @@ var VelocityStatic;
 (function(VelocityStatic) {
     var CSS;
     (function(CSS) {
-        /* The singular setPropertyValue, which routes the logic for all normalizations, hooks, and standard CSS properties. */
+        /**
+         * The singular setPropertyValue, which routes the logic for all
+         * normalizations, hooks, and standard CSS properties.
+         */
         function setPropertyValue(element, propertyName, propertyValue) {
             var data = Data(element);
-            if (!data || data.cache[propertyName] !== propertyValue) {
-                if (data) {
-                    data.cache[propertyName] = propertyValue;
-                }
-                //			if (IE <= 8) {
-                //				try {
-                //					/* A try/catch is used for IE<=8, which throws an error when "invalid" CSS values are set, e.g. a negative width.
-                //					 Try/catch is avoided for other browsers since it incurs a performance overhead. */
-                //					if (Normalizations[propertyName]) {
-                //						Normalizations[propertyName](element, propertyValue);
-                //					} else {
-                //						element.style[propertyName] = propertyValue;
-                //					}
-                //				} catch (error) {
-                //					if (debug) {
-                //						console.log("Browser does not support [" + propertyValue + "] for [" + propertyName + "]");
-                //					}
-                //				}
-                //			} else {
-                if (CSS.Normalizations[propertyName] && CSS.Normalizations[propertyName](element, propertyValue) !== false) {} else if (data && data.isSVG && CSS.Names.SVGAttribute(propertyName)) {
+            if (data && data.cache[propertyName] !== propertyValue) {
+                data.cache[propertyName] = propertyValue;
+                if (CSS.Normalizations[propertyName] && CSS.Normalizations[propertyName](element, propertyValue) !== false) {} else if (data.isSVG && CSS.Names.SVGAttribute(propertyName)) {
                     // TODO: Add this as Normalisations
                     /* Note: For SVG attributes, vendor-prefixed property names are never used. */
                     /* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
@@ -1046,7 +1036,6 @@ var VelocityStatic;
                 } else {
                     element.style[propertyName] = propertyValue;
                 }
-                //			}
                 if (VelocityStatic.debug >= 2) {
                     console.info("Set " + propertyName + ": " + propertyValue, element);
                 }
@@ -2756,7 +2745,8 @@ var VelocityStatic;
 
 (function(VelocityStatic) {
     /**
-     *
+     * Call the begin method of an animation in a separate function so it can
+     * benefit from JIT compiling while still having a try/catch block.
      */
     function callBegin(activeCall) {
         try {
@@ -2768,10 +2758,14 @@ var VelocityStatic;
             }, 1);
         }
     }
+    /**
+     * Call the progress method of an animation in a separate function so it can
+     * benefit from JIT compiling while still having a try/catch block.
+     */
     function callProgress(activeCall, timeCurrent) {
         try {
-            var elements = activeCall.elements, percentComplete = activeCall.percentComplete, options = activeCall.options, tweenValue = activeCall.tweens["tween"];
-            activeCall.options.progress.call(elements, elements, percentComplete, Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, VelocityStatic.defaults.duration) - timeCurrent), activeCall.timeStart, tweenValue ? tweenValue.currentValue : String(percentComplete), activeCall);
+            var elements = activeCall.elements, percentComplete = activeCall.percentComplete, options = activeCall.options, tweenValue = activeCall.tween;
+            activeCall.options.progress.call(elements, elements, percentComplete, Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, VelocityStatic.defaults.duration) - timeCurrent), activeCall.timeStart, tweenValue !== undefined ? tweenValue : String(percentComplete * 100), activeCall);
         } catch (error) {
             setTimeout(function() {
                 throw error;
@@ -2921,7 +2915,7 @@ var VelocityStatic;
                         // The begin callback is fired once per call, not once
                         // per element, and is passed the full raw DOM element
                         // set as both its context and its first argument.
-                        if (options && options._started++ === 0) {
+                        if (options._started++ === 0) {
                             options._first = activeCall;
                             if (options.begin) {
                                 // Pass to an external fn with a try/catch block for optimisation
@@ -2931,7 +2925,7 @@ var VelocityStatic;
                             }
                         }
                     }
-                    if (options && options._first === activeCall && options.progress) {
+                    if (options._first === activeCall && options.progress) {
                         activeCall._nextProgress = undefined;
                         if (lastProgress) {
                             lastProgress._nextProgress = lastProgress = activeCall;
@@ -2959,28 +2953,24 @@ var VelocityStatic;
                     }
                     for (var property in tweens) {
                         // For every element, iterate through each property.
-                        var tween = tweens[property], easing = tween.easing || activeEasing, pattern = tween.pattern, rounding = tween.rounding, currentValue = "", i = 0;
+                        var tween = tweens[property], easing = tween[1] || activeEasing, pattern = tween[3], rounding = tween[4], currentValue = "", i = 0;
                         for (;i < pattern.length; i++) {
-                            var startValue = tween.startValue[i];
+                            var startValue = tween[2][i];
                             if (startValue != null) {
                                 // All easings must deal with numbers except for
                                 // our internal ones
-                                var result = easing(tween.reverse ? 1 - percentComplete : percentComplete, startValue, tween.endValue[i], property);
+                                var result = easing(activeCall._reverse ? 1 - percentComplete : percentComplete, startValue, tween[0][i], property);
                                 pattern[i] = rounding && rounding[i] ? Math.round(result) : result;
                             }
                             currentValue += pattern[i];
                         }
-                        //currentValue = "".concat.apply("", tween.pattern);
-                        // If no value change is occurring, don't proceed with
-                        // DOM updating.
-                        if (firstTick || tween.currentValue !== currentValue) {
-                            tween.currentValue = currentValue;
+                        if (property === "tween") {
                             // Skip the fake 'tween' property as that is only
                             // passed into the progress callback.
-                            if (property !== "tween") {
-                                // TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-                                VelocityStatic.CSS.setPropertyValue(element, property, tween.currentValue);
-                            }
+                            activeCall.tween = currentValue;
+                        } else {
+                            // TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
+                            VelocityStatic.CSS.setPropertyValue(element, property, currentValue);
                         }
                     }
                 }
@@ -3031,6 +3021,16 @@ var VelocityStatic;
  *
  * Tweens
  */
+var Tween;
+
+(function(Tween) {
+    Tween[Tween["END"] = 0] = "END";
+    Tween[Tween["EASING"] = 1] = "EASING";
+    Tween[Tween["START"] = 2] = "START";
+    Tween[Tween["PATTERN"] = 3] = "PATTERN";
+    Tween[Tween["ROUNDING"] = 4] = "ROUNDING";
+})(Tween || (Tween = {}));
+
 var VelocityStatic;
 
 (function(VelocityStatic) {
@@ -3539,12 +3539,6 @@ var VelocityStatic;
                     //							endValue = startValue / endValue;
                     //							break;
                     //					}
-                    var tween = activeCall.tweens[propertyName] = {
-                        currentValue: startValue,
-                        endValue: arrayEnd,
-                        pattern: pattern,
-                        startValue: arrayStart
-                    };
                     if (propertyName === "display") {
                         if (!/^(at-start|at-end|during)$/.test(easing)) {
                             easing = endValue === "none" ? "at-end" : "at-start";
@@ -3554,15 +3548,7 @@ var VelocityStatic;
                             easing = endValue === "hidden" ? "at-end" : "at-start";
                         }
                     }
-                    if (easing) {
-                        var validatedEasing = validateEasing(easing, duration);
-                        if (validatedEasing) {
-                            tween.easing = validatedEasing;
-                        }
-                    }
-                    if (rounding) {
-                        tween.rounding = rounding;
-                    }
+                    activeCall.tweens[propertyName] = [ arrayEnd, validateEasing(easing, duration), arrayStart, pattern, rounding ];
                     if (VelocityStatic.debug) {
                         console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(activeCall.tweens[propertyName]), element);
                     }
@@ -4059,13 +4045,8 @@ function VelocityFn() {
             // Need the extra fallback here in case it supplies an invalid
             // easing that we need to overrride with the default.
             options.easing = validateEasing(getValue(optionsMap.easing, defaults.easing), options.duration) || validateEasing(defaults.easing, options.duration);
-            if (optionsMap.loop !== undefined) {
-                options.loop = validateLoop(optionsMap.loop) || 0;
-            }
-            if (optionsMap.repeat !== undefined) {
-                options.repeat = validateRepeat(optionsMap.repeat) || 0;
-                options.repeatAgain = validateRepeat(optionsMap.repeat) || 0;
-            }
+            options.loop = getValue(validateLoop(optionsMap.loop), defaults.loop);
+            options.repeat = options.repeatAgain = getValue(validateRepeat(optionsMap.repeat), defaults.repeat);
             if (optionsMap.speed !== undefined) {
                 options.speed = validateSpeed(optionsMap.speed) || 0;
             }
@@ -4110,6 +4091,8 @@ function VelocityFn() {
             if (complete !== undefined) {
                 options.complete = complete;
             }
+            options.loop = defaults.loop;
+            options.repeat = options.repeatAgain = defaults.repeat;
         }
         /*************************
          Part I: Pre-Queueing

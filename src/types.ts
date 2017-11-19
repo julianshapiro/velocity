@@ -51,7 +51,7 @@ function isSVG(variable): variable is SVGElement {
 }
 
 function isPlainObject(variable): variable is {} {
-	if (!variable || String(variable) !== "[object Object]") {
+	if (!variable || typeof variable !== "object" || variable.nodeType || Object.prototype.toString.call(variable) !== "[object Object]") {
 		return false;
 	}
 	let proto = Object.getPrototypeOf(variable) as Object;

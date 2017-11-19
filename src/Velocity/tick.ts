@@ -10,7 +10,8 @@
 namespace VelocityStatic {
 
 	/**
-	 * 
+	 * Call the begin method of an animation in a separate function so it can
+	 * benefit from JIT compiling while still having a try/catch block.
 	 */
 	function callBegin(activeCall: AnimationCall) {
 		try {
@@ -24,19 +25,23 @@ namespace VelocityStatic {
 		}
 	}
 
+	/**
+	 * Call the progress method of an animation in a separate function so it can
+	 * benefit from JIT compiling while still having a try/catch block.
+	 */
 	function callProgress(activeCall: AnimationCall, timeCurrent: number) {
 		try {
 			let elements = activeCall.elements,
 				percentComplete = activeCall.percentComplete,
 				options = activeCall.options,
-				tweenValue = activeCall.tweens["tween"];
+				tweenValue = activeCall.tween;
 
 			activeCall.options.progress.call(elements,
 				elements,
 				percentComplete,
 				Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, defaults.duration) - timeCurrent),
 				activeCall.timeStart,
-				tweenValue ? tweenValue.currentValue : String(percentComplete),
+				tweenValue !== undefined ? tweenValue : String(percentComplete * 100),
 				activeCall);
 		} catch (error) {
 			setTimeout(function() {
@@ -222,7 +227,7 @@ namespace VelocityStatic {
 						// The begin callback is fired once per call, not once
 						// per element, and is passed the full raw DOM element
 						// set as both its context and its first argument.
-						if (options && options._started++ === 0) {
+						if (options._started++ === 0) {
 							options._first = activeCall;
 							if (options.begin) {
 								// Pass to an external fn with a try/catch block for optimisation
@@ -232,7 +237,7 @@ namespace VelocityStatic {
 							}
 						}
 					}
-					if (options && options._first === activeCall && options.progress) {
+					if (options._first === activeCall && options.progress) {
 						activeCall._nextProgress = undefined;
 						if (lastProgress) {
 							lastProgress._nextProgress = lastProgress = activeCall;
@@ -270,36 +275,31 @@ namespace VelocityStatic {
 					for (let property in tweens) {
 						// For every element, iterate through each property.
 						let tween = tweens[property],
-							easing = tween.easing || activeEasing,
-							pattern = tween.pattern,
-							rounding = tween.rounding,
+							easing = tween[Tween.EASING] || activeEasing,
+							pattern = tween[Tween.PATTERN],
+							rounding = tween[Tween.ROUNDING],
 							currentValue = "",
 							i = 0;
 
 						for (; i < pattern.length; i++) {
-							let startValue = tween.startValue[i];
+							let startValue = tween[Tween.START][i];
 
 							if (startValue != null) {
 								// All easings must deal with numbers except for
 								// our internal ones
-								let result = easing(tween.reverse ? 1 - percentComplete : percentComplete, startValue as number, tween.endValue[i] as number, property)
+								let result = easing(activeCall._reverse ? 1 - percentComplete : percentComplete, startValue as number, tween[Tween.END][i] as number, property)
 
 								pattern[i] = rounding && rounding[i] ? Math.round(result) : result;
 							}
 							currentValue += pattern[i];
 						}
-						//currentValue = "".concat.apply("", tween.pattern);
-
-						// If no value change is occurring, don't proceed with
-						// DOM updating.
-						if (firstTick || tween.currentValue !== currentValue) {
-							tween.currentValue = currentValue;
+						if (property === "tween") {
 							// Skip the fake 'tween' property as that is only
 							// passed into the progress callback.
-							if (property !== "tween") {
-								// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-								CSS.setPropertyValue(element, property, tween.currentValue);
-							}
+							activeCall.tween = currentValue;
+						} else {
+							// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
+							CSS.setPropertyValue(element, property, currentValue);
 						}
 					}
 				}
