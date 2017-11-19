@@ -10,7 +10,6 @@
 ///<reference path="Option Queue.ts" />
 ///<reference path="Option Repeat.ts" />
 ///<reference path="Option Visibility.ts" />
-///<reference path="Queueing.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *

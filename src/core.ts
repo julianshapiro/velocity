@@ -358,7 +358,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			let element = elements[i];
 
 			if (isNode(element)) {
-				let data = Data(element) || VelocityStatic.init(element),
+				let data = Data(element), // Not used, just to force init
 					animation: AnimationCall = Object.assign({
 						element: element,
 						tweens: {}
@@ -367,7 +367,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 				options._total++;
 				// TODO: Remove this and provide better tests
 				animations.push(animation);
-				VelocityStatic.queue(element, animation, animation.queue);
+				VelocityStatic.queue(element, animation, getValue(animation.queue, options.queue));
 			}
 		}
 		/* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */

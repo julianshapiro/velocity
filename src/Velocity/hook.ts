@@ -12,11 +12,6 @@ namespace VelocityStatic {
 		elements = sanitizeElements(elements);
 
 		elements.forEach(function(element) {
-			/* Initialize Velocity's per-element data cache if this element hasn't previously been animated. */
-			if (Data(element) === undefined) {
-				VelocityStatic.init(element);
-			}
-
 			/* Get property value. If an element set was passed in, only return the value for the first element. */
 			if (arg3 === undefined) {
 				if (value === undefined) {

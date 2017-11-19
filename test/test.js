@@ -679,29 +679,52 @@ QUnit.test('Global Fps Limit', function (assert) { return __awaiter(_this, void 
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.todo("Queue", function (assert) {
-    var done = assert.async(1), testQueue = "custom";
-    assert.expect(5);
-    var $target1 = getTarget();
-    assert.ok(!Data($target1) || !Data($target1).queueList || !Data($target1).queueList.hasOwnProperty(testQueue), "Custom queue is empty.");
-    Velocity($target1, defaultProperties, { queue: testQueue });
-    assert.ok(Data($target1).queueList && Data($target1).queueList.hasOwnProperty(testQueue) && !Data($target1).queueList[testQueue], "Custom queue was created.");
-    Velocity($target1, defaultProperties, { queue: testQueue });
-    assert.ok(Data($target1).queueList && Data($target1).queueList.hasOwnProperty(testQueue) && Data($target1).queueList[testQueue], "Custom queue grows.");
-    Velocity($target1, defaultProperties, { queue: testQueue });
-    //			assert.equal(Data($target1).isAnimating, false, "Custom queue didn't auto-dequeue.");
-    //			Velocity.Utilities.dequeue($target1, testQueue);
-    //			assert.equal(Data($target1).isAnimating, true, "Dequeue custom queue.");
-    Velocity($target1, "stop", testQueue);
-    assert.ok(Data($target1).queueList && !Data($target1).queueList.hasOwnProperty(testQueue), "Stopped custom queue.");
-    var $target2 = getTarget();
-    Velocity($target2, { opacity: 0 });
-    Velocity($target2, { width: 10 }, { queue: false });
-    setTimeout(function () {
-        /* Ensure that the second call starts immediately. */
-        assert.notEqual(Velocity.CSS.getPropertyValue($target2, "width"), defaultStyles.width, "Parallel calls don't queue.");
-        done();
-    }, asyncCheckDuration);
+QUnit.test("Queue", function (assert) {
+    var done = assert.async(4), testQueue = "custom", $target = getTarget(), ignore = $target.velocity("style", "display"), // Force data creation
+    data = Data($target), anim1, anim2, anim3;
+    assert.expect(7);
+    assert.ok(data.queueList[testQueue] === undefined, "Custom queue is empty."); // Shouldn't exist
+    $target.velocity(defaultProperties, {
+        queue: testQueue,
+        begin: function () {
+            anim1 = true;
+        },
+        complete: function () {
+            anim1 = false;
+            assert.ok(!anim2, "Queued animation isn't started early.");
+            done();
+        }
+    });
+    assert.ok(data.queueList[testQueue] !== undefined, "Custom queue was created."); // Should exist, but be "null"
+    $target.velocity(defaultProperties, {
+        queue: testQueue,
+        begin: function () {
+            anim2 = true;
+            assert.ok(anim1 === false, "Queued animation starts after first.");
+            done();
+        },
+        complete: function () {
+            anim2 = false;
+        }
+    });
+    assert.ok(data.queueList[testQueue], "Custom queue grows."); // Should exist and point at the next animation
+    $target.velocity(defaultProperties, {
+        begin: function () {
+            anim3 = true;
+            assert.ok(anim1 === true, "Different queue animation starts in parallel.");
+            done();
+        },
+        complete: function () {
+            anim3 = false;
+        }
+    });
+    $target.velocity(defaultProperties, {
+        queue: false,
+        begin: function () {
+            assert.ok(anim1 === true, "Queue:false animation starts in parallel.");
+            done();
+        }
+    });
 });
 ///<reference path="_module.ts" />
 /*
@@ -765,23 +788,6 @@ QUnit.todo("Visibility", function (assert) {
         assert.equal(/visible|inherit/.test(Velocity.CSS.getPropertyValue($target3, "visibility")), true, "visibility:'' was set immediately.");
         done();
     }, completeCheckDuration);
-});
-///<reference path="_module.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-QUnit.test("Queueing", function (assert) {
-    var done = assert.async(1), $target1 = getTarget();
-    assert.expect(1);
-    Velocity($target1, { opacity: 0 });
-    Velocity($target1, { width: 2 });
-    setTimeout(function () {
-        /* Ensure that the second call hasn't started yet. */
-        assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "width")), defaultStyles.width, "Queued calls chain.");
-        done();
-    }, asyncCheckDuration);
 });
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -1516,7 +1522,7 @@ QUnit.skip("Call Options", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.test("Callbacks", function (assert) {
+QUnit.todo("Callbacks", function (assert) {
     var done = assert.async(2), $targets = [getTarget(), getTarget()];
     assert.expect(3);
     Velocity($targets, "transition.bounceIn", {
@@ -1572,7 +1578,7 @@ QUnit.todo("In/Out", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.test("RegisterEffect", function (assert) {
+QUnit.todo("RegisterEffect", function (assert) {
     var done = assert.async(1), effectDefaultDuration = 800;
     assert.expect(2);
     Velocity.RegisterEffect("callout.twirl", {

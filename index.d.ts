@@ -48,11 +48,11 @@ type VelocityEasingType = VelocityEasingFn
  */
 interface VelocityExtended<TNode extends Node = HTMLorSVGElement> {
 	velocity: Velocity & {
-		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, easing?: VelocityEasingType, complete?: () => void): VelocityResult;
-		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: VelocityEasingType, complete?: () => void): VelocityResult;
-		(this: TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, option?: VelocityOptions): VelocityResult;
+		(this: TNode | TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+		(this: TNode | TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
+		(this: TNode | TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, easing?: VelocityEasingType, complete?: () => void): VelocityResult;
+		(this: TNode | TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: VelocityEasingType, complete?: () => void): VelocityResult;
+		(this: TNode | TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, option?: VelocityOptions): VelocityResult;
 		/**
 		 * TODO: Decide if this should be public
 		 * @private
@@ -719,8 +719,18 @@ interface Velocity {
 /**
  * Extend the return value from <code>document.querySelectorAll()</code>.
  */
-interface NodeListOf<TNode extends Node> extends NodeList, VelocityExtended<TNode> {}
+interface NodeListOf<TNode extends Node> extends VelocityExtended<TNode> {}
 
+/**
+ * Extend <code>Element</code> directly.
+ */
+interface Element extends VelocityExtended<Element> {}
+
+
+/**
+ * Extend <code>Element</code> directly.
+ */
+interface HTMLCollection extends VelocityExtended<Element> {}
 
 declare const Velocity: Velocity;
 

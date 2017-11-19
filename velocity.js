@@ -2049,13 +2049,50 @@ var VelocityStatic;
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-function Data(element, value) {
-    if (value) {
+/**
+ * Get the internal data store for an element.
+ */
+function Data(element) {
+    // Use a string member so Uglify doesn't mangle it.
+    var data = element["velocityData"];
+    if (!data) {
+        // Do it this way so it errors on incorrect data.
+        data = {
+            /**
+             * Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements.
+             */
+            isSVG: isSVG(element),
+            /**
+             * Keep track of whether the element is currently being animated by Velocity.
+             * This is used to ensure that property values are not transferred between non-consecutive (stale) calls.
+             */
+            isAnimating: false,
+            /**
+             * A reference to the element's live computedStyle object. Learn more here: https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle
+             */
+            computedStyle: null,
+            /**
+             * Cached current value as set
+             */
+            cache: Object.create(null),
+            /**
+             * The queues and their animations
+             */
+            queueList: Object.create(null),
+            /**
+             * The last tweens for use as repetitions
+             */
+            lastAnimationList: Object.create(null),
+            /**
+             * The last tweens for use as repetitions
+             */
+            lastFinishList: Object.create(null)
+        };
         Object.defineProperty(element, "velocityData", {
-            value: value
+            value: data
         });
     } else {
-        return element.velocityData;
+        return data;
     }
 }
 
@@ -2252,10 +2289,6 @@ var VelocityStatic;
         var value;
         elements = sanitizeElements(elements);
         elements.forEach(function(element) {
-            /* Initialize Velocity's per-element data cache if this element hasn't previously been animated. */
-            if (Data(element) === undefined) {
-                VelocityStatic.init(element);
-            }
             /* Get property value. If an element set was passed in, only return the value for the first element. */
             if (arg3 === undefined) {
                 if (value === undefined) {
@@ -2268,53 +2301,6 @@ var VelocityStatic;
         });
         return value;
     }
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    /* A design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying. Accordingly, each element has a data cache. */
-    function init(element) {
-        var data = {
-            /**
-             * Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements.
-             */
-            isSVG: isSVG(element),
-            /**
-             * Keep track of whether the element is currently being animated by Velocity.
-             * This is used to ensure that property values are not transferred between non-consecutive (stale) calls.
-             */
-            isAnimating: false,
-            /**
-             * A reference to the element's live computedStyle object. Learn more here: https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle
-             */
-            computedStyle: null,
-            /**
-             * Cached current value as set
-             */
-            cache: Object.create(null),
-            /**
-             * The queues and their animations
-             */
-            queueList: Object.create(null),
-            /**
-             * The last tweens for use as repetitions
-             */
-            lastAnimationList: Object.create(null),
-            /**
-             * The last tweens for use as repetitions
-             */
-            lastFinishList: Object.create(null)
-        };
-        Data(element, data);
-        return data;
-    }
-    VelocityStatic.init = init;
 })(VelocityStatic || (VelocityStatic = {}));
 
 /*
@@ -4168,19 +4154,15 @@ function VelocityFn() {
         for (var i = 0, length_1 = elements.length; i < length_1; i++) {
             var element = elements[i];
             if (isNode(element)) {
-                var data = Data(element) || VelocityStatic.init(element), animation = Object.assign({
+                var data = Data(element), // Not used, just to force init
+                animation = Object.assign({
                     element: element,
                     tweens: {}
                 }, rootAnimation);
                 options._total++;
                 // TODO: Remove this and provide better tests
-                data.opts = {
-                    duration: options.duration,
-                    easing: options.easing,
-                    complete: options.complete
-                };
                 animations.push(animation);
-                VelocityStatic.queue(element, animation, animation.queue);
+                VelocityStatic.queue(element, animation, getValue(animation.queue, options.queue));
             }
         }
         /* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */

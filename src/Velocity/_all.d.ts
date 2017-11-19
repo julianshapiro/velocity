@@ -7,7 +7,6 @@
 ///<reference path="debug.ts" />
 ///<reference path="defaults.ts" />
 ///<reference path="hook.ts" />
-///<reference path="init.ts" />
 ///<reference path="mock.ts" />
 ///<reference path="queue.ts" />
 ///<reference path="redirects.ts" />
