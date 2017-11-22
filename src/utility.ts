@@ -76,7 +76,7 @@ let _indexOf = Array.prototype.indexOf;
 let _inArray: (searchElement: any) => boolean =
 	(Array.prototype as any).includes || function(value) {
 		return _indexOf.call(this, value) > -1;
-	}
+	};
 
 /**
  * Convert an element or array-like element list into an array if needed.
@@ -97,7 +97,7 @@ function getValue<T>(args: any): T {
 	for (let i = 0, _args = arguments; i < _args.length; i++) {
 		let _arg = _args[i];
 
-		if (_arg !== undefined && _arg !== NaN) {
+		if (_arg !== undefined && _arg === _arg) {
 			return _arg;
 		}
 	}
