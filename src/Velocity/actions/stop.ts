@@ -16,7 +16,7 @@ namespace VelocityStatic {
 		if (queueName === undefined || (queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue))) {
 			/* Check that this call was applied to the target element. */
 			/* Make sure it can't be delayed */ // TODO do we need this?
-			animation.started = true;
+			//animation.started = true;
 			/* Remove the queue so this can't trigger any newly added animations when it finishes */
 			animation.options.queue = false;
 

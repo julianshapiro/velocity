@@ -361,11 +361,11 @@ var VelocityStatic;
             /* Complete is fired once per call (not once per element) and is passed the full raw DOM element set as both its context and its first argument. */
             /* Note: Callbacks aren't fired when calls are manually stopped (via Velocity("stop"). */
             if (options && ++options._completed === options._total) {
-                var complete = options.complete;
-                if (!isStopped && complete) {
+                if (!isStopped && options.complete) {
                     callComplete(activeCall);
                     // Only called once, even if reversed or repeated
-                    delete options.complete;
+                    //TODO: change all delete commands with assignment to null. This is consistently 5-10 times faster than deleting the key  https://jsperf.com/delete-vs-undefined-vs-null/16
+                    options.complete = null;
                 }
                 /**********************
                  Promise Resolving
@@ -1840,7 +1840,7 @@ var VelocityStatic;
             /* Check that this call was applied to the target element. */
             /* Make sure it can't be delayed */
             // TODO do we need this?
-            animation.started = true;
+            //animation.started = true;
             /* Remove the queue so this can't trigger any newly added animations when it finishes */
             animation.options.queue = false;
             /* Since "reverse" uses cached start values (the previous call's endValues), these values must be
@@ -2991,7 +2991,7 @@ var VelocityStatic;
          ***************************/
         VelocityStatic.State.firstNew = activeCall._next;
         /* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
-        if (isNode(element)) {
+        if (isNode(element) && activeCall.timeStart !== -1) {
             var data = Data(element), lastAnimation = void 0, /* A container for the processed data associated with each property in the propertyMap.
              (Each property in the map produces its own "tween".) */
             propertiesMap = activeCall.properties;
@@ -3848,6 +3848,7 @@ function VelocityFn() {
     // First get the elements, and the animations connected to the last call if
     // this is chained.
     // TODO: Clean this up a bit
+    // TODO: Throw error if the chain is called with elements as the first argument. isVelocityResult(this) && ( (isNode(arg0) || isWrapped(arg0)) && arg0 == this)
     if (isNode(this)) {
         // This is from a chain such as document.getElementById("").velocity(...)
         elements = [ this ];

@@ -36,7 +36,7 @@ namespace VelocityStatic {
 
 		State.firstNew = activeCall._next;
 		/* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
-		if (isNode(element)) {
+		if (isNode(element) && activeCall.timeStart !== -1) {
 			let data = Data(element),
 				lastAnimation: AnimationCall,
 				/* A container for the processed data associated with each property in the propertyMap.

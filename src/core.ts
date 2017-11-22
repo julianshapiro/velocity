@@ -92,6 +92,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	// First get the elements, and the animations connected to the last call if
 	// this is chained.
 	// TODO: Clean this up a bit
+	// TODO: Throw error if the chain is called with elements as the first argument. isVelocityResult(this) && ( (isNode(arg0) || isWrapped(arg0)) && arg0 == this)
 	if (isNode(this)) {
 		// This is from a chain such as document.getElementById("").velocity(...)
 		elements = [this as HTMLorSVGElement] as VelocityResult;

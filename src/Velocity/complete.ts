@@ -74,12 +74,12 @@ namespace VelocityStatic {
 			/* Complete is fired once per call (not once per element) and is passed the full raw DOM element set as both its context and its first argument. */
 			/* Note: Callbacks aren't fired when calls are manually stopped (via Velocity("stop"). */
 			if (options && ++options._completed === options._total) {
-				let complete = options.complete;
 
-				if (!isStopped && complete) {
+				if (!isStopped && options.complete) {
 					callComplete(activeCall);
 					// Only called once, even if reversed or repeated
-					delete options.complete;
+					//TODO: change all delete commands with assignment to null. This is consistently 5-10 times faster than deleting the key  https://jsperf.com/delete-vs-undefined-vs-null/16
+					options.complete = null;
 				}
 
 				/**********************
