@@ -37,4 +37,4 @@ const Duration = {
 	"fast": DURATION_FAST,
 	"normal": DURATION_NORMAL,
 	"slow": DURATION_SLOW,
-}
+};

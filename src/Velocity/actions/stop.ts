@@ -28,8 +28,8 @@ namespace VelocityStatic {
 
 			/* Prematurely call completeCall() on each matched active call. Pass an additional flag for "stop" to indicate
              that the complete callback and display:none setting should be skipped since we're completing prematurely. */
-			completeCall(animation, isStopped)
-			dequeue(animation.element, queueName)
+			completeCall(animation, isStopped);
+			dequeue(animation.element, queueName);
 		}
 	}
 

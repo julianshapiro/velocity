@@ -369,8 +369,6 @@ namespace VelocityStatic {
 					if (debug) {
 						console.log("Pattern found:", pattern, " -> ", arrayStart, arrayEnd, "[" + startValue + "," + endValue + "]");
 					}
-					arrayStart = arrayStart;
-					arrayEnd = arrayEnd;
 
 					/***************************
 					 Unit Ratio Calculation

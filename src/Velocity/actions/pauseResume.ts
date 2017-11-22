@@ -29,7 +29,7 @@ namespace VelocityStatic {
 			queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined,
 			queueName = queue === "false" ? false : validateQueue(args[0]),
 			activeCall: AnimationCall,
-			defaultQueue = defaults.queue
+			defaultQueue = defaults.queue;
 
 		if (isVelocityResult(elements) && elements.velocity.animations) {
 			for (let i = 0, animations = elements.velocity.animations; i < animations.length; i++) {

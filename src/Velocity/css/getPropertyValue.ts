@@ -20,7 +20,7 @@ namespace VelocityStatic.CSS {
 			// Browsers do not return height and width values for elements
 			// that are set to display:"none". Thus, we temporarily toggle
 			// display to the element type's default value.
-			let toggleDisplay: boolean = getPropertyValue(element, "display") === "none"
+			let toggleDisplay: boolean = getPropertyValue(element, "display") === "none";
 
 			// When box-sizing isn't set to border-box, height and width
 			// style values are incorrectly computed when an element's

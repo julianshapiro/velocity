@@ -225,7 +225,7 @@ function sanitizeElements(elements) {
 function getValue(args) {
     for (var i = 0, _args = arguments; i < _args.length; i++) {
         var _arg = _args[i];
-        if (_arg !== undefined && _arg !== NaN) {
+        if (_arg !== undefined && _arg === _arg) {
             return _arg;
         }
     }
@@ -2024,9 +2024,8 @@ function Data(element) {
         Object.defineProperty(element, "velocityData", {
             value: data
         });
-    } else {
-        return data;
     }
+    return data;
 }
 
 /*
@@ -3285,8 +3284,6 @@ var VelocityStatic;
                     if (VelocityStatic.debug) {
                         console.log("Pattern found:", pattern, " -> ", arrayStart, arrayEnd, "[" + startValue + "," + endValue + "]");
                     }
-                    arrayStart = arrayStart;
-                    arrayEnd = arrayEnd;
                     /***************************
                      Unit Ratio Calculation
                      ***************************/
