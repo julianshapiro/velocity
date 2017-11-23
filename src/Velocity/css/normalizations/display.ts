@@ -13,8 +13,8 @@ namespace VelocityStatic.CSS {
 		tableRowGroupRx = /^(tbody)$/i;
 
 	/**
-	 * Return a Normalisation that can be used to set / get the vendor prefixed
-	 * real name for a propery.
+	 * Display has an extra value of "auto" that works out the correct value
+	 * based on the type of element.
 	 */
 	function display(element: HTMLorSVGElement): string;
 	function display(element: HTMLorSVGElement, propertyValue: string): boolean;
