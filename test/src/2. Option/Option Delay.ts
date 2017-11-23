@@ -5,7 +5,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.test("Delay (Note: Browser Tab Must Have Focus Due to rAF)", function(assert) {
+QUnit.test("Delay", function(assert) {
 	var done = assert.async(2),
 		testDelay = 250,
 		$target = getTarget(),
@@ -16,7 +16,7 @@ QUnit.test("Delay (Note: Browser Tab Must Have Focus Due to rAF)", function(asse
 		duration: defaultOptions.duration,
 		delay: testDelay,
 		begin: function(elements, activeCall) {
-			assert.close(getNow() - start, testDelay, 32, "Delayed calls start after the correct delay");
+			assert.close(getNow() - start, testDelay, 32, "Delayed calls start after the correct delay.");
 			done();
 		}
 	});
@@ -24,7 +24,7 @@ QUnit.test("Delay (Note: Browser Tab Must Have Focus Due to rAF)", function(asse
 		duration: defaultOptions.duration,
 		delay: testDelay,
 		begin: function(elements, activeCall) {
-			assert.close(getNow() - start, (testDelay * 2) + (defaultOptions.duration as number), 32, "Queued delays start after the correct delay");
+			assert.close(getNow() - start, (testDelay * 2) + (defaultOptions.duration as number), 32, "Queued delays start after the correct delay.");
 			done();
 		}
 	});

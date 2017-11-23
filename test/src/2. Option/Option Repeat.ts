@@ -7,11 +7,11 @@
 
 QUnit.test("Repeat", function(assert) {
 	var done = assert.async(1),
-			testOptions = {repeat: 2, delay: 100, duration: 100},
-			begin = 0,
-			complete = 0,
-			repeat = 0,
-			start = Date.now();
+		testOptions = {repeat: 2, delay: 100, duration: 100},
+		begin = 0,
+		complete = 0,
+		repeat = 0,
+		start = Date.now();
 
 	assert.expect(4);
 	Velocity(getTarget(), defaultProperties, {
@@ -28,10 +28,10 @@ QUnit.test("Repeat", function(assert) {
 		},
 		complete: function(elements, animation) {
 			complete++;
-			assert.equal(begin, 1, "Begin callback only called once");
-			assert.equal(repeat, testOptions.repeat + 1, "Animation repeated correct number of times (once each direction per loop)");
-			assert.close(Date.now() - start, (testOptions.delay + testOptions.duration) * (testOptions.repeat + 1), (testOptions.repeat + 1) * 16 + 32, "Repeat delay is correct");
-			assert.equal(complete, 1, "Complete callback only called once");
+			assert.equal(begin, 1, "Begin callback only called once.");
+			assert.equal(repeat, testOptions.repeat + 1, "Animation repeated correct number of times (original plus repeats).");
+			assert.close(Date.now() - start, (testOptions.delay + testOptions.duration) * (testOptions.repeat + 1), (testOptions.repeat + 1) * 16 + 32, "Repeat with 'delay' has correct duration.");
+			assert.equal(complete, 1, "Complete callback only called once.");
 			done();
 		}
 	});

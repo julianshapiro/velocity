@@ -32,10 +32,10 @@ QUnit.test("Loop", function(assert) {
 			complete++;
 		}
 	}).then(() => {
-		assert.equal(begin, 1, "Begin callback only called once");
-		assert.equal(loop, testOptions.loop * 2 - 1, "Animation looped correct number of times (once each direction per loop)");
-		assert.close(getNow() - start, (testOptions.delay + testOptions.duration) * loop, 32, "Loop delay is correct");
-		assert.equal(complete, 1, "Complete callback only called once");
+		assert.equal(begin, 1, "Begin callback only called once.");
+		assert.equal(loop, testOptions.loop * 2 - 1, "Animation looped correct number of times (once each direction per loop).");
+		assert.close(getNow() - start, (testOptions.delay + testOptions.duration) * loop, 32, "Looping with 'delay' has correct duration.");
+		assert.equal(complete, 1, "Complete callback only called once.");
 		done();
 	});
 });

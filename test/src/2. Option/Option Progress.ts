@@ -7,15 +7,16 @@
 
 QUnit.test("Progress", function(assert) {
 	var done = assert.async(1),
-			$target = getTarget();
+		$target = getTarget();
 
-	assert.expect(3);
+	assert.expect(4);
 	Velocity($target, defaultProperties, {
 		duration: asyncCheckDuration,
 		progress: once(function(elements, percentComplete, msRemaining) {
-			assert.deepEqual(this, [$target], "Elements passed into progress.");
-			assert.equal(percentComplete >= 0 && percentComplete <= 1, true, "percentComplete passed into progress.");
-			assert.equal(msRemaining > asyncCheckDuration - 50, true, "msRemaining passed into progress.");
+			assert.deepEqual(elements, [$target], "Elements passed into progress.");
+			assert.deepEqual(this, [$target], "Elements passed into progress as this.");
+			assert.equal(percentComplete >= 0 && percentComplete <= 1, true, "'percentComplete' passed into progress.");
+			assert.equal(msRemaining > asyncCheckDuration - 50, true, "'msRemaining' passed into progress.");
 			done();
 		})
 	});

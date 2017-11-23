@@ -448,14 +448,14 @@ QUnit.test("Complete", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.test("Delay (Note: Browser Tab Must Have Focus Due to rAF)", function (assert) {
+QUnit.test("Delay", function (assert) {
     var done = assert.async(2), testDelay = 250, $target = getTarget(), start = getNow();
     assert.expect(2);
     Velocity($target, defaultProperties, {
         duration: defaultOptions.duration,
         delay: testDelay,
         begin: function (elements, activeCall) {
-            assert.close(getNow() - start, testDelay, 32, "Delayed calls start after the correct delay");
+            assert.close(getNow() - start, testDelay, 32, "Delayed calls start after the correct delay.");
             done();
         }
     });
@@ -463,7 +463,7 @@ QUnit.test("Delay (Note: Browser Tab Must Have Focus Due to rAF)", function (ass
         duration: defaultOptions.duration,
         delay: testDelay,
         begin: function (elements, activeCall) {
-            assert.close(getNow() - start, (testDelay * 2) + defaultOptions.duration, 32, "Queued delays start after the correct delay");
+            assert.close(getNow() - start, (testDelay * 2) + defaultOptions.duration, 32, "Queued delays start after the correct delay.");
             done();
         }
     });
@@ -592,10 +592,10 @@ QUnit.test("Loop", function (assert) {
             complete++;
         }
     }).then(function () {
-        assert.equal(begin, 1, "Begin callback only called once");
-        assert.equal(loop, testOptions.loop * 2 - 1, "Animation looped correct number of times (once each direction per loop)");
-        assert.close(getNow() - start, (testOptions.delay + testOptions.duration) * loop, 32, "Loop delay is correct");
-        assert.equal(complete, 1, "Complete callback only called once");
+        assert.equal(begin, 1, "Begin callback only called once.");
+        assert.equal(loop, testOptions.loop * 2 - 1, "Animation looped correct number of times (once each direction per loop).");
+        assert.close(getNow() - start, (testOptions.delay + testOptions.duration) * loop, 32, "Looping with 'delay' has correct duration.");
+        assert.equal(complete, 1, "Complete callback only called once.");
         done();
     });
 });
@@ -607,13 +607,14 @@ QUnit.test("Loop", function (assert) {
  */
 QUnit.test("Progress", function (assert) {
     var done = assert.async(1), $target = getTarget();
-    assert.expect(3);
+    assert.expect(4);
     Velocity($target, defaultProperties, {
         duration: asyncCheckDuration,
         progress: once(function (elements, percentComplete, msRemaining) {
-            assert.deepEqual(this, [$target], "Elements passed into progress.");
-            assert.equal(percentComplete >= 0 && percentComplete <= 1, true, "percentComplete passed into progress.");
-            assert.equal(msRemaining > asyncCheckDuration - 50, true, "msRemaining passed into progress.");
+            assert.deepEqual(elements, [$target], "Elements passed into progress.");
+            assert.deepEqual(this, [$target], "Elements passed into progress as this.");
+            assert.equal(percentComplete >= 0 && percentComplete <= 1, true, "'percentComplete' passed into progress.");
+            assert.equal(msRemaining > asyncCheckDuration - 50, true, "'msRemaining' passed into progress.");
             done();
         })
     });
@@ -625,51 +626,37 @@ QUnit.test("Progress", function (assert) {
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 var _this = this;
-QUnit.test('Global Fps Limit', function (assert) { return __awaiter(_this, void 0, void 0, function () {
-    var testFrame, $target, _a, _b, _c, _d, _e, _f, _g, _h;
-    return __generator(this, function (_j) {
-        switch (_j.label) {
+QUnit.test("FPS Limit", function (assert) { return __awaiter(_this, void 0, void 0, function () {
+    var count, $target, frameRates, testFrame, i, _a, _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
-                testFrame = function (frameRate) {
+                $target = getTarget(), frameRates = [5, 15, 30, 60], testFrame = function (frameRate) {
                     var counter = 0;
                     Velocity.defaults.fpsLimit = frameRate;
-                    /**
-                     * Test if the frame rate is assigned succesfully
-                     */
+                    // Test if the frame rate is assigned succesfully.
                     assert.equal(frameRate, Velocity.defaults.fpsLimit, "Setting global fps limit to " + frameRate);
                     return Velocity($target, defaultProperties, {
-                        duration: asyncCheckDuration,
+                        duration: 1000,
                         progress: function () {
                             counter++;
                         }
                     }).then(function () { return counter; });
                 };
-                $target = getTarget();
-                assert.expect(8);
-                /**
-                 * Test if the limit is working for 60, 30, 15 and 5 fps
-                 */
-                _b = (_a = assert).close;
-                return [4 /*yield*/, testFrame(60)];
+                assert.expect(frameRates.length * 2);
+                i = 0;
+                _c.label = 1;
             case 1:
-                /**
-                 * Test if the limit is working for 60, 30, 15 and 5 fps
-                 */
-                _b.apply(_a, [_j.sent(), 7, 3, 'Testing 60fps']);
-                _d = (_c = assert).close;
-                return [4 /*yield*/, testFrame(30)];
+                if (!(i < frameRates.length)) return [3 /*break*/, 4];
+                _b = (_a = assert).close;
+                return [4 /*yield*/, testFrame(frameRates[i])];
             case 2:
-                _d.apply(_c, [_j.sent(), 5, 1, 'Testing 30fps']);
-                _f = (_e = assert).close;
-                return [4 /*yield*/, testFrame(15)];
+                _b.apply(_a, [count = _c.sent(), frameRates[i], 1, "...counted " + count + " frames (\xB11 frame)"]);
+                _c.label = 3;
             case 3:
-                _f.apply(_e, [_j.sent(), 3, 1, 'Testing 15fps']);
-                _h = (_g = assert).close;
-                return [4 /*yield*/, testFrame(5)];
-            case 4:
-                _h.apply(_g, [_j.sent(), 1, 1, 'Testing 5fps']);
-                Velocity.defaults.fpsLimit = 60;
-                return [2 /*return*/];
+                i++;
+                return [3 /*break*/, 1];
+            case 4: return [2 /*return*/];
         }
     });
 }); });
@@ -749,10 +736,10 @@ QUnit.test("Repeat", function (assert) {
         },
         complete: function (elements, animation) {
             complete++;
-            assert.equal(begin, 1, "Begin callback only called once");
-            assert.equal(repeat, testOptions.repeat + 1, "Animation repeated correct number of times (once each direction per loop)");
-            assert.close(Date.now() - start, (testOptions.delay + testOptions.duration) * (testOptions.repeat + 1), (testOptions.repeat + 1) * 16 + 32, "Repeat delay is correct");
-            assert.equal(complete, 1, "Complete callback only called once");
+            assert.equal(begin, 1, "Begin callback only called once.");
+            assert.equal(repeat, testOptions.repeat + 1, "Animation repeated correct number of times (original plus repeats).");
+            assert.close(Date.now() - start, (testOptions.delay + testOptions.duration) * (testOptions.repeat + 1), (testOptions.repeat + 1) * 16 + 32, "Repeat with 'delay' has correct duration.");
+            assert.equal(complete, 1, "Complete callback only called once.");
             done();
         }
     });
@@ -770,7 +757,7 @@ QUnit.test("Speed", function (assert) {
     Velocity(getTarget(), defaultProperties, {
         speed: 5,
         begin: function (elements) {
-            assert.equal(elements.velocity.animations[0].options.speed, 5, "Speed on options overrides default");
+            assert.equal(elements.velocity.animations[0].options.speed, 5, "Speed on options overrides default.");
             done();
         }
     });
@@ -781,7 +768,7 @@ QUnit.test("Speed", function (assert) {
         },
         complete: function (elements) {
             var actual = getNow() - elements.__start, expected = duration / 3;
-            assert.close(actual, expected, 32, "Velocity.defaults.speed change is respected (\xD73, " + Math.floor(actual - expected) + "ms \xB132ms)");
+            assert.close(actual, expected, 32, "Velocity.defaults.speed change is respected. (\xD73, " + Math.floor(actual - expected) + "ms \xB132ms)");
             Velocity.defaults.speed = defaultSpeed;
             done();
         }
@@ -794,7 +781,7 @@ QUnit.test("Speed", function (assert) {
         },
         complete: function (elements) {
             var actual = getNow() - elements.__start, expected = duration / 2;
-            assert.close(actual, expected, 32, "Double speed animation lasts half as long (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
+            assert.close(actual, expected, 32, "Double speed animation lasts half as long. (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
             done();
         }
     });
@@ -807,7 +794,7 @@ QUnit.test("Speed", function (assert) {
         complete: function (elements) {
             var actual = getNow() - elements.__start, expected = duration * 2;
             // TODO: Really not happy with the allowed range - it sits around 40ms, but should be closer to 16ms
-            assert.close(actual, expected, 64, "Half speed animation lasts twice as long (\xD7\xBD, " + Math.floor(actual - expected) + "ms \xB164ms)");
+            assert.close(actual, expected, 64, "Half speed animation lasts twice as long. (\xD7\xBD, " + Math.floor(actual - expected) + "ms \xB164ms)");
             done();
         }
     });
@@ -820,7 +807,7 @@ QUnit.test("Speed", function (assert) {
                 elements.__count = 1;
             }
             else {
-                assert.equal(elements.__start, percentComplete, "Frozen (speed:0) animation doesn't progress");
+                assert.equal(elements.__start, percentComplete, "Frozen (speed:0) animation doesn't progress.");
                 elements
                     .velocity("option", "speed", 1) // Just in case "stop" is broken
                     .velocity("stop");
