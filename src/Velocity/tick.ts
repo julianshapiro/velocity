@@ -205,10 +205,12 @@ namespace VelocityStatic {
 						// Remove pause key after processing.
 						delete activeCall.paused;
 					}
-					// Don't bother getting until we can use these.
-					let delay = getValue(activeCall.delay, options.delay);
+					let speed = getValue(activeCall.speed, options.speed, defaults.speed);
 
 					if (!activeCall.started) {
+						// Don't bother getting until we can use these.
+						let delay = getValue(activeCall.delay, options.delay) / speed;
+
 						// Make sure anything we've delayed doesn't start
 						// animating yet, there might still be an active delay
 						// after something has been un-paused
@@ -237,28 +239,25 @@ namespace VelocityStatic {
 							}
 						}
 					}
+					if (speed !== 1) {
+						// On the first frame we may have a shorter delta
+						let delta = Math.min(deltaTime, timeCurrent - timeStart);
+
+						if (speed === 0) {
+							// If we're freezing the animation then don't let the
+							// time change
+							activeCall.timeStart = timeStart += delta;
+						} else {
+							activeCall.timeStart = timeStart += delta * (1 - speed);
+						}
+					}
+
 					if (options._first === activeCall && options.progress) {
 						activeCall._nextProgress = undefined;
 						if (lastProgress) {
 							lastProgress._nextProgress = lastProgress = activeCall;
 						} else {
 							firstProgress = lastProgress = activeCall;
-						}
-					}
-
-					if (!firstTick) {
-						let speed = getValue(activeCall.speed, options.speed, defaults.speed);
-
-						if (speed !== 1) {
-							let delta = Math.min(deltaTime, timeCurrent - timeStart);
-
-							if (speed === 0) {
-								// If we're freezing the animation then don't let the
-								// time change
-								activeCall.timeStart = timeStart += delta;
-							} else {
-								activeCall.timeStart = timeStart += delta * (1 - speed);
-							}
 						}
 					}
 

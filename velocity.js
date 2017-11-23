@@ -332,7 +332,6 @@ var VelocityStatic;
          ****************************/
         var options = activeCall.options, queue = getValue(activeCall.queue, options.queue), isLoop = getValue(activeCall.loop, options.loop, VelocityStatic.defaults.loop), isRepeat = getValue(activeCall.repeat, options.repeat, VelocityStatic.defaults.repeat);
         if (!isStopped && (isLoop || isRepeat)) {
-            var tweens = activeCall.tweens;
             if (isRepeat && isRepeat !== true) {
                 activeCall.repeat = isRepeat - 1;
             } else if (isLoop && isLoop !== true) {
@@ -2903,9 +2902,10 @@ var VelocityStatic;
                         // Remove pause key after processing.
                         delete activeCall.paused;
                     }
-                    // Don't bother getting until we can use these.
-                    var delay = getValue(activeCall.delay, options.delay);
+                    var speed = getValue(activeCall.speed, options.speed, VelocityStatic.defaults.speed);
                     if (!activeCall.started) {
+                        // Don't bother getting until we can use these.
+                        var delay = getValue(activeCall.delay, options.delay) / speed;
                         // Make sure anything we've delayed doesn't start
                         // animating yet, there might still be an active delay
                         // after something has been un-paused
@@ -2932,25 +2932,23 @@ var VelocityStatic;
                             }
                         }
                     }
+                    if (speed !== 1) {
+                        // On the first frame we may have a shorter delta
+                        var delta = Math.min(deltaTime, timeCurrent - timeStart);
+                        if (speed === 0) {
+                            // If we're freezing the animation then don't let the
+                            // time change
+                            activeCall.timeStart = timeStart += delta;
+                        } else {
+                            activeCall.timeStart = timeStart += delta * (1 - speed);
+                        }
+                    }
                     if (options._first === activeCall && options.progress) {
                         activeCall._nextProgress = undefined;
                         if (lastProgress) {
                             lastProgress._nextProgress = lastProgress = activeCall;
                         } else {
                             firstProgress = lastProgress = activeCall;
-                        }
-                    }
-                    if (!firstTick) {
-                        var speed = getValue(activeCall.speed, options.speed, VelocityStatic.defaults.speed);
-                        if (speed !== 1) {
-                            var delta = Math.min(deltaTime, timeCurrent - timeStart);
-                            if (speed === 0) {
-                                // If we're freezing the animation then don't let the
-                                // time change
-                                activeCall.timeStart = timeStart += delta;
-                            } else {
-                                activeCall.timeStart = timeStart += delta * (1 - speed);
-                            }
                         }
                     }
                     var activeEasing = getValue(activeCall.easing, options.easing, VelocityStatic.defaults.easing), millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, duration = getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration), percentComplete = activeCall.percentComplete = VelocityStatic.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1), tweens = activeCall.tweens;

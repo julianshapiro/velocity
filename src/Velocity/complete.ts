@@ -39,8 +39,6 @@ namespace VelocityStatic {
 			isRepeat = getValue(activeCall.repeat, options.repeat, defaults.repeat);
 
 		if (!isStopped && (isLoop || isRepeat)) {
-			let tweens = activeCall.tweens;
-
 			if (isRepeat && isRepeat !== true) {
 				activeCall.repeat = isRepeat - 1;
 			} else if (isLoop && isLoop !== true) {

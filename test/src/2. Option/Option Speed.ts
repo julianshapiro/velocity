@@ -6,11 +6,12 @@
  */
 
 QUnit.test("Speed", function(assert) {
-	var done = assert.async(5),
+	var done = assert.async(6),
+		delay = 200,
 		duration = 400,
-		defaultSpeed = Velocity.defaults.speed;
+		startDelay = getNow();
 
-	assert.expect(5);
+	assert.expect(6);
 	Velocity.defaults.speed = 3;
 	Velocity(getTarget(), defaultProperties, {
 		speed: 5,
@@ -29,7 +30,7 @@ QUnit.test("Speed", function(assert) {
 				expected = duration / 3;
 
 			assert.close(actual, expected, 32, "Velocity.defaults.speed change is respected. (\xD73, " + Math.floor(actual - expected) + "ms \xB132ms)");
-			Velocity.defaults.speed = defaultSpeed;
+
 			done();
 		}
 	});
@@ -44,6 +45,21 @@ QUnit.test("Speed", function(assert) {
 				expected = duration / 2;
 
 			assert.close(actual, expected, 32, "Double speed animation lasts half as long. (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
+			done();
+		}
+	});
+	Velocity(getTarget(), defaultProperties, {
+		duration: duration,
+		delay: delay,
+		speed: 2,
+		begin: function(elements) {
+			elements.__start = startDelay;
+		},
+		complete: function(elements) {
+			let actual = getNow() - elements.__start,
+				expected = (duration + delay) / 2;
+
+			assert.close(actual, expected, 32, "Delayed animation includes speed for delay. (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
 			done();
 		}
 	});
