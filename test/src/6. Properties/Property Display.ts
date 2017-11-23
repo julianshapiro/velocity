@@ -6,7 +6,7 @@
  */
 
 QUnit.test("Display", function(assert) {
-	var done = assert.async(3);
+	var done = assert.async(5);
 
 	Velocity(getTarget(), "style", "display", "none")
 		.velocity({display: "block"}, {
@@ -17,9 +17,26 @@ QUnit.test("Display", function(assert) {
 			})
 		});
 
+	Velocity(getTarget(), "style", "display", "none")
+		.velocity("style", "display", "auto")
+		.then(function(elements) {
+			assert.equal(elements[0].style.display, "block", "Display:'auto' was understood.");
+			assert.equal(elements.velocity("style", "display"), "block", "Display:'auto' was cached as 'block'.");
+
+			done();
+		});
+
+	Velocity(getTarget(), "style", "display", "none")
+		.velocity("style", "display", "")
+		.then(function(elements) {
+			assert.equal(elements.velocity("style", "display"), "block", "Display:'' was reset correctly.");
+
+			done();
+		});
+
 	Velocity(getTarget(), {display: "none"}, {
 		progress: once(function(elements: VelocityResult) {
-			assert.notEqual(elements.velocity("style", "display"), 0, "Display:'none' was not set immediately.");
+			assert.notEqual(elements.velocity("style", "display"), "none", "Display:'none' was not set immediately.");
 
 			done();
 		})
@@ -28,12 +45,4 @@ QUnit.test("Display", function(assert) {
 
 		done();
 	});
-
-	//	var $target3 = getTarget();
-	//	Velocity($target3, {display: testDisplayBlank});
-	//	setTimeout(function() {
-	//		assert.equal(Velocity($target3, "style", "display"), "block", "Display:'' was set immediately.");
-	//
-	//		done();
-	//	}, completeCheckDuration);
 });

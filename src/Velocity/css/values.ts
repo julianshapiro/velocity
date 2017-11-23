@@ -49,26 +49,6 @@ namespace VelocityStatic.CSS {
 				return "px";
 			}
 		},
-		/* HTML elements default to an associated display type when they're not set to display:none. */
-		/* Note: This function is used for correctly setting the non-"none" display value in certain Velocity redirects, such as fadeIn/Out. */
-		getDisplayType: function(element: HTMLorSVGElement): string {
-			let tagName = element && element.tagName.toString().toLowerCase();
-
-			if (/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(tagName)) {
-				return "inline";
-			} else if (/^(li)$/i.test(tagName)) {
-				return "list-item";
-			} else if (/^(tr)$/i.test(tagName)) {
-				return "table-row";
-			} else if (/^(table)$/i.test(tagName)) {
-				return "table";
-			} else if (/^(tbody)$/i.test(tagName)) {
-				return "table-row-group";
-				/* Default to "block" when no match is found. */
-			} else {
-				return "block";
-			}
-		},
 		/* The class add/remove functions are used to temporarily apply a "velocity-animating" class to elements while they're animating. */
 		addClass: function(element: HTMLorSVGElement, className: string): void {
 			if (element) {

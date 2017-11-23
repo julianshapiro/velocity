@@ -50,8 +50,7 @@ QUnit.test("Arguments", function (assert) {
     testDuration = 1000, testEasing = "easeInSine", result, testOptions = {
         duration: 123,
         easing: testEasing,
-        complete: testComplete,
-        display: "block"
+        complete: testComplete
     };
     assert.expect(18);
     /****************
@@ -474,38 +473,6 @@ QUnit.test("Delay", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.test("Display", function (assert) {
-    var done = assert.async(3);
-    Velocity(getTarget(), "style", "display", "none")
-        .velocity({ display: "block" }, {
-        progress: once(function (elements) {
-            assert.equal(elements.velocity("style", "display"), "block", "Display:'block' was set immediately.");
-            done();
-        })
-    });
-    Velocity(getTarget(), { display: "none" }, {
-        progress: once(function (elements) {
-            assert.notEqual(elements.velocity("style", "display"), 0, "Display:'none' was not set immediately.");
-            done();
-        })
-    }).then(function (elements) {
-        assert.equal(elements.velocity("style", "display"), "none", "Display:'none' was set upon completion.");
-        done();
-    });
-    //	var $target3 = getTarget();
-    //	Velocity($target3, {display: testDisplayBlank});
-    //	setTimeout(function() {
-    //		assert.equal(Velocity($target3, "style", "display"), "block", "Display:'' was set immediately.");
-    //
-    //		done();
-    //	}, completeCheckDuration);
-});
-///<reference path="_module.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
 QUnit.test("Easing", function (assert) {
     var done = assert.async(3), success;
     assert.expect(5);
@@ -815,38 +782,6 @@ QUnit.test("Speed", function (assert) {
             }
         }
     });
-});
-///<reference path="_module.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-QUnit.todo("Visibility", function (assert) {
-    var done = assert.async(4), testVisibilityBlock = "visible", testVisibilityNone = "hidden", testVisibilityBlank = "";
-    var $target1 = getTarget();
-    /* Async checks are used since the visibility property is set inside processCallsTick(). */
-    Velocity($target1, defaultProperties, { visibility: testVisibilityBlock });
-    setTimeout(function () {
-        assert.equal(Velocity.CSS.getPropertyValue($target1, "visibility"), testVisibilityBlock, "visibility:'visible' was set immediately.");
-        done();
-    }, asyncCheckDuration);
-    var $target2 = getTarget();
-    Velocity($target2, defaultProperties, { visibility: testVisibilityNone });
-    setTimeout(function () {
-        assert.notEqual(Velocity.CSS.getPropertyValue($target2, "visibility"), 0, "visibility:'hidden' was not set immediately.");
-        done();
-    }, asyncCheckDuration);
-    setTimeout(function () {
-        assert.equal(Velocity.CSS.getPropertyValue($target2, "visibility"), "hidden", "visibility:'hidden' was set upon completion.");
-        done();
-    }, completeCheckDuration);
-    var $target3 = getTarget();
-    Velocity($target3, defaultProperties, { display: testVisibilityBlank });
-    setTimeout(function () {
-        assert.equal(/visible|inherit/.test(Velocity.CSS.getPropertyValue($target3, "visibility")), true, "visibility:'' was set immediately.");
-        done();
-    }, completeCheckDuration);
 });
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -1512,7 +1447,7 @@ QUnit.todo("Packaged Effect: slideUp/Down", function (assert) {
         },
         complete: function (elements) {
             assert.deepEqual(elements, [$target1], "slideDown: Complete callback returned.");
-            assert.equal(Velocity.CSS.getPropertyValue($target1, "display"), Velocity.CSS.Values.getDisplayType($target1), "slideDown: display set to default.");
+            //			assert.equal(Velocity.CSS.getPropertyValue($target1, "display"), Velocity.CSS.Values.getDisplayType($target1), "slideDown: display set to default.");
             assert.notEqual(Velocity.CSS.getPropertyValue($target1, "height"), 0, "slideDown: height set.");
             assert.equal(Velocity.CSS.getPropertyValue($target1, "paddingTop"), initialStyles.paddingTop, "slideDown: paddingTop set.");
             done();
@@ -1622,10 +1557,10 @@ QUnit.todo("In/Out", function (assert) {
         done();
     }, asyncCheckDuration);
     setTimeout(function () {
-        assert.equal(Velocity.CSS.getPropertyValue($target1, "display"), Velocity.CSS.Values.getDisplayType($target1), "In: display set to default.");
+        //		assert.equal(Velocity.CSS.getPropertyValue($target1, "display"), Velocity.CSS.Values.getDisplayType($target1), "In: display set to default.");
         assert.equal(Velocity.CSS.getPropertyValue($target2, "display"), "inline", "In: Custom inline value set.");
         assert.equal(Velocity.CSS.getPropertyValue($target3, "display"), 0, "Out: display set to none.");
-        assert.equal(Velocity.CSS.getPropertyValue($target4, "display"), Velocity.CSS.Values.getDisplayType($target3), "Out: No display value set.");
+        //		assert.equal(Velocity.CSS.getPropertyValue($target4, "display"), Velocity.CSS.Values.getDisplayType($target3), "Out: No display value set.");
         assert.equal(Velocity.CSS.getPropertyValue($target5, "visibility"), "visible", "In: visibility set to visible.");
         assert.equal(Velocity.CSS.getPropertyValue($target6, "visibility"), "hidden", "Out: visibility set to hidden.");
         done();
@@ -1687,7 +1622,7 @@ QUnit.skip("RunSequence", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.module("Normalizations");
+QUnit.module("Properties");
 ///<reference path="_module.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -1735,6 +1670,76 @@ QUnit.todo("GenericReordering", function (assert) {
         assert.equal(Velocity.CSS.Normalizations["textShadow"](element), test.result, test.test);
     }
 });
+///<reference path="_module.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+QUnit.test("Display", function (assert) {
+    var done = assert.async(5);
+    Velocity(getTarget(), "style", "display", "none")
+        .velocity({ display: "block" }, {
+        progress: once(function (elements) {
+            assert.equal(elements.velocity("style", "display"), "block", "Display:'block' was set immediately.");
+            done();
+        })
+    });
+    Velocity(getTarget(), "style", "display", "none")
+        .velocity("style", "display", "auto")
+        .then(function (elements) {
+        assert.equal(elements[0].style.display, "block", "Display:'auto' was understood.");
+        assert.equal(elements.velocity("style", "display"), "block", "Display:'auto' was cached as 'block'.");
+        done();
+    });
+    Velocity(getTarget(), "style", "display", "none")
+        .velocity("style", "display", "")
+        .then(function (elements) {
+        assert.equal(elements.velocity("style", "display"), "block", "Display:'' was reset correctly.");
+        done();
+    });
+    Velocity(getTarget(), { display: "none" }, {
+        progress: once(function (elements) {
+            assert.notEqual(elements.velocity("style", "display"), "none", "Display:'none' was not set immediately.");
+            done();
+        })
+    }).then(function (elements) {
+        assert.equal(elements.velocity("style", "display"), "none", "Display:'none' was set upon completion.");
+        done();
+    });
+});
+///<reference path="_module.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+QUnit.todo("Visibility", function (assert) {
+    var done = assert.async(4), testVisibilityBlock = "visible", testVisibilityNone = "hidden", testVisibilityBlank = "";
+    var $target1 = getTarget();
+    /* Async checks are used since the visibility property is set inside processCallsTick(). */
+    Velocity($target1, defaultProperties, { visibility: testVisibilityBlock });
+    setTimeout(function () {
+        assert.equal(Velocity.CSS.getPropertyValue($target1, "visibility"), testVisibilityBlock, "visibility:'visible' was set immediately.");
+        done();
+    }, asyncCheckDuration);
+    var $target2 = getTarget();
+    Velocity($target2, defaultProperties, { visibility: testVisibilityNone });
+    setTimeout(function () {
+        assert.notEqual(Velocity.CSS.getPropertyValue($target2, "visibility"), 0, "visibility:'hidden' was not set immediately.");
+        done();
+    }, asyncCheckDuration);
+    setTimeout(function () {
+        assert.equal(Velocity.CSS.getPropertyValue($target2, "visibility"), "hidden", "visibility:'hidden' was set upon completion.");
+        done();
+    }, completeCheckDuration);
+    var $target3 = getTarget();
+    Velocity($target3, defaultProperties, { display: testVisibilityBlank });
+    setTimeout(function () {
+        assert.equal(/visible|inherit/.test(Velocity.CSS.getPropertyValue($target3, "visibility")), true, "visibility:'' was set immediately.");
+        done();
+    }, completeCheckDuration);
+});
 ///<reference types="qunit" />
 ///<reference path="../../index.d.ts" />
 ///<reference path="1. Core/_all.d.ts" />
@@ -1742,7 +1747,7 @@ QUnit.todo("GenericReordering", function (assert) {
 ///<reference path="3. Command/_all.d.ts" />
 ///<reference path="4. Feature/_all.d.ts" />
 ///<reference path="5. UI Pack/_all.d.ts" />
-///<reference path="6. Normalizations/_all.d.ts" />
+///<reference path="6. Properties/_all.d.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -1751,30 +1756,32 @@ QUnit.todo("GenericReordering", function (assert) {
 // Needed tests:
 // - new stop behvaior
 // - e/p/o shorthands
-/* IE detection: https://gist.github.com/julianshapiro/9098609 */
-var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), isAndroid = /Android/i.test(navigator.userAgent), $ = (window.jQuery || window.Zepto), $qunitStage = document.getElementById("qunit-stage"), defaultStyles = {
+var defaultStyles = {
     opacity: 1,
     width: 1,
     height: 1,
     marginBottom: 1,
     colorGreen: 200,
     textShadowBlur: 3
-}, defaultProperties = {
+};
+var defaultProperties = {
     opacity: defaultStyles.opacity / 2,
     width: defaultStyles.width * 2,
     height: defaultStyles.height * 2
-}, defaultOptions = {
+};
+var defaultOptions = {
     queue: "",
     duration: 300,
     easing: "swing",
     begin: null,
     complete: null,
     progress: null,
-    display: null,
     loop: false,
     delay: 0,
     mobileHA: true
-}, asyncCheckDuration = defaultOptions.duration / 2, completeCheckDuration = defaultOptions.duration * 2, IE = (function () {
+};
+/* IE detection: https://gist.github.com/julianshapiro/9098609 */
+var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), isAndroid = /Android/i.test(navigator.userAgent), $ = (window.jQuery || window.Zepto), $qunitStage = document.getElementById("qunit-stage"), asyncCheckDuration = defaultOptions.duration / 2, completeCheckDuration = defaultOptions.duration * 2, IE = (function () {
     if (document.documentMode) {
         return document.documentMode;
     }

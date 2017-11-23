@@ -5,7 +5,7 @@
 ///<reference path="3. Command/_all.d.ts" />
 ///<reference path="4. Feature/_all.d.ts" />
 ///<reference path="5. UI Pack/_all.d.ts" />
-///<reference path="6. Normalizations/_all.d.ts" />
+///<reference path="6. Properties/_all.d.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -36,36 +36,38 @@ interface VelocityExtended {
 // - new stop behvaior
 // - e/p/o shorthands
 
+const defaultStyles = {
+	opacity: 1,
+	width: 1,
+	height: 1,
+	marginBottom: 1,
+	colorGreen: 200,
+	textShadowBlur: 3
+};
+
+const defaultProperties: VelocityProperties = {
+	opacity: defaultStyles.opacity / 2,
+	width: defaultStyles.width * 2,
+	height: defaultStyles.height * 2
+};
+
+const defaultOptions: VelocityOptions = {
+	queue: "",
+	duration: 300,
+	easing: "swing",
+	begin: null,
+	complete: null,
+	progress: null,
+	loop: false,
+	delay: 0,
+	mobileHA: true
+};
+
 /* IE detection: https://gist.github.com/julianshapiro/9098609 */
 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
 	isAndroid = /Android/i.test(navigator.userAgent),
 	$ = ((window as any).jQuery || (window as any).Zepto),
 	$qunitStage = document.getElementById("qunit-stage"),
-	defaultStyles = {
-		opacity: 1,
-		width: 1,
-		height: 1,
-		marginBottom: 1,
-		colorGreen: 200,
-		textShadowBlur: 3
-	},
-	defaultProperties: VelocityProperties = {
-		opacity: defaultStyles.opacity / 2,
-		width: defaultStyles.width * 2,
-		height: defaultStyles.height * 2
-	},
-	defaultOptions: VelocityOptions = {
-		queue: "",
-		duration: 300,
-		easing: "swing",
-		begin: null,
-		complete: null,
-		progress: null,
-		display: null,
-		loop: false,
-		delay: 0,
-		mobileHA: true
-	},
 	asyncCheckDuration = (defaultOptions.duration as number) / 2,
 	completeCheckDuration = (defaultOptions.duration as number) * 2,
 	IE = (function() {

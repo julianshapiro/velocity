@@ -32,7 +32,7 @@ namespace VelocityStatic.CSS {
 			// scrollbar.
 			// TODO: offsetHeight does not exist on SVGElement
 			if (toggleDisplay) {
-				setPropertyValue(element, "display", Values.getDisplayType(element));
+				setPropertyValue(element, "display", "auto");
 			}
 			computedValue = augmentDimension(element, property, true);
 			if (toggleDisplay) {

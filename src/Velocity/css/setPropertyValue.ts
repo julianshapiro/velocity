@@ -13,16 +13,17 @@ namespace VelocityStatic.CSS {
 		let data = Data(element);
 
 		if (data && data.cache[propertyName] !== propertyValue) {
-			data.cache[propertyName] = propertyValue;
-			if (Normalizations[propertyName] && Normalizations[propertyName](element, propertyValue) !== false) {
-				// Skip if this has been handled
-			} else if (data.isSVG && Names.SVGAttribute(propertyName)) {
-				// TODO: Add this as Normalisations
-				/* Note: For SVG attributes, vendor-prefixed property names are never used. */
-				/* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
-				element.setAttribute(propertyName, propertyValue);
-			} else {
-				element.style[propertyName] = propertyValue;
+			// By setting it to undefined we force a true "get" later
+			data.cache[propertyName] = propertyValue || undefined;
+			if (!Normalizations[propertyName] || !Normalizations[propertyName](element, propertyValue)) {
+				if (data.isSVG && Names.SVGAttribute(propertyName)) {
+					// TODO: Add this as Normalisations
+					/* Note: For SVG attributes, vendor-prefixed property names are never used. */
+					/* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
+					element.setAttribute(propertyName, propertyValue);
+				} else {
+					element.style[propertyName] = propertyValue;
+				}
 			}
 			if (debug >= 2) {
 				console.info("Set " + propertyName + ": " + propertyValue, element);

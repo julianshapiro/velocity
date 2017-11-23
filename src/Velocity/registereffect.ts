@@ -119,15 +119,15 @@ namespace VelocityStatic {
 					}
 
 					/* If the user isn't overriding the display option, default to "auto" for "In"-suffixed transitions. */
-					if (redirectOptions.display !== null) {
-						if (redirectOptions.display !== undefined && redirectOptions.display !== "none") {
-							opts.display = redirectOptions.display;
-						} else if (/In$/.test(effectName)) {
-							/* Inline elements cannot be subjected to transforms, so we switch them to inline-block. */
-							let defaultDisplay = CSS.Values.getDisplayType(element);
-							opts.display = (defaultDisplay === "inline") ? "inline-block" : defaultDisplay;
-						}
-					}
+					//					if (redirectOptions.display !== null) {
+					//						if (redirectOptions.display !== undefined && redirectOptions.display !== "none") {
+					//							opts.display = redirectOptions.display;
+					//						} else if (/In$/.test(effectName)) {
+					//							/* Inline elements cannot be subjected to transforms, so we switch them to inline-block. */
+					//							let defaultDisplay = CSS.Values.getDisplayType(element);
+					//							opts.display = (defaultDisplay === "inline") ? "inline-block" : defaultDisplay;
+					//						}
+					//					}
 
 					if (redirectOptions.visibility && redirectOptions.visibility !== "hidden") {
 						opts.visibility = redirectOptions.visibility;

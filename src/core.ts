@@ -147,13 +147,16 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			// Due to being an async call, they should be back to "normal"
 			// before the <code>.then()</code> function gets called.
 			resolver = function(args: VelocityResult) {
-				let _then = args && args.then;
+				if (isVelocityResult(args)) {
+					let _then = args && args.then;
 
-				// TODO: We need to safely tell if this is *this* VelocityResult and not a user-supplied Promise
-				if (_then) {
-					args.then = undefined; // Preserve, don't delete
+					if (_then) {
+						args.then = undefined; // Preserving enumeration etc
+					}
 					_resolve(args);
-					args.then = _then;
+					if (_then) {
+						args.then = _then;
+					}
 				} else {
 					_resolve(args);
 				}
@@ -248,7 +251,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			options.easing = validateEasing(getValue(optionsMap.easing, defaults.easing), options.duration) || validateEasing(defaults.easing, options.duration);
 			options.loop = getValue(validateLoop(optionsMap.loop), defaults.loop);
 			options.repeat = options.repeatAgain = getValue(validateRepeat(optionsMap.repeat), defaults.repeat);
-			if (optionsMap.speed !== undefined) {
+			if (optionsMap.speed != null) {
 				options.speed = getValue(validateSpeed(optionsMap.speed), 1);
 			}
 			if (isBoolean(optionsMap.promise)) {
@@ -262,18 +265,26 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 				/* Note: You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
 				options.mobileHA = true;
 			}
+			if (optionsMap.display != null) {
+				(propertiesMap as VelocityProperties).display = optionsMap.display as string;
+				console.error("Deprecated 'options.display' used, this is now a property:", optionsMap.display);
+			}
+			if (optionsMap.visibility != null) {
+				(propertiesMap as VelocityProperties).visibility = optionsMap.visibility as string;
+				console.error("Deprecated 'options.visibility' used, this is now a property:", optionsMap.visibility);
+			}
 			// TODO: Allow functional options for different options per element
 			let optionsBegin = validateBegin(optionsMap.begin),
 				optionsComplete = validateComplete(optionsMap.complete),
 				optionsProgress = validateProgress(optionsMap.progress);
 
-			if (optionsBegin !== undefined) {
+			if (optionsBegin != null) {
 				options.begin = optionsBegin;
 			}
-			if (optionsComplete !== undefined) {
+			if (optionsComplete != null) {
 				options.complete = optionsComplete;
 			}
-			if (optionsProgress !== undefined) {
+			if (optionsProgress != null) {
 				options.progress = optionsProgress;
 			}
 		} else if (!syntacticSugar) {
@@ -302,37 +313,6 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			options.loop = defaults.loop;
 			options.repeat = options.repeatAgain = defaults.repeat;
 		}
-
-		/*************************
-		 Part I: Pre-Queueing
-		 *************************/
-
-		/*********************************
-		 Option: Display & Visibility
-		 *********************************/
-
-		/* Refer to Velocity's documentation (VelocityJS.org/#displayAndVisibility) for a description of the display and visibility options' behavior. */
-		/* Note: We strictly check for undefined instead of falsiness because display accepts an empty string value. */
-		// TODO: convert to property
-		let optionsDisplay: string;
-		if (options.display !== undefined && options.display !== null) {
-			optionsDisplay = options.display.toString().toLowerCase();
-			/* Users can pass in a special "auto" value to instruct Velocity to set the element to its default display value. */
-			if (optionsDisplay === "auto") {
-				// TODO: put this on the element
-				//			opts.display = VelocityStatic.CSS.Values.getDisplayType(element);
-			}
-		}
-
-		// TODO: convert to property
-		let optionsVisibility: string;
-		if (options.visibility !== undefined && options.visibility !== null) {
-			optionsVisibility = options.visibility.toString().toLowerCase();
-		}
-
-		/***********************
-		 Part II: Queueing
-		 ***********************/
 
 		/* When a set of elements is targeted by a Velocity call, the set is broken up and each element has the current Velocity call individually queued onto it.
 		 In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */

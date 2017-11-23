@@ -84,7 +84,7 @@ namespace VelocityStatic {
 		if (promiseHandler) {
 			if (error) {
 				promiseHandler._rejecter(error);
-			} else if (elements && elements.then) {
+			} else if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
 				elements.then(promiseHandler._resolver);
 			} else {
 				promiseHandler._resolver(elements);

@@ -13,8 +13,7 @@ QUnit.test("Arguments", function(assert) {
 		testOptions: VelocityOptions = {
 			duration: 123,
 			easing: testEasing,
-			complete: testComplete,
-			display: "block"
+			complete: testComplete
 		};
 
 	assert.expect(18);

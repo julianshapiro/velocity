@@ -25,7 +25,7 @@ QUnit.todo("Packaged Effect: slideUp/Down", function(assert) {
 		},
 		complete: function(elements) {
 			assert.deepEqual(elements, [$target1], "slideDown: Complete callback returned.");
-			assert.equal(Velocity.CSS.getPropertyValue($target1, "display"), Velocity.CSS.Values.getDisplayType($target1), "slideDown: display set to default.");
+			//			assert.equal(Velocity.CSS.getPropertyValue($target1, "display"), Velocity.CSS.Values.getDisplayType($target1), "slideDown: display set to default.");
 			assert.notEqual(Velocity.CSS.getPropertyValue($target1, "height"), 0, "slideDown: height set.");
 			assert.equal(Velocity.CSS.getPropertyValue($target1, "paddingTop"), initialStyles.paddingTop, "slideDown: paddingTop set.");
 

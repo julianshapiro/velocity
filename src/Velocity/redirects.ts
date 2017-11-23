@@ -29,9 +29,11 @@ namespace VelocityStatic {
 				};
 
 			if (opts.display === undefined) {
+				let isInline = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(element.nodeName.toLowerCase());
+
 				/* Show the element before slideDown begins and hide the element after slideUp completes. */
 				/* Note: Inline elements cannot have dimensions animated, so they're reverted to inline-block. */
-				opts.display = (direction === "Down" ? (CSS.Values.getDisplayType(element) === "inline" ? "inline-block" : "block") : "none");
+				opts.display = (direction === "Down" ? (isInline ? "inline-block" : "block") : "none");
 			}
 
 			opts.begin = function() {

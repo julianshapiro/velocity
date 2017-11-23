@@ -454,7 +454,7 @@ var VelocityStatic;
                 // scrollbar.
                 // TODO: offsetHeight does not exist on SVGElement
                 if (toggleDisplay) {
-                    CSS.setPropertyValue(element, "display", CSS.Values.getDisplayType(element));
+                    CSS.setPropertyValue(element, "display", "auto");
                 }
                 computedValue = CSS.augmentDimension(element, property, true);
                 if (toggleDisplay) {
@@ -925,6 +925,50 @@ var VelocityStatic;
 (function(VelocityStatic) {
     var CSS;
     (function(CSS) {
+        var inlineRx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i, listItemRx = /^(li)$/i, tableRowRx = /^(tr)$/i, tableRx = /^(table)$/i, tableRowGroupRx = /^(tbody)$/i;
+        function display(element, propertyValue) {
+            var style = element.style;
+            if (propertyValue === undefined) {
+                return CSS.getPropertyValue(element, "display", true);
+            }
+            if (propertyValue === "auto") {
+                var nodeName = element && element.nodeName, data = Data(element);
+                if (inlineRx.test(nodeName)) {
+                    propertyValue = "inline";
+                } else if (listItemRx.test(nodeName)) {
+                    propertyValue = "list-item";
+                } else if (tableRowRx.test(nodeName)) {
+                    propertyValue = "table-row";
+                } else if (tableRx.test(nodeName)) {
+                    propertyValue = "table";
+                } else if (tableRowGroupRx.test(nodeName)) {
+                    propertyValue = "table-row-group";
+                } else {
+                    // Default to "block" when no match is found.
+                    propertyValue = "block";
+                }
+                // IMPORTANT: We need to do this as getPropertyValue bypasses the
+                // Normalisation when it exists in the cache.
+                data.cache["display"] = propertyValue;
+            }
+            style.display = propertyValue;
+            return true;
+        }
+        CSS.registerNormalization([ "display", display ]);
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="normalizations.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
         function genericReordering(element, propertyValue) {
             if (propertyValue === undefined) {
                 propertyValue = CSS.getPropertyValue(element, "textShadow", true);
@@ -1027,14 +1071,17 @@ var VelocityStatic;
         function setPropertyValue(element, propertyName, propertyValue) {
             var data = Data(element);
             if (data && data.cache[propertyName] !== propertyValue) {
-                data.cache[propertyName] = propertyValue;
-                if (CSS.Normalizations[propertyName] && CSS.Normalizations[propertyName](element, propertyValue) !== false) {} else if (data.isSVG && CSS.Names.SVGAttribute(propertyName)) {
-                    // TODO: Add this as Normalisations
-                    /* Note: For SVG attributes, vendor-prefixed property names are never used. */
-                    /* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
-                    element.setAttribute(propertyName, propertyValue);
-                } else {
-                    element.style[propertyName] = propertyValue;
+                // By setting it to undefined we force a true "get" later
+                data.cache[propertyName] = propertyValue || undefined;
+                if (!CSS.Normalizations[propertyName] || !CSS.Normalizations[propertyName](element, propertyValue)) {
+                    if (data.isSVG && CSS.Names.SVGAttribute(propertyName)) {
+                        // TODO: Add this as Normalisations
+                        /* Note: For SVG attributes, vendor-prefixed property names are never used. */
+                        /* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
+                        element.setAttribute(propertyName, propertyValue);
+                    } else {
+                        element.style[propertyName] = propertyValue;
+                    }
                 }
                 if (VelocityStatic.debug >= 2) {
                     console.info("Set " + propertyName + ": " + propertyValue, element);
@@ -1087,24 +1134,6 @@ var VelocityStatic;
                 } else {
                     /* Default to px for all other properties. */
                     return "px";
-                }
-            },
-            /* HTML elements default to an associated display type when they're not set to display:none. */
-            /* Note: This function is used for correctly setting the non-"none" display value in certain Velocity redirects, such as fadeIn/Out. */
-            getDisplayType: function(element) {
-                var tagName = element && element.tagName.toString().toLowerCase();
-                if (/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(tagName)) {
-                    return "inline";
-                } else if (/^(li)$/i.test(tagName)) {
-                    return "list-item";
-                } else if (/^(tr)$/i.test(tagName)) {
-                    return "table-row";
-                } else if (/^(table)$/i.test(tagName)) {
-                    return "table";
-                } else if (/^(tbody)$/i.test(tagName)) {
-                    return "table-row-group";
-                } else {
-                    return "block";
                 }
             },
             /* The class add/remove functions are used to temporarily apply a "velocity-animating" class to elements while they're animating. */
@@ -1967,7 +1996,7 @@ var VelocityStatic;
         if (promiseHandler) {
             if (error) {
                 promiseHandler._rejecter(error);
-            } else if (elements && elements.then) {
+            } else if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
                 elements.then(promiseHandler._resolver);
             } else {
                 promiseHandler._resolver(elements);
@@ -2422,9 +2451,10 @@ var VelocityStatic;
                 paddingBottom: ""
             };
             if (opts.display === undefined) {
+                var isInline = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(element.nodeName.toLowerCase());
                 /* Show the element before slideDown begins and hide the element after slideUp completes. */
                 /* Note: Inline elements cannot have dimensions animated, so they're reverted to inline-block. */
-                opts.display = direction === "Down" ? VelocityStatic.CSS.Values.getDisplayType(element) === "inline" ? "inline-block" : "block" : "none";
+                opts.display = direction === "Down" ? isInline ? "inline-block" : "block" : "none";
             }
             opts.begin = function() {
                 /* If the user passed in a begin callback, fire it now. */
@@ -2596,15 +2626,15 @@ var VelocityStatic;
                         };
                     }
                     /* If the user isn't overriding the display option, default to "auto" for "In"-suffixed transitions. */
-                    if (redirectOptions.display !== null) {
-                        if (redirectOptions.display !== undefined && redirectOptions.display !== "none") {
-                            opts.display = redirectOptions.display;
-                        } else if (/In$/.test(effectName)) {
-                            /* Inline elements cannot be subjected to transforms, so we switch them to inline-block. */
-                            var defaultDisplay = VelocityStatic.CSS.Values.getDisplayType(element);
-                            opts.display = defaultDisplay === "inline" ? "inline-block" : defaultDisplay;
-                        }
-                    }
+                    //					if (redirectOptions.display !== null) {
+                    //						if (redirectOptions.display !== undefined && redirectOptions.display !== "none") {
+                    //							opts.display = redirectOptions.display;
+                    //						} else if (/In$/.test(effectName)) {
+                    //							/* Inline elements cannot be subjected to transforms, so we switch them to inline-block. */
+                    //							let defaultDisplay = CSS.Values.getDisplayType(element);
+                    //							opts.display = (defaultDisplay === "inline") ? "inline-block" : defaultDisplay;
+                    //						}
+                    //					}
                     if (redirectOptions.visibility && redirectOptions.visibility !== "hidden") {
                         opts.visibility = redirectOptions.visibility;
                     }
@@ -3937,13 +3967,15 @@ function VelocityFn() {
             // Due to being an async call, they should be back to "normal"
             // before the <code>.then()</code> function gets called.
             resolver = function(args) {
-                var _then = args && args.then;
-                // TODO: We need to safely tell if this is *this* VelocityResult and not a user-supplied Promise
-                if (_then) {
-                    args.then = undefined;
-                    // Preserve, don't delete
+                if (isVelocityResult(args)) {
+                    var _then = args && args.then;
+                    if (_then) {
+                        args.then = undefined;
+                    }
                     _resolve(args);
-                    args.then = _then;
+                    if (_then) {
+                        args.then = _then;
+                    }
                 } else {
                     _resolve(args);
                 }
@@ -4028,7 +4060,7 @@ function VelocityFn() {
             options.easing = validateEasing(getValue(optionsMap.easing, defaults.easing), options.duration) || validateEasing(defaults.easing, options.duration);
             options.loop = getValue(validateLoop(optionsMap.loop), defaults.loop);
             options.repeat = options.repeatAgain = getValue(validateRepeat(optionsMap.repeat), defaults.repeat);
-            if (optionsMap.speed !== undefined) {
+            if (optionsMap.speed != null) {
                 options.speed = getValue(validateSpeed(optionsMap.speed), 1);
             }
             if (isBoolean(optionsMap.promise)) {
@@ -4042,15 +4074,23 @@ function VelocityFn() {
                 /* Note: You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
                 options.mobileHA = true;
             }
+            if (optionsMap.display != null) {
+                propertiesMap.display = optionsMap.display;
+                console.error("Deprecated 'options.display' used, this is now a property:", optionsMap.display);
+            }
+            if (optionsMap.visibility != null) {
+                propertiesMap.visibility = optionsMap.visibility;
+                console.error("Deprecated 'options.visibility' used, this is now a property:", optionsMap.visibility);
+            }
             // TODO: Allow functional options for different options per element
             var optionsBegin = validateBegin(optionsMap.begin), optionsComplete = validateComplete(optionsMap.complete), optionsProgress = validateProgress(optionsMap.progress);
-            if (optionsBegin !== undefined) {
+            if (optionsBegin != null) {
                 options.begin = optionsBegin;
             }
-            if (optionsComplete !== undefined) {
+            if (optionsComplete != null) {
                 options.complete = optionsComplete;
             }
-            if (optionsProgress !== undefined) {
+            if (optionsProgress != null) {
                 options.progress = optionsProgress;
             }
         } else if (!syntacticSugar) {
@@ -4075,29 +4115,6 @@ function VelocityFn() {
             options.loop = defaults.loop;
             options.repeat = options.repeatAgain = defaults.repeat;
         }
-        /*************************
-         Part I: Pre-Queueing
-         *************************/
-        /*********************************
-         Option: Display & Visibility
-         *********************************/
-        /* Refer to Velocity's documentation (VelocityJS.org/#displayAndVisibility) for a description of the display and visibility options' behavior. */
-        /* Note: We strictly check for undefined instead of falsiness because display accepts an empty string value. */
-        // TODO: convert to property
-        var optionsDisplay = void 0;
-        if (options.display !== undefined && options.display !== null) {
-            optionsDisplay = options.display.toString().toLowerCase();
-            /* Users can pass in a special "auto" value to instruct Velocity to set the element to its default display value. */
-            if (optionsDisplay === "auto") {}
-        }
-        // TODO: convert to property
-        var optionsVisibility = void 0;
-        if (options.visibility !== undefined && options.visibility !== null) {
-            optionsVisibility = options.visibility.toString().toLowerCase();
-        }
-        /***********************
-         Part II: Queueing
-         ***********************/
         /* When a set of elements is targeted by a Velocity call, the set is broken up and each element has the current Velocity call individually queued onto it.
          In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
         /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
