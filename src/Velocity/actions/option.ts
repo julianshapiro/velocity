@@ -74,6 +74,8 @@ namespace VelocityStatic {
 			return result;
 		}
 		// SET
+		let isPercentComplete: boolean;
+
 		switch (key) {
 			case "cache":
 				value = validateCache(value);
@@ -96,14 +98,9 @@ namespace VelocityStatic {
 			case "loop":
 				value = validateLoop(value);
 				break;
-			case "promise": // useless
-				value = validatePromise(value);
-				break;
-			case "promiseRejectEmpty": // useless
-				value = validatePromiseRejectEmpty(value);
-				break;
-			case "queue": // careful
-				value = validateQueue(value);
+			case "percentComplete":
+				isPercentComplete = true;
+				value = parseFloat(value);
 				break;
 			case "repeat":
 			case "repeatAgain":
@@ -119,17 +116,26 @@ namespace VelocityStatic {
 					break;
 				}
 			// deliberate fallthrough
+			case "queue":
+			case "promise":
+			case "promiseRejectEmpty":
 			case "easing":
 			case "started":
 				console.warn("VelocityJS: Trying to set a read-only key:", key);
 				return;
 		}
-		if (value === undefined) {
+		if (value === undefined || value !== value) {
 			console.warn("VelocityJS: Trying to set an invalid value:", key, "=", value, "(" + args[1] + ")");
 			return null;
 		}
 		for (let i = 0; i < animations.length; i++) {
-			animations[i][key] = value;
+			let animation = animations[i];
+
+			if (isPercentComplete) {
+				animation.timeStart = lastTick - (getValue(animation.duration, animation.options.duration, defaults.duration) * value);
+			} else {
+				animation[key] = value;
+			}
 		}
 		if (promiseHandler) {
 			if (elements && elements.then) {
