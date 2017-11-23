@@ -6,10 +6,10 @@
  */
 
 QUnit.test("Easing", function(assert) {
-	var done = assert.async(3),
+	var done = assert.async(6),
 		success;
 
-	assert.expect(5);
+	assert.expect(14);
 	/* Ensure that a fake easing doesn't throw an error. */
 	try {
 		success = true;
@@ -75,6 +75,48 @@ QUnit.test("Easing", function(assert) {
 		easing: easingStepArray,
 		begin: function(elements, animation) {
 			assert.close(animation.options.easing(easingStepTestPercent, 0, 1), easingStepTestValue, 0.05, "Array converted into Step function.");
+			done();
+		}
+	});
+
+	Velocity(getTarget(), {opacity: [0, "during", 1]}, {
+		duration: asyncCheckDuration,
+		begin: function(elements) {
+			assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'during').");
+		},
+		progress: once(function(elements: VelocityResult) {
+			assert.equal(elements.velocity("style", "opacity"), 0, "Correct progress value (easing:'during').");
+		}),
+		complete: function(elements) {
+			assert.equal(elements.velocity("style", "opacity"), 1, "Correct complete value (easing:'during').");
+			done();
+		}
+	});
+
+	Velocity(getTarget(), {opacity: [0, "at-start", 1]}, {
+		duration: asyncCheckDuration,
+		begin: function(elements) {
+			assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'at-start').");
+		},
+		progress: once(function(elements: VelocityResult) {
+			assert.equal(elements.velocity("style", "opacity"), 0, "Correct progress value (easing:'at-start').");
+		}),
+		complete: function(elements) {
+			assert.equal(elements.velocity("style", "opacity"), 0, "Correct complete value (easing:'at-start').");
+			done();
+		}
+	});
+
+	Velocity(getTarget(), {opacity: [0, "at-end", 1]}, {
+		duration: asyncCheckDuration,
+		begin: function(elements) {
+			assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'at-end').");
+		},
+		progress: once(function(elements: VelocityResult) {
+			assert.equal(elements.velocity("style", "opacity"), 1, "Correct progress value (easing:'at-end').");
+		}),
+		complete: function(elements) {
+			assert.equal(elements.velocity("style", "opacity"), 0, "Correct complete value (easing:'at-end').");
 			done();
 		}
 	});
