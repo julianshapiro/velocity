@@ -1714,31 +1714,32 @@ QUnit.test("Display", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.todo("Visibility", function (assert) {
-    var done = assert.async(4), testVisibilityBlock = "visible", testVisibilityNone = "hidden", testVisibilityBlank = "";
-    var $target1 = getTarget();
-    /* Async checks are used since the visibility property is set inside processCallsTick(). */
-    Velocity($target1, defaultProperties, { visibility: testVisibilityBlock });
-    setTimeout(function () {
-        assert.equal(Velocity.CSS.getPropertyValue($target1, "visibility"), testVisibilityBlock, "visibility:'visible' was set immediately.");
+QUnit.test("Visibility", function (assert) {
+    var done = assert.async(4);
+    Velocity(getTarget(), "style", "visibility", "hidden")
+        .velocity({ visibility: "visible" }, {
+        progress: once(function (elements) {
+            assert.equal(elements.velocity("style", "visibility"), "visible", "Visibility:'visible' was set immediately.");
+            done();
+        })
+    });
+    Velocity(getTarget(), "style", "visibility", "hidden")
+        .velocity("style", "visibility", "")
+        .then(function (elements) {
+        // NOTE: The test elements inherit "hidden", so while illogical it
+        // is in fact correct.
+        assert.equal(elements.velocity("style", "visibility"), "hidden", "Visibility:'' was reset correctly.");
         done();
-    }, asyncCheckDuration);
-    var $target2 = getTarget();
-    Velocity($target2, defaultProperties, { visibility: testVisibilityNone });
-    setTimeout(function () {
-        assert.notEqual(Velocity.CSS.getPropertyValue($target2, "visibility"), 0, "visibility:'hidden' was not set immediately.");
+    });
+    Velocity(getTarget(), { visibility: "hidden" }, {
+        progress: once(function (elements) {
+            assert.notEqual(elements.velocity("style", "visibility"), "visible", "Visibility:'hidden' was not set immediately.");
+            done();
+        })
+    }).then(function (elements) {
+        assert.equal(elements.velocity("style", "visibility"), "hidden", "Visibility:'hidden' was set upon completion.");
         done();
-    }, asyncCheckDuration);
-    setTimeout(function () {
-        assert.equal(Velocity.CSS.getPropertyValue($target2, "visibility"), "hidden", "visibility:'hidden' was set upon completion.");
-        done();
-    }, completeCheckDuration);
-    var $target3 = getTarget();
-    Velocity($target3, defaultProperties, { display: testVisibilityBlank });
-    setTimeout(function () {
-        assert.equal(/visible|inherit/.test(Velocity.CSS.getPropertyValue($target3, "visibility")), true, "visibility:'' was set immediately.");
-        done();
-    }, completeCheckDuration);
+    });
 });
 ///<reference types="qunit" />
 ///<reference path="../../index.d.ts" />
