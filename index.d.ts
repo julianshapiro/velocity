@@ -38,10 +38,7 @@ type VelocityEasingType = VelocityEasingFn
 	| "ease-in" | "ease-out" | "ease-in-out"
 	| "at-start" | "at-end" | "during"
 	| string
-	| [number]
-	| [number, number]
-	| [number, number, number, number]
-	| VelocityEasingFn;
+	| number[];
 
 /**
  * Chaining Velocity calls from various sources.
@@ -98,7 +95,7 @@ type VelocityElements = HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult;
  * A property value can be a string or a number. If it is a number then it will
  * get the correct unit added to it depending on the property name if required.
  */
-type VelocityPropertyValue = number | string | [number | string] | [number | string, number | string] | [number | string, number[] | string, number | string];
+type VelocityPropertyValue = number | string | [number | string] | [number | string, VelocityEasingType | number | string] | [number | string, VelocityEasingType, number | string];
 
 /**
  * A property value can be a string or a number. If it is a number then it will
@@ -570,8 +567,9 @@ interface Velocity {
 	(elements: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
 	(elements: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
 	(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | VelocityProperties, options?: VelocityOptions): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | VelocityProperties, option?: any, value?: any): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | VelocityProperties): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | VelocityProperties, options: VelocityOptions): VelocityResult;
+	(elements: VelocityElements, propertyMap: string, option: any, value: any): VelocityResult;
 
 	defaults: VelocityOptions & {reset: () => void};
 

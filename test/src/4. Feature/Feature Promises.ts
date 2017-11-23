@@ -41,7 +41,7 @@ QUnit.test("Promises", function(assert) {
 	}).then(done);
 
 	/* Invalid arguments: Ensure an error isn't thrown. */
-	Velocity(getTarget(), {}, "fakeArg1", "fakeArg2").then(function() {
+	Velocity(getTarget(), {} as any, "fakeArg1", "fakeArg2").then(function() {
 		assert.ok(true, "Calling with invalid arguments should reject a Promise");
 	}, function() {
 		assert.notOk(true, "Calling with invalid arguments should reject a Promise");

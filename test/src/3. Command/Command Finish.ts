@@ -38,13 +38,13 @@ QUnit.todo("Finish / FinishAll", function(assert) {
 	Velocity($target3, {opacity: 0, width: 50}, Object.assign({}, defaultOptions, {delay: 1000}));
 	Velocity($target3, {width: 0}, defaultOptions);
 	Velocity($target3, {width: 100}, defaultOptions);
-	Velocity($target3, "finish", true);
+	Velocity($target3, "finish");
 
 	var $target4 = getTarget();
 	Velocity($target4, {opacity: 0, width: 50}, Object.assign({}, defaultOptions, {delay: 1000}));
 	Velocity($target4, {width: 0}, defaultOptions);
 	Velocity($target4, {width: 100}, defaultOptions);
-	Velocity($target4, "finishAll", true);
+	Velocity($target4, "finishAll");
 
 	setTimeout(function() {
 		assert.equal(Data($target2).cache.opacity, undefined, "Active call stopped.");

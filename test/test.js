@@ -820,12 +820,12 @@ QUnit.todo("Finish / FinishAll", function (assert) {
     Velocity($target3, { opacity: 0, width: 50 }, Object.assign({}, defaultOptions, { delay: 1000 }));
     Velocity($target3, { width: 0 }, defaultOptions);
     Velocity($target3, { width: 100 }, defaultOptions);
-    Velocity($target3, "finish", true);
+    Velocity($target3, "finish");
     var $target4 = getTarget();
     Velocity($target4, { opacity: 0, width: 50 }, Object.assign({}, defaultOptions, { delay: 1000 }));
     Velocity($target4, { width: 0 }, defaultOptions);
     Velocity($target4, { width: 100 }, defaultOptions);
-    Velocity($target4, "finishAll", true);
+    Velocity($target4, "finishAll");
     setTimeout(function () {
         assert.equal(Data($target2).cache.opacity, undefined, "Active call stopped.");
         assert.notEqual(Data($target2).cache.width, undefined, "Next queue item started.");
@@ -1233,7 +1233,7 @@ QUnit.todo("Stop", function (assert) {
     Velocity($target1, defaultProperties, defaultOptions);
     Velocity($target1, { top: 0 }, defaultOptions);
     Velocity($target1, { width: 0 }, defaultOptions);
-    Velocity($target1, "stop", true);
+    Velocity($target1, "stop");
     /* Ensure "stop" has removed all queued animations. */
     /* We're using the element's queue length as a proxy. 0 and 1 both mean that the element's queue has been cleared -- a length of 1 just indicates that the animation is in progress. */
     setTimeout(function () {
@@ -1248,7 +1248,7 @@ QUnit.todo("Stop", function (assert) {
     Velocity($target3, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 1000 }));
     Velocity($target3, { width: 0 }, defaultOptions);
     Velocity($target3, { width: 100 }, defaultOptions);
-    Velocity($target3, "stop", true);
+    Velocity($target3, "stop");
     setTimeout(function () {
         assert.equal(Data($target2).cache.opacity, undefined, "Active call stopped.");
         assert.notEqual(Data($target2).cache.width, undefined, "Next queue item started.");

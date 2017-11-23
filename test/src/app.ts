@@ -107,7 +107,7 @@ function getNow(): number {
 
 let targets: HTMLDivElement[] = [];
 
-function getTarget() {
+function getTarget(): HTMLDivElement {
 	var div = document.createElement("div") as HTMLDivElement;
 
 	div.className = "target";
