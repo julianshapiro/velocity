@@ -66,11 +66,12 @@ QUnit.test("Promises", function(assert) {
 		assert.ok(false, "Calling with multiple elements fulfills with a multiple element array");
 	}).then(done);
 
-	Velocity(getTarget(), defaultProperties, defaultOptions)
-		.velocity("stop")
-		.then(function() {
-			assert.ok(getNow() - start < (defaultOptions.duration as number), "Stop call fulfilled after correct delay.");
-		}, function() {
-			assert.ok(false, "Stop call fulfilled after correct delay");
-		}).then(done);
+	let anim = Velocity(getTarget(), defaultProperties, defaultOptions);
+
+	anim.then(function() {
+		assert.ok(getNow() - start < (defaultOptions.duration as number), "Stop call fulfilled after correct delay.");
+	}, function() {
+		assert.ok(false, "Stop call fulfilled after correct delay");
+	}).then(done);
+	anim.velocity("stop");
 });

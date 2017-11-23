@@ -246,20 +246,25 @@ namespace VelocityStatic {
 						}
 					}
 
-					let speed = getValue(activeCall.speed, options.speed, defaults.speed),
-						duration = getValue(activeCall.duration, options.duration, defaults.duration);
+					if (!firstTick) {
+						let speed = getValue(activeCall.speed, options.speed, defaults.speed);
 
-					if (!speed) {
-						// If we're freezing the animation then don't let the
-						// time change
-						activeCall.timeStart = timeStart -= deltaTime;
-					} else if (speed !== 1) {
-						activeCall.timeStart = timeStart -= deltaTime * speed;
-						duration /= speed;
+						if (speed !== 1) {
+							let delta = Math.min(deltaTime, timeCurrent - timeStart);
+
+							if (speed === 0) {
+								// If we're freezing the animation then don't let the
+								// time change
+								activeCall.timeStart = timeStart += delta;
+							} else {
+								activeCall.timeStart = timeStart += delta * (1 - speed);
+							}
+						}
 					}
 
 					let activeEasing = getValue(activeCall.easing, options.easing, defaults.easing),
 						millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart,
+						duration = getValue(activeCall.duration, options.duration, defaults.duration),
 						percentComplete = activeCall.percentComplete = mock ? 1 : Math.min(millisecondsEllapsed / duration, 1),
 						tweens = activeCall.tweens;
 

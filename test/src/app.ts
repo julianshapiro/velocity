@@ -27,6 +27,11 @@ interface Assert {
 	};
 }
 
+interface VelocityExtended {
+	__count?: number;
+	__start?: number;
+}
+
 // Needed tests:
 // - new stop behvaior
 // - e/p/o shorthands
@@ -84,8 +89,6 @@ var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.
 
 QUnit.config.reorder = false;
 
-Velocity.defaults = defaultOptions;
-
 function applyStartValues(element, startValues) {
 	$.each(startValues, function(property, startValue) {
 		element.style[property] = startValue;
@@ -142,6 +145,7 @@ QUnit.testDone(function() {
 		document.querySelectorAll(".velocity-animating").velocity("stop");
 	} catch (e) {}
 	freeTargets();
+	Velocity.defaults.reset();
 });
 
 /* Cleanup */

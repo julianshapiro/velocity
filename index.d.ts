@@ -48,11 +48,18 @@ type VelocityEasingType = VelocityEasingFn
  */
 interface VelocityExtended<TNode extends Node = HTMLorSVGElement> {
 	velocity: Velocity & {
-		(this: TNode | TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-		(this: TNode | TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-		(this: TNode | TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, easing?: VelocityEasingType, complete?: () => void): VelocityResult;
-		(this: TNode | TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: VelocityEasingType, complete?: () => void): VelocityResult;
-		(this: TNode | TNode[] | NodeListOf<TNode>, propertyMap: string | VelocityProperties, option?: VelocityOptions): VelocityResult;
+		(action: "finish", queue?: string): VelocityResult;
+		(action: "option", option: string): any;
+		(action: "option", option: string, value: any): VelocityResult;
+		(action: "pause", queue?: string): VelocityResult;
+		(action: "resume", queue?: string): VelocityResult;
+		(action: "stop", queue?: string): VelocityResult;
+		(action: string, ...args: any[]): VelocityResult;
+		(propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+		(propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
+		(propertyMap: string | VelocityProperties, easing?: VelocityEasingType, complete?: () => void): VelocityResult;
+		(propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: VelocityEasingType, complete?: () => void): VelocityResult;
+		(propertyMap: string | VelocityProperties, option?: VelocityOptions): VelocityResult;
 		/**
 		 * TODO: Decide if this should be public
 		 * @private
@@ -566,7 +573,8 @@ interface Velocity {
 	(elements: VelocityElements, propertyMap: string | VelocityProperties, options?: VelocityOptions): VelocityResult;
 	(elements: VelocityElements, propertyMap: string | VelocityProperties, option?: any, value?: any): VelocityResult;
 
-	defaults: VelocityOptions;
+	defaults: VelocityOptions & {reset: () => void};
+
 	queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: string | boolean): void;
 	dequeue(element: HTMLorSVGElement, queue?: string | boolean, skip?: boolean): AnimationCall;
 	freeAnimationCall(animation: AnimationCall): void;

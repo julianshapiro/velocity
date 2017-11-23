@@ -9,6 +9,7 @@
 ///<reference path="Option Fps Limit.ts" />
 ///<reference path="Option Queue.ts" />
 ///<reference path="Option Repeat.ts" />
+///<reference path="Option Speed.ts" />
 ///<reference path="Option Visibility.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.

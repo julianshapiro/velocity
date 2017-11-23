@@ -249,7 +249,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			options.loop = getValue(validateLoop(optionsMap.loop), defaults.loop);
 			options.repeat = options.repeatAgain = getValue(validateRepeat(optionsMap.repeat), defaults.repeat);
 			if (optionsMap.speed !== undefined) {
-				options.speed = validateSpeed(optionsMap.speed) || 0;
+				options.speed = getValue(validateSpeed(optionsMap.speed), 1);
 			}
 			if (isBoolean(optionsMap.promise)) {
 				options.promise = optionsMap.promise;
@@ -356,12 +356,12 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			let element = elements[i];
 
 			if (isNode(element)) {
-				let data = Data(element), // Not used, just to force init
-					animation: AnimationCall = Object.assign({
-						element: element,
-						tweens: {}
-					}, rootAnimation);
+				let animation: AnimationCall = Object.assign({
+					element: element,
+					tweens: {}
+				}, rootAnimation);
 
+				Data(element); // Not used, just to force init
 				options._total++;
 				// TODO: Remove this and provide better tests
 				animations.push(animation);

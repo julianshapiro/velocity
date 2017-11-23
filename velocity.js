@@ -2050,13 +2050,34 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
-    var _cache = DEFAULT_CACHE, _begin, _complete, _delay = DEFAULT_DELAY, _duration = DEFAULT_DURATION, _easing = validateEasing(DEFAULT_EASING, DEFAULT_DURATION), _fpsLimit = DEFAULT_FPSLIMIT, _loop = DEFAULT_LOOP, _minFrameTime = FUZZY_MS_PER_SECOND / DEFAULT_FPSLIMIT, _promise = DEFAULT_PROMISE, _promiseRejectEmpty = DEFAULT_PROMISE_REJECT_EMPTY, _queue = DEFAULT_QUEUE, _repeat = DEFAULT_REPEAT, _speed = DEFAULT_SPEED;
+    // NOTE: Add the variable here, then add the default state in "reset" below.
+    var _cache, _begin, _complete, _delay, _duration, _easing, _fpsLimit, _loop, _minFrameTime, _promise, _promiseRejectEmpty, _queue, _repeat, _speed;
     VelocityStatic.defaults = {
         mobileHA: true
     };
     // IMPORTANT: Make sure any new defaults get added to the actions/set.ts list
     Object.defineProperties(VelocityStatic.defaults, {
+        reset: {
+            enumerable: true,
+            value: function() {
+                _cache = DEFAULT_CACHE;
+                _begin = undefined;
+                _complete = undefined;
+                _delay = DEFAULT_DELAY;
+                _duration = DEFAULT_DURATION;
+                _easing = validateEasing(DEFAULT_EASING, DEFAULT_DURATION);
+                _fpsLimit = DEFAULT_FPSLIMIT;
+                _loop = DEFAULT_LOOP;
+                _minFrameTime = FUZZY_MS_PER_SECOND / DEFAULT_FPSLIMIT;
+                _promise = DEFAULT_PROMISE;
+                _promiseRejectEmpty = DEFAULT_PROMISE_REJECT_EMPTY;
+                _queue = DEFAULT_QUEUE;
+                _repeat = DEFAULT_REPEAT;
+                _speed = DEFAULT_SPEED;
+            }
+        },
         cache: {
+            enumerable: true,
             get: function() {
                 return _cache;
             },
@@ -2068,6 +2089,7 @@ var VelocityStatic;
             }
         },
         begin: {
+            enumerable: true,
             get: function() {
                 return _begin;
             },
@@ -2079,6 +2101,7 @@ var VelocityStatic;
             }
         },
         complete: {
+            enumerable: true,
             get: function() {
                 return _complete;
             },
@@ -2090,6 +2113,7 @@ var VelocityStatic;
             }
         },
         delay: {
+            enumerable: true,
             get: function() {
                 return _delay;
             },
@@ -2101,6 +2125,7 @@ var VelocityStatic;
             }
         },
         duration: {
+            enumerable: true,
             get: function() {
                 return _duration;
             },
@@ -2112,6 +2137,7 @@ var VelocityStatic;
             }
         },
         easing: {
+            enumerable: true,
             get: function() {
                 return _easing;
             },
@@ -2123,6 +2149,7 @@ var VelocityStatic;
             }
         },
         fpsLimit: {
+            enumerable: true,
             get: function() {
                 return _fpsLimit;
             },
@@ -2135,6 +2162,7 @@ var VelocityStatic;
             }
         },
         loop: {
+            enumerable: true,
             get: function() {
                 return _loop;
             },
@@ -2146,11 +2174,13 @@ var VelocityStatic;
             }
         },
         minFrameTime: {
+            enumerable: true,
             get: function() {
                 return _minFrameTime;
             }
         },
         promise: {
+            enumerable: true,
             get: function() {
                 return _promise;
             },
@@ -2162,6 +2192,7 @@ var VelocityStatic;
             }
         },
         promiseRejectEmpty: {
+            enumerable: true,
             get: function() {
                 return _promiseRejectEmpty;
             },
@@ -2173,6 +2204,7 @@ var VelocityStatic;
             }
         },
         queue: {
+            enumerable: true,
             get: function() {
                 return _queue;
             },
@@ -2184,6 +2216,7 @@ var VelocityStatic;
             }
         },
         repeat: {
+            enumerable: true,
             get: function() {
                 return _repeat;
             },
@@ -2195,6 +2228,7 @@ var VelocityStatic;
             }
         },
         speed: {
+            enumerable: true,
             get: function() {
                 return _speed;
             },
@@ -2206,6 +2240,7 @@ var VelocityStatic;
             }
         }
     });
+    VelocityStatic.defaults.reset();
 })(VelocityStatic || (VelocityStatic = {}));
 
 /*
@@ -2876,16 +2911,20 @@ var VelocityStatic;
                             firstProgress = lastProgress = activeCall;
                         }
                     }
-                    var speed = getValue(activeCall.speed, options.speed, VelocityStatic.defaults.speed), duration = getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration);
-                    if (!speed) {
-                        // If we're freezing the animation then don't let the
-                        // time change
-                        activeCall.timeStart = timeStart -= deltaTime;
-                    } else if (speed !== 1) {
-                        activeCall.timeStart = timeStart -= deltaTime * speed;
-                        duration /= speed;
+                    if (!firstTick) {
+                        var speed = getValue(activeCall.speed, options.speed, VelocityStatic.defaults.speed);
+                        if (speed !== 1) {
+                            var delta = Math.min(deltaTime, timeCurrent - timeStart);
+                            if (speed === 0) {
+                                // If we're freezing the animation then don't let the
+                                // time change
+                                activeCall.timeStart = timeStart += delta;
+                            } else {
+                                activeCall.timeStart = timeStart += delta * (1 - speed);
+                            }
+                        }
                     }
-                    var activeEasing = getValue(activeCall.easing, options.easing, VelocityStatic.defaults.easing), millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, percentComplete = activeCall.percentComplete = VelocityStatic.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1), tweens = activeCall.tweens;
+                    var activeEasing = getValue(activeCall.easing, options.easing, VelocityStatic.defaults.easing), millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, duration = getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration), percentComplete = activeCall.percentComplete = VelocityStatic.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1), tweens = activeCall.tweens;
                     if (percentComplete === 1) {
                         activeCall._nextComplete = undefined;
                         if (lastComplete) {
@@ -3990,7 +4029,7 @@ function VelocityFn() {
             options.loop = getValue(validateLoop(optionsMap.loop), defaults.loop);
             options.repeat = options.repeatAgain = getValue(validateRepeat(optionsMap.repeat), defaults.repeat);
             if (optionsMap.speed !== undefined) {
-                options.speed = validateSpeed(optionsMap.speed) || 0;
+                options.speed = getValue(validateSpeed(optionsMap.speed), 1);
             }
             if (isBoolean(optionsMap.promise)) {
                 options.promise = optionsMap.promise;
@@ -4079,11 +4118,12 @@ function VelocityFn() {
         for (var i = 0, length_1 = elements.length; i < length_1; i++) {
             var element = elements[i];
             if (isNode(element)) {
-                var data = Data(element), // Not used, just to force init
-                animation = Object.assign({
+                var animation = Object.assign({
                     element: element,
                     tweens: {}
                 }, rootAnimation);
+                Data(element);
+                // Not used, just to force init
                 options._total++;
                 // TODO: Remove this and provide better tests
                 animations.push(animation);
