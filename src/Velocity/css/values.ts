@@ -7,7 +7,7 @@
 namespace VelocityStatic.CSS {
 
 	let rxDegree = /^(rotate|skew)/i,
-		rxUnitless = /(^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight)$)|((opacity|red|green|blue|alpha)$)/i,
+		rxUnitless = /^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight|opacity)$/i, // TODO: These are wrong
 		rxShortForm = /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
 		rxLongForm = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i,
 		rxCSSNull = /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i;

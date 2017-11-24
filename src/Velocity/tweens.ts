@@ -21,8 +21,8 @@ namespace VelocityStatic {
 	 * pre-allocates the array as it is then the correct size and slightly
 	 * faster to access.
 	 */
-	function expandProperty(elements: HTMLorSVGElement[], element: HTMLorSVGElement, elementArrayIndex: number, property: string, valueData: VelocityProperty) {
-		let tween = new Array(Tween.length),
+	export function expandProperty(elements: HTMLorSVGElement[], element: HTMLorSVGElement, elementArrayIndex: number, property: string, valueData: VelocityProperty): VelocityTween {
+		let tween: VelocityTween = new Array(Tween.length) as any,
 			endValue: string,
 			easing: string,
 			startValue: string;
@@ -51,32 +51,230 @@ namespace VelocityStatic {
 		} else {
 			endValue = valueData as any;
 		}
-		/* If functions were passed in as values, pass the function the current element as its context,
-		 plus the element's index and the element set's size as arguments. Then, assign the returned value. */
+		// Fix endValue
 		if (isFunction(endValue)) {
 			endValue = endValue.call(element, elementArrayIndex, elements.length);
 		}
-		if (isFunction(startValue)) {
-			startValue = startValue.call(element, elementArrayIndex, elements.length);
-		}
 		if (isNumber(endValue)) {
-			// Make sure we have the correct value.
 			endValue = String(endValue) + CSS.Values.getUnitType(property);
-		}
-		if (isNumber(startValue)) {
-			// Make sure we have the correct value.
-			startValue = String(startValue) + CSS.Values.getUnitType(property);
 		}
 		if (isString(endValue)) {
 			endValue = CSS.fixColors(endValue);
+		} else {
+			console.warn("Velocity: Bad tween supplied!", property, valueData)
+		}
+		// Fix startValue if it exists
+		if (isFunction(startValue)) {
+			startValue = startValue.call(element, elementArrayIndex, elements.length);
+		}
+		if (isNumber(startValue)) {
+			startValue = String(startValue) + CSS.Values.getUnitType(property);
 		}
 		if (isString(startValue)) {
 			startValue = CSS.fixColors(startValue);
 		}
-		tween[Tween.END] = endValue;
-		tween[Tween.EASING] = easing;
-		tween[Tween.START] = startValue;
+		tween[Tween.END] = endValue as any;
+		tween[Tween.EASING] = easing as any;
+		tween[Tween.START] = startValue as any;
 		return tween;
+	}
+
+	/**
+	 * Convert a string-based tween with start and end strings, into a pattern
+	 * based tween with arrays.
+	 */
+	function explodeTween(tween: VelocityTween, duration: number, propertyName: string) {
+		let endValue: string = tween[Tween.END] as any as string,
+			startValue: string = tween[Tween.START] as any as string;
+
+		if (!isString(endValue) || !isString(startValue)) {
+			return;
+		}
+		let easing = tween[Tween.EASING] as any,
+			arrayStart: (string | number)[] = [null],
+			arrayEnd: (string | number)[] = [null],
+			pattern: (string | number)[] = [""],
+			rounding: boolean[],
+			indexStart = 0, // index in startValue
+			indexEnd = 0, // index in endValue
+			inCalc = 0, // Keep track of being inside a "calc()" so we don't duplicate it
+			inRGB = 0, // Keep track of being inside an RGB as we can't use fractional values
+			inRGBA = 0, // Keep track of being inside an RGBA as we must pass fractional for the alpha channel
+			isStringValue: boolean;
+
+		// TODO: Relative Values
+
+		/* Operator logic must be performed last since it requires unit-normalized start and end values. */
+		/* Note: Relative *percent values* do not behave how most people think; while one would expect "+=50%"
+		 to increase the property 1.5x its current value, it in fact increases the percent units in absolute terms:
+		 50 points is added on top of the current % value. */
+		//					switch (operator as any as string) {
+		//						case "+":
+		//							endValue = startValue + endValue;
+		//							break;
+		//
+		//						case "-":
+		//							endValue = startValue - endValue;
+		//							break;
+		//
+		//						case "*":
+		//							endValue = startValue * endValue;
+		//							break;
+		//
+		//						case "/":
+		//							endValue = startValue / endValue;
+		//							break;
+		//					}
+
+		// TODO: Leading from a calc value
+
+		while (indexStart < startValue.length || indexEnd < endValue.length) {
+			let charStart = startValue[indexStart],
+				charEnd = endValue[indexEnd];
+
+			// If they're both numbers, then parse them as a whole
+			if (/[\d\.-]/.test(charStart) && /[\d\.-]/.test(charEnd)) {
+				let tempStart = charStart, // temporary character buffer
+					tempEnd = charEnd, // temporary character buffer
+					dotStart = ".", // Make sure we can only ever match a single dot in a decimal
+					dotEnd = "."; // Make sure we can only ever match a single dot in a decimal
+
+				while (++indexStart < startValue.length) {
+					charStart = startValue[indexStart];
+					if (charStart === dotStart) {
+						dotStart = ".."; // Can never match two characters
+					} else if (!/\d/.test(charStart)) {
+						break;
+					}
+					tempStart += charStart;
+				}
+				while (++indexEnd < endValue.length) {
+					charEnd = endValue[indexEnd];
+					if (charEnd === dotEnd) {
+						dotEnd = ".."; // Can never match two characters
+					} else if (!/\d/.test(charEnd)) {
+						break;
+					}
+					tempEnd += charEnd;
+				}
+				let unitStart = CSS.getUnit(startValue, indexStart), // temporary unit type
+					unitEnd = CSS.getUnit(endValue, indexEnd); // temporary unit type
+
+				indexStart += unitStart.length;
+				indexEnd += unitEnd.length;
+				if (unitStart === unitEnd) {
+					// Same units
+					if (tempStart === tempEnd) {
+						// Same numbers, so just copy over
+						pattern[pattern.length - 1] += tempStart + unitStart;
+					} else {
+						if (inRGB) {
+							if (!rounding) {
+								rounding = [];
+							}
+							rounding[arrayStart.length] = true;
+						}
+						pattern.push(0, unitStart);
+						arrayStart.push(parseFloat(tempStart), null);
+						arrayEnd.push(parseFloat(tempEnd), null);
+					}
+				} else {
+					// Different units, so put into a "calc(from + to)" and animate each side to/from zero
+					pattern[pattern.length - 1] += inCalc ? "+ (" : "calc(";
+					pattern.push(0, unitStart + " + ", 0, unitEnd + ")");
+					arrayStart.push(parseFloat(tempStart) || 0, null, 0, null);
+					arrayEnd.push(0, null, parseFloat(tempEnd) || 0, null);
+				}
+			} else if (charStart === charEnd) {
+				pattern[pattern.length - 1] += charStart;
+				indexStart++;
+				indexEnd++;
+				// Keep track of being inside a calc()
+				if (inCalc === 0 && charStart === "c"
+					|| inCalc === 1 && charStart === "a"
+					|| inCalc === 2 && charStart === "l"
+					|| inCalc === 3 && charStart === "c"
+					|| inCalc >= 4 && charStart === "("
+				) {
+					inCalc++;
+				} else if ((inCalc && inCalc < 5)
+					|| inCalc >= 4 && charStart === ")" && --inCalc < 5) {
+					inCalc = 0;
+				}
+				// Keep track of being inside an rgb() / rgba()
+				// Only the opacity is not rounded
+				if (inRGB === 0 && charStart === "r"
+					|| inRGB === 1 && charStart === "g"
+					|| inRGB === 2 && charStart === "b"
+					|| inRGB === 3 && charStart === "a"
+					|| inRGB >= 3 && charStart === "("
+				) {
+					if (inRGB === 3 && charStart === "a") {
+						inRGBA = 1;
+					}
+					inRGB++;
+				} else if (inRGBA && charStart === ",") {
+					if (++inRGBA > 3) {
+						inRGB = inRGBA = 0;
+					}
+				} else if ((inRGBA && inRGB < (inRGBA ? 5 : 4))
+					|| inRGB >= (inRGBA ? 4 : 3) && charStart === ")" && --inRGB < (inRGBA ? 5 : 4)) {
+					inRGB = inRGBA = 0;
+				}
+			} else if (charStart || charEnd) {
+				// Different letters, so we're going to push them into start and end until the next word
+				isStringValue = true;
+				if (!isString(arrayStart[arrayStart.length - 1])) {
+					if (pattern.length === 1 && !pattern[0]) {
+						arrayStart[0] = arrayEnd[0] = "";
+					} else {
+						pattern.push("");
+						arrayStart.push("");
+						arrayEnd.push("");
+					}
+				}
+				while (indexStart < startValue.length) {
+					charStart = startValue[indexStart++];
+					if (charStart === " ") {
+						break;
+					} else {
+						arrayStart[arrayStart.length - 1] += charStart;
+					}
+				}
+				while (indexEnd < endValue.length) {
+					charEnd = endValue[indexEnd++];
+					if (charEnd === " ") {
+						break;
+					} else {
+						arrayEnd[arrayEnd.length - 1] += charEnd;
+					}
+				}
+			}
+		}
+		if (indexStart !== startValue.length || indexEnd !== endValue.length) {
+			// TODO: change the tween to use a string type if they're different
+			console.error("Velocity: Trying to pattern match mis-matched strings " + propertyName + ":[\"" + endValue + "\", \"" + startValue + "\"]");
+		}
+		if (debug) {
+			console.log("Velocity: Pattern found:", pattern, " -> ", arrayStart, arrayEnd, "[" + startValue + "," + endValue + "]");
+		}
+		if (propertyName === "display") {
+			if (!/^(at-start|at-end|during)$/.test(easing)) {
+				easing = endValue === "none" ? "at-end" : "at-start";
+			}
+		} else if (propertyName === "visibility") {
+			if (!/^(at-start|at-end|during)$/.test(easing)) {
+				easing = endValue === "hidden" ? "at-end" : "at-start";
+			}
+		} else if (isStringValue && !isFunction(easing) && !/^(at-start|at-end|during)$/.test(easing) && easing !== Easing.atStart && easing !== Easing.atEnd && easing !== Easing.during) {
+			console.warn("Velocity: String easings must use one of 'at-start', 'during' or 'at-end': {" + propertyName + ": [\"" + endValue + "\", " + easing + ", \"" + startValue + "\"]}");
+			easing = "at-start";
+		}
+		tween[Tween.END] = arrayEnd;
+		tween[Tween.EASING] = validateEasing(easing, duration);
+		tween[Tween.START] = arrayStart;
+		tween[Tween.PATTERN] = pattern;
+		tween[Tween.ROUNDING] = rounding;
 	}
 
 	/**
@@ -124,18 +322,7 @@ namespace VelocityStatic {
 					}
 
 					let tween = expandProperty(elements, element, elementArrayIndex, property, propertiesMap[property]),
-						endValue: string = tween[Tween.END],
-						easing = tween[Tween.EASING],
-						startValue: string = tween[Tween.START],
-						arrayStart: (string | number)[] = [null],
-						arrayEnd: (string | number)[] = [null],
-						pattern: (string | number)[] = [""],
-						rounding: boolean[],
-						indexStart = 0, // index in startValue
-						indexEnd = 0, // index in endValue
-						inCalc = 0, // Keep track of being inside a "calc()" so we don't duplicate it
-						inRGB = 0, // Keep track of being inside an RGB as we can't use fractional values
-						inRGBA = 0; // Keep track of being inside an RGBA as we must pass fractional for the alpha channel
+						startValue: string = tween[Tween.START] as any as string;
 
 					if (startValue === undefined) {
 						// Get the start value if it's not been passed in
@@ -147,181 +334,11 @@ namespace VelocityStatic {
 						if (isString(startValue)) {
 							startValue = CSS.fixColors(startValue);
 						}
+						tween[Tween.START] = startValue as any;
 					}
-					while (indexStart < startValue.length || indexEnd < endValue.length) {
-						let charStart = startValue[indexStart],
-							charEnd = endValue[indexEnd];
+					activeCall.tweens[propertyName] = tween;
+					explodeTween(tween, duration, propertyName);
 
-						// If they're both numbers, then parse them as a whole
-						if (/[\d\.-]/.test(charStart) && /[\d\.-]/.test(charEnd)) {
-							let tempStart = charStart, // temporary character buffer
-								tempEnd = charEnd, // temporary character buffer
-								dotStart = ".", // Make sure we can only ever match a single dot in a decimal
-								dotEnd = "."; // Make sure we can only ever match a single dot in a decimal
-
-							while (++indexStart < startValue.length) {
-								charStart = startValue[indexStart];
-								if (charStart === dotStart) {
-									dotStart = ".."; // Can never match two characters
-								} else if (!/\d/.test(charStart)) {
-									break;
-								}
-								tempStart += charStart;
-							}
-							while (++indexEnd < endValue.length) {
-								charEnd = endValue[indexEnd];
-								if (charEnd === dotEnd) {
-									dotEnd = ".."; // Can never match two characters
-								} else if (!/\d/.test(charEnd)) {
-									break;
-								}
-								tempEnd += charEnd;
-							}
-							let unitStart = CSS.getUnit(startValue, indexStart), // temporary unit type
-								unitEnd = CSS.getUnit(endValue, indexEnd); // temporary unit type
-
-							indexStart += unitStart.length;
-							indexEnd += unitEnd.length;
-							if (unitStart === unitEnd) {
-								// Same units
-								if (tempStart === tempEnd) {
-									// Same numbers, so just copy over
-									pattern[pattern.length - 1] += tempStart + unitStart;
-								} else {
-									if (inRGB) {
-										if (!rounding) {
-											rounding = [];
-										}
-										rounding[arrayStart.length] = true;
-									}
-									pattern.push(0, unitStart);
-									arrayStart.push(parseFloat(tempStart), null);
-									arrayEnd.push(parseFloat(tempEnd), null);
-								}
-							} else {
-								// Different units, so put into a "calc(from + to)" and animate each side to/from zero
-								pattern[pattern.length - 1] += inCalc ? "+ (" : "calc(";
-								pattern.push(0, unitStart + " + ", 0, unitEnd + ")");
-								arrayStart.push(parseFloat(tempStart) || 0, null, 0, null);
-								arrayEnd.push(0, null, parseFloat(tempEnd) || 0, null);
-							}
-						} else if (charStart === charEnd) {
-							pattern[pattern.length - 1] += charStart;
-							indexStart++;
-							indexEnd++;
-							// Keep track of being inside a calc()
-							if (inCalc === 0 && charStart === "c"
-								|| inCalc === 1 && charStart === "a"
-								|| inCalc === 2 && charStart === "l"
-								|| inCalc === 3 && charStart === "c"
-								|| inCalc >= 4 && charStart === "("
-							) {
-								inCalc++;
-							} else if ((inCalc && inCalc < 5)
-								|| inCalc >= 4 && charStart === ")" && --inCalc < 5) {
-								inCalc = 0;
-							}
-							// Keep track of being inside an rgb() / rgba()
-							// Only the opacity is not rounded
-							if (inRGB === 0 && charStart === "r"
-								|| inRGB === 1 && charStart === "g"
-								|| inRGB === 2 && charStart === "b"
-								|| inRGB === 3 && charStart === "a"
-								|| inRGB >= 3 && charStart === "("
-							) {
-								if (inRGB === 3 && charStart === "a") {
-									inRGBA = 1;
-								}
-								inRGB++;
-							} else if (inRGBA && charStart === ",") {
-								if (++inRGBA > 3) {
-									inRGB = inRGBA = 0;
-								}
-							} else if ((inRGBA && inRGB < (inRGBA ? 5 : 4))
-								|| inRGB >= (inRGBA ? 4 : 3) && charStart === ")" && --inRGB < (inRGBA ? 5 : 4)) {
-								inRGB = inRGBA = 0;
-							}
-						} else if (charStart || charEnd) {
-							// Different letters, so we're going to push them into start and end until the next word
-							if (!isString(arrayStart[arrayStart.length - 1])) {
-								if (pattern.length === 1 && !pattern[0]) {
-									arrayStart[0] = arrayEnd[0] = "";
-								} else {
-									pattern.push("");
-									arrayStart.push("");
-									arrayEnd.push("");
-								}
-							}
-							while (indexStart < startValue.length) {
-								charStart = startValue[indexStart++];
-								if (charStart === " ") {
-									break;
-								} else {
-									arrayStart[arrayStart.length - 1] += charStart;
-								}
-							}
-							while (indexEnd < endValue.length) {
-								charEnd = endValue[indexEnd++];
-								if (charEnd === " ") {
-									break;
-								} else {
-									arrayEnd[arrayEnd.length - 1] += charEnd;
-								}
-							}
-						}
-					}
-					if (indexStart !== startValue.length || indexEnd !== endValue.length) {
-						// TODO: change the tween to use a string type if they're different
-						//							if (debug) {
-						console.error("Trying to pattern match mis-matched strings " + propertyName + ":[\"" + endValue + "\", \"" + startValue + "\"]");
-						//							}
-						//							pattern = undefined;
-					}
-					if (debug) {
-						console.log("Pattern found:", pattern, " -> ", arrayStart, arrayEnd, "[" + startValue + "," + endValue + "]");
-					}
-
-					/*********************
-					 Relative Values
-					 *********************/
-
-					/* Operator logic must be performed last since it requires unit-normalized start and end values. */
-					/* Note: Relative *percent values* do not behave how most people think; while one would expect "+=50%"
-					 to increase the property 1.5x its current value, it in fact increases the percent units in absolute terms:
-					 50 points is added on top of the current % value. */
-					//					switch (operator as any as string) {
-					//						case "+":
-					//							endValue = startValue + endValue;
-					//							break;
-					//
-					//						case "-":
-					//							endValue = startValue - endValue;
-					//							break;
-					//
-					//						case "*":
-					//							endValue = startValue * endValue;
-					//							break;
-					//
-					//						case "/":
-					//							endValue = startValue / endValue;
-					//							break;
-					//					}
-
-					if (propertyName === "display") {
-						if (!/^(at-start|at-end|during)$/.test(easing)) {
-							easing = endValue === "none" ? "at-end" : "at-start";
-						}
-					} else if (propertyName === "visibility") {
-						if (!/^(at-start|at-end|during)$/.test(easing)) {
-							easing = endValue === "hidden" ? "at-end" : "at-start";
-						}
-					}
-					tween[Tween.END] = arrayEnd;
-					tween[Tween.EASING] = validateEasing(easing, duration);
-					tween[Tween.START] = arrayStart;
-					tween[Tween.PATTERN] = pattern;
-					tween[Tween.ROUNDING] = rounding;
-					activeCall.tweens[propertyName] = tween as any;
 					if (debug) {
 						console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween), element);
 					}
