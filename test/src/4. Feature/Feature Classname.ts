@@ -6,20 +6,14 @@
  */
 
 QUnit.test("'velocity-animating' Classname", function(assert) {
-	var done = assert.async(2),
-			$target1 = getTarget();
+	var done = assert.async(1);
 
-	Velocity($target1, defaultProperties);
-
-	setTimeout(function() {
-		assert.equal(/velocity-animating/.test($target1.className), true, "Class added.");
-
-		done();
-	}, asyncCheckDuration);
-
-	setTimeout(function() {
-		assert.equal(/velocity-animating/.test($target1.className), false, "Class removed.");
-
-		done();
-	}, completeCheckDuration);
+	Velocity(getTarget(), defaultProperties, {
+		begin: function(elements) {
+			assert.equal(/velocity-animating/.test(elements[0].className), true, "Class added.");
+		},
+		complete: function(elements) {
+			assert.equal(/velocity-animating/.test(elements[0].className), false, "Class removed.");
+		}
+	}).then(done);
 });

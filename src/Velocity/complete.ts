@@ -32,20 +32,18 @@ namespace VelocityStatic {
 		//		console.log("complete", activeCall)
 		// TODO: Check if it's not been completed already
 
-		/****************************
-		 Option: Loop || Repeat
-		 ****************************/
-
 		let options = activeCall.options,
 			queue = getValue(activeCall.queue, options.queue),
 			isLoop = getValue(activeCall.loop, options.loop, defaults.loop),
 			isRepeat = getValue(activeCall.repeat, options.repeat, defaults.repeat);
 
 		if (!isStopped && (isLoop || isRepeat)) {
+
 			////////////////////
 			// Option: Loop   //
 			// Option: Repeat //
 			////////////////////
+
 			if (isRepeat && isRepeat !== true) {
 				activeCall.repeat = isRepeat - 1;
 			} else if (isLoop && isLoop !== true) {
@@ -62,21 +60,25 @@ namespace VelocityStatic {
 			activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
 			activeCall.started = false;
 		} else {
-			let elements = activeCall.elements,
-				element = activeCall.element,
+			let element = activeCall.element,
 				data = Data(element);
 
-			// TODO: Need to check that there's no other queue:false animations running on this element
-			if (isStopped && data && (queue === false || data.queueList[queue])) {
+			if (!isStopped && data && queue !== false) {
+
 				////////////////////////
 				// Feature: Classname //
 				////////////////////////
-				let animating = false;
 
-				for (let tmp in data.queueList) {
-					// If there's even a single animation then break.
-					animating = true;
-					break;
+				let animating = false,
+					queueList = data.queueList;
+
+				// TODO: Need to check that there's no other queue:false animations running on this element
+				for (let tmp in queueList) {
+					if (tmp !== queue || queueList[tmp] !== null) {
+						// If there's even a single animation then break.
+						animating = true;
+						break;
+					}
 				}
 				data.isAnimating = animating;
 				if (!animating) {
@@ -88,6 +90,7 @@ namespace VelocityStatic {
 			//////////////////////
 			// Option: Complete //
 			//////////////////////
+
 			// If this is the last animation in this list then we can check for
 			// and complete calls or Promises.
 			// TODO: When deleting an element we need to adjust these values.
@@ -101,13 +104,15 @@ namespace VelocityStatic {
 				let resolver = options._resolver;
 
 				if (resolver) {
-					resolver(elements as any);
+					// Fulfil the Promise
+					resolver(activeCall.elements as any);
 					delete options._resolver;
 				}
 			}
 			///////////////////
 			// Option: Queue //
 			///////////////////
+
 			if (queue !== false) {
 				// We only do clever things with queues...
 				if (!isStopped) {
