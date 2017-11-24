@@ -323,7 +323,11 @@ var VelocityStatic;
             }, 1);
         }
     }
-    /* Note: Unlike tick(), which processes all active calls at once, call completion is handled on a per-call basis. */
+    /**
+     * Complete an animation. This might involve restarting (for loop or repeat
+     * options). Once it is finished we also check for any callbacks or Promises
+     * that need updating.
+     */
     function completeCall(activeCall, isStopped) {
         //		console.log("complete", activeCall)
         // TODO: Check if it's not been completed already
@@ -332,6 +336,10 @@ var VelocityStatic;
          ****************************/
         var options = activeCall.options, queue = getValue(activeCall.queue, options.queue), isLoop = getValue(activeCall.loop, options.loop, VelocityStatic.defaults.loop), isRepeat = getValue(activeCall.repeat, options.repeat, VelocityStatic.defaults.repeat);
         if (!isStopped && (isLoop || isRepeat)) {
+            ////////////////////
+            // Option: Loop   //
+            // Option: Repeat //
+            ////////////////////
             if (isRepeat && isRepeat !== true) {
                 activeCall.repeat = isRepeat - 1;
             } else if (isLoop && isLoop !== true) {
@@ -342,53 +350,65 @@ var VelocityStatic;
                 activeCall._reverse = !activeCall._reverse;
             }
             if (queue !== false) {
+                // Can't be called when stopped so no need for an extra check.
                 Data(activeCall.element).lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration);
             }
             activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
             activeCall.started = false;
         } else {
             var elements = activeCall.elements, element = activeCall.element, data = Data(element);
-            // TODO: Need to check that there's no other animations running on this element
+            // TODO: Need to check that there's no other queue:false animations running on this element
             if (isStopped && data && (queue === false || data.queueList[queue])) {
-                data.isAnimating = false;
+                ////////////////////////
+                // Feature: Classname //
+                ////////////////////////
+                var animating = false;
+                for (var tmp in data.queueList) {
+                    // If there's even a single animation then break.
+                    animating = true;
+                    break;
+                }
+                data.isAnimating = animating;
+                if (!animating) {
+                    // Remove the "velocity-animating" indicator class.
+                    VelocityStatic.CSS.Values.removeClass(element, "velocity-animating");
+                }
             }
-            // Remove the "velocity-animating" indicator class.
-            VelocityStatic.CSS.Values.removeClass(element, "velocity-animating");
-            /*********************
-             Option: Complete
-             *********************/
-            /* Complete is fired once per call (not once per element) and is passed the full raw DOM element set as both its context and its first argument. */
-            /* Note: Callbacks aren't fired when calls are manually stopped (via Velocity("stop"). */
+            //////////////////////
+            // Option: Complete //
+            //////////////////////
+            // If this is the last animation in this list then we can check for
+            // and complete calls or Promises.
+            // TODO: When deleting an element we need to adjust these values.
             if (options && ++options._completed === options._total) {
                 if (!isStopped && options.complete) {
+                    // We don't call the complete if the animation is stopped,
+                    // and we clear the key to prevent it being called again.
                     callComplete(activeCall);
-                    // Only called once, even if reversed or repeated
-                    //TODO: change all delete commands with assignment to null. This is consistently 5-10 times faster than deleting the key  https://jsperf.com/delete-vs-undefined-vs-null/16
                     options.complete = null;
                 }
-                /**********************
-                 Promise Resolving
-                 **********************/
-                /* Note: Infinite loops don't return promises. */
                 var resolver = options._resolver;
                 if (resolver) {
                     resolver(elements);
                     delete options._resolver;
                 }
             }
-            /***************
-             Dequeueing
-             ***************/
-            /* Fire the next call in the queue so long as this call's queue wasn't set to false (to trigger a parallel animation),
-             which would have already caused the next call to fire. Note: Even if the end of the animation queue has been reached,
-             dequeue() must still be called in order to completely clear jQuery's animation queue. */
+            ///////////////////
+            // Option: Queue //
+            ///////////////////
             if (queue !== false) {
-                data.lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration);
+                // We only do clever things with queues...
+                if (!isStopped) {
+                    // If we're not stopping an animation, we need to remember
+                    // what time it finished so that the next animation in
+                    // sequence gets the correct start time.
+                    data.lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration);
+                }
+                // Start the next animation in sequence, or delete the queue if
+                // this was the last one.
                 VelocityStatic.dequeue(element, queue);
             }
-            /************************
-             Cleanup
-             ************************/
+            // Cleanup any pointers, and remember the last animation etc.
             VelocityStatic.freeAnimationCall(activeCall);
         }
     }
