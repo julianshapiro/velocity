@@ -2905,15 +2905,15 @@ var VelocityStatic;
                     var speed = getValue(activeCall.speed, options.speed, VelocityStatic.defaults.speed);
                     if (!activeCall.started) {
                         // Don't bother getting until we can use these.
-                        var delay = getValue(activeCall.delay, options.delay) / speed;
+                        var delay = getValue(activeCall.delay, options.delay);
                         // Make sure anything we've delayed doesn't start
                         // animating yet, there might still be an active delay
                         // after something has been un-paused
                         if (delay) {
-                            if (timeStart + delay > timeCurrent) {
+                            if (timeStart + delay / speed > timeCurrent) {
                                 continue;
                             }
-                            activeCall.timeStart = timeStart += delay;
+                            activeCall.timeStart = timeStart += delay / (delay > 0 ? speed : 1);
                         }
                         // TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
                         activeCall.started = true;

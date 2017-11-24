@@ -757,8 +757,8 @@ QUnit.test("Repeat", function (assert) {
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 QUnit.test("Speed", function (assert) {
-    var done = assert.async(6), delay = 200, duration = 400, startDelay = getNow();
-    assert.expect(6);
+    var done = assert.async(7), delay = 200, duration = 400, startDelay = getNow();
+    assert.expect(7);
     Velocity.defaults.speed = 3;
     Velocity(getTarget(), defaultProperties, {
         speed: 5,
@@ -800,6 +800,19 @@ QUnit.test("Speed", function (assert) {
         complete: function (elements) {
             var actual = getNow() - elements.__start, expected = (duration + delay) / 2;
             assert.close(actual, expected, 32, "Delayed animation includes speed for delay. (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
+            done();
+        }
+    });
+    Velocity(getTarget(), defaultProperties, {
+        duration: duration,
+        delay: -delay,
+        speed: 2,
+        begin: function (elements) {
+            elements.__start = startDelay;
+        },
+        complete: function (elements) {
+            var actual = getNow() - elements.__start, expected = (duration - delay) / 2;
+            assert.close(actual, expected, 32, "Negative delay animation includes speed for delay. (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
             done();
         }
     });
