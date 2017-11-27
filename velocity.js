@@ -426,11 +426,19 @@ var VelocityStatic;
     var CSS;
     (function(CSS) {
         /**
+         * Convert a hex list to an rgba value. Designed to be used in replace.
+         */
+        function makeRGBA(ignore, r, g, b) {
+            return "rgba(" + parseInt(r, 16) + "," + parseInt(g, 16) + "," + parseInt(b, 16) + ",1)";
+        }
+        /**
          * Replace any css colour name with its rgba() value. It is possible to use
          * the name within an "rgba(blue, 0.4)" string this way.
          */
         function fixColors(str) {
-            return str.replace(/(rgba?\(\s*)?(\b[a-z]+\b)/g, function($0, $1, $2) {
+            return str.replace(/#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi, makeRGBA).replace(/#([a-f\d])([a-f\d])([a-f\d])/gi, function($0, r, g, b) {
+                return makeRGBA($0, r + r, g + g, b + b);
+            }).replace(/(rgba?\(\s*)?(\b[a-z]+\b)/g, function($0, $1, $2) {
                 if (CSS.Lists.colorNames.hasOwnProperty($2)) {
                     return ($1 ? $1 : "rgba(") + CSS.Lists.colorNames[$2] + ($1 ? "" : ",1)");
                 }
