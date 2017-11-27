@@ -2023,6 +2023,88 @@ var VelocityStatic;
     VelocityStatic.registerAction([ "style", styleAction ], true);
 })(VelocityStatic || (VelocityStatic = {}));
 
+///<reference path="actions.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Get or set a property from one or more elements.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    function tween(elements, percentComplete, properties, property, easing) {
+        return tweenAction(arguments, elements);
+    }
+    VelocityStatic.tween = tween;
+    /**
+     *
+     */
+    function tweenAction(args, elements, promiseHandler, action) {
+        if (!elements) {
+            if (!args.length) {
+                console.info('Velocity(<element>, "tween", percentComplete, property, end | [end, <easing>, <start>], <easing>) => value\n' + 'Velocity(<element>, "tween", percentComplete, {property: end | [end, <easing>, <start>], ...}, <easing>) => {property: value, ...}');
+                return null;
+            }
+            elements = [ document.body ];
+        } else if (elements.length !== 1) {
+            console.warn("VelocityJS: Cannot tween more than one element!");
+            return null;
+        }
+        var percentComplete = args[0], properties = args[1], singleResult, easing = args[2], fakeAnimation = {
+            elements: elements,
+            element: elements[0],
+            queue: false,
+            options: {
+                duration: 1e3
+            },
+            tweens: null
+        }, result = {}, count = 0;
+        if (isString(args[1])) {
+            singleResult = true;
+            properties = (_a = {}, _a[args[1]] = args[2], _a);
+        }
+        if (!isNumber(percentComplete) || percentComplete < 0 || percentComplete > 1) {
+            console.warn("VelocityJS: Must tween a percentage from 0 to 1!");
+            return null;
+        }
+        if (!isPlainObject(properties)) {
+            console.warn("VelocityJS: Cannot tween an invalid property!");
+            return null;
+        }
+        var activeEasing = validateEasing(getValue(easing, VelocityStatic.defaults.easing), 1e3);
+        VelocityStatic.expandProperties(fakeAnimation, properties);
+        for (var property in fakeAnimation.tweens) {
+            // For every element, iterate through each property.
+            var tween_1 = fakeAnimation.tweens[property], easing_1 = tween_1[1] || activeEasing, pattern = tween_1[3], rounding = tween_1[4], currentValue = "", i = 0;
+            count++;
+            if (pattern) {
+                for (;i < pattern.length; i++) {
+                    var startValue = tween_1[2][i];
+                    if (startValue == null) {
+                        currentValue += pattern[i];
+                    } else {
+                        var result_1 = easing_1(percentComplete, startValue, tween_1[0][i], property);
+                        currentValue += rounding && rounding[i] ? Math.round(result_1) : result_1;
+                    }
+                }
+            }
+            result[property] = currentValue;
+        }
+        if (singleResult && count === 1) {
+            for (var property in result) {
+                if (result.hasOwnProperty(property)) {
+                    return result[property];
+                }
+            }
+        }
+        return result;
+        var _a;
+    }
+    VelocityStatic.registerAction([ "tween", tweenAction ], true);
+})(VelocityStatic || (VelocityStatic = {}));
+
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -2998,18 +3080,18 @@ var VelocityStatic;
                     }
                     for (var property in tweens) {
                         // For every element, iterate through each property.
-                        var tween = tweens[property], easing = tween[1] || activeEasing, pattern = tween[3], rounding = tween[4], currentValue = "", i = 0;
+                        var tween_2 = tweens[property], easing = tween_2[1] || activeEasing, pattern = tween_2[3], rounding = tween_2[4], currentValue = "", i = 0;
                         if (!pattern) {
-                            console.warn("tick", property, JSON.stringify(tween));
+                            console.warn("tick", property, JSON.stringify(tween_2));
                         } else {
                             for (;i < pattern.length; i++) {
-                                var startValue = tween[2][i];
+                                var startValue = tween_2[2][i];
                                 if (startValue == null) {
                                     currentValue += pattern[i];
                                 } else {
                                     // All easings must deal with numbers except for
                                     // our internal ones
-                                    var result = easing(reverse ? 1 - percentComplete : percentComplete, startValue, tween[0][i], property);
+                                    var result = easing(reverse ? 1 - percentComplete : percentComplete, startValue, tween_2[0][i], property);
                                     currentValue += rounding && rounding[i] ? Math.round(result) : result;
                                 }
                             }
@@ -3097,11 +3179,11 @@ var VelocityStatic;
                     }
                     continue;
                 }
-                var tween = tweens[propertyName] = new Array(5), endValue = void 0, startValue = void 0;
+                var tween_3 = tweens[propertyName] = new Array(5), endValue = void 0, startValue = void 0;
                 if (isFunction(valueData)) {
-                    // If we have a function as the main argument then
-                    // resolve it first, in case it returns an array that
-                    // needs to be split.
+                    // If we have a function as the main argument then resolve
+                    // it first, in case it returns an array that needs to be
+                    // split.
                     valueData = valueData.call(element, elementArrayIndex, elements.length, elements);
                 }
                 if (Array.isArray(valueData)) {
@@ -3112,7 +3194,7 @@ var VelocityStatic;
                     if (isString(arr1) && (/^[\d-]/.test(arr1) || VelocityStatic.CSS.RegEx.isHex.test(arr1)) || isFunction(arr1) || isNumber(arr1)) {
                         startValue = arr1;
                     } else if (isString(arr1) && VelocityStatic.Easings[arr1] || Array.isArray(arr1)) {
-                        tween[1] = arr1;
+                        tween_3[1] = arr1;
                         startValue = arr2;
                     } else {
                         startValue = arr1 || arr2;
@@ -3128,7 +3210,7 @@ var VelocityStatic;
                     endValue = String(endValue) + VelocityStatic.CSS.Values.getUnitType(propertyName);
                 }
                 if (isString(endValue)) {
-                    tween[0] = VelocityStatic.CSS.fixColors(endValue);
+                    tween_3[0] = VelocityStatic.CSS.fixColors(endValue);
                 } else {
                     console.warn("Velocity: Bad tween supplied!", propertyName, valueData);
                 }
@@ -3139,14 +3221,14 @@ var VelocityStatic;
                 if (isNumber(startValue)) {
                     startValue = String(startValue) + VelocityStatic.CSS.Values.getUnitType(propertyName);
                 }
-                if (!isString(startValue) && queue !== false && data.queueList[queue] === undefined) {
-                    // If there's nothing currently running or queued then grab the
-                    // value now - instead of grabbing it during a tick.
+                if (!isString(startValue) && (queue === false || data.queueList[queue] === undefined)) {
+                    // If there's nothing currently running or queued then grab
+                    // the value now - instead of grabbing it during a tick.
                     startValue = VelocityStatic.CSS.getPropertyValue(element, propertyName);
                 }
                 if (isString(startValue)) {
-                    tween[2] = VelocityStatic.CSS.fixColors(startValue);
-                    explodeTween(propertyName, tween, duration);
+                    tween_3[2] = VelocityStatic.CSS.fixColors(startValue);
+                    explodeTween(propertyName, tween_3, duration);
                 }
             }
         }
@@ -3336,19 +3418,19 @@ var VelocityStatic;
             if (!(activeCall._flags & 4)) {
                 var tweens = activeCall.tweens, duration = getValue(activeCall.options.duration, VelocityStatic.defaults.duration);
                 for (var propertyName in tweens) {
-                    var tween = tweens[propertyName];
-                    if (tween[2] == null) {
+                    var tween_4 = tweens[propertyName];
+                    if (tween_4[2] == null) {
                         // Get the start value as it's not been passed in
                         var startValue = VelocityStatic.CSS.getPropertyValue(element, propertyName);
                         if (isString(startValue)) {
-                            tween[2] = VelocityStatic.CSS.fixColors(startValue);
-                            explodeTween(propertyName, tween, duration);
+                            tween_4[2] = VelocityStatic.CSS.fixColors(startValue);
+                            explodeTween(propertyName, tween_4, duration);
                         } else if (!Array.isArray(startValue)) {
-                            console.warn("bad type", tween, propertyName, startValue);
+                            console.warn("bad type", tween_4, propertyName, startValue);
                         }
                     }
                     if (VelocityStatic.debug) {
-                        console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween), element);
+                        console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween_4), element);
                     }
                 }
                 activeCall._flags |= 4;
@@ -3883,10 +3965,10 @@ function VelocityFn() {
             }
         } else if (!syntacticSugar) {
             // Expand any direct options if possible.
-            var offset = 0, duration_1 = validateDuration(_arguments[argumentIndex + offset], true);
-            if (duration_1 !== undefined) {
+            var offset = 0, duration = validateDuration(_arguments[argumentIndex + offset], true);
+            if (duration !== undefined) {
                 offset++;
-                options.duration = duration_1;
+                options.duration = duration;
             }
             if (!isFunction(_arguments[argumentIndex + offset])) {
                 // Despite coming before Complete, we can't pass a fn easing
@@ -3907,7 +3989,7 @@ function VelocityFn() {
          In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
         /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
          the call array is pushed to VelocityStatic.State.calls for live processing by the requestAnimationFrame tick. */
-        var duration = getValue(options.duration, defaults.duration), rootAnimation = {
+        var rootAnimation = {
             _prev: undefined,
             _next: undefined,
             _flags: 0,

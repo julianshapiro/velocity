@@ -319,18 +319,17 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		/* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
 		 the call array is pushed to VelocityStatic.State.calls for live processing by the requestAnimationFrame tick. */
 
-		let duration = getValue(options.duration, defaults.duration),
-			rootAnimation: AnimationCall = {
-				_prev: undefined,
-				_next: undefined,
-				_flags: 0,
-				options: options,
-				percentComplete: 0,
-				//element: element,
-				elements: elements,
-				ellapsedTime: 0,
-				timeStart: 0
-			};
+		let rootAnimation: AnimationCall = {
+			_prev: undefined,
+			_next: undefined,
+			_flags: 0,
+			options: options,
+			percentComplete: 0,
+			//element: element,
+			elements: elements,
+			ellapsedTime: 0,
+			timeStart: 0
+		};
 
 		animations = [];
 		for (let index = 0, length = elements.length; index < length; index++) {

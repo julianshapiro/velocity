@@ -56,9 +56,9 @@ namespace VelocityStatic {
 					startValue: string;
 
 				if (isFunction(valueData)) {
-					// If we have a function as the main argument then
-					// resolve it first, in case it returns an array that
-					// needs to be split.
+					// If we have a function as the main argument then resolve
+					// it first, in case it returns an array that needs to be
+					// split.
 					valueData = (valueData as VelocityPropertyFn).call(element, elementArrayIndex, elements.length, elements);
 				}
 				if (Array.isArray(valueData)) {
@@ -98,9 +98,9 @@ namespace VelocityStatic {
 				if (isNumber(startValue)) {
 					startValue = String(startValue) + CSS.Values.getUnitType(propertyName);
 				}
-				if (!isString(startValue) && queue !== false && data.queueList[queue] === undefined) {
-					// If there's nothing currently running or queued then grab the
-					// value now - instead of grabbing it during a tick.
+				if (!isString(startValue) && (queue === false || data.queueList[queue] === undefined)) {
+					// If there's nothing currently running or queued then grab
+					// the value now - instead of grabbing it during a tick.
 					startValue = CSS.getPropertyValue(element, propertyName);
 				}
 				if (isString(startValue)) {

@@ -6,3 +6,4 @@
 ///<reference path="reverse.ts" />
 ///<reference path="stop.ts" />
 ///<reference path="style.ts" />
+///<reference path="tween.ts" />
