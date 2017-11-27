@@ -15,7 +15,11 @@ namespace VelocityStatic {
 	function checkAnimation(animation: AnimationCall, queueName: false | string, defaultQueue: false | string, isPaused: boolean) {
 		if (queueName === undefined
 			|| (queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue))) {
-			animation.paused = isPaused;
+			if (isPaused) {
+				animation._flags |= AnimationFlags.PAUSED;
+			} else {
+				animation._flags &= ~AnimationFlags.PAUSED;
+			}
 		}
 	};
 

@@ -45,9 +45,9 @@ namespace VelocityStatic.CSS {
 		 Also, in all browsers, when border colors aren't all the same, a compound value is returned that Velocity isn't setup to parse.
 		 So, as a polyfill for querying individual border side colors, we just return the top border's color and animate all borders from that value. */
 		/* TODO: There is a borderColor normalisation in legacy/ - figure out where this is needed... */
-//		if (property === "borderColor") {
-//			property = "borderTopColor";
-//		}
+		//		if (property === "borderColor") {
+		//			property = "borderTopColor";
+		//		}
 
 		/* IE9 has a bug in which the "filter" property must be accessed from computedStyle using the getPropertyValue method
 		 instead of a direct property lookup. The getPropertyValue method is slower than a direct lookup, which is why we avoid it by default. */
@@ -76,7 +76,7 @@ namespace VelocityStatic.CSS {
 				computedValue = _position(element)[property] + "px"; /* GET */
 			}
 		}
-		return computedValue !== undefined ? String(computedValue) : undefined;
+		return computedValue ? String(computedValue) : "";
 	}
 
 	/**

@@ -319,32 +319,33 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		/* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
 		 the call array is pushed to VelocityStatic.State.calls for live processing by the requestAnimationFrame tick. */
 
-		let rootAnimation: AnimationCall = {
-			_prev: undefined,
-			_next: undefined,
-			options: options,
-			started: false,
-			percentComplete: 0,
-			//element: element,
-			elements: elements,
-			ellapsedTime: 0,
-			properties: propertiesMap as VelocityProperties,
-			timeStart: 0
-		};
+		let duration = getValue(options.duration, defaults.duration),
+			rootAnimation: AnimationCall = {
+				_prev: undefined,
+				_next: undefined,
+				_flags: 0,
+				options: options,
+				percentComplete: 0,
+				//element: element,
+				elements: elements,
+				ellapsedTime: 0,
+				timeStart: 0
+			};
+
 		animations = [];
-		for (let i = 0, length = elements.length; i < length; i++) {
-			let element = elements[i];
+		for (let index = 0, length = elements.length; index < length; index++) {
+			let element = elements[index];
 
 			if (isNode(element)) {
-				let animation: AnimationCall = Object.assign({
-					element: element,
-					tweens: {}
-				}, rootAnimation);
+				let tweens = Object.create(null),
+					animation: AnimationCall = Object.assign({
+						element: element,
+						tweens: tweens
+					}, rootAnimation);
 
-				Data(element); // Not used, just to force init
 				options._total++;
-				// TODO: Remove this and provide better tests
 				animations.push(animation);
+				VelocityStatic.expandProperties(animation, propertiesMap);
 				VelocityStatic.queue(element, animation, getValue(animation.queue, options.queue));
 			}
 		}

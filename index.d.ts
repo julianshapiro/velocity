@@ -98,10 +98,20 @@ type VelocityElements = HTMLorSVGElement | HTMLorSVGElement[] | VelocityResult;
 type VelocityPropertyValue = number | string | [number | string] | [number | string, VelocityEasingType | number | string] | [number | string, VelocityEasingType, number | string];
 
 /**
+ * A callback to allow us to generate a property value for a property name.
+ */
+type VelocityPropertyFn = (this: HTMLorSVGElement, index?: number, total?: number, elements?: VelocityElements) => VelocityPropertyValue;
+
+/**
+ * A callback to allow us to generate a property start / end value.
+ */
+type VelocityPropertyValueFn = (this: HTMLorSVGElement, index?: number, total?: number) => number | string;
+
+/**
  * A property value can be a string or a number. If it is a number then it will
  * get the correct unit added to it depending on the property name if required.
  */
-type VelocityProperty = VelocityPropertyValue | ((index?: number, total?: number) => VelocityPropertyValue);
+type VelocityProperty = VelocityPropertyValue | VelocityPropertyFn;
 
 // TODO: | ((element: HTMLorSVGElement, index: number, elements: HTMLorSVGElement[]) => number | string);
 
@@ -459,6 +469,30 @@ interface ScrollData {
 
 type VelocityTween = [(string | number)[], VelocityEasingFn, (string | number)[], (string | number)[], boolean[]];
 
+declare const enum AnimationFlags {
+	/**
+	 * Set once the animation has started - after any delay (and possible pause)
+	 */
+	STARTED = 1 << 0,
+	/**
+	 * The pause state of this animation. If true it is paused, if false it was
+	 * paused and needs to be resumed, and if undefined / null then not either.
+	 */
+	PAUSED = 1 << 1,
+	/**
+	 * When the tweens are expanded this is set to save future processing.
+	 */
+	EXPANDED = 1 << 2,
+	/**
+	 * When the animation is running in reverse, such as for a loop.
+	 */
+	REVERSE = 1 << 3,
+	/**
+	 * Set when an animation is manually stopped.
+	 */
+	STOPPED = 1<<4,
+}
+
 interface AnimationCall extends StrictVelocityOptions {
 	/**
 	 * Used to store the next AnimationCell in this list.
@@ -486,11 +520,9 @@ interface AnimationCall extends StrictVelocityOptions {
 	 */
 	_nextComplete?: AnimationCall;
 	/**
-	 * If an animation is reversed such as for a loop.
-	 * 
-	 * @private
+	 * A number of flags for use in tracking an animation.
 	 */
-	_reverse?: boolean;
+	_flags: number;
 	/**
 	 * Properties to be tweened
 	 */
@@ -500,11 +532,6 @@ interface AnimationCall extends StrictVelocityOptions {
 	 * not used.
 	 */
 	tween?: string;
-	/**
-	 * Valocity call properties - before processing when the animation goes
-	 * live.
-	 */
-	properties?: "reverse" | VelocityProperties;
 	/**
 	 * The element this specific animation is for. If there is more than one in
 	 * the elements list then this will be duplicated when it is pulled off a
@@ -529,15 +556,6 @@ interface AnimationCall extends StrictVelocityOptions {
 	 */
 	timeStart?: number;
 	/**
-	 * The pause state of this animation. If true it is paused, if false it was
-	 * paused and needs to be resumed, and if undefined / null then not either.
-	 */
-	paused?: boolean;
-	/**
-	 * Set once the animation has started - after any delay (and possible pause)
-	 */
-	started?: boolean;
-	/**
 	 * The time (in ms) that this animation has already run. Used with the
 	 * duration and easing to provide the exact tween needed.
 	 */
@@ -546,18 +564,6 @@ interface AnimationCall extends StrictVelocityOptions {
 	 * The percentage complete as a number 0 <= n <= 1
 	 */
 	percentComplete?: number;
-	/**
-	 * TODO: Remove this so it's a normal property
-	 *
-	 * @deprecated
-	 */
-	display?: never;
-	/**
-	 * TODO: Remove this so it's a normal property
-	 *
-	 * @deprecated
-	 */
-	visibility?: never;
 }
 
 interface Velocity {

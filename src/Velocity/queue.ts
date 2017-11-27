@@ -33,7 +33,6 @@ namespace VelocityStatic {
 	 * Add an item to an animation queue.
 	 */
 	export function queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: string | false): void {
-
 		if (queue === false) {
 			animate(animation);
 		} else {
@@ -92,15 +91,18 @@ namespace VelocityStatic {
 	 * mark us as finished.
 	 */
 	export function freeAnimationCall(animation: AnimationCall): void {
+		let next = animation._next,
+			prev = animation._prev;
+
 		if (State.first === animation) {
-			State.first = animation._next;
-		} else if (animation._prev) {
-			animation._prev._next = animation._next;
+			State.first = next;
+		} else if (prev) {
+			prev._next = next;
 		}
 		if (State.last === animation) {
-			State.last = animation._prev;
-		} else if (animation._next) {
-			animation._next._prev = animation._prev;
+			State.last = prev;
+		} else if (next) {
+			next._prev = prev;
 		}
 		let queue = getValue(animation.queue, animation.options.queue, defaults.queue);
 

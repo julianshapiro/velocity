@@ -39,7 +39,7 @@ namespace VelocityStatic {
 			activeCall.options.progress.call(elements,
 				elements,
 				percentComplete,
-				Math.max(0, activeCall.timeStart + getValue(activeCall.duration, options && options.duration, defaults.duration) - timeCurrent),
+				Math.max(0, activeCall.timeStart + (activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaults.duration) - timeCurrent),
 				activeCall.timeStart,
 				tweenValue !== undefined ? tweenValue : String(percentComplete * 100),
 				activeCall);
@@ -48,6 +48,29 @@ namespace VelocityStatic {
 				throw error;
 			}, 1);
 		}
+	}
+
+	let firstProgress: AnimationCall,
+		firstComplete: AnimationCall;
+
+	function asyncCallbacks() {
+		let activeCall: AnimationCall,
+			nextCall: AnimationCall;
+		// Callbacks and complete that might read the DOM again.
+
+		// Progress callback
+		for (activeCall = firstProgress; activeCall; activeCall = nextCall) {
+			nextCall = activeCall._nextProgress;
+			// Pass to an external fn with a try/catch block for optimisation
+			callProgress(activeCall, lastTick);
+		}
+		// Complete animations, including complete callback or looping
+		for (activeCall = firstComplete; activeCall; activeCall = nextCall) {
+			nextCall = activeCall._nextComplete;
+			/* If this call has finished tweening, pass it to complete() to handle call cleanup. */
+			completeCall(activeCall);
+		}
+
 	}
 
 	/**************
@@ -145,11 +168,14 @@ namespace VelocityStatic {
 				deltaTime = lastTick ? timeCurrent - lastTick : FRAME_TIME,
 				activeCall: AnimationCall,
 				nextCall: AnimationCall,
-				firstProgress: AnimationCall,
 				lastProgress: AnimationCall,
-				firstComplete: AnimationCall,
-				lastComplete: AnimationCall;
+				lastComplete: AnimationCall,
+				defaultSpeed = defaults.speed,
+				defaultEasing = defaults.easing,
+				defaultDuration = defaults.duration;
 
+			firstProgress = null;
+			firstComplete = null;
 			if (deltaTime >= defaults.minFrameTime || !lastTick) {
 				lastTick = timeCurrent;
 
@@ -159,7 +185,7 @@ namespace VelocityStatic {
 
 				/* Exapand any tweens that might need it */
 				while ((activeCall = State.firstNew)) {
-					expandTween(activeCall);
+					validateTweens(activeCall);
 				}
 				/* Iterate through each active call. */
 				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
@@ -178,7 +204,7 @@ namespace VelocityStatic {
 					// Don't bother getting until we can use these.
 					let timeStart = activeCall.timeStart,
 						options = activeCall.options,
-						paused = activeCall.paused,
+						flags = activeCall._flags,
 						firstTick = !timeStart;
 
 					// If this is the first time that this call has been
@@ -186,7 +212,7 @@ namespace VelocityStatic {
 					// it's value is as close to the real animation start time
 					// as possible.
 					if (firstTick) {
-						let queue = getValue(activeCall.queue, options.queue);
+						let queue = activeCall.queue != null ? activeCall.queue : options.queue;
 
 						timeStart = timeCurrent - deltaTime;
 						if (queue !== false) {
@@ -196,20 +222,17 @@ namespace VelocityStatic {
 					}
 					// If this animation is paused then skip processing unless
 					// it has been set to resume.
-					if (paused === true) {
+					if (flags & AnimationFlags.PAUSED) {
 						// Update the time start to accomodate the paused
 						// completion amount.
 						activeCall.timeStart += deltaTime;
 						continue;
-					} else if (paused === false) {
-						// Remove pause key after processing.
-						delete activeCall.paused;
 					}
-					let speed = getValue(activeCall.speed, options.speed, defaults.speed);
+					let speed = activeCall.speed != null ? activeCall.speed : options.speed != null ? options.speed : defaultSpeed;
 
-					if (!activeCall.started) {
+					if (!(flags & AnimationFlags.STARTED)) {
 						// Don't bother getting until we can use these.
-						let delay = getValue(activeCall.delay, options.delay);
+						let delay = activeCall.delay != null ? activeCall.delay : options.delay;
 
 						// Make sure anything we've delayed doesn't start
 						// animating yet, there might still be an active delay
@@ -223,9 +246,7 @@ namespace VelocityStatic {
 
 						// TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
 
-						activeCall.started = true;
-						// Apply the "velocity-animating" indicator class.
-						CSS.Values.addClass(element, "velocity-animating");
+						activeCall._flags |= AnimationFlags.STARTED;
 						// The begin callback is fired once per call, not once
 						// per element, and is passed the full raw DOM element
 						// set as both its context and its first argument.
@@ -261,11 +282,12 @@ namespace VelocityStatic {
 						}
 					}
 
-					let activeEasing = getValue(activeCall.easing, options.easing, defaults.easing),
+					let activeEasing = activeCall.easing != null ? activeCall.easing : options.easing != null ? options.easing : defaultEasing,
 						millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart,
-						duration = getValue(activeCall.duration, options.duration, defaults.duration),
+						duration = activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaultDuration,
 						percentComplete = activeCall.percentComplete = mock ? 1 : Math.min(millisecondsEllapsed / duration, 1),
-						tweens = activeCall.tweens;
+						tweens = activeCall.tweens,
+						reverse = activeCall._flags & AnimationFlags.REVERSE;
 
 					if (percentComplete === 1) {
 						activeCall._nextComplete = undefined;
@@ -285,42 +307,35 @@ namespace VelocityStatic {
 							currentValue = "",
 							i = 0;
 
-						for (; i < pattern.length; i++) {
-							let startValue = tween[Tween.START][i];
-
-							if (startValue != null) {
-								// All easings must deal with numbers except for
-								// our internal ones
-								let result = easing(activeCall._reverse ? 1 - percentComplete : percentComplete, startValue as number, tween[Tween.END][i] as number, property)
-
-								pattern[i] = rounding && rounding[i] ? Math.round(result) : result;
-							}
-							currentValue += pattern[i];
-						}
-						if (property === "tween") {
-							// Skip the fake 'tween' property as that is only
-							// passed into the progress callback.
-							activeCall.tween = currentValue;
+						if (!pattern) {
+							console.warn("tick", property, JSON.stringify(tween))
 						} else {
-							// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-							CSS.setPropertyValue(element, property, currentValue);
+							for (; i < pattern.length; i++) {
+								let startValue = tween[Tween.START][i];
+
+								if (startValue == null) {
+									currentValue += pattern[i];
+								} else {
+									// All easings must deal with numbers except for
+									// our internal ones
+									let result = easing(reverse ? 1 - percentComplete : percentComplete, startValue as number, tween[Tween.END][i] as number, property)
+
+									currentValue += rounding && rounding[i] ? Math.round(result) : result;
+								}
+							}
+							if (property === "tween") {
+								// Skip the fake 'tween' property as that is only
+								// passed into the progress callback.
+								activeCall.tween = currentValue;
+							} else {
+								// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
+								CSS.setPropertyValue(element, property, currentValue);
+							}
 						}
 					}
 				}
-
-				// Callbacks and complete that might read the DOM again.
-
-				// Progress callback
-				for (activeCall = firstProgress; activeCall; activeCall = nextCall) {
-					nextCall = activeCall._nextProgress;
-					// Pass to an external fn with a try/catch block for optimisation
-					callProgress(activeCall, timeCurrent);
-				}
-				// Complete animations, including complete callback or looping
-				for (activeCall = firstComplete; activeCall; activeCall = nextCall) {
-					nextCall = activeCall._nextComplete;
-					/* If this call has finished tweening, pass it to complete() to handle call cleanup. */
-					completeCall(activeCall);
+				if (firstProgress || firstComplete) {
+					setTimeout(asyncCallbacks, 1);
 				}
 			}
 		}

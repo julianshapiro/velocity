@@ -26,7 +26,7 @@ namespace VelocityStatic {
 
 			while (animation = VelocityStatic.dequeue(element, queue)) {
 				animation.queue = false;
-				VelocityStatic.expandTween(animation);
+				VelocityStatic.validateTweens(animation);
 			}
 		});
 		VelocityStatic.Actions["stop"].apply(this, arguments);

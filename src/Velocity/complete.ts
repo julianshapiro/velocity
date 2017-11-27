@@ -28,14 +28,15 @@ namespace VelocityStatic {
 	 * options). Once it is finished we also check for any callbacks or Promises
 	 * that need updating.
 	 */
-	export function completeCall(activeCall: AnimationCall, isStopped?: boolean) {
+	export function completeCall(activeCall: AnimationCall) {
 		//		console.log("complete", activeCall)
 		// TODO: Check if it's not been completed already
 
 		let options = activeCall.options,
 			queue = getValue(activeCall.queue, options.queue),
 			isLoop = getValue(activeCall.loop, options.loop, defaults.loop),
-			isRepeat = getValue(activeCall.repeat, options.repeat, defaults.repeat);
+			isRepeat = getValue(activeCall.repeat, options.repeat, defaults.repeat),
+			isStopped = activeCall._flags & AnimationFlags.STOPPED;
 
 		if (!isStopped && (isLoop || isRepeat)) {
 
@@ -51,14 +52,14 @@ namespace VelocityStatic {
 				activeCall.repeat = getValue(activeCall.repeatAgain, options.repeatAgain, defaults.repeatAgain);
 			}
 			if (isLoop) {
-				activeCall._reverse = !activeCall._reverse;
+				activeCall._flags ^= AnimationFlags.REVERSE;
 			}
 			if (queue !== false) {
 				// Can't be called when stopped so no need for an extra check.
 				Data(activeCall.element).lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, defaults.duration);
 			}
 			activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
-			activeCall.started = false;
+			activeCall._flags &= ~AnimationFlags.STARTED;
 		} else {
 			let element = activeCall.element,
 				data = Data(element);
