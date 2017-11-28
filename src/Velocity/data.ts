@@ -51,7 +51,6 @@ function Data(element: HTMLorSVGElement): ElementData {
 		Object.defineProperty(element, "velocityData", {
 			value: data
 		});
-
 	}
 
 	return data;

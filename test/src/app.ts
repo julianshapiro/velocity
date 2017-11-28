@@ -142,6 +142,10 @@ function once(func): typeof func {
 	};
 }
 
+function sleep(ms: number) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 QUnit.testDone(function() {
 	try {
 		document.querySelectorAll(".velocity-animating").velocity("stop");

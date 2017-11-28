@@ -568,7 +568,7 @@ interface AnimationCall extends StrictVelocityOptions {
 
 interface Velocity {
 	// TODO: Add all variations of the velocity argument formats allowed. Make them TYPE based as they're used in multiple places.
-	(options?: VelocityObjectArgs): VelocityResult;
+	(options?: VelocityObjectArgs | string): VelocityResult;
 	(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
 	(elements: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
 	(elements: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;

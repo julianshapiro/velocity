@@ -7,8 +7,9 @@
 		"preserveConstEnums": true,
 		"removeComments": false,
 		"sourceMap": true,
+		"inlineSources": true,
 		"target": "es5",
-		"lib" : [
+		"lib": [
 			"es6",
 			"dom",
 			"scripthost"

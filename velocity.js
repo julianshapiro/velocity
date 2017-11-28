@@ -1859,7 +1859,8 @@ var VelocityStatic;
         }
         if (promiseHandler) {
             if (elements && elements.then) {
-                elements.then(promiseHandler._resolver);
+                //elements.then(promiseHandler._resolver);
+                promiseHandler._resolver(elements);
             } else {
                 promiseHandler._resolver(elements);
             }
