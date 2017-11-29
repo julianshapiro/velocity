@@ -7,6 +7,7 @@
 
 QUnit.skip("Colors (Shorthands)", function(assert) {
 	var $target = getTarget();
+
 	Velocity($target, {borderColor: "#7871c2", color: ["#297dad", "spring", "#5ead29"]});
 
 	//	assert.equal(Data($target).style.borderColorRed.endValue, 120, "Hex #1a component.");

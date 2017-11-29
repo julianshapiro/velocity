@@ -34,6 +34,7 @@ namespace VelocityStatic {
 			elements = [document.body];
 			requireForcefeeding = true;
 		} else if (elements.length !== 1) {
+			// TODO: Allow more than a single element to return an array of results
 			throw new Error("VelocityJS: Cannot tween more than one element!");
 		}
 		let percentComplete: number = args[0],

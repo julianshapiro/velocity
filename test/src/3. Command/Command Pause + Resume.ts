@@ -112,8 +112,8 @@ QUnit.test("Pause / Resume", async (assert) => {
 
 	//TODO this is resolved instead of the promise. Should remove and use it inside of then() above
 	await sleep(150);
-	assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetD, "opacity") as string), 1, "Second tween animation must have not started when pausing both elements and resuming first tween");
-	assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetC, "opacity") as string), 0, "First tween animation must be completed when pausing both elements and resuming only first tween");
+	assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetD, "opacity") as string), 1, "Second tween animation must have not started when pausing both elements and resuming first tween.");
+	assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetC, "opacity") as string), 0, "First tween animation must be completed when pausing both elements and resuming only first tween.");
 
 	// Testing named queue for both elements
 	var $targetA = getTarget(), $targetB = getTarget();
@@ -147,8 +147,8 @@ QUnit.test("Pause / Resume", async (assert) => {
 
 	//TODO this is resolved instead of the promise. Should remove and use it inside of then() above
 	await sleep(150);
-	assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetD, "opacity") as string), 1, "Second tween animation must have not started when pausing both elements and resuming first tween when in same queue");
-	assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetC, "opacity") as string), 0, "First tween animation must be completed when pausing both elements and resuming only first tween when in same queue");
+	assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetD, "opacity") as string), 1, "Second tween animation must have not started when pausing both elements and resuming first tween when in same queue.");
+	assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetC, "opacity") as string), 0, "First tween animation must be completed when pausing both elements and resuming only first tween when in same queue.");
 
 	/* Ensure proper behavior with queue:false  */
 	var $target4 = getTarget();

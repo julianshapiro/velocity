@@ -14,7 +14,7 @@ QUnit.test("Tween", function(assert) {
 	assert.raises(() => {(Velocity as any)("tween", "invalid")}, "Invalid percentComplete throws an error.");
 	assert.raises(() => {(Velocity as any)([$target1, $target1], "tween", "invalid")}, "Passing more than one target throws an error.");
 	assert.raises(() => {(Velocity as any)("tween", 0, ["invalid"])}, "Invalid propertyMap throws an error.");
-	assert.raises(() => {(Velocity as any)("tween", 0, "invalid", 1)}, "Property without an element must be forcefeed or throw an error.");
+	assert.raises(() => {(Velocity as any)("tween", 0, "invalid", 1)}, "Property without an element must be forcefed or throw an error.");
 
 	assert.equal($target1.velocity("tween", 0.5, "opacity", [1, 0], "linear"), "0.5", "Calling on an chain returns the correct value.");
 	assert.equal(Velocity($target1, "tween", 0.5, "opacity", [1, 0], "linear"), "0.5", "Calling with an element returns the correct value.");

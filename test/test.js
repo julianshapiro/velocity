@@ -578,6 +578,47 @@ QUnit.test("Easing", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
+var _this = this;
+QUnit.test("FPS Limit", function (assert) { return __awaiter(_this, void 0, void 0, function () {
+    var count, $target, frameRates, testFrame, i, _a, _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
+            case 0:
+                $target = getTarget(), frameRates = [5, 15, 30, 60], testFrame = function (frameRate) {
+                    var counter = 0;
+                    Velocity.defaults.fpsLimit = frameRate;
+                    // Test if the frame rate is assigned succesfully.
+                    assert.equal(frameRate, Velocity.defaults.fpsLimit, "Setting global fps limit to " + frameRate);
+                    return Velocity($target, defaultProperties, {
+                        duration: 1000,
+                        progress: function () {
+                            counter++;
+                        }
+                    }).then(function () { return counter; });
+                };
+                assert.expect(frameRates.length * 2);
+                i = 0;
+                _c.label = 1;
+            case 1:
+                if (!(i < frameRates.length)) return [3 /*break*/, 4];
+                _b = (_a = assert).close;
+                return [4 /*yield*/, testFrame(frameRates[i])];
+            case 2:
+                _b.apply(_a, [count = _c.sent(), frameRates[i], 1, "...counted " + count + " frames (\xB11 frame)"]);
+                _c.label = 3;
+            case 3:
+                i++;
+                return [3 /*break*/, 1];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); });
+///<reference path="_module.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
 QUnit.test("Loop", function (assert) {
     var done = assert.async(1), testOptions = { loop: 2, delay: 100, duration: 100 }, begin = 0, complete = 0, loop = 0, start = getNow(), lastPercentComplete = 2;
     assert.expect(4);
@@ -625,47 +666,6 @@ QUnit.test("Progress", function (assert) {
         })
     });
 });
-///<reference path="_module.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var _this = this;
-QUnit.test("FPS Limit", function (assert) { return __awaiter(_this, void 0, void 0, function () {
-    var count, $target, frameRates, testFrame, i, _a, _b;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
-            case 0:
-                $target = getTarget(), frameRates = [5, 15, 30, 60], testFrame = function (frameRate) {
-                    var counter = 0;
-                    Velocity.defaults.fpsLimit = frameRate;
-                    // Test if the frame rate is assigned succesfully.
-                    assert.equal(frameRate, Velocity.defaults.fpsLimit, "Setting global fps limit to " + frameRate);
-                    return Velocity($target, defaultProperties, {
-                        duration: 1000,
-                        progress: function () {
-                            counter++;
-                        }
-                    }).then(function () { return counter; });
-                };
-                assert.expect(frameRates.length * 2);
-                i = 0;
-                _c.label = 1;
-            case 1:
-                if (!(i < frameRates.length)) return [3 /*break*/, 4];
-                _b = (_a = assert).close;
-                return [4 /*yield*/, testFrame(frameRates[i])];
-            case 2:
-                _b.apply(_a, [count = _c.sent(), frameRates[i], 1, "...counted " + count + " frames (\xB11 frame)"]);
-                _c.label = 3;
-            case 3:
-                i++;
-                return [3 /*break*/, 1];
-            case 4: return [2 /*return*/];
-        }
-    });
-}); });
 ///<reference path="_module.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -1006,8 +1006,8 @@ QUnit.test("Pause / Resume", function (assert) { return __awaiter(_this, void 0,
             case 9:
                 //TODO this is resolved instead of the promise. Should remove and use it inside of then() above
                 _a.sent();
-                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetD, "opacity")), 1, "Second tween animation must have not started when pausing both elements and resuming first tween");
-                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetC, "opacity")), 0, "First tween animation must be completed when pausing both elements and resuming only first tween");
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetD, "opacity")), 1, "Second tween animation must have not started when pausing both elements and resuming first tween.");
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetC, "opacity")), 0, "First tween animation must be completed when pausing both elements and resuming only first tween.");
                 $targetA = getTarget(), $targetB = getTarget();
                 Velocity([$targetA, $targetB], { opacity: 0 }, {
                     queue: "test",
@@ -1039,8 +1039,8 @@ QUnit.test("Pause / Resume", function (assert) { return __awaiter(_this, void 0,
             case 11:
                 //TODO this is resolved instead of the promise. Should remove and use it inside of then() above
                 _a.sent();
-                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetD, "opacity")), 1, "Second tween animation must have not started when pausing both elements and resuming first tween when in same queue");
-                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetC, "opacity")), 0, "First tween animation must be completed when pausing both elements and resuming only first tween when in same queue");
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetD, "opacity")), 1, "Second tween animation must have not started when pausing both elements and resuming first tween when in same queue.");
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($targetC, "opacity")), 0, "First tween animation must be completed when pausing both elements and resuming only first tween when in same queue.");
                 $target4 = getTarget();
                 Velocity($target4, { opacity: 0 }, { duration: 200 });
                 isResumed = false;
@@ -1360,7 +1360,7 @@ QUnit.test("Tween", function (assert) {
     assert.raises(function () { Velocity("tween", "invalid"); }, "Invalid percentComplete throws an error.");
     assert.raises(function () { Velocity([$target1, $target1], "tween", "invalid"); }, "Passing more than one target throws an error.");
     assert.raises(function () { Velocity("tween", 0, ["invalid"]); }, "Invalid propertyMap throws an error.");
-    assert.raises(function () { Velocity("tween", 0, "invalid", 1); }, "Property without an element must be forcefeed or throw an error.");
+    assert.raises(function () { Velocity("tween", 0, "invalid", 1); }, "Property without an element must be forcefed or throw an error.");
     assert.equal($target1.velocity("tween", 0.5, "opacity", [1, 0], "linear"), "0.5", "Calling on an chain returns the correct value.");
     assert.equal(Velocity($target1, "tween", 0.5, "opacity", [1, 0], "linear"), "0.5", "Calling with an element returns the correct value.");
     assert.equal(Velocity("tween", 0.5, "opacity", [1, 0], "linear"), "0.5", "Calling without an element returns the correct value.");
@@ -1440,36 +1440,36 @@ QUnit.test("Promises", function (assert) {
      Invalid Arguments
      **********************/
     Velocity().then(function () {
-        assert.notOk(true, "Calling with no arguments should reject a Promise");
+        assert.notOk(true, "Calling with no arguments should reject a Promise.");
     }, function () {
-        assert.ok(true, "Calling with no arguments should reject a Promise");
+        assert.ok(true, "Calling with no arguments should reject a Promise.");
     }).then(done);
     Velocity(getTarget()).then(function () {
-        assert.notOk(true, "Calling with no properties should reject a Promise");
+        assert.notOk(true, "Calling with no properties should reject a Promise.");
     }, function () {
-        assert.ok(true, "Calling with no properties should reject a Promise");
+        assert.ok(true, "Calling with no properties should reject a Promise.");
     }).then(done);
     Velocity(getTarget(), {}).then(function () {
-        assert.ok(true, "Calling with empty properties should not reject a Promise");
+        assert.ok(true, "Calling with empty properties should not reject a Promise.");
     }, function () {
-        assert.notOk(true, "Calling with empty properties should not reject a Promise");
+        assert.notOk(true, "Calling with empty properties should not reject a Promise.");
     }).then(done);
     Velocity(getTarget(), {}, defaultOptions.duration).then(function () {
-        assert.ok(true, "Calling with empty properties + duration should not reject a Promise");
+        assert.ok(true, "Calling with empty properties + duration should not reject a Promise.");
     }, function () {
-        assert.notOk(true, "Calling with empty properties + duration should not reject a Promise");
+        assert.notOk(true, "Calling with empty properties + duration should not reject a Promise.");
     }).then(done);
     /* Invalid arguments: Ensure an error isn't thrown. */
     Velocity(getTarget(), {}, "fakeArg1", "fakeArg2").then(function () {
-        assert.ok(true, "Calling with invalid arguments should reject a Promise");
+        assert.ok(true, "Calling with invalid arguments should reject a Promise.");
     }, function () {
-        assert.notOk(true, "Calling with invalid arguments should reject a Promise");
+        assert.notOk(true, "Calling with invalid arguments should reject a Promise.");
     }).then(done);
     result = Velocity(getTarget(), defaultProperties, defaultOptions);
     result.then(function (elements) {
-        assert.equal(elements.length, 1, "Calling with a single element fulfills with a single element array");
+        assert.equal(elements.length, 1, "Calling with a single element fulfills with a single element array.");
     }, function () {
-        assert.ok(false, "Calling with a single element fulfills with a single element array");
+        assert.ok(false, "Calling with a single element fulfills with a single element array.");
     }).then(done);
     result.velocity(defaultProperties).then(function (elements) {
         assert.ok(getNow() - start > 2 * defaultOptions.duration, "Queued call fulfilled after correct delay.");
@@ -1478,15 +1478,15 @@ QUnit.test("Promises", function (assert) {
     }).then(done);
     result = Velocity([getTarget(), getTarget()], defaultProperties, defaultOptions);
     result.then(function (elements) {
-        assert.equal(elements.length, 2, "Calling with multiple elements fulfills with a multiple element array");
+        assert.equal(elements.length, 2, "Calling with multiple elements fulfills with a multiple element array.");
     }, function () {
-        assert.ok(false, "Calling with multiple elements fulfills with a multiple element array");
+        assert.ok(false, "Calling with multiple elements fulfills with a multiple element array.");
     }).then(done);
     var anim = Velocity(getTarget(), defaultProperties, defaultOptions);
     anim.then(function () {
         assert.ok(getNow() - start < defaultOptions.duration, "Stop call fulfilled after correct delay.");
     }, function () {
-        assert.ok(false, "Stop call fulfilled after correct delay");
+        assert.ok(false, "Stop call fulfilled after correct delay.");
     }).then(done);
     anim.velocity("stop");
 });
