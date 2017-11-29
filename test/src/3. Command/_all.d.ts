@@ -5,6 +5,7 @@
 ///<reference path="Command Reverse.ts" />
 ///<reference path="Command Scroll.ts" />
 ///<reference path="Command Stop.ts" />
+///<reference path="Command Tween.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *

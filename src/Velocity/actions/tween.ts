@@ -23,6 +23,8 @@ namespace VelocityStatic {
 	 * 
 	 */
 	function tweenAction(args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string): any {
+		let requireForcefeeding: boolean;
+
 		if (!elements) {
 			if (!args.length) {
 				console.info("Velocity(<element>, \"tween\", percentComplete, property, end | [end, <easing>, <start>], <easing>) => value\n"
@@ -30,9 +32,9 @@ namespace VelocityStatic {
 				return null;
 			}
 			elements = [document.body];
+			requireForcefeeding = true;
 		} else if (elements.length !== 1) {
-			console.warn("VelocityJS: Cannot tween more than one element!");
-			return null;
+			throw new Error("VelocityJS: Cannot tween more than one element!");
 		}
 		let percentComplete: number = args[0],
 			properties: VelocityProperties = args[1],
@@ -55,14 +57,20 @@ namespace VelocityStatic {
 			properties = {
 				[args[1]]: args[2]
 			};
+			easing = args[3];
 		}
 		if (!isNumber(percentComplete) || percentComplete < 0 || percentComplete > 1) {
-			console.warn("VelocityJS: Must tween a percentage from 0 to 1!");
-			return null;
+			throw new Error("VelocityJS: Must tween a percentage from 0 to 1!");
 		}
 		if (!isPlainObject(properties)) {
-			console.warn("VelocityJS: Cannot tween an invalid property!");
-			return null;
+			throw new Error("VelocityJS: Cannot tween an invalid property!");
+		}
+		if (requireForcefeeding) {
+			for (let property in properties) {
+				if (properties.hasOwnProperty(property) && (!Array.isArray(properties[property]) || properties[property].length < 2)) {
+					throw new Error("VelocityJS: When not supplying an element you must force-feed values: " + property);
+				}
+			}
 		}
 		let activeEasing = validateEasing(getValue(easing, defaults.easing), 1000);
 

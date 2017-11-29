@@ -908,11 +908,11 @@ QUnit.todo("Finish / FinishAll", function (assert) {
  */
 var _this = this;
 QUnit.test("Pause / Resume", function (assert) { return __awaiter(_this, void 0, void 0, function () {
-    var $target1, $target1d, $target2, $target2d, $target3, percent, isPaused, val, $targetC, $targetD, $targetA, $targetB, $targetC, $targetD, $target4, isResumed;
+    var done, $target1, $target1d, $target2, $target2d, $target3, percent, isPaused, val, $targetC, $targetD, $targetA, $targetB, $targetC, $targetD, $target4, isResumed;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                $target1 = getTarget(), $target1d = getTarget();
+                done = assert.async(3), $target1 = getTarget(), $target1d = getTarget();
                 assert.expect(12);
                 /* Ensure an error isn't thrown when "pause" is called on a $target that isn't animating. */
                 Velocity($target1, "pause");
@@ -928,6 +928,7 @@ QUnit.test("Pause / Resume", function (assert) { return __awaiter(_this, void 0,
                 });
                 Velocity($target1d, "pause").then(function () {
                     assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1d, "opacity")), 1, "Property value unchanged after pause during delay.");
+                    done();
                 });
                 $target2 = getTarget();
                 $target2d = getTarget();
@@ -1051,6 +1052,7 @@ QUnit.test("Pause / Resume", function (assert) { return __awaiter(_this, void 0,
                     queue: false,
                     begin: function (elements) {
                         assert.ok(true, "Animation with {queue:false} will run regardless of previously paused animations.");
+                        done();
                     }
                 });
                 Velocity($target4, { top: 20 }, {
@@ -1058,19 +1060,12 @@ QUnit.test("Pause / Resume", function (assert) { return __awaiter(_this, void 0,
                     easing: "linear",
                     begin: function (elements) {
                         assert.ok(isResumed, "Queued animation began after previously paused animation completed");
+                        done();
                     }
                 });
                 sleep(100);
                 isResumed = true;
                 Velocity($target4, "resume");
-                sleep(800);
-                /* Clear out any existing test animations to prevent errors from being thrown
-                 in another test */
-                try {
-                    Velocity([$targetA, $targetB, $targetC, $targetD, $target1, $target1d, $target2, $target2d, $target3, $target4], "stop");
-                }
-                catch (e) {
-                }
                 return [2 /*return*/];
         }
     });
@@ -1352,6 +1347,27 @@ QUnit.test("Stop", function (assert) {
     assert.equal(Data($target2).cache.opacity, undefined, "Active call stopped.");
     assert.notEqual(Data($target2).cache.width, undefined, "Next queue item started.");
     assert.equal(!Data($target3).queueList || !Object.keys(Data($target3).queueList), true, "Full queue array cleared.");
+});
+///<reference path="_module.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+QUnit.test("Tween", function (assert) {
+    var $target1 = getTarget(), startOpacity = $target1.style.opacity;
+    assert.expect(11);
+    assert.raises(function () { Velocity("tween", "invalid"); }, "Invalid percentComplete throws an error.");
+    assert.raises(function () { Velocity([$target1, $target1], "tween", "invalid"); }, "Passing more than one target throws an error.");
+    assert.raises(function () { Velocity("tween", 0, ["invalid"]); }, "Invalid propertyMap throws an error.");
+    assert.raises(function () { Velocity("tween", 0, "invalid", 1); }, "Property without an element must be forcefeed or throw an error.");
+    assert.equal($target1.velocity("tween", 0.5, "opacity", [1, 0], "linear"), "0.5", "Calling on an chain returns the correct value.");
+    assert.equal(Velocity($target1, "tween", 0.5, "opacity", [1, 0], "linear"), "0.5", "Calling with an element returns the correct value.");
+    assert.equal(Velocity("tween", 0.5, "opacity", [1, 0], "linear"), "0.5", "Calling without an element returns the correct value.");
+    assert.equal($target1.style.opacity, startOpacity, "Ensure that the element is not altered.");
+    assert.equal(typeof Velocity($target1, "tween", 0.5, "opacity", [1, 0], "linear"), "string", "Calling a single property returns a value.");
+    assert.equal(typeof Velocity($target1, "tween", 0.5, { opacity: [1, 0] }, "linear"), "object", "Calling a propertiesMap returns an object.");
+    assert.deepEqual($target1.velocity("tween", 0.5, { opacity: [1, 0] }, "linear"), Velocity($target1, "tween", 0.5, { opacity: [1, 0] }, "linear"), "Calling directly returns the same as a chain.");
 });
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.

@@ -1,6 +1,6 @@
 module.exports = {
 	main: {
-		files: ["src/**/*.ts"],
+		files: ["index.d.ts", "src/**/*.ts"],
 		tasks: ["default"]
 	},
 	test: {

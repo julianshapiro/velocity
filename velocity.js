@@ -2051,15 +2051,16 @@ var VelocityStatic;
      *
      */
     function tweenAction(args, elements, promiseHandler, action) {
+        var requireForcefeeding;
         if (!elements) {
             if (!args.length) {
                 console.info('Velocity(<element>, "tween", percentComplete, property, end | [end, <easing>, <start>], <easing>) => value\n' + 'Velocity(<element>, "tween", percentComplete, {property: end | [end, <easing>, <start>], ...}, <easing>) => {property: value, ...}');
                 return null;
             }
             elements = [ document.body ];
+            requireForcefeeding = true;
         } else if (elements.length !== 1) {
-            console.warn("VelocityJS: Cannot tween more than one element!");
-            return null;
+            throw new Error("VelocityJS: Cannot tween more than one element!");
         }
         var percentComplete = args[0], properties = args[1], singleResult, easing = args[2], fakeAnimation = {
             elements: elements,
@@ -2073,14 +2074,20 @@ var VelocityStatic;
         if (isString(args[1])) {
             singleResult = true;
             properties = (_a = {}, _a[args[1]] = args[2], _a);
+            easing = args[3];
         }
         if (!isNumber(percentComplete) || percentComplete < 0 || percentComplete > 1) {
-            console.warn("VelocityJS: Must tween a percentage from 0 to 1!");
-            return null;
+            throw new Error("VelocityJS: Must tween a percentage from 0 to 1!");
         }
         if (!isPlainObject(properties)) {
-            console.warn("VelocityJS: Cannot tween an invalid property!");
-            return null;
+            throw new Error("VelocityJS: Cannot tween an invalid property!");
+        }
+        if (requireForcefeeding) {
+            for (var property in properties) {
+                if (properties.hasOwnProperty(property) && (!Array.isArray(properties[property]) || properties[property].length < 2)) {
+                    throw new Error("VelocityJS: When not supplying an element you must force-feed values: " + property);
+                }
+            }
         }
         var activeEasing = validateEasing(getValue(easing, VelocityStatic.defaults.easing), 1e3);
         VelocityStatic.expandProperties(fakeAnimation, properties);
@@ -2380,33 +2387,6 @@ var VelocityStatic;
         }
     });
     VelocityStatic.defaults.reset();
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    /* A parallel to jQuery's $.css(), used for getting/setting Velocity's hooked CSS properties. */
-    function style(elements, arg2, arg3) {
-        var value;
-        elements = sanitizeElements(elements);
-        elements.forEach(function(element) {
-            /* Get property value. If an element set was passed in, only return the value for the first element. */
-            if (arg3 === undefined) {
-                if (value === undefined) {
-                    value = VelocityStatic.CSS.getPropertyValue(element, arg2);
-                }
-            } else {
-                /* sPV returns an array of the normalized propertyName/propertyValue pair used to update the DOM. */
-                VelocityStatic.CSS.setPropertyValue(element, arg2, arg3);
-            }
-        });
-        return value;
-    }
 })(VelocityStatic || (VelocityStatic = {}));
 
 /*

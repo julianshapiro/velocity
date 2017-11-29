@@ -16,7 +16,7 @@ QUnit.test("Promises", function(assert) {
 	 Invalid Arguments
 	 **********************/
 
-	Velocity().then(function() {
+	(Velocity as any)().then(function() {
 		assert.notOk(true, "Calling with no arguments should reject a Promise");
 	}, function() {
 		assert.ok(true, "Calling with no arguments should reject a Promise");

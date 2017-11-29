@@ -41,31 +41,6 @@ type VelocityEasingType = VelocityEasingFn
 	| number[];
 
 /**
- * Chaining Velocity calls from various sources.
- */
-interface VelocityExtended<TNode extends Node = HTMLorSVGElement> {
-	velocity: Velocity & {
-		(action: "finish", queue?: string): VelocityResult;
-		(action: "option", option: string): any;
-		(action: "option", option: string, value: any): VelocityResult;
-		(action: "pause", queue?: string): VelocityResult;
-		(action: "resume", queue?: string): VelocityResult;
-		(action: "stop", queue?: string): VelocityResult;
-		(action: string, ...args: any[]): VelocityResult;
-		(propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-		(propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-		(propertyMap: string | VelocityProperties, easing?: VelocityEasingType, complete?: () => void): VelocityResult;
-		(propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: VelocityEasingType, complete?: () => void): VelocityResult;
-		(propertyMap: string | VelocityProperties, option?: VelocityOptions): VelocityResult;
-		/**
-		 * TODO: Decide if this should be public
-		 * @private
-		 */
-		animations: AnimationCall[]
-	}
-}
-
-/**
  * The return type of any velocity call. If this is called via a "utility"
  * function (such a jQuery <code>$(elements).velocity(...)</code>) then it will
  * be based on the array-like list of elements supplied, otherwise it will
@@ -490,7 +465,7 @@ declare const enum AnimationFlags {
 	/**
 	 * Set when an animation is manually stopped.
 	 */
-	STOPPED = 1<<4,
+	STOPPED = 1 << 4,
 }
 
 interface AnimationCall extends StrictVelocityOptions {
@@ -566,18 +541,40 @@ interface AnimationCall extends StrictVelocityOptions {
 	percentComplete?: number;
 }
 
+/**
+ * VelocityChain is used to extend the chained Velocity calls with specific
+ * actions and their arguments.
+ */
+interface VelocityChain {
+	(action: string, ...args: any[]): any | VelocityResult;
+	(propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
+	(propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+	(propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: VelocityEasingType, complete?: () => void): VelocityResult;
+	(propertyMap: string | VelocityProperties, easing?: VelocityEasingType, complete?: () => void): VelocityResult;
+	(propertyMap: string | VelocityProperties, option?: VelocityOptions): VelocityResult;
+}
+
+/**
+ * Direct Velocity access.
+ */
 interface Velocity {
 	// TODO: Add all variations of the velocity argument formats allowed. Make them TYPE based as they're used in multiple places.
-	(options?: VelocityObjectArgs | string): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | VelocityProperties): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | VelocityProperties, options: VelocityOptions): VelocityResult;
-	(elements: VelocityElements, propertyMap: string, option: any, value: any): VelocityResult;
+	(options: VelocityObjectArgs): VelocityResult;
+	(action: string, ...args: any[]): VelocityResult;
+	(elements: VelocityElements, action: string, ...args: any[]): VelocityResult;
+	(elements: VelocityElements, propertyMap: VelocityProperties, complete?: () => void): VelocityResult;
+	(elements: VelocityElements, propertyMap: VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+	(elements: VelocityElements, propertyMap: VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
+	(elements: VelocityElements, propertyMap: VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
+	(elements: VelocityElements, propertyMap: VelocityProperties, options?: VelocityOptions): VelocityResult;
 
-	defaults: VelocityOptions & {reset: () => void};
+	defaults: VelocityOptions & {
+		/**
+		 * Provided in order to reset Velocity defaults back to their initial
+		 * state.
+		 */
+		reset: () => void
+	};
 
 	queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: string | boolean): void;
 	dequeue(element: HTMLorSVGElement, queue?: string | boolean, skip?: boolean): AnimationCall;
@@ -588,20 +585,12 @@ interface Velocity {
 	RegisterEffect(effectName: string, properties): Velocity;
 
 	/**
-	 * Expose a style shortcut - can't be used with chaining, but might be of
-	 * use to people.
-	 */
-	style(elements: VelocityResult, property: {[property: string]: string}): VelocityResult;
-	style(elements: VelocityResult, property: string): string | string[];
-	style(elements: VelocityResult, property: string, value: string): VelocityResult;
-
-	/**
 	 * Available to be able to check what version you're running against.
 	 */
-	version: {
-		major: number;
-		minor: number;
-		patch: number;
+	readonly version: {
+		readonly major: number;
+		readonly minor: number;
+		readonly patch: number;
 	}
 
 	CSS: {
@@ -609,12 +598,6 @@ interface Velocity {
 		getUnit(str: string, start?: number): string;
 		fixColors(str: string): string;
 		Normalizations: {[name: string]: VelocityNormalizationsFn};
-		//		Hooks: {
-		//			getRoot(property: string): string;
-		//			cleanRootPropertyValue(rootProperty: string, rootPropertyValue: string): string;
-		//			extractValue(fullHookName: string, rootPropertyValue: string): string;
-		//			injectValue(fullHookName: string, hookValue: string, rootPropertyValue: string): string;
-		//		};
 		Names: {
 			camelCase(property: string): string;
 			SVGAttribute(property: string): boolean;
@@ -629,80 +612,217 @@ interface Velocity {
 			removeClass(element: HTMLorSVGElement, className: string): void;
 		};
 	};
-	State: {
+	/**
+	 * Current internal state of Velocity. 
+	 */
+	readonly State: {
 		/**
 		 * Detect if this is a NodeJS or web browser
 		 */
-		isClient: boolean;
+		readonly isClient: boolean;
 		/**
 		 * Detect mobile devices to determine if mobileHA should be turned
 		 * on.
 		 */
-		isMobile: boolean;
+		readonly isMobile: boolean;
 		/**
 		 * The mobileHA option's behavior changes on older Android devices
 		 * (Gingerbread, versions 2.3.3-2.3.7).
 		 */
-		isAndroid: boolean;
+		readonly isAndroid: boolean;
 		/**
 		 * The mobileHA option's behavior changes on older Android devices
 		 * (Gingerbread, versions 2.3.3-2.3.7).
 		 */
-		isGingerbread: boolean;
+		readonly isGingerbread: boolean;
 		/**
 		 * Chrome browser
 		 */
-		isChrome: boolean;
+		readonly isChrome: boolean;
 		/**
 		 * Firefox browser
 		 */
-		isFirefox: boolean;
+		readonly isFirefox: boolean;
 		/**
 		 * Create a cached element for re-use when checking for CSS property
 		 * prefixes.
 		 */
-		prefixElement: boolean;
+		readonly prefixElement: boolean;
 		/**
 		 * Cache every prefix match to avoid repeating lookups.
 		 */
-		prefixMatches: {[property: string]: string};
+		readonly prefixMatches: {[property: string]: string};
 		/**
 		 * Retrieve the appropriate scroll anchor and property name for the
 		 * browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY
+		 * 
+		 * @deprecated
 		 */
 		windowScrollAnchor: boolean;
 		/**
 		 * Cache the anchor used for animating window scrolling.
+		 * 
+		 * @deprecated
 		 */
 		scrollAnchor: Element;
 		/**
 		 * Cache the browser-specific property names associated with the
+		 * 
+		 * @deprecated
 		 * scroll anchor.
 		 */
 		scrollPropertyLeft: string;
 		/**
 		 * Cache the browser-specific property names associated with the
+		 * 
+		 * @deprecated
 		 * scroll anchor.
 		 */
 		scrollPropertyTop: string;
 		/**
 		 * Keep track of whether our RAF tick is running.
 		 */
-		isTicking: boolean;
+		readonly isTicking: boolean;
 		/**
 		 * Container for every in-progress call to Velocity.
 		 */
-		first: AnimationCall;
+		readonly first: AnimationCall;
 		/**
 		 * Container for every in-progress call to Velocity.
 		 */
-		last: AnimationCall;
+		readonly last: AnimationCall;
 		/**
 		 * First new animation - to shortcut starting them all up and push
 		 * any css reads to the start of the tick
 		 */
-		firstNew: AnimationCall;
+		readonly firstNew: AnimationCall;
 	};
+}
+
+/**
+ * Chaining Velocity calls from various sources.
+ */
+interface VelocityExtended<TNode extends Node = HTMLorSVGElement> {
+	velocity: Velocity & VelocityChain & {
+		/**
+		 * TODO: Decide if this should be public
+		 * @private
+		 */
+		animations: AnimationCall[]
+	}
+}
+
+////////////////////
+// Action: Finish //
+////////////////////
+interface Velocity {
+	(action: "finish", queue?: string): VelocityResult;
+	(elements: VelocityElements, action: "finish", queue?: string): VelocityResult;
+}
+
+interface VelocityChain {
+	(action: "finish", queue?: string): VelocityResult;
+}
+
+////////////////////
+// Action: Option //
+////////////////////
+interface Velocity {
+	(action: "option", option: string): any;
+	(action: "option", option: string, value: any): VelocityResult;
+	(elements: VelocityElements, action: "option", option: string): any;
+	(elements: VelocityElements, action: "option", option: string, value: any): VelocityResult;
+}
+
+interface VelocityChain {
+	(action: "option", option: string): any;
+	(action: "option", option: string, value: any): VelocityResult;
+}
+
+///////////////////
+// Action: Pause //
+///////////////////
+interface Velocity {
+	(action: "pause", queue?: string): VelocityResult;
+	(elements: VelocityElements, action: "pause", queue?: string): VelocityResult;
+}
+
+interface VelocityChain {
+	(action: "pause", queue?: string): VelocityResult;
+}
+
+////////////////////
+// Action: Resume //
+////////////////////
+interface Velocity {
+	(action: "resume", queue?: string): VelocityResult;
+	(elements: VelocityElements, action: "resume", queue?: string): VelocityResult;
+}
+
+interface VelocityChain {
+	(action: "resume", queue?: string): VelocityResult;
+}
+
+////////////////////
+// Action: Resume //
+////////////////////
+interface Velocity {
+	(action: "resume", queue?: string): VelocityResult;
+	(elements: VelocityElements, action: "resume", queue?: string): VelocityResult;
+}
+
+interface VelocityChain {
+	(action: "resume", queue?: string): VelocityResult;
+}
+
+//////////////////
+// Action: Stop //
+//////////////////
+interface Velocity {
+	(action: "stop", queue?: string): VelocityResult;
+	(elements: VelocityElements, action: "stop", queue?: string): VelocityResult;
+}
+
+interface VelocityChain {
+	(action: "stop", queue?: string): VelocityResult;
+}
+
+///////////////////
+// Action: Style //
+///////////////////
+interface Velocity {
+	(action: "style", property: {[property: string]: string}): VelocityResult;
+	(action: "style", property: string): string | string[];
+	(action: "style", property: string, value: string): VelocityResult;
+	(element: HTMLorSVGElement, action: "style", property: string): string;
+	(elements: VelocityElements, action: "style", property: {[property: string]: string}): VelocityResult;
+	(elements: VelocityElements, action: "style", property: string): string | string[];
+	(elements: VelocityElements, action: "style", property: string, value: string): VelocityResult;
+
+	style(elements: VelocityResult, property: {[property: string]: string}): VelocityResult;
+	style(elements: VelocityResult, property: string): string | string[];
+	style(elements: VelocityResult, property: string, value: string): VelocityResult;
+}
+
+interface VelocityChain {
+	(action: "style", property: {[property: string]: string}): VelocityResult;
+	(action: "style", property: string): string | string[];
+	(action: "style", property: string, value: string): VelocityResult;
+}
+
+///////////////////
+// Action: Tween //
+///////////////////
+interface Velocity {
+	(action: "tween", percentComplete: number, property: string, value: VelocityPropertyValue, easing?: VelocityEasingType): string;
+	(action: "tween", percentComplete: number, propertyMap: VelocityProperties, easing?: VelocityEasingType): {[property in keyof CSSStyleDeclaration]?: string};
+	(elements: VelocityElements, action: "tween", percentComplete: number, property: string, value: VelocityPropertyValue, easing?: VelocityEasingType): string;
+	(elements: VelocityElements, action: "tween", percentComplete: number, propertyMap: VelocityProperties, easing?: VelocityEasingType): {[property in keyof CSSStyleDeclaration]?: string};
+}
+
+interface VelocityChain {
+	(action: "tween", percentComplete: number, property: string, value: VelocityPropertyValue, easing?: VelocityEasingType): string;
+	(action: "tween", percentComplete: number, propertyMap: VelocityProperties, easing?: VelocityEasingType): {[property in keyof CSSStyleDeclaration]?: string};
 }
 
 /**
@@ -714,7 +834,6 @@ interface NodeListOf<TNode extends Node> extends VelocityExtended<TNode> {}
  * Extend <code>Element</code> directly.
  */
 interface Element extends VelocityExtended<Element> {}
-
 
 /**
  * Extend <code>Element</code> directly.
