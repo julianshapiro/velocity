@@ -21,7 +21,6 @@ namespace VelocityStatic {
 		}
 	}
 
-
 	/**
 	 * When the stop action is triggered, the elements' currently active call is immediately stopped. The active call might have
 	 * been applied to multiple elements, in which case all of the call's elements will be stopped. When an element
@@ -37,7 +36,6 @@ namespace VelocityStatic {
 	 */
 	function stop(args: any[], elements: VelocityResult, promiseHandler?: VelocityPromise, action?: string): void {
 		let queueName = args[0] === undefined ? undefined : validateQueue(args[0]),
-			activeCall: AnimationCall,
 			defaultQueue = defaults.queue,
 			isStopped = action[0] === "s" && action[1] === "t" && action[2] === "o" && action[3] === "p";
 
@@ -46,16 +44,15 @@ namespace VelocityStatic {
 				checkAnimationShouldBeStopped(animations[i], queueName, defaultQueue, isStopped);
 			}
 		} else {
-			activeCall = State.first;
-			while (activeCall) {
+			for (let activeCall = State.first, nextCall: AnimationCall; activeCall; activeCall = nextCall) {
+				nextCall = activeCall._next;
 				if (!elements || _inArray.call(elements, activeCall.element)) {
 					checkAnimationShouldBeStopped(activeCall, queueName, defaultQueue, isStopped);
 				}
-				activeCall = activeCall._next;
 			}
 		}
 		if (promiseHandler) {
-			if (elements && elements.then) {
+			if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
 				elements.then(promiseHandler._resolver);
 			} else {
 				promiseHandler._resolver(elements);

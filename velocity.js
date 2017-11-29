@@ -1791,7 +1791,7 @@ var VelocityStatic;
             }
         }
         if (promiseHandler) {
-            if (elements && elements.then) {
+            if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
                 elements.then(promiseHandler._resolver);
             } else {
                 promiseHandler._resolver(elements);
@@ -1845,9 +1845,8 @@ var VelocityStatic;
             }
         }
         if (promiseHandler) {
-            if (elements && elements.then) {
-                //elements.then(promiseHandler._resolver);
-                promiseHandler._resolver(elements);
+            if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
+                elements.then(promiseHandler._resolver);
             } else {
                 promiseHandler._resolver(elements);
             }
@@ -1910,22 +1909,21 @@ var VelocityStatic;
      * @param {string} action
      */
     function stop(args, elements, promiseHandler, action) {
-        var queueName = args[0] === undefined ? undefined : validateQueue(args[0]), activeCall, defaultQueue = VelocityStatic.defaults.queue, isStopped = action[0] === "s" && action[1] === "t" && action[2] === "o" && action[3] === "p";
+        var queueName = args[0] === undefined ? undefined : validateQueue(args[0]), defaultQueue = VelocityStatic.defaults.queue, isStopped = action[0] === "s" && action[1] === "t" && action[2] === "o" && action[3] === "p";
         if (isVelocityResult(elements) && elements.velocity.animations) {
             for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
                 checkAnimationShouldBeStopped(animations[i], queueName, defaultQueue, isStopped);
             }
         } else {
-            activeCall = VelocityStatic.State.first;
-            while (activeCall) {
+            for (var activeCall = VelocityStatic.State.first, nextCall = void 0; activeCall; activeCall = nextCall) {
+                nextCall = activeCall._next;
                 if (!elements || _inArray.call(elements, activeCall.element)) {
                     checkAnimationShouldBeStopped(activeCall, queueName, defaultQueue, isStopped);
                 }
-                activeCall = activeCall._next;
             }
         }
         if (promiseHandler) {
-            if (elements && elements.then) {
+            if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
                 elements.then(promiseHandler._resolver);
             } else {
                 promiseHandler._resolver(elements);
