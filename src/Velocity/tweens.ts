@@ -318,31 +318,29 @@ namespace VelocityStatic {
 			State.firstNew = activeCall._next;
 		}
 		/* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
-		if (isNode(element)) {
-			if (!(activeCall._flags & AnimationFlags.EXPANDED)) {
-				let tweens = activeCall.tweens,
-					duration = getValue(activeCall.options.duration, defaults.duration);
+		if (isNode(element) && !(activeCall._flags & AnimationFlags.EXPANDED)) {
+			let tweens = activeCall.tweens,
+				duration = getValue(activeCall.options.duration, defaults.duration);
 
-				for (let propertyName in tweens) {
-					let tween = tweens[propertyName];
+			for (let propertyName in tweens) {
+				let tween = tweens[propertyName];
 
-					if (tween[Tween.START] == null) {
-						// Get the start value as it's not been passed in
-						let startValue = CSS.getPropertyValue(element, propertyName);
+				if (tween[Tween.START] == null) {
+					// Get the start value as it's not been passed in
+					let startValue = CSS.getPropertyValue(element, propertyName);
 
-						if (isString(startValue)) {
-							tween[Tween.START] = CSS.fixColors(startValue) as any;
-							explodeTween(propertyName, tween, duration);
-						} else if (!Array.isArray(startValue)) {
-							console.warn("bad type", tween, propertyName, startValue)
-						}
-					}
-					if (debug) {
-						console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween), element);
+					if (isString(startValue)) {
+						tween[Tween.START] = CSS.fixColors(startValue) as any;
+						explodeTween(propertyName, tween, duration);
+					} else if (!Array.isArray(startValue)) {
+						console.warn("bad type", tween, propertyName, startValue)
 					}
 				}
-				activeCall._flags |= AnimationFlags.EXPANDED;
+				if (debug) {
+					console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween), element);
+				}
 			}
+			activeCall._flags |= AnimationFlags.EXPANDED;
 		}
 	}
 }

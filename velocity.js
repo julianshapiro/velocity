@@ -3383,27 +3383,25 @@ var VelocityStatic;
             VelocityStatic.State.firstNew = activeCall._next;
         }
         /* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
-        if (isNode(element)) {
-            if (!(activeCall._flags & 4)) {
-                var tweens = activeCall.tweens, duration = getValue(activeCall.options.duration, VelocityStatic.defaults.duration);
-                for (var propertyName in tweens) {
-                    var tween_4 = tweens[propertyName];
-                    if (tween_4[2] == null) {
-                        // Get the start value as it's not been passed in
-                        var startValue = VelocityStatic.CSS.getPropertyValue(element, propertyName);
-                        if (isString(startValue)) {
-                            tween_4[2] = VelocityStatic.CSS.fixColors(startValue);
-                            explodeTween(propertyName, tween_4, duration);
-                        } else if (!Array.isArray(startValue)) {
-                            console.warn("bad type", tween_4, propertyName, startValue);
-                        }
-                    }
-                    if (VelocityStatic.debug) {
-                        console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween_4), element);
+        if (isNode(element) && !(activeCall._flags & 4)) {
+            var tweens = activeCall.tweens, duration = getValue(activeCall.options.duration, VelocityStatic.defaults.duration);
+            for (var propertyName in tweens) {
+                var tween_4 = tweens[propertyName];
+                if (tween_4[2] == null) {
+                    // Get the start value as it's not been passed in
+                    var startValue = VelocityStatic.CSS.getPropertyValue(element, propertyName);
+                    if (isString(startValue)) {
+                        tween_4[2] = VelocityStatic.CSS.fixColors(startValue);
+                        explodeTween(propertyName, tween_4, duration);
+                    } else if (!Array.isArray(startValue)) {
+                        console.warn("bad type", tween_4, propertyName, startValue);
                     }
                 }
-                activeCall._flags |= 4;
+                if (VelocityStatic.debug) {
+                    console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween_4), element);
+                }
             }
+            activeCall._flags |= 4;
         }
     }
     VelocityStatic.validateTweens = validateTweens;
