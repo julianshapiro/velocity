@@ -64,28 +64,13 @@ namespace VelocityStatic {
 			let element = activeCall.element,
 				data = Data(element);
 
-			if (!isStopped && data && queue !== false) {
+			if (!--data.count && !isStopped) {
 
 				////////////////////////
 				// Feature: Classname //
 				////////////////////////
 
-				let animating = false,
-					queueList = data.queueList;
-
-				// TODO: Need to check that there's no other queue:false animations running on this element
-				for (let tmp in queueList) {
-					if (tmp !== queue || queueList[tmp] !== null) {
-						// If there's even a single animation then break.
-						animating = true;
-						break;
-					}
-				}
-				data.isAnimating = animating;
-				if (!animating) {
-					// Remove the "velocity-animating" indicator class.
-					CSS.Values.removeClass(element, "velocity-animating");
-				}
+				CSS.Values.removeClass(element, "velocity-animating");
 			}
 
 			//////////////////////
@@ -110,6 +95,7 @@ namespace VelocityStatic {
 					delete options._resolver;
 				}
 			}
+
 			///////////////////
 			// Option: Queue //
 			///////////////////

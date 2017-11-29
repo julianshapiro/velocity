@@ -312,8 +312,7 @@ namespace VelocityStatic {
 	 * animations so that the start and end values are correct.
 	 */
 	export function validateTweens(activeCall: AnimationCall) {
-		let options = activeCall.options,
-			element = activeCall.element;
+		let element = activeCall.element;
 
 		if (State.firstNew === activeCall) {
 			State.firstNew = activeCall._next;
@@ -343,20 +342,6 @@ namespace VelocityStatic {
 					}
 				}
 				activeCall._flags |= AnimationFlags.EXPANDED;
-			}
-			let data = Data(element),
-				queue = getValue(activeCall.queue, options.queue, defaults.queue);
-
-			if (queue !== false) {
-				// Store the last animation added so we can use it for the
-				// beginning of the next one.
-				data.lastAnimationList[queue] = activeCall;
-			}
-			if (!data.isAnimating) {
-				// Switch on the element's animating flag.
-				data.isAnimating = true;
-				// Apply the "velocity-animating" indicator class.
-				CSS.Values.addClass(element, "velocity-animating");
 			}
 		}
 	}

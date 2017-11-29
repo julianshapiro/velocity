@@ -398,9 +398,10 @@ interface ElementData {
 	 */
 	computedStyle?: CSSStyleDeclaration;
 	/**
-	 * Set when this Element has a running animation on it.
+	 * Changed as animations start and finish on an element. This allows us to
+	 * keep track of exactly how many are running at a given time.
 	 */
-	isAnimating: boolean;
+	count: number;
 	/**
 	 * Animations to be run for each queue. The animations are linked lists,
 	 * but treated as a FIFO queue (new ones are added to the end). When the

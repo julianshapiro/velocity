@@ -27,6 +27,26 @@ namespace VelocityStatic {
 		if (!State.firstNew) {
 			State.firstNew = animation;
 		}
+		let element = animation.element,
+			data = Data(element),
+			queue = animation.queue;
+
+		if (queue == null) {
+			queue = animation.options.queue;
+		}
+		if (queue !== false) {
+			// Store the last animation added so we can use it for the
+			// beginning of the next one.
+			data.lastAnimationList[queue] = animation;
+		}
+		if (!data.count++) {
+
+			////////////////////////
+			// Feature: Classname //
+			////////////////////////
+
+			CSS.Values.addClass(element, "velocity-animating");
+		}
 	}
 
 	/**

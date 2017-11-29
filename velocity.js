@@ -354,24 +354,11 @@ var VelocityStatic;
             activeCall._flags &= ~1;
         } else {
             var element = activeCall.element, data = Data(element);
-            if (!isStopped && data && queue !== false) {
+            if (!--data.count && !isStopped) {
                 ////////////////////////
                 // Feature: Classname //
                 ////////////////////////
-                var animating = false, queueList = data.queueList;
-                // TODO: Need to check that there's no other queue:false animations running on this element
-                for (var tmp in queueList) {
-                    if (tmp !== queue || queueList[tmp] !== null) {
-                        // If there's even a single animation then break.
-                        animating = true;
-                        break;
-                    }
-                }
-                data.isAnimating = animating;
-                if (!animating) {
-                    // Remove the "velocity-animating" indicator class.
-                    VelocityStatic.CSS.Values.removeClass(element, "velocity-animating");
-                }
+                VelocityStatic.CSS.Values.removeClass(element, "velocity-animating");
             }
             //////////////////////
             // Option: Complete //
@@ -2127,7 +2114,7 @@ var VelocityStatic;
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 /**
- * Get the internal data store for an element.
+ * Get (and create) the internal data store for an element.
  */
 function Data(element) {
     // Use a string member so Uglify doesn't mangle it.
@@ -2135,34 +2122,12 @@ function Data(element) {
     if (!data) {
         // Do it this way so it errors on incorrect data.
         data = {
-            /**
-             * Store whether this is an SVG element, since its properties are retrieved and updated differently than standard HTML elements.
-             */
             isSVG: isSVG(element),
-            /**
-             * Keep track of whether the element is currently being animated by Velocity.
-             * This is used to ensure that property values are not transferred between non-consecutive (stale) calls.
-             */
-            isAnimating: false,
-            /**
-             * A reference to the element's live computedStyle object. Learn more here: https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle
-             */
+            count: 0,
             computedStyle: null,
-            /**
-             * Cached current value as set
-             */
             cache: Object.create(null),
-            /**
-             * The queues and their animations
-             */
             queueList: Object.create(null),
-            /**
-             * The last tweens for use as repetitions
-             */
             lastAnimationList: Object.create(null),
-            /**
-             * The last tweens for use as repetitions
-             */
             lastFinishList: Object.create(null)
         };
         Object.defineProperty(element, "velocityData", {
@@ -2435,6 +2400,21 @@ var VelocityStatic;
         VelocityStatic.State.last = animation;
         if (!VelocityStatic.State.firstNew) {
             VelocityStatic.State.firstNew = animation;
+        }
+        var element = animation.element, data = Data(element), queue = animation.queue;
+        if (queue == null) {
+            queue = animation.options.queue;
+        }
+        if (queue !== false) {
+            // Store the last animation added so we can use it for the
+            // beginning of the next one.
+            data.lastAnimationList[queue] = animation;
+        }
+        if (!data.count++) {
+            ////////////////////////
+            // Feature: Classname //
+            ////////////////////////
+            VelocityStatic.CSS.Values.addClass(element, "velocity-animating");
         }
     }
     /**
@@ -3398,7 +3378,7 @@ var VelocityStatic;
      * animations so that the start and end values are correct.
      */
     function validateTweens(activeCall) {
-        var options = activeCall.options, element = activeCall.element;
+        var element = activeCall.element;
         if (VelocityStatic.State.firstNew === activeCall) {
             VelocityStatic.State.firstNew = activeCall._next;
         }
@@ -3423,18 +3403,6 @@ var VelocityStatic;
                     }
                 }
                 activeCall._flags |= 4;
-            }
-            var data = Data(element), queue_2 = getValue(activeCall.queue, options.queue, VelocityStatic.defaults.queue);
-            if (queue_2 !== false) {
-                // Store the last animation added so we can use it for the
-                // beginning of the next one.
-                data.lastAnimationList[queue_2] = activeCall;
-            }
-            if (!data.isAnimating) {
-                // Switch on the element's animating flag.
-                data.isAnimating = true;
-                // Apply the "velocity-animating" indicator class.
-                VelocityStatic.CSS.Values.addClass(element, "velocity-animating");
             }
         }
     }
