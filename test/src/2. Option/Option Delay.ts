@@ -6,26 +6,37 @@
  */
 
 QUnit.test("Delay", function(assert) {
-	var done = assert.async(2),
-		testDelay = 250,
-		$target = getTarget(),
-		start = getNow();
+	const testDelay = 250;
 
-	assert.expect(2);
-	Velocity($target, defaultProperties, {
-		duration: defaultOptions.duration,
-		delay: testDelay,
-		begin: function(elements, activeCall) {
-			assert.close(getNow() - start, testDelay, 32, "Delayed calls start after the correct delay.");
-			done();
-		}
+	async(assert, 1, function(done) {
+		const start = getNow();
+
+		Velocity(getTarget(), defaultProperties, {
+			duration: defaultOptions.duration,
+			delay: testDelay,
+			begin: function(elements, activeCall) {
+				assert.close(getNow() - start, testDelay, 32, "Delayed calls start after the correct delay.");
+				done();
+			}
+		});
 	});
-	Velocity($target, defaultProperties, {
-		duration: defaultOptions.duration,
-		delay: testDelay,
-		begin: function(elements, activeCall) {
-			assert.close(getNow() - start, (testDelay * 2) + (defaultOptions.duration as number), 32, "Queued delays start after the correct delay.");
-			done();
-		}
+
+	async(assert, 1, function(done) {
+		const start = getNow();
+
+		Velocity(getTarget(), defaultProperties, {
+			duration: defaultOptions.duration,
+			delay: testDelay
+		})
+			.velocity(defaultProperties, {
+				duration: defaultOptions.duration,
+				delay: testDelay,
+				begin: function(elements, activeCall) {
+					assert.close(getNow() - start, (testDelay * 2) + (defaultOptions.duration as number), 32, "Queued delays start after the correct delay.");
+					done();
+				}
+			});
 	});
+
+	assert.expect(async());
 });

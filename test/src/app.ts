@@ -152,6 +152,12 @@ function sleep(ms: number) {
 
 let asyncCount = 0;
 
+/**
+ * Create an asyn callback. Each callback must be independant of all others, and
+ * gets it's own unique done() callback to use. This also requires a count of
+ * the number of tests run, and the assert object used.
+ * Call without any arguments to get a total count of tests requested.
+ */
 function async(): number;
 function async(assert: Assert, count: number, callback: (done: () => void) => void): void;
 function async(assert?: Assert, count?: number, callback?: (done: () => void) => void): number {
@@ -182,6 +188,7 @@ QUnit.testDone(function() {
 	try {
 		document.querySelectorAll(".velocity-animating").velocity("stop");
 	} catch (e) {}
+	async();
 	freeTargets();
 	Velocity.defaults.reset();
 });

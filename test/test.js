@@ -414,15 +414,17 @@ QUnit.module("Option");
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 QUnit.test("Begin", function (assert) {
-    var done = assert.async(1), $targetSet = [getTarget(), getTarget()];
-    assert.expect(1);
-    Velocity($targetSet, defaultProperties, {
-        duration: asyncCheckDuration,
-        begin: function () {
-            assert.deepEqual(this, $targetSet, "Elements passed into callback.");
-            done();
-        }
+    async(assert, 1, function (done) {
+        var $targetSet = [getTarget(), getTarget()];
+        Velocity($targetSet, defaultProperties, {
+            duration: asyncCheckDuration,
+            begin: function () {
+                assert.deepEqual(this, $targetSet, "Elements passed into callback.");
+                done();
+            }
+        });
     });
+    assert.expect(async());
 });
 ///<reference path="_module.ts" />
 /*
@@ -431,15 +433,17 @@ QUnit.test("Begin", function (assert) {
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 QUnit.test("Complete", function (assert) {
-    var done = assert.async(1), $targetSet = [getTarget(), getTarget()];
-    assert.expect(1);
-    Velocity($targetSet, defaultProperties, {
-        duration: asyncCheckDuration,
-        complete: function () {
-            assert.deepEqual(this, $targetSet, "Elements passed into callback.");
-            done();
-        }
+    async(assert, 1, function (done) {
+        var $targetSet = [getTarget(), getTarget()];
+        Velocity($targetSet, defaultProperties, {
+            duration: asyncCheckDuration,
+            complete: function () {
+                assert.deepEqual(this, $targetSet, "Elements passed into callback.");
+                done();
+            }
+        });
     });
+    assert.expect(async());
 });
 ///<reference path="_module.ts" />
 /*
@@ -448,24 +452,34 @@ QUnit.test("Complete", function (assert) {
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 QUnit.test("Delay", function (assert) {
-    var done = assert.async(2), testDelay = 250, $target = getTarget(), start = getNow();
-    assert.expect(2);
-    Velocity($target, defaultProperties, {
-        duration: defaultOptions.duration,
-        delay: testDelay,
-        begin: function (elements, activeCall) {
-            assert.close(getNow() - start, testDelay, 32, "Delayed calls start after the correct delay.");
-            done();
-        }
+    var testDelay = 250;
+    async(assert, 1, function (done) {
+        var start = getNow();
+        Velocity(getTarget(), defaultProperties, {
+            duration: defaultOptions.duration,
+            delay: testDelay,
+            begin: function (elements, activeCall) {
+                assert.close(getNow() - start, testDelay, 32, "Delayed calls start after the correct delay.");
+                done();
+            }
+        });
     });
-    Velocity($target, defaultProperties, {
-        duration: defaultOptions.duration,
-        delay: testDelay,
-        begin: function (elements, activeCall) {
-            assert.close(getNow() - start, (testDelay * 2) + defaultOptions.duration, 32, "Queued delays start after the correct delay.");
-            done();
-        }
+    async(assert, 1, function (done) {
+        var start = getNow();
+        Velocity(getTarget(), defaultProperties, {
+            duration: defaultOptions.duration,
+            delay: testDelay
+        })
+            .velocity(defaultProperties, {
+            duration: defaultOptions.duration,
+            delay: testDelay,
+            begin: function (elements, activeCall) {
+                assert.close(getNow() - start, (testDelay * 2) + defaultOptions.duration, 32, "Queued delays start after the correct delay.");
+                done();
+            }
+        });
     });
+    assert.expect(async());
 });
 ///<reference path="_module.ts" />
 /*
@@ -474,48 +488,58 @@ QUnit.test("Delay", function (assert) {
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 QUnit.test("Easing", function (assert) {
-    var done = assert.async(6), success;
-    assert.expect(14);
-    /* Ensure that a fake easing doesn't throw an error. */
-    try {
-        success = true;
-        Velocity(getTarget(), defaultProperties, { easing: "fake" });
-    }
-    catch (e) {
-        success = false;
-    }
-    assert.ok(success, "Fake easing string didn't throw error.");
-    /* Ensure that an improperly-formmated bezier curve array doesn't throw an error. */
-    try {
-        success = true;
-        Velocity(getTarget(), defaultProperties, { easing: ["a", 0.5, 0.5, 0.5] });
-        Velocity(getTarget(), defaultProperties, { easing: [0.5, 0.5, 0.5] });
-    }
-    catch (e) {
-        success = false;
-    }
-    assert.ok(success, "Invalid bezier curve didn't throw error.");
-    /* Ensure that a properly-formatted bezier curve array returns a bezier function. */
-    var easingBezierArray = [0.27, -0.65, 0.78, 0.19], easingBezierTestPercent = 0.25, easingBezierTestValue = -0.23;
-    Velocity(getTarget(), defaultProperties, {
-        easing: easingBezierArray,
-        begin: function (elements, animation) {
-            assert.close(animation.options.easing(easingBezierTestPercent, 0, 1), easingBezierTestValue, 0.005, "Array converted into bezier function.");
-            done();
+    async(assert, 1, function (done) {
+        var success = false;
+        try {
+            success = true;
+            Velocity(getTarget(), defaultProperties, { easing: "fake" });
         }
+        catch (e) {
+            success = false;
+        }
+        assert.ok(success, "Fake easing string didn't throw error.");
+        done();
     });
-    /* Ensure that a properly-formatted spring RK4 array returns a bezier function. */
-    var easingSpringRK4Array = [250, 12], easingSpringRK4TestPercent = 0.25, easingSpringRK4TestValue = 0.928, // TODO: Check accuracy
-    easingSpringRK4TestDuration = 992;
-    Velocity(getTarget(), defaultProperties, {
-        duration: 150,
-        easing: easingSpringRK4Array,
-        begin: function (elements, animation) {
-            assert.close(animation.options.easing(easingSpringRK4TestPercent, 0, 1), easingSpringRK4TestValue, 10, "Array with duration converted into springRK4 function.");
-            done();
+    async(assert, 1, function (done) {
+        var success = false;
+        try {
+            success = true;
+            Velocity(getTarget(), defaultProperties, { easing: ["a", 0.5, 0.5, 0.5] });
+            Velocity(getTarget(), defaultProperties, { easing: [0.5, 0.5, 0.5] });
         }
+        catch (e) {
+            success = false;
+        }
+        assert.ok(success, "Invalid bezier curve didn't throw error.");
+        done();
+    });
+    async(assert, 1, function (done) {
+        // TODO: Use a "tween" action?
+        /* Ensure that a properly-formatted bezier curve array returns a bezier function. */
+        var easingBezierArray = [0.27, -0.65, 0.78, 0.19], easingBezierTestPercent = 0.25, easingBezierTestValue = -0.23;
+        Velocity(getTarget(), defaultProperties, {
+            easing: easingBezierArray,
+            begin: function (elements, animation) {
+                assert.close(animation.options.easing(easingBezierTestPercent, 0, 1), easingBezierTestValue, 0.005, "Array converted into bezier function.");
+                done();
+            }
+        });
+    });
+    async(assert, 1, function (done) {
+        /* Ensure that a properly-formatted spring RK4 array returns a bezier function. */
+        var easingSpringRK4Array = [250, 12], easingSpringRK4TestPercent = 0.25, easingSpringRK4TestValue = 0.928, // TODO: Check accuracy
+        easingSpringRK4TestDuration = 992;
+        Velocity(getTarget(), defaultProperties, {
+            duration: 150,
+            easing: easingSpringRK4Array,
+            begin: function (elements, animation) {
+                assert.close(animation.options.easing(easingSpringRK4TestPercent, 0, 1), easingSpringRK4TestValue, 10, "Array with duration converted into springRK4 function.");
+                done();
+            }
+        });
     });
     // TODO: Get this working in Velocity - so it can be tested
+    //	async(assert, 1, function(done) {
     //	Velocity(getTarget(), defaultProperties, {
     //		easing: easingSpringRK4Array,
     //		begin: function(elements, animation) {
@@ -523,54 +547,64 @@ QUnit.test("Easing", function (assert) {
     //			done();
     //		}
     //	});
-    /* Ensure that a properly-formatted step easing array returns a step function. */
-    var easingStepArray = [4], easingStepTestPercent = 0.35, easingStepTestValue = 0.25;
-    Velocity(getTarget(), defaultProperties, {
-        easing: easingStepArray,
-        begin: function (elements, animation) {
-            assert.close(animation.options.easing(easingStepTestPercent, 0, 1), easingStepTestValue, 0.05, "Array converted into Step function.");
-            done();
-        }
+    //	});
+    async(assert, 1, function (done) {
+        /* Ensure that a properly-formatted step easing array returns a step function. */
+        var easingStepArray = [4], easingStepTestPercent = 0.35, easingStepTestValue = 0.25;
+        Velocity(getTarget(), defaultProperties, {
+            easing: easingStepArray,
+            begin: function (elements, animation) {
+                assert.close(animation.options.easing(easingStepTestPercent, 0, 1), easingStepTestValue, 0.05, "Array converted into Step function.");
+                done();
+            }
+        });
     });
-    Velocity(getTarget(), { opacity: [0, "during", 1] }, {
-        duration: asyncCheckDuration,
-        begin: function (elements) {
-            assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'during').");
-        },
-        progress: once(function (elements) {
-            assert.equal(elements.velocity("style", "opacity"), 0, "Correct progress value (easing:'during').");
-        }),
-        complete: function (elements) {
-            assert.equal(elements.velocity("style", "opacity"), 1, "Correct complete value (easing:'during').");
-            done();
-        }
+    async(assert, 3, function (done) {
+        Velocity(getTarget(), { opacity: [0, "during", 1] }, {
+            duration: asyncCheckDuration,
+            begin: function (elements) {
+                assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'during').");
+            },
+            progress: once(function (elements) {
+                assert.equal(elements.velocity("style", "opacity"), 0, "Correct progress value (easing:'during').");
+            }),
+            complete: function (elements) {
+                assert.equal(elements.velocity("style", "opacity"), 1, "Correct complete value (easing:'during').");
+                done();
+            }
+        });
     });
-    Velocity(getTarget(), { opacity: [0, "at-start", 1] }, {
-        duration: asyncCheckDuration,
-        begin: function (elements) {
-            assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'at-start').");
-        },
-        progress: once(function (elements) {
-            assert.equal(elements.velocity("style", "opacity"), 0, "Correct progress value (easing:'at-start').");
-        }),
-        complete: function (elements) {
-            assert.equal(elements.velocity("style", "opacity"), 0, "Correct complete value (easing:'at-start').");
-            done();
-        }
+    async(assert, 3, function (done) {
+        Velocity(getTarget(), { opacity: [0, "at-start", 1] }, {
+            duration: asyncCheckDuration,
+            begin: function (elements) {
+                assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'at-start').");
+            },
+            progress: once(function (elements) {
+                assert.equal(elements.velocity("style", "opacity"), 0, "Correct progress value (easing:'at-start').");
+            }),
+            complete: function (elements) {
+                assert.equal(elements.velocity("style", "opacity"), 0, "Correct complete value (easing:'at-start').");
+                done();
+            }
+        });
     });
-    Velocity(getTarget(), { opacity: [0, "at-end", 1] }, {
-        duration: asyncCheckDuration,
-        begin: function (elements) {
-            assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'at-end').");
-        },
-        progress: once(function (elements) {
-            assert.equal(elements.velocity("style", "opacity"), 1, "Correct progress value (easing:'at-end').");
-        }),
-        complete: function (elements) {
-            assert.equal(elements.velocity("style", "opacity"), 0, "Correct complete value (easing:'at-end').");
-            done();
-        }
+    async(assert, 3, function (done) {
+        Velocity(getTarget(), { opacity: [0, "at-end", 1] }, {
+            duration: asyncCheckDuration,
+            begin: function (elements) {
+                assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'at-end').");
+            },
+            progress: once(function (elements) {
+                assert.equal(elements.velocity("style", "opacity"), 1, "Correct progress value (easing:'at-end').");
+            }),
+            complete: function (elements) {
+                assert.equal(elements.velocity("style", "opacity"), 0, "Correct complete value (easing:'at-end').");
+                done();
+            }
+        });
     });
+    assert.expect(async());
 });
 ///<reference path="_module.ts" />
 /*
@@ -620,31 +654,34 @@ QUnit.test("FPS Limit", function (assert) { return __awaiter(_this, void 0, void
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 QUnit.test("Loop", function (assert) {
-    var done = assert.async(1), testOptions = { loop: 2, delay: 100, duration: 100 }, begin = 0, complete = 0, loop = 0, start = getNow(), lastPercentComplete = 2;
-    assert.expect(4);
-    Velocity(getTarget(), defaultProperties, {
-        loop: testOptions.loop,
-        delay: testOptions.delay,
-        duration: testOptions.duration,
-        begin: function (elements, animation) {
-            begin++;
-        },
-        progress: function (elements, percentComplete, remaining, start, tweenValue) {
-            if (lastPercentComplete > percentComplete) {
-                loop++;
+    async(assert, 4, function (done) {
+        var testOptions = { loop: 2, delay: 100, duration: 100 }, start = getNow();
+        var begin = 0, complete = 0, loop = 0, lastPercentComplete = 2;
+        Velocity(getTarget(), defaultProperties, {
+            loop: testOptions.loop,
+            delay: testOptions.delay,
+            duration: testOptions.duration,
+            begin: function (elements, animation) {
+                begin++;
+            },
+            progress: function (elements, percentComplete, remaining, start, tweenValue) {
+                if (lastPercentComplete > percentComplete) {
+                    loop++;
+                }
+                lastPercentComplete = percentComplete;
+            },
+            complete: function (elements, animation) {
+                complete++;
             }
-            lastPercentComplete = percentComplete;
-        },
-        complete: function (elements, animation) {
-            complete++;
-        }
-    }).then(function () {
-        assert.equal(begin, 1, "Begin callback only called once.");
-        assert.equal(loop, testOptions.loop * 2 - 1, "Animation looped correct number of times (once each direction per loop).");
-        assert.close(getNow() - start, (testOptions.delay + testOptions.duration) * loop, 32, "Looping with 'delay' has correct duration.");
-        assert.equal(complete, 1, "Complete callback only called once.");
-        done();
+        }).then(function () {
+            assert.equal(begin, 1, "Begin callback only called once.");
+            assert.equal(loop, testOptions.loop * 2 - 1, "Animation looped correct number of times (once each direction per loop).");
+            assert.close(getNow() - start, (testOptions.delay + testOptions.duration) * loop, 32, "Looping with 'delay' has correct duration.");
+            assert.equal(complete, 1, "Complete callback only called once.");
+            done();
+        });
     });
+    assert.expect(async());
 });
 ///<reference path="_module.ts" />
 /*
@@ -653,18 +690,20 @@ QUnit.test("Loop", function (assert) {
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 QUnit.test("Progress", function (assert) {
-    var done = assert.async(1), $target = getTarget();
-    assert.expect(4);
-    Velocity($target, defaultProperties, {
-        duration: asyncCheckDuration,
-        progress: once(function (elements, percentComplete, msRemaining) {
-            assert.deepEqual(elements, [$target], "Elements passed into progress.");
-            assert.deepEqual(this, [$target], "Elements passed into progress as this.");
-            assert.equal(percentComplete >= 0 && percentComplete <= 1, true, "'percentComplete' passed into progress.");
-            assert.equal(msRemaining > asyncCheckDuration - 50, true, "'msRemaining' passed into progress.");
-            done();
-        })
+    async(assert, 4, function (done) {
+        var $target = getTarget();
+        Velocity($target, defaultProperties, {
+            duration: asyncCheckDuration,
+            progress: once(function (elements, percentComplete, msRemaining) {
+                assert.deepEqual(elements, [$target], "Elements passed into progress.");
+                assert.deepEqual(this, [$target], "Elements passed into progress as this.");
+                assert.equal(percentComplete >= 0 && percentComplete <= 1, true, "'percentComplete' passed into progress.");
+                assert.equal(msRemaining > asyncCheckDuration - 50, true, "'msRemaining' passed into progress.");
+                done();
+            })
+        });
     });
+    assert.expect(async());
 });
 ///<reference path="_module.ts" />
 /*
@@ -726,29 +765,32 @@ QUnit.test("Queue", function (assert) {
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 QUnit.test("Repeat", function (assert) {
-    var done = assert.async(1), testOptions = { repeat: 2, delay: 100, duration: 100 }, begin = 0, complete = 0, repeat = 0, start = Date.now();
-    assert.expect(4);
-    Velocity(getTarget(), defaultProperties, {
-        repeat: testOptions.repeat,
-        delay: testOptions.delay,
-        duration: testOptions.duration,
-        begin: function (elements, animation) {
-            begin++;
-        },
-        progress: function (elements, percentComplete, remaining, start, tweenValue) {
-            if (percentComplete === 1) {
-                repeat++;
+    async(assert, 4, function (done) {
+        var testOptions = { repeat: 2, delay: 100, duration: 100 }, start = Date.now();
+        var begin = 0, complete = 0, repeat = 0;
+        Velocity(getTarget(), defaultProperties, {
+            repeat: testOptions.repeat,
+            delay: testOptions.delay,
+            duration: testOptions.duration,
+            begin: function (elements, animation) {
+                begin++;
+            },
+            progress: function (elements, percentComplete, remaining, start, tweenValue) {
+                if (percentComplete === 1) {
+                    repeat++;
+                }
+            },
+            complete: function (elements, animation) {
+                complete++;
+                assert.equal(begin, 1, "Begin callback only called once.");
+                assert.equal(repeat, testOptions.repeat + 1, "Animation repeated correct number of times (original plus repeats).");
+                assert.close(Date.now() - start, (testOptions.delay + testOptions.duration) * (testOptions.repeat + 1), (testOptions.repeat + 1) * 16 + 32, "Repeat with 'delay' has correct duration.");
+                assert.equal(complete, 1, "Complete callback only called once.");
+                done();
             }
-        },
-        complete: function (elements, animation) {
-            complete++;
-            assert.equal(begin, 1, "Begin callback only called once.");
-            assert.equal(repeat, testOptions.repeat + 1, "Animation repeated correct number of times (original plus repeats).");
-            assert.close(Date.now() - start, (testOptions.delay + testOptions.duration) * (testOptions.repeat + 1), (testOptions.repeat + 1) * 16 + 32, "Repeat with 'delay' has correct duration.");
-            assert.equal(complete, 1, "Complete callback only called once.");
-            done();
-        }
+        });
     });
+    assert.expect(async());
 });
 ///<reference path="_module.ts" />
 /*
@@ -757,95 +799,109 @@ QUnit.test("Repeat", function (assert) {
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 QUnit.test("Speed", function (assert) {
-    var done = assert.async(7), delay = 200, duration = 400, startDelay = getNow();
-    assert.expect(7);
-    Velocity.defaults.speed = 3;
-    Velocity(getTarget(), defaultProperties, {
-        speed: 5,
-        begin: function (elements) {
-            assert.equal(elements.velocity.animations[0].options.speed, 5, "Speed on options overrides default.");
-            done();
-        }
-    });
-    Velocity(getTarget(), defaultProperties, {
-        duration: duration,
-        begin: function (elements) {
-            elements.__start = getNow();
-        },
-        complete: function (elements) {
-            var actual = getNow() - elements.__start, expected = duration / 3;
-            assert.close(actual, expected, 32, "Velocity.defaults.speed change is respected. (\xD73, " + Math.floor(actual - expected) + "ms \xB132ms)");
-            done();
-        }
-    });
-    Velocity(getTarget(), defaultProperties, {
-        duration: duration,
-        speed: 2,
-        begin: function (elements) {
-            elements.__start = getNow();
-        },
-        complete: function (elements) {
-            var actual = getNow() - elements.__start, expected = duration / 2;
-            assert.close(actual, expected, 32, "Double speed animation lasts half as long. (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
-            done();
-        }
-    });
-    Velocity(getTarget(), defaultProperties, {
-        duration: duration,
-        delay: delay,
-        speed: 2,
-        begin: function (elements) {
-            elements.__start = startDelay;
-        },
-        complete: function (elements) {
-            var actual = getNow() - elements.__start, expected = (duration + delay) / 2;
-            assert.close(actual, expected, 32, "Delayed animation includes speed for delay. (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
-            done();
-        }
-    });
-    Velocity(getTarget(), defaultProperties, {
-        duration: duration,
-        delay: -delay,
-        speed: 2,
-        begin: function (elements) {
-            elements.__start = startDelay;
-        },
-        complete: function (elements) {
-            var actual = getNow() - elements.__start, expected = (duration - delay) / 2;
-            assert.close(actual, expected, 32, "Negative delay animation includes speed for delay. (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
-            done();
-        }
-    });
-    Velocity(getTarget(), defaultProperties, {
-        duration: duration,
-        speed: 0.5,
-        begin: function (elements) {
-            elements.__start = getNow();
-        },
-        complete: function (elements) {
-            var actual = getNow() - elements.__start, expected = duration * 2;
-            // TODO: Really not happy with the allowed range - it sits around 40ms, but should be closer to 16ms
-            assert.close(actual, expected, 64, "Half speed animation lasts twice as long. (\xD7\xBD, " + Math.floor(actual - expected) + "ms \xB164ms)");
-            done();
-        }
-    });
-    Velocity(getTarget(), defaultProperties, {
-        duration: duration,
-        speed: 0,
-        progress: function (elements, percentComplete) {
-            if (!elements.__count) {
-                elements.__start = percentComplete;
-                elements.__count = 1;
-            }
-            else {
-                assert.equal(elements.__start, percentComplete, "Frozen (speed:0) animation doesn't progress.");
-                elements
-                    .velocity("option", "speed", 1) // Just in case "stop" is broken
-                    .velocity("stop");
+    var delay = 200, duration = 400, startDelay = getNow();
+    async(assert, 1, function (done) {
+        Velocity.defaults.speed = 3;
+        Velocity(getTarget(), defaultProperties, {
+            speed: 5,
+            begin: function (elements) {
+                assert.equal(elements.velocity.animations[0].options.speed, 5, "Speed on options overrides default.");
                 done();
             }
-        }
+        });
     });
+    async(assert, 1, function (done) {
+        Velocity(getTarget(), defaultProperties, {
+            duration: duration,
+            begin: function (elements) {
+                elements.__start = getNow();
+            },
+            complete: function (elements) {
+                var actual = getNow() - elements.__start, expected = duration / 3;
+                assert.close(actual, expected, 32, "Velocity.defaults.speed change is respected. (\xD73, " + Math.floor(actual - expected) + "ms \xB132ms)");
+                done();
+            }
+        });
+    });
+    async(assert, 1, function (done) {
+        Velocity(getTarget(), defaultProperties, {
+            duration: duration,
+            speed: 2,
+            begin: function (elements) {
+                elements.__start = getNow();
+            },
+            complete: function (elements) {
+                var actual = getNow() - elements.__start, expected = duration / 2;
+                assert.close(actual, expected, 32, "Double speed animation lasts half as long. (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
+                done();
+            }
+        });
+    });
+    async(assert, 1, function (done) {
+        Velocity(getTarget(), defaultProperties, {
+            duration: duration,
+            delay: delay,
+            speed: 2,
+            begin: function (elements) {
+                elements.__start = startDelay;
+            },
+            complete: function (elements) {
+                var actual = getNow() - elements.__start, expected = (duration + delay) / 2;
+                assert.close(actual, expected, 32, "Delayed animation includes speed for delay. (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
+                done();
+            }
+        });
+    });
+    async(assert, 1, function (done) {
+        Velocity(getTarget(), defaultProperties, {
+            duration: duration,
+            delay: -delay,
+            speed: 2,
+            begin: function (elements) {
+                elements.__start = startDelay;
+            },
+            complete: function (elements) {
+                var actual = getNow() - elements.__start, expected = (duration - delay) / 2;
+                assert.close(actual, expected, 32, "Negative delay animation includes speed for delay. (\xD72, " + Math.floor(actual - expected) + "ms \xB132ms)");
+                done();
+            }
+        });
+    });
+    async(assert, 1, function (done) {
+        Velocity(getTarget(), defaultProperties, {
+            duration: duration,
+            speed: 0.5,
+            begin: function (elements) {
+                elements.__start = getNow();
+            },
+            complete: function (elements) {
+                var actual = getNow() - elements.__start, expected = duration * 2;
+                // TODO: Really not happy with the allowed range - it sits around 40ms, but should be closer to 16ms
+                assert.close(actual, expected, 64, "Half speed animation lasts twice as long. (\xD7\xBD, " + Math.floor(actual - expected) + "ms \xB164ms)");
+                done();
+            }
+        });
+    });
+    async(assert, 1, function (done) {
+        Velocity(getTarget(), defaultProperties, {
+            duration: duration,
+            speed: 0,
+            progress: function (elements, percentComplete) {
+                if (!elements.__count) {
+                    elements.__start = percentComplete;
+                    elements.__count = 1;
+                }
+                else {
+                    assert.equal(elements.__start, percentComplete, "Frozen (speed:0) animation doesn't progress.");
+                    elements
+                        .velocity("option", "speed", 1) // Just in case "stop" is broken
+                        .velocity("stop");
+                    done();
+                }
+            }
+        });
+    });
+    assert.expect(async());
 });
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -2134,6 +2190,7 @@ QUnit.testDone(function () {
         document.querySelectorAll(".velocity-animating").velocity("stop");
     }
     catch (e) { }
+    async();
     freeTargets();
     Velocity.defaults.reset();
 });

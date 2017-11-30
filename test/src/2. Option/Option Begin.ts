@@ -6,15 +6,18 @@
  */
 
 QUnit.test("Begin", function(assert) {
-	var done = assert.async(1),
-			$targetSet = [getTarget(), getTarget()];
+	async(assert, 1, function(done) {
+		const $targetSet = [getTarget(), getTarget()];
 
-	assert.expect(1);
-	Velocity($targetSet, defaultProperties, {
-		duration: asyncCheckDuration,
-		begin: function() {
-			assert.deepEqual(this, $targetSet, "Elements passed into callback.");
-			done();
-		}
+		Velocity($targetSet, defaultProperties, {
+			duration: asyncCheckDuration,
+			begin: function() {
+				assert.deepEqual(this, $targetSet, "Elements passed into callback.");
+
+				done();
+			}
+		});
 	});
+
+	assert.expect(async());
 });
