@@ -105,6 +105,10 @@ function getNow(): number {
 	return performance && performance.now ? performance.now() : Date.now();
 }
 
+function getPropertyValue(element: HTMLElement, property: string): string {
+	return Velocity.CSS.getPropertyValue(element, property);
+}
+
 let targets: HTMLDivElement[] = [];
 
 function getTarget(): HTMLDivElement {
@@ -144,6 +148,25 @@ function once(func): typeof func {
 
 function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+let asyncCount = 0;
+
+function async(): number;
+function async(assert: Assert, count: number, callback: (done: () => void) => void): void;
+function async(assert?: Assert, count?: number, callback?: (done: () => void) => void): number {
+	if (!assert) {
+		const count = asyncCount;
+
+		asyncCount = 0;
+		return count;
+	}
+	const done = assert.async(1);
+
+	asyncCount += count;
+	setTimeout(function() {
+		callback(done);
+	}, 1);
 }
 
 function isEmptyObject(variable): variable is {} {

@@ -10,14 +10,17 @@
 namespace VelocityStatic {
 
 	/**
-	 * Check if an animation should be paused / resumed.
+	 * Check if an animation should be stopped, and if so then set the STOPPED
+	 * flag on it, then call complete.
 	 */
-	function checkAnimationShouldBeStopped(animation: AnimationCall, queueName: false | string, defaultQueue: false | string, isStopped: boolean) {
-		if (queueName === undefined || (queueName === getValue(animation.queue, animation.options.queue, defaultQueue))) {
-			if (isStopped) {
-				animation._flags |= AnimationFlags.STOPPED;
-			}
+	function checkAnimationShouldBeStopped(animation: AnimationCall, queueName: false | string, defaultQueue: false | string) {
+		validateTweens(animation);
+		if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
+			console.log("Stopping", queueName, ":", animation.queue, animation.options.queue, defaultQueue)
+			animation._flags |= AnimationFlags.STOPPED;
 			completeCall(animation);
+		} else {
+			console.log("Not stopping", queueName, animation.queue, animation.options.queue, defaultQueue)
 		}
 	}
 
@@ -36,18 +39,27 @@ namespace VelocityStatic {
 	 */
 	function stop(args: any[], elements: VelocityResult, promiseHandler?: VelocityPromise, action?: string): void {
 		let queueName = args[0] === undefined ? undefined : validateQueue(args[0]),
-			defaultQueue = defaults.queue,
-			isStopped = action[0] === "s" && action[1] === "t" && action[2] === "o" && action[3] === "p";
+			defaultQueue = defaults.queue;
 
 		if (isVelocityResult(elements) && elements.velocity.animations) {
 			for (let i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-				checkAnimationShouldBeStopped(animations[i], queueName, defaultQueue, isStopped);
+				checkAnimationShouldBeStopped(animations[i], queueName, defaultQueue);
 			}
 		} else {
-			for (let activeCall = State.first, nextCall: AnimationCall; activeCall; activeCall = nextCall) {
+			let activeCall = State.first,
+				nextCall: AnimationCall;
+
+			if (queueName === undefined) {
+				queueName = defaultQueue;
+			}
+			// Exapand any tweens that might need it.
+			while ((activeCall = State.firstNew)) {
+				validateTweens(activeCall);
+			}
+			for (activeCall = State.first; activeCall; activeCall = nextCall || State.firstNew) {
 				nextCall = activeCall._next;
 				if (!elements || _inArray.call(elements, activeCall.element)) {
-					checkAnimationShouldBeStopped(activeCall, queueName, defaultQueue, isStopped);
+					checkAnimationShouldBeStopped(activeCall, queueName, defaultQueue);
 				}
 			}
 		}

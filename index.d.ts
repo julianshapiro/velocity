@@ -595,7 +595,7 @@ interface Velocity {
 	}
 
 	CSS: {
-		getPropertyValue(element: HTMLorSVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean): string | number;
+		getPropertyValue(element: HTMLorSVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean): string;
 		getUnit(str: string, start?: number): string;
 		fixColors(str: string): string;
 		Normalizations: {[name: string]: VelocityNormalizationsFn};

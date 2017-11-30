@@ -183,11 +183,11 @@ namespace VelocityStatic {
 				 Call Iteration
 				 ********************/
 
-				/* Exapand any tweens that might need it */
+				// Exapand any tweens that might need it.
 				while ((activeCall = State.firstNew)) {
 					validateTweens(activeCall);
 				}
-				/* Iterate through each active call. */
+				// Iterate through each active call.
 				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
 					nextCall = activeCall._next;
 					let element = activeCall.element,

@@ -10,20 +10,13 @@
 namespace VelocityStatic {
 
 	/**
-	 * Check if an animation should be paused / resumed.
+	 * Check if an animation should be finished, and if so we set the tweens to
+	 * the final value for it, then call complete.
 	 */
 	function checkAnimationShouldBeFinished(animation: AnimationCall, queueName: false | string, defaultQueue: false | string) {
-		if (queueName === undefined || (queueName === getValue(animation.queue, animation.options.queue, defaultQueue))) {
-
-			/* If we want to finish everything in the queue, we have to iterate through it
-             and call each function. This will make them active calls below, which will
-             cause them to be applied via the duration setting. */
-			/* Iterate through the items in the element's queue. */
-
-			animation.queue = false;
-
+		validateTweens(animation);
+		if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
 			for (const property in animation.tweens) {
-
 				let tween = animation.tweens[property],
 					pattern = tween[Tween.PATTERN],
 					currentValue = "",
@@ -32,14 +25,13 @@ namespace VelocityStatic {
 				if (pattern) {
 					for (; i < pattern.length; i++) {
 						let endValue = tween[Tween.END][i];
+
 						currentValue += endValue == null ? pattern[i] : endValue;
 					}
 				}
-
 				CSS.setPropertyValue(animation.element, property, currentValue);
 			}
-
-			//completeCall(animation);
+			completeCall(animation);
 		}
 	}
 
@@ -53,25 +45,26 @@ namespace VelocityStatic {
 
 		if (isVelocityResult(elements) && elements.velocity.animations) {
 			for (let i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-				validateTweens(animations[i]);
 				checkAnimationShouldBeFinished(animations[i], queueName, defaultQueue);
 			}
 		} else {
 			for (let element of elements) {
-				/* If we want to finish everything in the queue, we have to iterate through every element.
-				 We first get each queued animation and add the end value given to each element. */
+				let activeCall = State.first,
+					nextCall: AnimationCall;
 
-				for (let activeCall = State.first, nextCall: AnimationCall; activeCall; activeCall = nextCall) {
-					nextCall = activeCall._next || VelocityStatic.dequeue(element, queueName);
-
+				// Exapand any tweens that might need it.
+				while ((activeCall = State.firstNew)) {
 					validateTweens(activeCall);
+				}
+				// If we want to finish everything in the queue, we have to
+				// iterate through every element. We first get each queued
+				// animation and add the end value given to each element.
+				for (activeCall = State.first; activeCall; activeCall = nextCall || State.firstNew) {
+					nextCall = activeCall._next || VelocityStatic.dequeue(element, queueName);
 					checkAnimationShouldBeFinished(activeCall, queueName, defaultQueue);
 				}
 			}
 		}
-
-		VelocityStatic.Actions["stop"].apply(this, arguments);
-
 		if (promiseHandler) {
 			if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
 				elements.then(promiseHandler._resolver);

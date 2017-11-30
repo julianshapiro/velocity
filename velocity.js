@@ -1635,15 +1635,12 @@ var VelocityStatic;
 
 (function(VelocityStatic) {
     /**
-     * Check if an animation should be paused / resumed.
+     * Check if an animation should be finished, and if so we set the tweens to
+     * the final value for it, then call complete.
      */
     function checkAnimationShouldBeFinished(animation, queueName, defaultQueue) {
+        VelocityStatic.validateTweens(animation);
         if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
-            /* If we want to finish everything in the queue, we have to iterate through it
-             and call each function. This will make them active calls below, which will
-             cause them to be applied via the duration setting. */
-            /* Iterate through the items in the element's queue. */
-            animation.queue = false;
             for (var property in animation.tweens) {
                 var tween_1 = animation.tweens[property], pattern = tween_1[3], currentValue = "", i = 0;
                 if (pattern) {
@@ -1654,6 +1651,7 @@ var VelocityStatic;
                 }
                 VelocityStatic.CSS.setPropertyValue(animation.element, property, currentValue);
             }
+            VelocityStatic.completeCall(animation);
         }
     }
     /**
@@ -1664,22 +1662,25 @@ var VelocityStatic;
         var queueName = args[0] === undefined ? undefined : validateQueue(args[0]), defaultQueue = VelocityStatic.defaults.queue;
         if (isVelocityResult(elements) && elements.velocity.animations) {
             for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-                VelocityStatic.validateTweens(animations[i]);
                 checkAnimationShouldBeFinished(animations[i], queueName, defaultQueue);
             }
         } else {
             for (var _i = 0, elements_1 = elements; _i < elements_1.length; _i++) {
                 var element = elements_1[_i];
-                /* If we want to finish everything in the queue, we have to iterate through every element.
-                 We first get each queued animation and add the end value given to each element. */
-                for (var activeCall = VelocityStatic.State.first, nextCall = void 0; activeCall; activeCall = nextCall) {
-                    nextCall = activeCall._next || VelocityStatic.dequeue(element, queueName);
+                var activeCall = VelocityStatic.State.first, nextCall = void 0;
+                // Exapand any tweens that might need it.
+                while (activeCall = VelocityStatic.State.firstNew) {
                     VelocityStatic.validateTweens(activeCall);
+                }
+                // If we want to finish everything in the queue, we have to
+                // iterate through every element. We first get each queued
+                // animation and add the end value given to each element.
+                for (activeCall = VelocityStatic.State.first; activeCall; activeCall = nextCall || VelocityStatic.State.firstNew) {
+                    nextCall = activeCall._next || VelocityStatic.dequeue(element, queueName);
                     checkAnimationShouldBeFinished(activeCall, queueName, defaultQueue);
                 }
             }
         }
-        VelocityStatic.Actions["stop"].apply(this, arguments);
         if (promiseHandler) {
             if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
                 elements.then(promiseHandler._resolver);
@@ -1956,14 +1957,17 @@ var VelocityStatic;
 
 (function(VelocityStatic) {
     /**
-     * Check if an animation should be paused / resumed.
+     * Check if an animation should be stopped, and if so then set the STOPPED
+     * flag on it, then call complete.
      */
-    function checkAnimationShouldBeStopped(animation, queueName, defaultQueue, isStopped) {
+    function checkAnimationShouldBeStopped(animation, queueName, defaultQueue) {
+        VelocityStatic.validateTweens(animation);
         if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
-            if (isStopped) {
-                animation._flags |= 16;
-            }
+            console.log("Stopping", queueName, ":", animation.queue, animation.options.queue, defaultQueue);
+            animation._flags |= 16;
             VelocityStatic.completeCall(animation);
+        } else {
+            console.log("Not stopping", queueName, animation.queue, animation.options.queue, defaultQueue);
         }
     }
     /**
@@ -1980,16 +1984,24 @@ var VelocityStatic;
      * @param {string} action
      */
     function stop(args, elements, promiseHandler, action) {
-        var queueName = args[0] === undefined ? undefined : validateQueue(args[0]), defaultQueue = VelocityStatic.defaults.queue, isStopped = action[0] === "s" && action[1] === "t" && action[2] === "o" && action[3] === "p";
+        var queueName = args[0] === undefined ? undefined : validateQueue(args[0]), defaultQueue = VelocityStatic.defaults.queue;
         if (isVelocityResult(elements) && elements.velocity.animations) {
             for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-                checkAnimationShouldBeStopped(animations[i], queueName, defaultQueue, isStopped);
+                checkAnimationShouldBeStopped(animations[i], queueName, defaultQueue);
             }
         } else {
-            for (var activeCall = VelocityStatic.State.first, nextCall = void 0; activeCall; activeCall = nextCall) {
+            var activeCall = VelocityStatic.State.first, nextCall = void 0;
+            if (queueName === undefined) {
+                queueName = defaultQueue;
+            }
+            // Exapand any tweens that might need it.
+            while (activeCall = VelocityStatic.State.firstNew) {
+                VelocityStatic.validateTweens(activeCall);
+            }
+            for (activeCall = VelocityStatic.State.first; activeCall; activeCall = nextCall || VelocityStatic.State.firstNew) {
                 nextCall = activeCall._next;
                 if (!elements || _inArray.call(elements, activeCall.element)) {
-                    checkAnimationShouldBeStopped(activeCall, queueName, defaultQueue, isStopped);
+                    checkAnimationShouldBeStopped(activeCall, queueName, defaultQueue);
                 }
             }
         }
@@ -2544,7 +2556,13 @@ var VelocityStatic;
      * mark us as finished.
      */
     function freeAnimationCall(animation) {
-        var next = animation._next, prev = animation._prev;
+        var next = animation._next, prev = animation._prev, queue = animation.queue;
+        if (queue == null) {
+            queue = animation.options.queue;
+        }
+        if (VelocityStatic.State.firstNew === animation) {
+            VelocityStatic.State.firstNew = next;
+        }
         if (VelocityStatic.State.first === animation) {
             VelocityStatic.State.first = next;
         } else if (prev) {
@@ -2555,8 +2573,7 @@ var VelocityStatic;
         } else if (next) {
             next._prev = prev;
         }
-        var queue = getValue(animation.queue, animation.options.queue, VelocityStatic.defaults.queue);
-        if (queue !== false) {
+        if (queue) {
             var data = Data(animation.element);
             if (data) {
                 data.lastAnimationList[queue] = animation;
@@ -3022,11 +3039,11 @@ var VelocityStatic;
                 /********************
                  Call Iteration
                  ********************/
-                /* Exapand any tweens that might need it */
+                // Exapand any tweens that might need it.
                 while (activeCall = VelocityStatic.State.firstNew) {
                     VelocityStatic.validateTweens(activeCall);
                 }
-                /* Iterate through each active call. */
+                // Iterate through each active call.
                 for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
                     nextCall = activeCall._next;
                     var element = activeCall.element, data = void 0;

@@ -112,8 +112,15 @@ namespace VelocityStatic {
 	 */
 	export function freeAnimationCall(animation: AnimationCall): void {
 		let next = animation._next,
-			prev = animation._prev;
+			prev = animation._prev,
+			queue = animation.queue;
 
+		if (queue == null) {
+			queue = animation.options.queue;
+		}
+		if (State.firstNew === animation) {
+			State.firstNew = next;
+		}
 		if (State.first === animation) {
 			State.first = next;
 		} else if (prev) {
@@ -124,9 +131,7 @@ namespace VelocityStatic {
 		} else if (next) {
 			next._prev = prev;
 		}
-		let queue = getValue(animation.queue, animation.options.queue, defaults.queue);
-
-		if (queue !== false) {
+		if (queue) {
 			let data = Data(animation.element);
 
 			if (data) {
