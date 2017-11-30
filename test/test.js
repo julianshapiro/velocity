@@ -859,47 +859,55 @@ QUnit.module("Command");
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.todo("Finish / FinishAll", function (assert) {
-    var done = assert.async(2), $target1 = getTarget();
-    assert.expect(9);
-    /* Ensure an error isn't thrown when "finish" is called on a $target that isn't animating. */
-    Velocity($target1, "finish");
-    /* Animate to defaultProperties, and then "finish" to jump to the end of it. */
-    Velocity($target1, defaultProperties, Object.assign({}, defaultOptions, { delay: 1000 }));
-    Velocity($target1, "finish");
-    setTimeout(function () {
-        /* Ensure "finish" has removed all queued animations. */
-        /* We're using the element's queue length as a proxy. 0 and 1 both mean that the element's queue has been cleared -- a length of 1 just indicates that the animation is in progress. */
-        assert.equal(!Data($target1).queueList, true, "Queue cleared.");
-        /* End result of the animation should be applied */
-        assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "width")), defaultProperties.width, "Standard end value #1 was set.");
-        assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "opacity")), defaultProperties.opacity, "Standard end value #2 was set.");
-        done();
-    }, asyncCheckDuration);
-    var $target2 = getTarget();
-    Velocity($target2, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 1000 }));
-    Velocity($target2, { width: 0 }, defaultOptions);
-    Velocity($target2, "finish");
-    var $target3 = getTarget();
-    Velocity($target3, { opacity: 0, width: 50 }, Object.assign({}, defaultOptions, { delay: 1000 }));
-    Velocity($target3, { width: 0 }, defaultOptions);
-    Velocity($target3, { width: 100 }, defaultOptions);
-    Velocity($target3, "finish");
-    var $target4 = getTarget();
-    Velocity($target4, { opacity: 0, width: 50 }, Object.assign({}, defaultOptions, { delay: 1000 }));
-    Velocity($target4, { width: 0 }, defaultOptions);
-    Velocity($target4, { width: 100 }, defaultOptions);
-    Velocity($target4, "finishAll");
-    setTimeout(function () {
-        assert.equal(Data($target2).cache.opacity, undefined, "Active call stopped.");
-        assert.notEqual(Data($target2).cache.width, undefined, "Next queue item started.");
-        assert.equal(!Data($target3) || !Data($target3).queueList, true, "Full queue array cleared.");
-        assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target3, "width")), 50, "Just the first call's width was applied.");
-        assert.equal(!Data($target4) || !Data($target4).queueList, true, "Full queue array cleared.");
-        assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target4, "width")), 100, "The last call's width was applied.");
-        done();
-    }, asyncCheckDuration);
-});
+var _this = this;
+QUnit.todo("Finish / FinishAll", function (assert) { return __awaiter(_this, void 0, void 0, function () {
+    var $target1, $target2, $target3, $target4;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                $target1 = getTarget();
+                assert.expect(9);
+                /* Ensure an error isn't thrown when "finish" is called on a $target that isn't animating. */
+                Velocity($target1, "finish");
+                /* Animate to defaultProperties, and then "finish" to jump to the end of it. */
+                Velocity($target1, defaultProperties, Object.assign({}, defaultOptions, { delay: 1000 }));
+                Velocity($target1, "finish");
+                return [4 /*yield*/, sleep(asyncCheckDuration)];
+            case 1:
+                _a.sent();
+                /* Ensure "finish" has removed all queued animations. */
+                /* We're using the element's queue length as a proxy. 0 and 1 both mean that the element's queue has been cleared -- a length of 1 just indicates that the animation is in progress. */
+                assert.equal(isEmptyObject(Data($target1).queueList), true, "Queue cleared.");
+                /* End result of the animation should be applied */
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "width")), defaultProperties.width, "Standard end value #1 was set.");
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "opacity")), defaultProperties.opacity, "Standard end value #2 was set.");
+                $target2 = getTarget();
+                Velocity($target2, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 1000 }));
+                Velocity($target2, { width: 0 }, defaultOptions);
+                Velocity($target2, "finish");
+                $target3 = getTarget();
+                Velocity($target3, { opacity: 0, width: 50 }, Object.assign({}, defaultOptions, { delay: 1000 }));
+                Velocity($target3, { width: 0 }, defaultOptions);
+                Velocity($target3, { width: 100 }, defaultOptions);
+                Velocity($target3, "finish");
+                $target4 = getTarget();
+                Velocity($target4, { opacity: 0, width: 50 }, Object.assign({}, defaultOptions, { delay: 1000 }));
+                Velocity($target4, { width: 0 }, defaultOptions);
+                Velocity($target4, { width: 100 }, defaultOptions);
+                Velocity($target4, "finishAll");
+                return [4 /*yield*/, sleep(asyncCheckDuration)];
+            case 2:
+                _a.sent();
+                assert.equal(Data($target2).cache.opacity, undefined, "Active call stopped.");
+                assert.notEqual(Data($target2).cache.width, undefined, "Next queue item started.");
+                assert.equal(!Data($target3) || !Data($target3).queueList, true, "Full queue array cleared.");
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target3, "width")), 50, "Just the first call's width was applied.");
+                assert.equal(!Data($target4) || !Data($target4).queueList, true, "Full queue array cleared.");
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target4, "width")), 100, "The last call's width was applied.");
+                return [2 /*return*/];
+        }
+    });
+}); });
 ///<reference path="_module.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -908,11 +916,11 @@ QUnit.todo("Finish / FinishAll", function (assert) {
  */
 var _this = this;
 QUnit.test("Pause / Resume", function (assert) { return __awaiter(_this, void 0, void 0, function () {
-    var done, $target1, $target1d, $target2, $target2d, $target3, percent, isPaused, val, $targetC, $targetD, $targetA, $targetB, $targetC, $targetD, $target4, isResumed;
+    var $target1, $target1d, $target2, $target2d, $target3, percent, isPaused, val, $targetC, $targetD, $targetA, $targetB, $targetC, $targetD, $target4, isResumed;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                done = assert.async(3), $target1 = getTarget(), $target1d = getTarget();
+                $target1 = getTarget(), $target1d = getTarget();
                 assert.expect(12);
                 /* Ensure an error isn't thrown when "pause" is called on a $target that isn't animating. */
                 Velocity($target1, "pause");
@@ -928,7 +936,6 @@ QUnit.test("Pause / Resume", function (assert) { return __awaiter(_this, void 0,
                 });
                 Velocity($target1d, "pause").then(function () {
                     assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1d, "opacity")), 1, "Property value unchanged after pause during delay.");
-                    done();
                 });
                 $target2 = getTarget();
                 $target2d = getTarget();
@@ -1044,7 +1051,9 @@ QUnit.test("Pause / Resume", function (assert) { return __awaiter(_this, void 0,
                 $target4 = getTarget();
                 Velocity($target4, { opacity: 0 }, { duration: 200 });
                 isResumed = false;
-                sleep(100);
+                return [4 /*yield*/, sleep(100)];
+            case 12:
+                _a.sent();
                 Velocity($target4, "pause");
                 Velocity($target4, { left: -20 }, {
                     duration: 100,
@@ -1052,7 +1061,6 @@ QUnit.test("Pause / Resume", function (assert) { return __awaiter(_this, void 0,
                     queue: false,
                     begin: function (elements) {
                         assert.ok(true, "Animation with {queue:false} will run regardless of previously paused animations.");
-                        done();
                     }
                 });
                 Velocity($target4, { top: 20 }, {
@@ -1060,12 +1068,16 @@ QUnit.test("Pause / Resume", function (assert) { return __awaiter(_this, void 0,
                     easing: "linear",
                     begin: function (elements) {
                         assert.ok(isResumed, "Queued animation began after previously paused animation completed");
-                        done();
                     }
                 });
-                sleep(100);
+                return [4 /*yield*/, sleep(100)];
+            case 13:
+                _a.sent();
                 isResumed = true;
                 Velocity($target4, "resume");
+                return [4 /*yield*/, sleep(100)];
+            case 14:
+                _a.sent();
                 return [2 /*return*/];
         }
     });
@@ -1321,33 +1333,72 @@ QUnit.skip("Scroll (Element)", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.test("Stop", function (assert) {
-    var $target1 = getTarget();
-    assert.expect(4);
-    /* Ensure an error isn't thrown when "stop" is called on a $target that isn't animating. */
-    Velocity($target1, "stop");
-    Velocity($target1, defaultProperties, defaultOptions);
-    Velocity($target1, { top: 0 }, defaultOptions);
-    Velocity($target1, { width: 0 }, defaultOptions);
-    Velocity($target1, "stop");
-    sleep(1);
-    /* Ensure "stop" has removed all queued animations. */
-    /* We're using the element's queue length as a proxy. 0 and 1 both mean that the element's queue has been cleared -- a length of 1 just indicates that the animation is in progress. */
-    assert.equal(!Data($target1).queueList || !Object.keys(Data($target1).queueList).length, true, "Queue cleared.");
-    var $target2 = getTarget();
-    Velocity($target2, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 1000 }));
-    Velocity($target2, { width: 0 }, defaultOptions);
-    Velocity($target2, "stop");
-    var $target3 = getTarget();
-    Velocity($target3, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 1000 }));
-    Velocity($target3, { width: 0 }, defaultOptions);
-    Velocity($target3, { width: 100 }, defaultOptions);
-    Velocity($target3, "stop");
-    sleep(asyncCheckDuration);
-    assert.equal(Data($target2).cache.opacity, undefined, "Active call stopped.");
-    assert.notEqual(Data($target2).cache.width, undefined, "Next queue item started.");
-    assert.equal(!Data($target3).queueList || !Object.keys(Data($target3).queueList), true, "Full queue array cleared.");
-});
+var _this = this;
+QUnit.test("Stop", function (assert) { return __awaiter(_this, void 0, void 0, function () {
+    var $target1, $target2, $target3, $target4, $target5, $target6;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                $target1 = getTarget();
+                assert.expect(8);
+                /* Ensure an error isn't thrown when "stop" is called on a $target that isn't animating. */
+                Velocity($target1, "stop");
+                Velocity($target1, defaultProperties, defaultOptions);
+                Velocity($target1, { top: 0 }, defaultOptions);
+                Velocity($target1, { width: 0 }, defaultOptions);
+                Velocity($target1, "stop");
+                return [4 /*yield*/, sleep(1)];
+            case 1:
+                _a.sent();
+                $target2 = getTarget();
+                Velocity($target2, { width: 0 }, defaultOptions);
+                return [4 /*yield*/, sleep(150)];
+            case 2:
+                _a.sent();
+                Velocity($target2, "stop");
+                /* End result of the animation should be applied */
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target2, "width")), parseFloat($target2.style.width) / 2, "Standard end value width was set.");
+                Velocity($target2, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 1000 }));
+                return [4 /*yield*/, sleep(defaultOptions.duration / 2)];
+            case 3:
+                _a.sent();
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "opacity")), 1, "Should not have started animation with delay.");
+                $target3 = getTarget();
+                Velocity($target3, { opacity: 0 }, Object.assign({}, defaultOptions, { queue: "test" }));
+                Velocity($target3, "stop");
+                return [4 /*yield*/, sleep(defaultOptions.duration)];
+            case 4:
+                _a.sent();
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target3, "opacity")), 1, "Should have not stopped animation with queue.");
+                $target4 = getTarget();
+                Velocity($target4, { opacity: 0 }, Object.assign({}, defaultOptions, { queue: "test" }));
+                Velocity($target4, "stop", "test");
+                return [4 /*yield*/, sleep(defaultOptions.duration)];
+            case 5:
+                _a.sent();
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target4, "opacity")), 1, "Should have stopped animation with queue.");
+                $target5 = getTarget();
+                Velocity($target5, { opacity: 0 }, defaultOptions);
+                Velocity($target5, { width: "500px" }, defaultOptions);
+                Velocity($target5, "stop");
+                return [4 /*yield*/, sleep(defaultOptions.duration)];
+            case 6:
+                _a.sent();
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target5, "opacity")), 1, "Should have stopped all animations and have initial opacity.");
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target5, "width")), 1, "Should have stopped all animations and have initial width.");
+                $target6 = getTarget();
+                Velocity($target6, { opacity: 0 }, Object.assign({}, defaultOptions, { queue: "test" }));
+                Velocity($target6, { width: "500px" }, Object.assign({}, defaultOptions, { queue: "test" }));
+                Velocity($target6, "stop", "test");
+                return [4 /*yield*/, sleep(defaultOptions.duration)];
+            case 7:
+                _a.sent();
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target6, "opacity")), 1, "Should have stopped all animations with queue and have initial opacity.");
+                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target6, "width")), 1, "Should have stopped all animations with queue and have initial width.");
+                return [2 /*return*/];
+        }
+    });
+}); });
 ///<reference path="_module.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -1957,6 +2008,14 @@ function once(func) {
 }
 function sleep(ms) {
     return new Promise(function (resolve) { return setTimeout(resolve, ms); });
+}
+function isEmptyObject(variable) {
+    for (var name_1 in variable) {
+        if (variable.hasOwnProperty(name_1)) {
+            return false;
+        }
+    }
+    return true;
 }
 QUnit.testDone(function () {
     try {

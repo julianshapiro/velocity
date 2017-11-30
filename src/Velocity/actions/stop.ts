@@ -13,7 +13,7 @@ namespace VelocityStatic {
 	 * Check if an animation should be paused / resumed.
 	 */
 	function checkAnimationShouldBeStopped(animation: AnimationCall, queueName: false | string, defaultQueue: false | string, isStopped: boolean) {
-		if (queueName === undefined || (queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue))) {
+		if (queueName === undefined || (queueName === getValue(animation.queue, animation.options.queue, defaultQueue))) {
 			if (isStopped) {
 				animation._flags |= AnimationFlags.STOPPED;
 			}
@@ -60,6 +60,5 @@ namespace VelocityStatic {
 		}
 	}
 
-	registerAction(["finish", stop], true);
 	registerAction(["stop", stop], true);
 }

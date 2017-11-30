@@ -146,6 +146,15 @@ function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function isEmptyObject(variable): variable is {} {
+	for (let name in variable) {
+		if (variable.hasOwnProperty(name)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 QUnit.testDone(function() {
 	try {
 		document.querySelectorAll(".velocity-animating").velocity("stop");

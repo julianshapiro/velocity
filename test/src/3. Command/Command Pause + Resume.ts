@@ -6,8 +6,7 @@
  */
 
 QUnit.test("Pause / Resume", async (assert) => {
-	var done = assert.async(3),
-		$target1 = getTarget(),
+	var $target1 = getTarget(),
 		$target1d = getTarget(); //delayed
 
 	assert.expect(12);
@@ -29,8 +28,6 @@ QUnit.test("Pause / Resume", async (assert) => {
 
 	Velocity($target1d, "pause").then(() => {
 		assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1d, "opacity") as string), 1, "Property value unchanged after pause during delay.")
-
-		done();
 	});
 
 	/* Ensure a resumed $target proceeds to animate */
@@ -156,7 +153,7 @@ QUnit.test("Pause / Resume", async (assert) => {
 
 	var isResumed = false;
 
-	sleep(100);
+	await sleep(100);
 	Velocity($target4, "pause");
 	Velocity($target4, {left: -20}, {
 		duration: 100,
@@ -164,8 +161,6 @@ QUnit.test("Pause / Resume", async (assert) => {
 		queue: false,
 		begin: function(elements) {
 			assert.ok(true, "Animation with {queue:false} will run regardless of previously paused animations.");
-
-			done();
 		}
 	});
 
@@ -174,13 +169,12 @@ QUnit.test("Pause / Resume", async (assert) => {
 		easing: "linear",
 		begin: function(elements) {
 			assert.ok(isResumed, "Queued animation began after previously paused animation completed");
-
-			done();
 		}
 	});
 
-	sleep(100);
+	await sleep(100);
 
 	isResumed = true;
 	Velocity($target4, "resume");
+	await sleep(100);
 });
