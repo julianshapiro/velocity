@@ -283,6 +283,17 @@ namespace VelocityStatic {
 				}
 			}
 		}
+		// TODO: These two would be slightly better to not add the array indices in the first place
+		if (pattern[0] === "" && arrayEnd[0] == null) {
+			pattern.shift();
+			arrayStart.shift();
+			arrayEnd.shift();
+		}
+		if (pattern[pattern.length] === "" && arrayEnd[arrayEnd.length] == null) {
+			pattern.pop();
+			arrayStart.pop();
+			arrayEnd.pop();
+		}
 		if (indexStart !== startValue.length || indexEnd !== endValue.length) {
 			// TODO: change the tween to use a string type if they're different
 			console.error("Velocity: Trying to pattern match mis-matched strings " + propertyName + ":[\"" + endValue + "\", \"" + startValue + "\"]");

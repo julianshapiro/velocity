@@ -16,11 +16,8 @@ namespace VelocityStatic {
 	function checkAnimationShouldBeStopped(animation: AnimationCall, queueName: false | string, defaultQueue: false | string) {
 		validateTweens(animation);
 		if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
-			console.log("Stopping", queueName, ":", animation.queue, animation.options.queue, defaultQueue)
 			animation._flags |= AnimationFlags.STOPPED;
 			completeCall(animation);
-		} else {
-			console.log("Not stopping", queueName, animation.queue, animation.options.queue, defaultQueue)
 		}
 	}
 
