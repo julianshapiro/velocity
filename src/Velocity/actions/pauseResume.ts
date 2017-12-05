@@ -13,8 +13,7 @@ namespace VelocityStatic {
 	 * Check if an animation should be paused / resumed.
 	 */
 	function checkAnimation(animation: AnimationCall, queueName: false | string, defaultQueue: false | string, isPaused: boolean) {
-		if (queueName === undefined
-			|| (queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue))) {
+		if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
 			if (isPaused) {
 				animation._flags |= AnimationFlags.PAUSED;
 			} else {
@@ -32,7 +31,6 @@ namespace VelocityStatic {
 		let isPaused = action.indexOf("pause") === 0,
 			queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined,
 			queueName = queue === "false" ? false : validateQueue(args[0]),
-			activeCall: AnimationCall,
 			defaultQueue = defaults.queue;
 
 		if (isVelocityResult(elements) && elements.velocity.animations) {
@@ -40,7 +38,8 @@ namespace VelocityStatic {
 				checkAnimation(animations[i], queueName, defaultQueue, isPaused);
 			}
 		} else {
-			activeCall = State.first;
+			let activeCall: AnimationCall = State.first;
+
 			while (activeCall) {
 				if (!elements || _inArray.call(elements, activeCall.element)) {
 					checkAnimation(activeCall, queueName, defaultQueue, isPaused);

@@ -1,7 +1,6 @@
 ///<reference path="_module.ts" />
 ///<reference path="Command Finish.ts" />
 ///<reference path="Command Pause + Resume.ts" />
-///<reference path="Command PauseAll + ResumeAll.ts" />
 ///<reference path="Command Reverse.ts" />
 ///<reference path="Command Scroll.ts" />
 ///<reference path="Command Stop.ts" />

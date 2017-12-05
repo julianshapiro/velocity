@@ -1684,9 +1684,6 @@ var VelocityStatic;
             }
         } else {
             var activeCall = VelocityStatic.State.first, nextCall = void 0;
-            if (queueName === undefined) {
-                queueName = defaultQueue;
-            }
             while (activeCall = VelocityStatic.State.firstNew) {
                 VelocityStatic.validateTweens(activeCall);
             }
@@ -1870,7 +1867,7 @@ var VelocityStatic;
      * Check if an animation should be paused / resumed.
      */
     function checkAnimation(animation, queueName, defaultQueue, isPaused) {
-        if (queueName === undefined || queueName !== undefined && queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
+        if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
             if (isPaused) {
                 animation._flags |= 2;
             } else {
@@ -1884,13 +1881,13 @@ var VelocityStatic;
      * as well.
      */
     function pauseResume(args, elements, promiseHandler, action) {
-        var isPaused = action.indexOf("pause") === 0, queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined, queueName = queue === "false" ? false : validateQueue(args[0]), activeCall, defaultQueue = VelocityStatic.defaults.queue;
+        var isPaused = action.indexOf("pause") === 0, queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined, queueName = queue === "false" ? false : validateQueue(args[0]), defaultQueue = VelocityStatic.defaults.queue;
         if (isVelocityResult(elements) && elements.velocity.animations) {
             for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
                 checkAnimation(animations[i], queueName, defaultQueue, isPaused);
             }
         } else {
-            activeCall = VelocityStatic.State.first;
+            var activeCall = VelocityStatic.State.first;
             while (activeCall) {
                 if (!elements || _inArray.call(elements, activeCall.element)) {
                     checkAnimation(activeCall, queueName, defaultQueue, isPaused);
