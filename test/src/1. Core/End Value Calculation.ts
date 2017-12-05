@@ -5,7 +5,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.todo("End Value Calculation", function(assert) {
+QUnit.test("End Value Calculation", function (assert) {
 //	/* Standard properties without operators. */
 //	var $target1 = getTarget(),
 //			done = assert.async(2);
@@ -34,4 +34,84 @@ QUnit.todo("End Value Calculation", function(assert) {
 //
 //		done();
 //	}, asyncCheckDuration);
+
+	async(assert, 2, async function (done) {
+		const $target = getTarget();
+
+		Velocity($target, {left: '500px'}, {duration: 10});
+
+		await sleep(100);
+
+		let animatedValue = Velocity.CSS.getPropertyValue($target, "left");
+
+		assert.equal(animatedValue, "500px", "Finished animated value with given pixels should be the same.");
+
+		Velocity($target, {left: '0px'}, {duration: 10});
+
+		await sleep(100);
+
+		animatedValue = Velocity.CSS.getPropertyValue($target, "left");
+
+		assert.equal(animatedValue, "0px", "Finished animated value with 0px should be the same.");
+
+		done();
+	});
+
+	async(assert, 1, async function (done) {
+		const $target = getTarget();
+
+		Velocity($target, {left: '500px'}, {duration: 10});
+
+		await sleep(100);
+
+		Velocity($target, {left: '0'}, {duration: 10});
+
+		await sleep(100);
+
+		let animatedValue = Velocity.CSS.getPropertyValue($target, "left");
+
+		assert.equal(animatedValue, "0px", "Finished animated value without giving px, but only number as a string should be the same.");
+
+		done();
+	});
+
+	async(assert, 1, async function (done) {
+		const $target = getTarget();
+
+		Velocity($target, {left: '500px'}, {duration: 10});
+
+		await sleep(100);
+
+		Velocity($target, {left: 0}, {duration: 10});
+
+		await sleep(1000);
+
+		let animatedValue = Velocity.CSS.getPropertyValue($target, "left");
+
+		assert.equal(animatedValue, "0px", "Finished animated value given as number 0 should be the same as 0px.");
+
+		done();
+	});
+
+	async(assert, 2, async function (done) {
+		const $target = getTarget();
+
+		Velocity($target, {left: 500}, {duration: 10});
+
+		await sleep(100);
+
+		let animatedValue = Velocity.CSS.getPropertyValue($target, "left");
+
+		assert.equal(animatedValue, "500px", "Finished animated value with given pixels should be the same.");
+
+		Velocity($target, {left: 0}, {duration: 10});
+
+		await sleep(100);
+
+		animatedValue = Velocity.CSS.getPropertyValue($target, "left");
+
+		assert.equal(animatedValue, "0px", "Omitted pixels (px) when given animation should run properly.");
+
+		done();
+	});
 });

@@ -1684,9 +1684,6 @@ var VelocityStatic;
             }
         } else {
             var activeCall = VelocityStatic.State.first, nextCall = void 0;
-            if (queueName === undefined) {
-                queueName = defaultQueue;
-            }
             while (activeCall = VelocityStatic.State.firstNew) {
                 VelocityStatic.validateTweens(activeCall);
             }
@@ -3333,6 +3330,13 @@ var VelocityStatic;
                 var unitStart = VelocityStatic.CSS.getUnit(startValue, indexStart), // temporary unit type
                 unitEnd = VelocityStatic.CSS.getUnit(endValue, indexEnd);
                 // temporary unit type
+                if (unitStart.length > 0 && unitEnd.length === 0) {
+                    unitEnd = unitStart;
+                    endValue += unitStart;
+                } else if (unitStart.length === 0 && unitEnd.length > 0) {
+                    unitStart = unitEnd;
+                    startValue += unitEnd;
+                }
                 indexStart += unitStart.length;
                 indexEnd += unitEnd.length;
                 if (unitStart === unitEnd) {

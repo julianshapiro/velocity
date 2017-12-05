@@ -192,6 +192,14 @@ namespace VelocityStatic {
 				let unitStart = CSS.getUnit(startValue, indexStart), // temporary unit type
 					unitEnd = CSS.getUnit(endValue, indexEnd); // temporary unit type
 
+				if (unitStart.length > 0 && unitEnd.length === 0) {
+					unitEnd = unitStart;
+					endValue+= unitStart;
+				} else if (unitStart.length === 0 && unitEnd.length > 0) {
+					unitStart = unitEnd;
+					startValue+= unitEnd;
+				}
+
 				indexStart += unitStart.length;
 				indexEnd += unitEnd.length;
 				if (unitStart === unitEnd) {
