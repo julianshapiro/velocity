@@ -11,18 +11,20 @@ namespace VelocityStatic.CSS {
 	 */
 	export function getUnit(property: string, start?: number): string {
 		start = start || 0;
-		for (let i = 0, units = CSS.Lists.units; i < units.length; i++) {
-			let j = 0,
-				unit = units[i];
+		if (property[start] && property[start] !== " ") {
+			for (let i = 0, units = CSS.Lists.units; i < units.length; i++) {
+				let j = 0,
+					unit = units[i];
 
-			do {
-				if (j >= unit.length) {
-					return unit;
-				}
-				if (unit[j] !== property[start + j]) {
-					break;
-				}
-			} while (++j);
+				do {
+					if (j >= unit.length) {
+						return unit;
+					}
+					if (unit[j] !== property[start + j]) {
+						break;
+					}
+				} while (++j);
+			}
 		}
 		return "";
 	}

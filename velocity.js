@@ -585,16 +585,18 @@ var VelocityStatic;
          */
         function getUnit(property, start) {
             start = start || 0;
-            for (var i = 0, units = CSS.Lists.units; i < units.length; i++) {
-                var j = 0, unit = units[i];
-                do {
-                    if (j >= unit.length) {
-                        return unit;
-                    }
-                    if (unit[j] !== property[start + j]) {
-                        break;
-                    }
-                } while (++j);
+            if (property[start] && property[start] !== " ") {
+                for (var i = 0, units = CSS.Lists.units; i < units.length; i++) {
+                    var j = 0, unit = units[i];
+                    do {
+                        if (j >= unit.length) {
+                            return unit;
+                        }
+                        if (unit[j] !== property[start + j]) {
+                            break;
+                        }
+                    } while (++j);
+                }
             }
             return "";
         }

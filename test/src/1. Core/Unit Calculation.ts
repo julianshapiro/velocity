@@ -5,7 +5,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.test("End Value Calculation", function(assert) {
+QUnit.test("Unit Calculation", function(assert) {
 	// TODO: Add code and tests for operators - probably using calc() internally
 	//	/* Standard properties with operators. */
 	//	var testIncrementWidth = "5px",

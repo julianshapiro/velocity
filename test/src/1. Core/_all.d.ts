@@ -2,9 +2,9 @@
 ///<reference path="Arguments.ts" />
 ///<reference path="CSS_Object.ts" />
 ///<reference path="End Value Caching.ts" />
-///<reference path="End Value Calculation.ts" />
 ///<reference path="End Value Setting.ts" />
 ///<reference path="Start Value Calculation.ts" />
+///<reference path="Unit Calculation.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
