@@ -3332,6 +3332,13 @@ var VelocityStatic;
                 // temporary unit type
                 indexStart += unitStart.length;
                 indexEnd += unitEnd.length;
+                if (unitEnd.length === 0) {
+                    // This order as it's most common for the user supplied
+                    // value to be a number.
+                    unitEnd = unitStart;
+                } else if (unitStart.length === 0) {
+                    unitStart = unitEnd;
+                }
                 if (unitStart === unitEnd) {
                     // Same units
                     if (tempStart === tempEnd) {

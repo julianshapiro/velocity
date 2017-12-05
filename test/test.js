@@ -205,18 +205,8 @@ QUnit.todo("End Value Caching", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.todo("End Value Calculation", function (assert) {
-    //	/* Standard properties without operators. */
-    //	var $target1 = getTarget(),
-    //			done = assert.async(2);
-    //
-    //	Velocity($target1, defaultProperties);
-    //	setTimeout(function() {
-    //		assert.equal(Data($target1).style.width.endValue, defaultProperties.width, "Standard end value #1 was calculated.");
-    //		assert.equal(Data($target1).style.opacity.endValue, defaultProperties.opacity, "Standard end value #2 was calculated.");
-    //		done();
-    //	}, asyncCheckDuration);
-    //
+QUnit.test("End Value Calculation", function (assert) {
+    // TODO: Add code and tests for operators - probably using calc() internally
     //	/* Standard properties with operators. */
     //	var testIncrementWidth = "5px",
     //			testDecrementOpacity = 0.25,
@@ -234,6 +224,96 @@ QUnit.todo("End Value Calculation", function (assert) {
     //
     //		done();
     //	}, asyncCheckDuration);
+    async(assert, 2, function (done) {
+        return __awaiter(this, void 0, void 0, function () {
+            var $target;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        $target = getTarget();
+                        Velocity($target, { left: "500px" }, { duration: 10 });
+                        return [4 /*yield*/, sleep(100)];
+                    case 1:
+                        _a.sent();
+                        assert.equal(getPropertyValue($target, "left"), "500px", "Finished animated value with given pixels should be the same.");
+                        Velocity($target, { left: "0px" }, { duration: 10 });
+                        return [4 /*yield*/, sleep(100)];
+                    case 2:
+                        _a.sent();
+                        assert.equal(getPropertyValue($target, "left"), "0px", "Finished animated value with 0px should be the same.");
+                        done();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    });
+    async(assert, 1, function (done) {
+        return __awaiter(this, void 0, void 0, function () {
+            var $target;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        $target = getTarget();
+                        Velocity($target, { left: "500px" }, { duration: 10 });
+                        return [4 /*yield*/, sleep(100)];
+                    case 1:
+                        _a.sent();
+                        Velocity($target, { left: "0" }, { duration: 10 });
+                        return [4 /*yield*/, sleep(100)];
+                    case 2:
+                        _a.sent();
+                        assert.equal(getPropertyValue($target, "left"), "0px", "Finished animated value without giving px, but only number as a string should be the same.");
+                        done();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    });
+    async(assert, 1, function (done) {
+        return __awaiter(this, void 0, void 0, function () {
+            var $target;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        $target = getTarget();
+                        Velocity($target, { left: "500px" }, { duration: 10 });
+                        return [4 /*yield*/, sleep(100)];
+                    case 1:
+                        _a.sent();
+                        Velocity($target, { left: 0 }, { duration: 10 });
+                        return [4 /*yield*/, sleep(1000)];
+                    case 2:
+                        _a.sent();
+                        assert.equal(getPropertyValue($target, "left"), "0px", "Finished animated value given as number 0 should be the same as 0px.");
+                        done();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    });
+    async(assert, 2, function (done) {
+        return __awaiter(this, void 0, void 0, function () {
+            var $target;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        $target = getTarget();
+                        Velocity($target, { left: 500 }, { duration: 10 });
+                        return [4 /*yield*/, sleep(100)];
+                    case 1:
+                        _a.sent();
+                        assert.equal(getPropertyValue($target, "left"), "500px", "Finished animated value with given pixels should be the same.");
+                        Velocity($target, { left: 0 }, { duration: 10 });
+                        return [4 /*yield*/, sleep(100)];
+                    case 2:
+                        _a.sent();
+                        assert.equal(getPropertyValue($target, "left"), "0px", "Omitted pixels (px) when given animation should run properly.");
+                        done();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    });
 });
 ///<reference path="_module.ts" />
 /*
