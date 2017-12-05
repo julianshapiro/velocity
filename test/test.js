@@ -916,52 +916,124 @@ QUnit.module("Command");
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 var _this = this;
-QUnit.todo("Finish / FinishAll", function (assert) { return __awaiter(_this, void 0, void 0, function () {
-    var $target1, $target2, $target3, $target4;
+QUnit.test("Finish", function (assert) { return __awaiter(_this, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                $target1 = getTarget();
-                assert.expect(9);
-                /* Ensure an error isn't thrown when "finish" is called on a $target that isn't animating. */
-                Velocity($target1, "finish");
-                /* Animate to defaultProperties, and then "finish" to jump to the end of it. */
-                Velocity($target1, defaultProperties, Object.assign({}, defaultOptions, { delay: 1000 }));
-                Velocity($target1, "finish");
-                return [4 /*yield*/, sleep(asyncCheckDuration)];
-            case 1:
-                _a.sent();
-                /* Ensure "finish" has removed all queued animations. */
-                /* We're using the element's queue length as a proxy. 0 and 1 both mean that the element's queue has been cleared -- a length of 1 just indicates that the animation is in progress. */
-                assert.equal(isEmptyObject(Data($target1).queueList), true, "Queue cleared.");
-                /* End result of the animation should be applied */
-                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "width")), defaultProperties.width, "Standard end value #1 was set.");
-                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "opacity")), defaultProperties.opacity, "Standard end value #2 was set.");
-                $target2 = getTarget();
-                Velocity($target2, { opacity: 0 }, Object.assign({}, defaultOptions, { delay: 1000 }));
-                Velocity($target2, { width: 0 }, defaultOptions);
-                Velocity($target2, "finish");
-                $target3 = getTarget();
-                Velocity($target3, { opacity: 0, width: 50 }, Object.assign({}, defaultOptions, { delay: 1000 }));
-                Velocity($target3, { width: 0 }, defaultOptions);
-                Velocity($target3, { width: 100 }, defaultOptions);
-                Velocity($target3, "finish");
-                $target4 = getTarget();
-                Velocity($target4, { opacity: 0, width: 50 }, Object.assign({}, defaultOptions, { delay: 1000 }));
-                Velocity($target4, { width: 0 }, defaultOptions);
-                Velocity($target4, { width: 100 }, defaultOptions);
-                Velocity($target4, "finishAll");
-                return [4 /*yield*/, sleep(asyncCheckDuration)];
-            case 2:
-                _a.sent();
-                assert.equal(Data($target2).cache.opacity, undefined, "Active call stopped.");
-                assert.notEqual(Data($target2).cache.width, undefined, "Next queue item started.");
-                assert.equal(!Data($target3) || !Data($target3).queueList, true, "Full queue array cleared.");
-                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target3, "width")), 50, "Just the first call's width was applied.");
-                assert.equal(!Data($target4) || !Data($target4).queueList, true, "Full queue array cleared.");
-                assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target4, "width")), 100, "The last call's width was applied.");
-                return [2 /*return*/];
-        }
+        async(assert, 1, function (done) {
+            Velocity(getTarget(), "finish");
+            assert.ok(true, "Calling on an element that isn't animating doesn't cause an error.");
+            done();
+        });
+        async(assert, 1, function (done) {
+            var $target = getTarget();
+            Velocity($target, defaultProperties, defaultOptions);
+            Velocity($target, { top: 0 }, defaultOptions);
+            Velocity($target, { width: 0 }, defaultOptions);
+            Velocity($target, "finish");
+            assert.ok(true, "Calling on an element that is animating doesn't cause an error.");
+            done();
+        });
+        async(assert, 2, function (done) {
+            return __awaiter(this, void 0, void 0, function () {
+                var $target, complete1, complete2;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            $target = getTarget();
+                            complete1 = false, complete2 = false;
+                            Velocity($target, { opacity: [0, 1] }, {
+                                queue: "test1",
+                                complete: function () { complete1 = true; }
+                            });
+                            Velocity($target, { opacity: [0, 1] }, {
+                                queue: "test2",
+                                complete: function () { complete2 = true; }
+                            });
+                            Velocity($target, "finish", "test1");
+                            return [4 /*yield*/, sleep(defaultOptions.duration / 2)];
+                        case 1:
+                            _a.sent();
+                            assert.ok(complete1, "Finish animation with correct queue.");
+                            assert.notOk(complete2, "Don't finish animation with wrong queue.");
+                            done();
+                            return [2 /*return*/];
+                    }
+                });
+            });
+        });
+        async(assert, 3, function (done) {
+            return __awaiter(this, void 0, void 0, function () {
+                var $target, begin, complete;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            $target = getTarget();
+                            begin = false, complete = false;
+                            Velocity($target, { opacity: [0, 1] }, {
+                                begin: function () { begin = true; },
+                                complete: function () { complete = true; }
+                            });
+                            return [4 /*yield*/, sleep(500)];
+                        case 1:
+                            _a.sent();
+                            Velocity($target, "finish");
+                            assert.ok(begin, "Finish calls 'begin()' callback without delay.");
+                            assert.ok(complete, "Finish calls 'complete()' callback without delay.");
+                            assert.equal(getPropertyValue($target, "opacity"), "0", "Finish animation with correct value.");
+                            done();
+                            return [2 /*return*/];
+                    }
+                });
+            });
+        });
+        async(assert, 3, function (done) {
+            return __awaiter(this, void 0, void 0, function () {
+                var $target, begin, complete;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            $target = getTarget();
+                            begin = false, complete = false;
+                            Velocity($target, { opacity: [0, 1] }, {
+                                delay: 1000,
+                                begin: function () { begin = true; },
+                                complete: function () { complete = true; }
+                            });
+                            return [4 /*yield*/, sleep(500)];
+                        case 1:
+                            _a.sent();
+                            Velocity($target, "finish");
+                            assert.ok(begin, "Finish calls 'begin()' callback with delay.");
+                            assert.ok(complete, "Finish calls 'complete()' callback with delay.");
+                            assert.equal(getPropertyValue($target, "opacity"), "0", "Finish animation with correct value before delay ends.");
+                            done();
+                            return [2 /*return*/];
+                    }
+                });
+            });
+        });
+        async(assert, 3, function (done) {
+            return __awaiter(this, void 0, void 0, function () {
+                var $target;
+                return __generator(this, function (_a) {
+                    $target = getTarget();
+                    Velocity($target, { opacity: 0 })
+                        .velocity({ opacity: 1 })
+                        .velocity({ opacity: 0.25 })
+                        .velocity({ opacity: 0.75 })
+                        .velocity({ opacity: 0.5 });
+                    Velocity($target, "finish");
+                    assert.equal(getPropertyValue($target, "opacity"), "0", "Finish once starts the second animation.");
+                    Velocity($target, "finish");
+                    assert.equal(getPropertyValue($target, "opacity"), "1", "Finish twice starts the third animation.");
+                    Velocity($target, "finish", true);
+                    assert.equal(getPropertyValue($target, "opacity"), "0.5", "Finish 'true' finishes all animations.");
+                    done();
+                    return [2 /*return*/];
+                });
+            });
+        });
+        assert.expect(async());
+        return [2 /*return*/];
     });
 }); });
 ///<reference path="_module.ts" />
@@ -1393,8 +1465,7 @@ QUnit.test("Stop", function (assert) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             async(assert, 1, function (done) {
-                var $target = getTarget();
-                Velocity($target, "stop");
+                Velocity(getTarget(), "stop");
                 assert.ok(true, "Calling on an element that isn't animating doesn't cause an error.");
                 done();
             });
@@ -1449,46 +1520,28 @@ QUnit.test("Stop", function (assert) {
                     });
                 });
             });
-            async(assert, 1, function (done) {
+            async(assert, 2, function (done) {
                 return __awaiter(this, void 0, void 0, function () {
-                    var $target, complete;
+                    var $target, complete1, complete2;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
                                 $target = getTarget();
-                                complete = false;
+                                complete1 = false, complete2 = false;
                                 Velocity($target, { opacity: [0, 1] }, {
-                                    queue: "test",
-                                    complete: function () { complete = true; }
+                                    queue: "test1",
+                                    complete: function () { complete1 = true; }
                                 });
-                                Velocity($target, "stop", "test");
+                                Velocity($target, { opacity: [0, 1] }, {
+                                    queue: "test2",
+                                    complete: function () { complete2 = true; }
+                                });
+                                Velocity($target, "stop", "test1");
                                 return [4 /*yield*/, sleep(defaultOptions.duration * 2)];
                             case 1:
                                 _a.sent();
-                                assert.notOk(complete, "Stop animation with correct queue.");
-                                done();
-                                return [2 /*return*/];
-                        }
-                    });
-                });
-            });
-            async(assert, 1, function (done) {
-                return __awaiter(this, void 0, void 0, function () {
-                    var $target, complete;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                $target = getTarget();
-                                complete = false;
-                                Velocity($target, { opacity: [0, 1] }, {
-                                    queue: "test",
-                                    complete: function () { complete = true; }
-                                });
-                                Velocity($target, "stop");
-                                return [4 /*yield*/, sleep(defaultOptions.duration * 2)];
-                            case 1:
-                                _a.sent();
-                                assert.ok(complete, "Don't stop animation with wrong queue.");
+                                assert.ok(complete2, "Stop animation with correct queue.");
+                                assert.notOk(complete1, "Don't stop animation with wrong queue.");
                                 done();
                                 return [2 /*return*/];
                         }
@@ -1509,11 +1562,11 @@ QUnit.test("Stop", function (assert) {
                                 Velocity($target, { width: "500px" }, {
                                     begin: function () { begin2 = true; }
                                 });
-                                Velocity($target, "stop");
+                                Velocity($target, "stop", true);
                                 return [4 /*yield*/, sleep(defaultOptions.duration * 2)];
                             case 1:
                                 _a.sent();
-                                assert.notOk(begin1 || begin2, "Stop all animations in sequence.");
+                                assert.notOk(begin1 || begin2, "Stop 'true' stops all animations.");
                                 done();
                                 return [2 /*return*/];
                         }

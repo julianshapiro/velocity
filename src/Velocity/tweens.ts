@@ -323,14 +323,14 @@ namespace VelocityStatic {
 	 * animations so that the start and end values are correct.
 	 */
 	export function validateTweens(activeCall: AnimationCall) {
-		let element = activeCall.element;
-
+		// This might be called on an already-ready animation
 		if (State.firstNew === activeCall) {
 			State.firstNew = activeCall._next;
 		}
-		/* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
-		if (isNode(element) && !(activeCall._flags & AnimationFlags.EXPANDED)) {
-			let tweens = activeCall.tweens,
+		// Check if we're actually already ready
+		if (!(activeCall._flags & AnimationFlags.EXPANDED)) {
+			let element = activeCall.element,
+				tweens = activeCall.tweens,
 				duration = getValue(activeCall.options.duration, defaults.duration);
 
 			for (let propertyName in tweens) {
@@ -338,7 +338,7 @@ namespace VelocityStatic {
 
 				if (tween[Tween.START] == null) {
 					// Get the start value as it's not been passed in
-					let startValue = CSS.getPropertyValue(element, propertyName);
+					let startValue = CSS.getPropertyValue(activeCall.element, propertyName);
 
 					if (isString(startValue)) {
 						tween[Tween.START] = CSS.fixColors(startValue) as any;

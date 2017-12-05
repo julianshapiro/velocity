@@ -13,7 +13,7 @@ namespace VelocityStatic {
 	 * Call the begin method of an animation in a separate function so it can
 	 * benefit from JIT compiling while still having a try/catch block.
 	 */
-	function callBegin(activeCall: AnimationCall) {
+	export function callBegin(activeCall: AnimationCall) {
 		try {
 			let elements = activeCall.elements;
 

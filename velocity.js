@@ -1641,6 +1641,24 @@ var VelocityStatic;
     function checkAnimationShouldBeFinished(animation, queueName, defaultQueue) {
         VelocityStatic.validateTweens(animation);
         if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
+            if (!(animation._flags & 1)) {
+                // Copied from tick.ts - ensure that the animation is completely
+                // valid and run begin() before complete().
+                var options = animation.options;
+                // The begin callback is fired once per call, not once per
+                // element, and is passed the full raw DOM element set as both
+                // its context and its first argument.
+                if (options._started++ === 0) {
+                    options._first = animation;
+                    if (options.begin) {
+                        // Pass to an external fn with a try/catch block for optimisation
+                        VelocityStatic.callBegin(animation);
+                        // Only called once, even if reversed or repeated
+                        options.begin = undefined;
+                    }
+                }
+                animation._flags |= 1;
+            }
             for (var property in animation.tweens) {
                 var tween_1 = animation.tweens[property], pattern = tween_1[3], currentValue = "", i = 0;
                 if (pattern) {
@@ -1659,24 +1677,22 @@ var VelocityStatic;
      * @param {HTMLorSVGElement[]} elements The velocity elements
      */
     function finish(args, elements, promiseHandler) {
-        var queueName = args[0] === undefined ? undefined : validateQueue(args[0]), defaultQueue = VelocityStatic.defaults.queue;
+        var queueName = validateQueue(args[0], true), defaultQueue = VelocityStatic.defaults.queue, finishAll = args[queueName === undefined ? 0 : 1] === true;
         if (isVelocityResult(elements) && elements.velocity.animations) {
             for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
                 checkAnimationShouldBeFinished(animations[i], queueName, defaultQueue);
             }
         } else {
-            for (var _i = 0, elements_1 = elements; _i < elements_1.length; _i++) {
-                var element = elements_1[_i];
-                var activeCall = VelocityStatic.State.first, nextCall = void 0;
-                // Exapand any tweens that might need it.
-                while (activeCall = VelocityStatic.State.firstNew) {
-                    VelocityStatic.validateTweens(activeCall);
-                }
-                // If we want to finish everything in the queue, we have to
-                // iterate through every element. We first get each queued
-                // animation and add the end value given to each element.
-                for (activeCall = VelocityStatic.State.first; activeCall; activeCall = nextCall || VelocityStatic.State.firstNew) {
-                    nextCall = activeCall._next || VelocityStatic.dequeue(element, queueName);
+            var activeCall = VelocityStatic.State.first, nextCall = void 0;
+            if (queueName === undefined) {
+                queueName = defaultQueue;
+            }
+            while (activeCall = VelocityStatic.State.firstNew) {
+                VelocityStatic.validateTweens(activeCall);
+            }
+            for (activeCall = VelocityStatic.State.first; activeCall && (finishAll || activeCall !== VelocityStatic.State.firstNew); activeCall = nextCall || VelocityStatic.State.firstNew) {
+                nextCall = activeCall._next;
+                if (!elements || _inArray.call(elements, activeCall.element)) {
                     checkAnimationShouldBeFinished(activeCall, queueName, defaultQueue);
                 }
             }
@@ -1690,40 +1706,6 @@ var VelocityStatic;
         }
     }
     VelocityStatic.registerAction([ "finish", finish ], true);
-})(VelocityStatic || (VelocityStatic = {}));
-
-///<reference path="actions.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Finish all animation.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    /**
-     * Clear the currently-active delay on each targeted element.
-     * @param {HTMLorSVGElement[]} elements The velocity elements
-     */
-    function finishAll(args, elements, promiseHandler, action) {
-        var activeCall = VelocityStatic.State.first;
-        /* Clear the currently-active delay on each targeted element. */
-        elements.forEach(function(element) {
-            /* If we want to finish everything in the queue, we have to iterate through it
-             and call each function. This will make them active calls below, which will
-             cause them to be applied via the duration setting. */
-            /* Iterate through the items in the element's queue. */
-            var animation, queue = getValue(activeCall.queue, activeCall.options.queue);
-            while (animation = VelocityStatic.dequeue(element, queue)) {
-                animation.queue = false;
-                VelocityStatic.validateTweens(animation);
-            }
-        });
-        VelocityStatic.Actions["stop"].apply(this, arguments);
-    }
-    VelocityStatic.registerAction([ "finishAll", finishAll ], true);
 })(VelocityStatic || (VelocityStatic = {}));
 
 ///<reference path="actions.ts" />
@@ -1981,21 +1963,17 @@ var VelocityStatic;
      * @param {string} action
      */
     function stop(args, elements, promiseHandler, action) {
-        var queueName = args[0] === undefined ? undefined : validateQueue(args[0]), defaultQueue = VelocityStatic.defaults.queue;
+        var queueName = validateQueue(args[0], true), defaultQueue = VelocityStatic.defaults.queue, finishAll = args[queueName === undefined ? 0 : 1] === true;
         if (isVelocityResult(elements) && elements.velocity.animations) {
             for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
                 checkAnimationShouldBeStopped(animations[i], queueName, defaultQueue);
             }
         } else {
             var activeCall = VelocityStatic.State.first, nextCall = void 0;
-            if (queueName === undefined) {
-                queueName = defaultQueue;
-            }
-            // Exapand any tweens that might need it.
             while (activeCall = VelocityStatic.State.firstNew) {
                 VelocityStatic.validateTweens(activeCall);
             }
-            for (activeCall = VelocityStatic.State.first; activeCall; activeCall = nextCall || VelocityStatic.State.firstNew) {
+            for (activeCall = VelocityStatic.State.first; activeCall && (finishAll || activeCall !== VelocityStatic.State.firstNew); activeCall = nextCall || VelocityStatic.State.firstNew) {
                 nextCall = activeCall._next;
                 if (!elements || _inArray.call(elements, activeCall.element)) {
                     checkAnimationShouldBeStopped(activeCall, queueName, defaultQueue);
@@ -2920,6 +2898,7 @@ var VelocityStatic;
             }, 1);
         }
     }
+    VelocityStatic.callBegin = callBegin;
     /**
      * Call the progress method of an animation in a separate function so it can
      * benefit from JIT compiling while still having a try/catch block.
@@ -3472,18 +3451,18 @@ var VelocityStatic;
      * animations so that the start and end values are correct.
      */
     function validateTweens(activeCall) {
-        var element = activeCall.element;
+        // This might be called on an already-ready animation
         if (VelocityStatic.State.firstNew === activeCall) {
             VelocityStatic.State.firstNew = activeCall._next;
         }
-        /* Ensure each element in a set has a nodeType (is a real element) to avoid throwing errors. */
-        if (isNode(element) && !(activeCall._flags & 4)) {
-            var tweens = activeCall.tweens, duration = getValue(activeCall.options.duration, VelocityStatic.defaults.duration);
+        // Check if we're actually already ready
+        if (!(activeCall._flags & 4)) {
+            var element = activeCall.element, tweens = activeCall.tweens, duration = getValue(activeCall.options.duration, VelocityStatic.defaults.duration);
             for (var propertyName in tweens) {
                 var tween_5 = tweens[propertyName];
                 if (tween_5[2] == null) {
                     // Get the start value as it's not been passed in
-                    var startValue = VelocityStatic.CSS.getPropertyValue(element, propertyName);
+                    var startValue = VelocityStatic.CSS.getPropertyValue(activeCall.element, propertyName);
                     if (isString(startValue)) {
                         tween_5[2] = VelocityStatic.CSS.fixColors(startValue);
                         explodeTween(propertyName, tween_5, duration);

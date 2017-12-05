@@ -35,8 +35,9 @@ namespace VelocityStatic {
 	 * @param {string} action
 	 */
 	function stop(args: any[], elements: VelocityResult, promiseHandler?: VelocityPromise, action?: string): void {
-		let queueName = args[0] === undefined ? undefined : validateQueue(args[0]),
-			defaultQueue = defaults.queue;
+		let queueName: string | false = validateQueue(args[0], true),
+			defaultQueue: false | string = defaults.queue,
+			finishAll = args[queueName === undefined ? 0 : 1] === true;
 
 		if (isVelocityResult(elements) && elements.velocity.animations) {
 			for (let i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
@@ -46,14 +47,10 @@ namespace VelocityStatic {
 			let activeCall = State.first,
 				nextCall: AnimationCall;
 
-			if (queueName === undefined) {
-				queueName = defaultQueue;
-			}
-			// Exapand any tweens that might need it.
 			while ((activeCall = State.firstNew)) {
 				validateTweens(activeCall);
 			}
-			for (activeCall = State.first; activeCall; activeCall = nextCall || State.firstNew) {
+			for (activeCall = State.first; activeCall && (finishAll || activeCall !== State.firstNew); activeCall = nextCall || State.firstNew) {
 				nextCall = activeCall._next;
 				if (!elements || _inArray.call(elements, activeCall.element)) {
 					checkAnimationShouldBeStopped(activeCall, queueName, defaultQueue);

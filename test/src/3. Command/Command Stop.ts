@@ -7,9 +7,7 @@
 
 QUnit.test("Stop", async function(assert) {
 	async(assert, 1, function(done) {
-		const $target = getTarget();
-
-		Velocity($target, "stop");
+		Velocity(getTarget(), "stop");
 		assert.ok(true, "Calling on an element that isn't animating doesn't cause an error.");
 
 		done();
@@ -54,32 +52,23 @@ QUnit.test("Stop", async function(assert) {
 		done();
 	});
 
-	async(assert, 1, async function(done) {
+	async(assert, 2, async function(done) {
 		const $target = getTarget();
-		let complete = false;
+		let complete1 = false,
+			complete2 = false;
 
 		Velocity($target, {opacity: [0, 1]}, {
-			queue: "test",
-			complete: () => {complete = true}
+			queue: "test1",
+			complete: () => {complete1 = true}
 		});
-		Velocity($target, "stop", "test");
-		await sleep(defaultOptions.duration as number * 2);
-		assert.notOk(complete, "Stop animation with correct queue.");
-
-		done();
-	});
-
-	async(assert, 1, async function(done) {
-		const $target = getTarget();
-		let complete = false;
-
 		Velocity($target, {opacity: [0, 1]}, {
-			queue: "test",
-			complete: () => {complete = true}
+			queue: "test2",
+			complete: () => {complete2 = true}
 		});
-		Velocity($target, "stop");
+		Velocity($target, "stop", "test1");
 		await sleep(defaultOptions.duration as number * 2);
-		assert.ok(complete, "Don't stop animation with wrong queue.");
+		assert.ok(complete2, "Stop animation with correct queue.");
+		assert.notOk(complete1, "Don't stop animation with wrong queue.");
 
 		done();
 	});
@@ -95,9 +84,9 @@ QUnit.test("Stop", async function(assert) {
 		Velocity($target, {width: "500px"}, {
 			begin: () => {begin2 = true}
 		});
-		Velocity($target, "stop");
+		Velocity($target, "stop", true);
 		await sleep(defaultOptions.duration as number * 2);
-		assert.notOk(begin1 || begin2, "Stop all animations in sequence.");
+		assert.notOk(begin1 || begin2, "Stop 'true' stops all animations.");
 
 		done();
 	});
