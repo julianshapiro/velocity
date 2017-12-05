@@ -9,6 +9,7 @@
 ///<reference path="Option Queue.ts" />
 ///<reference path="Option Repeat.ts" />
 ///<reference path="Option Speed.ts" />
+///<reference path="Option Sync.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *

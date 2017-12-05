@@ -32,6 +32,7 @@ const DEFAULT_PROMISE_REJECT_EMPTY = true;
 const DEFAULT_QUEUE = "";
 const DEFAULT_REPEAT = 0;
 const DEFAULT_SPEED = 1;
+const DEFAULT_SYNC = true;
 
 const Duration = {
 	"fast": DURATION_FAST,

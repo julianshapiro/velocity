@@ -229,7 +229,8 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		/**
 		 * The options for this set of animations.
 		 */
-		let options: StrictVelocityOptions = {};
+		let options: StrictVelocityOptions = {},
+			isSync = defaults.sync;
 
 		// Private options first - set as non-enumerable, and starting with an
 		// underscore so we can filter them out.
@@ -238,6 +239,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			defineProperty(options, "_rejecter", rejecter);
 			defineProperty(options, "_resolver", resolver);
 		}
+		defineProperty(options, "_ready", 0);
 		defineProperty(options, "_started", 0);
 		defineProperty(options, "_completed", 0);
 		defineProperty(options, "_total", 0);
@@ -276,7 +278,8 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			// TODO: Allow functional options for different options per element
 			let optionsBegin = validateBegin(optionsMap.begin),
 				optionsComplete = validateComplete(optionsMap.complete),
-				optionsProgress = validateProgress(optionsMap.progress);
+				optionsProgress = validateProgress(optionsMap.progress),
+				optionsSync = validateSync(optionsMap.sync);
 
 			if (optionsBegin != null) {
 				options.begin = optionsBegin;
@@ -286,6 +289,9 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			}
 			if (optionsProgress != null) {
 				options.progress = optionsProgress;
+			}
+			if (optionsSync != null) {
+				isSync = optionsSync;
 			}
 		} else if (!syntacticSugar) {
 			// Expand any direct options if possible.
@@ -322,7 +328,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		let rootAnimation: AnimationCall = {
 			_prev: undefined,
 			_next: undefined,
-			_flags: 0,
+			_flags: isSync ? AnimationFlags.SYNC : 0,
 			options: options,
 			percentComplete: 0,
 			//element: element,

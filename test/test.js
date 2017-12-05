@@ -983,6 +983,67 @@ QUnit.test("Speed", function (assert) {
     });
     assert.expect(async());
 });
+///<reference path="_module.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+QUnit.test("Sync", function (assert) {
+    async(assert, 1, function (done) {
+        return __awaiter(this, void 0, void 0, function () {
+            var $target, $targetSet, complete;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        $target = getTarget(), $targetSet = [getTarget(), $target, getTarget()];
+                        complete = false;
+                        Velocity($target, defaultProperties, {
+                            duration: 300,
+                            complete: function () {
+                                complete = true;
+                            }
+                        });
+                        Velocity($targetSet, defaultProperties, {
+                            sync: false,
+                            duration: 250
+                        });
+                        return [4 /*yield*/, sleep(275)];
+                    case 1:
+                        _a.sent();
+                        assert.notOk(complete, "Sync 'false' animations don't wait for completion.");
+                        done();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    });
+    async(assert, 1, function (done) {
+        return __awaiter(this, void 0, void 0, function () {
+            var $target, $targetSet, complete;
+            return __generator(this, function (_a) {
+                $target = getTarget(), $targetSet = [getTarget(), $target, getTarget()];
+                complete = false;
+                Velocity($target, defaultProperties, {
+                    duration: 300,
+                    complete: function () {
+                        complete = true;
+                    }
+                });
+                Velocity($targetSet, defaultProperties, {
+                    sync: true,
+                    duration: 250,
+                    begin: function () {
+                        assert.ok(complete, "Sync 'true' animations wait for completion.");
+                        done();
+                    }
+                });
+                return [2 /*return*/];
+            });
+        });
+    });
+    assert.expect(async());
+});
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -2112,13 +2173,11 @@ var defaultStyles = {
     marginBottom: 1,
     colorGreen: 200,
     textShadowBlur: 3
-};
-var defaultProperties = {
+}, defaultProperties = {
     opacity: defaultStyles.opacity / 2,
     width: defaultStyles.width * 2,
     height: defaultStyles.height * 2
-};
-var defaultOptions = {
+}, defaultOptions = {
     queue: "",
     duration: 300,
     easing: "swing",
@@ -2128,9 +2187,7 @@ var defaultOptions = {
     loop: false,
     delay: 0,
     mobileHA: true
-};
-/* IE detection: https://gist.github.com/julianshapiro/9098609 */
-var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), isAndroid = /Android/i.test(navigator.userAgent), $ = (window.jQuery || window.Zepto), $qunitStage = document.getElementById("qunit-stage"), asyncCheckDuration = defaultOptions.duration / 2, completeCheckDuration = defaultOptions.duration * 2, IE = (function () {
+}, isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent), isAndroid = /Android/i.test(navigator.userAgent), $ = (window.jQuery || window.Zepto), $qunitStage = document.getElementById("qunit-stage"), asyncCheckDuration = defaultOptions.duration / 2, completeCheckDuration = defaultOptions.duration * 2, IE = (function () {
     if (document.documentMode) {
         return document.documentMode;
     }
@@ -2147,6 +2204,7 @@ var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.
     }
     return undefined;
 })();
+var targets = [], asyncCount = 0;
 QUnit.config.reorder = false;
 function applyStartValues(element, startValues) {
     $.each(startValues, function (property, startValue) {
@@ -2162,7 +2220,6 @@ function getNow() {
 function getPropertyValue(element, property) {
     return Velocity.CSS.getPropertyValue(element, property);
 }
-var targets = [];
 function getTarget() {
     var div = document.createElement("div");
     div.className = "target";
@@ -2175,14 +2232,6 @@ function getTarget() {
     $qunitStage.appendChild(div);
     targets.push(div);
     return div;
-}
-function freeTargets() {
-    while (targets.length) {
-        try {
-            $qunitStage.removeChild(targets.pop());
-        }
-        catch (e) { }
-    }
 }
 function once(func) {
     var done, result;
@@ -2197,7 +2246,6 @@ function once(func) {
 function sleep(ms) {
     return new Promise(function (resolve) { return setTimeout(resolve, ms); });
 }
-var asyncCount = 0;
 function async(assert, count, callback) {
     if (!assert) {
         var count_1 = asyncCount;
@@ -2223,8 +2271,16 @@ QUnit.testDone(function () {
         document.querySelectorAll(".velocity-animating").velocity("stop");
     }
     catch (e) { }
+    // Free all targets requested by the current test.
+    while (targets.length) {
+        try {
+            $qunitStage.removeChild(targets.pop());
+        }
+        catch (e) { }
+    }
+    // Ensure we have reset the test counter.
     async();
-    freeTargets();
+    // Make sure Velocity goes back to defaults.
     Velocity.defaults.reset();
 });
 /* Cleanup */

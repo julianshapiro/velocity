@@ -66,6 +66,8 @@ var DEFAULT_REPEAT = 0;
 
 var DEFAULT_SPEED = 1;
 
+var DEFAULT_SYNC = true;
+
 var Duration = {
     fast: DURATION_FAST,
     normal: DURATION_NORMAL,
@@ -331,7 +333,7 @@ var VelocityStatic;
     function completeCall(activeCall) {
         //		console.log("complete", activeCall)
         // TODO: Check if it's not been completed already
-        var options = activeCall.options, queue = getValue(activeCall.queue, options.queue), isLoop = getValue(activeCall.loop, options.loop, VelocityStatic.defaults.loop), isRepeat = getValue(activeCall.repeat, options.repeat, VelocityStatic.defaults.repeat), isStopped = activeCall._flags & 16;
+        var options = activeCall.options, queue = getValue(activeCall.queue, options.queue), isLoop = getValue(activeCall.loop, options.loop, VelocityStatic.defaults.loop), isRepeat = getValue(activeCall.repeat, options.repeat, VelocityStatic.defaults.repeat), isStopped = activeCall._flags & 8;
         if (!isStopped && (isLoop || isRepeat)) {
             ////////////////////
             // Option: Loop   //
@@ -344,14 +346,14 @@ var VelocityStatic;
                 activeCall.repeat = getValue(activeCall.repeatAgain, options.repeatAgain, VelocityStatic.defaults.repeatAgain);
             }
             if (isLoop) {
-                activeCall._flags ^= 8;
+                activeCall._flags ^= 64;
             }
             if (queue !== false) {
                 // Can't be called when stopped so no need for an extra check.
                 Data(activeCall.element).lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, VelocityStatic.defaults.duration);
             }
             activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
-            activeCall._flags &= ~1;
+            activeCall._flags &= ~4;
         } else {
             var element = activeCall.element, data = Data(element);
             if (!--data.count && !isStopped) {
@@ -1643,7 +1645,7 @@ var VelocityStatic;
     function checkAnimationShouldBeFinished(animation, queueName, defaultQueue) {
         VelocityStatic.validateTweens(animation);
         if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
-            if (!(animation._flags & 1)) {
+            if (!(animation._flags & 4)) {
                 // Copied from tick.ts - ensure that the animation is completely
                 // valid and run begin() before complete().
                 var options = animation.options;
@@ -1659,7 +1661,7 @@ var VelocityStatic;
                         options.begin = undefined;
                     }
                 }
-                animation._flags |= 1;
+                animation._flags |= 4;
             }
             for (var property in animation.tweens) {
                 var tween_1 = animation.tweens[property], pattern = tween_1[3], currentValue = "", i = 0;
@@ -1719,6 +1721,18 @@ var VelocityStatic;
 
 (function(VelocityStatic) {
     /**
+     * Used to map getters for the various AnimationFlags.
+     */
+    var animationFlags = {
+        isExpanded: 1,
+        isReady: 2,
+        isStarted: 4,
+        isStopped: 8,
+        isPaused: 16,
+        isSync: 32,
+        isReverse: 64
+    };
+    /**
      * Get or set an option or running AnimationCall data value. If there is no
      * value passed then it will get, otherwise we will set.
      *
@@ -1761,14 +1775,20 @@ var VelocityStatic;
         }
         // GET
         if (value === undefined) {
-            // If only a single animation is found and we're only targetting a
-            // single element, then return the value directly
-            if (elements.length === 1 && animations.length === 1) {
-                return getValue(animations[0][key], animations[0].options[key]);
-            }
-            var i = 0, result = [];
+            var i = 0, result = [], flag = animationFlags[key];
             for (;i < animations.length; i++) {
-                result.push(getValue(animations[i][key], animations[i].options[key]));
+                if (flag === undefined) {
+                    // A normal key to get.
+                    result.push(getValue(animations[i][key], animations[i].options[key]));
+                } else {
+                    // A flag that we're checking against.
+                    result.push((animations[i]._flags & flag) === 0);
+                }
+            }
+            if (elements.length === 1 && animations.length === 1) {
+                // If only a single animation is found and we're only targetting a
+                // single element, then return the value directly
+                return result[0];
             }
             return result;
         }
@@ -1871,9 +1891,9 @@ var VelocityStatic;
     function checkAnimation(animation, queueName, defaultQueue, isPaused) {
         if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
             if (isPaused) {
-                animation._flags |= 2;
+                animation._flags |= 16;
             } else {
-                animation._flags &= ~2;
+                animation._flags &= ~16;
             }
         }
     }
@@ -1944,7 +1964,7 @@ var VelocityStatic;
     function checkAnimationShouldBeStopped(animation, queueName, defaultQueue) {
         VelocityStatic.validateTweens(animation);
         if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
-            animation._flags |= 16;
+            animation._flags |= 8;
             VelocityStatic.completeCall(animation);
         }
     }
@@ -2217,7 +2237,7 @@ var VelocityStatic;
 
 (function(VelocityStatic) {
     // NOTE: Add the variable here, then add the default state in "reset" below.
-    var _cache, _begin, _complete, _delay, _duration, _easing, _fpsLimit, _loop, _minFrameTime, _promise, _promiseRejectEmpty, _queue, _repeat, _speed;
+    var _cache, _begin, _complete, _delay, _duration, _easing, _fpsLimit, _loop, _minFrameTime, _promise, _promiseRejectEmpty, _queue, _repeat, _speed, _sync;
     VelocityStatic.defaults = {
         mobileHA: true
     };
@@ -2240,6 +2260,7 @@ var VelocityStatic;
                 _queue = DEFAULT_QUEUE;
                 _repeat = DEFAULT_REPEAT;
                 _speed = DEFAULT_SPEED;
+                _sync = DEFAULT_SYNC;
             }
         },
         cache: {
@@ -2402,6 +2423,18 @@ var VelocityStatic;
                 value = validateSpeed(value);
                 if (value !== undefined) {
                     _speed = value;
+                }
+            }
+        },
+        sync: {
+            enumerable: true,
+            get: function() {
+                return _sync;
+            },
+            set: function(value) {
+                value = validateSync(value);
+                if (value !== undefined) {
+                    _sync = value;
                 }
             }
         }
@@ -3019,9 +3052,9 @@ var VelocityStatic;
                     VelocityStatic.validateTweens(activeCall);
                 }
                 // Iterate through each active call.
-                for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
-                    nextCall = activeCall._next;
-                    var element = activeCall.element, data = void 0;
+                for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = activeCall._next) {
+                    var element = activeCall.element;
+                    var data = void 0;
                     // Check to see if this element has been deleted midway
                     // through the animation. If it's gone then end this
                     // animation.
@@ -3031,12 +3064,13 @@ var VelocityStatic;
                         continue;
                     }
                     // Don't bother getting until we can use these.
-                    var timeStart = activeCall.timeStart, options = activeCall.options, flags = activeCall._flags, firstTick = !timeStart;
+                    var options = activeCall.options, flags = activeCall._flags;
+                    var timeStart = activeCall.timeStart;
                     // If this is the first time that this call has been
                     // processed by tick() then we assign timeStart now so that
                     // it's value is as close to the real animation start time
                     // as possible.
-                    if (firstTick) {
+                    if (!timeStart) {
                         var queue_1 = activeCall.queue != null ? activeCall.queue : options.queue;
                         timeStart = timeCurrent - deltaTime;
                         if (queue_1 !== false) {
@@ -3046,15 +3080,36 @@ var VelocityStatic;
                     }
                     // If this animation is paused then skip processing unless
                     // it has been set to resume.
-                    if (flags & 2) {
+                    if (flags & 16) {
                         // Update the time start to accomodate the paused
                         // completion amount.
                         activeCall.timeStart += deltaTime;
                         continue;
                     }
+                    // Check if this animation is ready - if it's synced then it
+                    // needs to wait for all other animations in the sync
+                    if (!(flags & 2)) {
+                        activeCall._flags |= 2;
+                        options._ready++;
+                    }
+                }
+                // Need to split the loop, as ready sync animations must all get
+                // the same start time.
+                for (activeCall = VelocityStatic.State.first; activeCall && activeCall !== VelocityStatic.State.firstNew; activeCall = nextCall) {
+                    var flags = activeCall._flags;
+                    nextCall = activeCall._next;
+                    if (!(flags & 2) || flags & 16) {
+                        continue;
+                    }
+                    var options = activeCall.options;
+                    if (flags & 32 && options._ready < options._total) {
+                        activeCall.timeStart += deltaTime;
+                        continue;
+                    }
                     var speed = activeCall.speed != null ? activeCall.speed : options.speed != null ? options.speed : defaultSpeed;
-                    if (!(flags & 1)) {
-                        // Don't bother getting until we can use these.
+                    var timeStart = activeCall.timeStart;
+                    // Don't bother getting until we can use these.
+                    if (!(flags & 4)) {
                         var delay = activeCall.delay != null ? activeCall.delay : options.delay;
                         // Make sure anything we've delayed doesn't start
                         // animating yet, there might still be an active delay
@@ -3065,8 +3120,7 @@ var VelocityStatic;
                             }
                             activeCall.timeStart = timeStart += delay / (delay > 0 ? speed : 1);
                         }
-                        // TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
-                        activeCall._flags |= 1;
+                        activeCall._flags |= 4;
                         // The begin callback is fired once per call, not once
                         // per element, and is passed the full raw DOM element
                         // set as both its context and its first argument.
@@ -3099,7 +3153,7 @@ var VelocityStatic;
                             firstProgress = lastProgress = activeCall;
                         }
                     }
-                    var activeEasing = activeCall.easing != null ? activeCall.easing : options.easing != null ? options.easing : defaultEasing, millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, duration = activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaultDuration, percentComplete = activeCall.percentComplete = VelocityStatic.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1), tweens = activeCall.tweens, reverse = activeCall._flags & 8;
+                    var activeEasing = activeCall.easing != null ? activeCall.easing : options.easing != null ? options.easing : defaultEasing, millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart, duration = activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaultDuration, percentComplete = activeCall.percentComplete = VelocityStatic.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1), tweens = activeCall.tweens, reverse = flags & 64;
                     if (percentComplete === 1) {
                         activeCall._nextComplete = undefined;
                         if (lastComplete) {
@@ -3112,7 +3166,7 @@ var VelocityStatic;
                         // For every element, iterate through each property.
                         var tween_3 = tweens[property], easing = tween_3[1] || activeEasing, pattern = tween_3[3], rounding = tween_3[4], currentValue = "", i = 0;
                         if (!pattern) {
-                            console.warn("tick", property, JSON.stringify(tween_3));
+                            console.warn("VelocityJS: Missing pattern:", property, JSON.stringify(tween_3[property]));
                         } else {
                             for (;i < pattern.length; i++) {
                                 var startValue = tween_3[2][i];
@@ -3131,7 +3185,7 @@ var VelocityStatic;
                                 activeCall.tween = currentValue;
                             } else {
                                 // TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-                                VelocityStatic.CSS.setPropertyValue(element, property, currentValue);
+                                VelocityStatic.CSS.setPropertyValue(activeCall.element, property, currentValue);
                             }
                         }
                     }
@@ -3462,7 +3516,7 @@ var VelocityStatic;
             VelocityStatic.State.firstNew = activeCall._next;
         }
         // Check if we're actually already ready
-        if (!(activeCall._flags & 4)) {
+        if (!(activeCall._flags & 1)) {
             var element = activeCall.element, tweens = activeCall.tweens, duration = getValue(activeCall.options.duration, VelocityStatic.defaults.duration);
             for (var propertyName in tweens) {
                 var tween_5 = tweens[propertyName];
@@ -3480,7 +3534,7 @@ var VelocityStatic;
                     console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween_5), element);
                 }
             }
-            activeCall._flags |= 4;
+            activeCall._flags |= 1;
         }
     }
     VelocityStatic.validateTweens = validateTweens;
@@ -3720,7 +3774,7 @@ function validateRepeat(value) {
 }
 
 /**
- * Validate a <code>delay</code> option.
+ * Validate a <code>speed</code> option.
  * @private
  */
 function validateSpeed(value) {
@@ -3729,6 +3783,19 @@ function validateSpeed(value) {
     }
     if (value != null) {
         console.error("VelocityJS: Trying to set 'speed' to an invalid value:", value);
+    }
+}
+
+/**
+ * Validate a <code>sync</code> option.
+ * @private
+ */
+function validateSync(value) {
+    if (isBoolean(value)) {
+        return value;
+    }
+    if (value != null) {
+        console.error("VelocityJS: Trying to set 'sync' to an invalid value:", value);
     }
 }
 
@@ -3944,7 +4011,7 @@ function VelocityFn() {
         /**
          * The options for this set of animations.
          */
-        var options = {};
+        var options = {}, isSync = defaults.sync;
         // Private options first - set as non-enumerable, and starting with an
         // underscore so we can filter them out.
         if (promise) {
@@ -3952,6 +4019,7 @@ function VelocityFn() {
             defineProperty(options, "_rejecter", rejecter);
             defineProperty(options, "_resolver", resolver);
         }
+        defineProperty(options, "_ready", 0);
         defineProperty(options, "_started", 0);
         defineProperty(options, "_completed", 0);
         defineProperty(options, "_total", 0);
@@ -3987,7 +4055,7 @@ function VelocityFn() {
                 console.error("Deprecated 'options.visibility' used, this is now a property:", optionsMap.visibility);
             }
             // TODO: Allow functional options for different options per element
-            var optionsBegin = validateBegin(optionsMap.begin), optionsComplete = validateComplete(optionsMap.complete), optionsProgress = validateProgress(optionsMap.progress);
+            var optionsBegin = validateBegin(optionsMap.begin), optionsComplete = validateComplete(optionsMap.complete), optionsProgress = validateProgress(optionsMap.progress), optionsSync = validateSync(optionsMap.sync);
             if (optionsBegin != null) {
                 options.begin = optionsBegin;
             }
@@ -3996,6 +4064,9 @@ function VelocityFn() {
             }
             if (optionsProgress != null) {
                 options.progress = optionsProgress;
+            }
+            if (optionsSync != null) {
+                isSync = optionsSync;
             }
         } else if (!syntacticSugar) {
             // Expand any direct options if possible.
@@ -4026,7 +4097,7 @@ function VelocityFn() {
         var rootAnimation = {
             _prev: undefined,
             _next: undefined,
-            _flags: 0,
+            _flags: isSync ? 32 : 0,
             options: options,
             percentComplete: 0,
             //element: element,

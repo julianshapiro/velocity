@@ -241,7 +241,7 @@ function validateRepeat(value: number | boolean): number | true {
 }
 
 /**
- * Validate a <code>delay</code> option.
+ * Validate a <code>speed</code> option.
  * @private
  */
 function validateSpeed(value: number): number {
@@ -250,5 +250,18 @@ function validateSpeed(value: number): number {
 	}
 	if (value != null) {
 		console.error("VelocityJS: Trying to set 'speed' to an invalid value:", value);
+	}
+}
+
+/**
+ * Validate a <code>sync</code> option.
+ * @private
+ */
+function validateSync(value: boolean): boolean {
+	if (isBoolean(value)) {
+		return value;
+	}
+	if (value != null) {
+		console.error("VelocityJS: Trying to set 'sync' to an invalid value:", value);
 	}
 }

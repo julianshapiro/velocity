@@ -227,7 +227,14 @@ interface VelocityOptions {
 	 */
 	speed?: number;
 	stagger?: string | number;
-
+	/**
+	 * When adding animations to elements each element has its own queue of
+	 * pending animations. This ensures that when adding a single animation to
+	 * multiple elements, they all begin at the same time.
+	 * 
+	 * @default true
+	 */
+	sync?: boolean;
 	/**
 	 * @deprecated
 	 */
@@ -360,6 +367,12 @@ interface StrictVelocityOptions extends VelocityOptions, VelocityPromise {
 	 */
 	_total?: number;
 	/**
+	 * The number of AnimationCalls that are ready to start.
+	 *
+	 * @private
+	 */
+	_ready?: number;
+	/**
 	 * The number of AnimationCalls that have started.
 	 *
 	 * @private
@@ -445,28 +458,46 @@ interface ScrollData {
 
 type VelocityTween = [(string | number)[], VelocityEasingFn, (string | number)[], (string | number)[], boolean[]];
 
+/**
+ * AnimationFlags are used internally. These are subject to change as they are
+ * only valid for the internal state of the current version of Velocity.
+ * 
+ * To get these values use the "option" action with a key of "isReady" etc. All
+ * of these are gettable with the same pattern of keyname.
+ * 
+ * @private
+ */
 declare const enum AnimationFlags {
 	/**
-	 * Set once the animation has started - after any delay (and possible pause)
+	 * When the tweens are expanded this is set to save future processing.
 	 */
-	STARTED = 1 << 0,
+	EXPANDED = 1 << 0,
+	/**
+	 * Set once the animation is ready to start - after any delay (and possible
+	 * pause).
+	 */
+	READY = 1 << 1,
+	/**
+	 * Set once the animation has started.
+	 */
+	STARTED = 1 << 2,
+	/**
+	 * Set when an animation is manually stopped.
+	 */
+	STOPPED = 1 << 3,
 	/**
 	 * The pause state of this animation. If true it is paused, if false it was
 	 * paused and needs to be resumed, and if undefined / null then not either.
 	 */
-	PAUSED = 1 << 1,
+	PAUSED = 1 << 4,
 	/**
-	 * When the tweens are expanded this is set to save future processing.
+	 * Set when the animation is a sync animation.
 	 */
-	EXPANDED = 1 << 2,
+	SYNC = 1 << 5,
 	/**
 	 * When the animation is running in reverse, such as for a loop.
 	 */
-	REVERSE = 1 << 3,
-	/**
-	 * Set when an animation is manually stopped.
-	 */
-	STOPPED = 1 << 4,
+	REVERSE = 1 << 6,
 }
 
 interface AnimationCall extends StrictVelocityOptions {

@@ -8,6 +8,18 @@
  */
 
 namespace VelocityStatic {
+	/**
+	 * Used to map getters for the various AnimationFlags.
+	 */
+	const animationFlags: {[key: string]: number} = {
+		"isExpanded": AnimationFlags.EXPANDED,
+		"isReady": AnimationFlags.READY,
+		"isStarted": AnimationFlags.STARTED,
+		"isStopped": AnimationFlags.STOPPED,
+		"isPaused": AnimationFlags.PAUSED,
+		"isSync": AnimationFlags.SYNC,
+		"isReverse": AnimationFlags.REVERSE
+	};
 
 	/**
 	 * Get or set an option or running AnimationCall data value. If there is no
@@ -60,16 +72,23 @@ namespace VelocityStatic {
 		}
 		// GET
 		if (value === undefined) {
-			// If only a single animation is found and we're only targetting a
-			// single element, then return the value directly
-			if (elements.length === 1 && animations.length === 1) {
-				return getValue(animations[0][key], animations[0].options[key]);
-			}
 			let i = 0,
-				result = [];
+				result = [],
+				flag = animationFlags[key];
 
 			for (; i < animations.length; i++) {
-				result.push(getValue(animations[i][key], animations[i].options[key]));
+				if (flag === undefined) {
+					// A normal key to get.
+					result.push(getValue(animations[i][key], animations[i].options[key]));
+				} else {
+					// A flag that we're checking against.
+					result.push((animations[i]._flags & flag) === 0);
+				}
+			}
+			if (elements.length === 1 && animations.length === 1) {
+				// If only a single animation is found and we're only targetting a
+				// single element, then return the value directly
+				return result[0];
 			}
 			return result;
 		}

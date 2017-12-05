@@ -43,28 +43,24 @@ const defaultStyles = {
 	marginBottom: 1,
 	colorGreen: 200,
 	textShadowBlur: 3
-};
-
-const defaultProperties: VelocityProperties = {
-	opacity: defaultStyles.opacity / 2,
-	width: defaultStyles.width * 2,
-	height: defaultStyles.height * 2
-};
-
-const defaultOptions: VelocityOptions = {
-	queue: "",
-	duration: 300,
-	easing: "swing",
-	begin: null,
-	complete: null,
-	progress: null,
-	loop: false,
-	delay: 0,
-	mobileHA: true
-};
-
-/* IE detection: https://gist.github.com/julianshapiro/9098609 */
-var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+},
+	defaultProperties: VelocityProperties = {
+		opacity: defaultStyles.opacity / 2,
+		width: defaultStyles.width * 2,
+		height: defaultStyles.height * 2
+	},
+	defaultOptions: VelocityOptions = {
+		queue: "",
+		duration: 300,
+		easing: "swing",
+		begin: null,
+		complete: null,
+		progress: null,
+		loop: false,
+		delay: 0,
+		mobileHA: true
+	},
+	isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
 	isAndroid = /Android/i.test(navigator.userAgent),
 	$ = ((window as any).jQuery || (window as any).Zepto),
 	$qunitStage = document.getElementById("qunit-stage"),
@@ -89,6 +85,9 @@ var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.
 		return undefined;
 	})();
 
+let targets: HTMLDivElement[] = [],
+	asyncCount = 0;
+
 QUnit.config.reorder = false;
 
 function applyStartValues(element, startValues) {
@@ -109,8 +108,6 @@ function getPropertyValue(element: HTMLElement, property: string): string {
 	return Velocity.CSS.getPropertyValue(element, property);
 }
 
-let targets: HTMLDivElement[] = [];
-
 function getTarget(): HTMLDivElement {
 	var div = document.createElement("div") as HTMLDivElement;
 
@@ -124,14 +121,6 @@ function getTarget(): HTMLDivElement {
 	$qunitStage.appendChild(div);
 	targets.push(div);
 	return div;
-}
-
-function freeTargets() {
-	while (targets.length) {
-		try {
-			$qunitStage.removeChild(targets.pop());
-		} catch (e) {}
-	}
 }
 
 function once(func): typeof func {
@@ -149,8 +138,6 @@ function once(func): typeof func {
 function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-let asyncCount = 0;
 
 /**
  * Create an asyn callback. Each callback must be independant of all others, and
@@ -188,8 +175,15 @@ QUnit.testDone(function() {
 	try {
 		document.querySelectorAll(".velocity-animating").velocity("stop");
 	} catch (e) {}
+	// Free all targets requested by the current test.
+	while (targets.length) {
+		try {
+			$qunitStage.removeChild(targets.pop());
+		} catch (e) {}
+	}
+	// Ensure we have reset the test counter.
 	async();
-	freeTargets();
+	// Make sure Velocity goes back to defaults.
 	Velocity.defaults.reset();
 });
 

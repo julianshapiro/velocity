@@ -188,10 +188,9 @@ namespace VelocityStatic {
 					validateTweens(activeCall);
 				}
 				// Iterate through each active call.
-				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
-					nextCall = activeCall._next;
-					let element = activeCall.element,
-						data: ElementData;
+				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = activeCall._next) {
+					const element = activeCall.element;
+					let data: ElementData;
 
 					// Check to see if this element has been deleted midway
 					// through the animation. If it's gone then end this
@@ -202,16 +201,15 @@ namespace VelocityStatic {
 						continue;
 					}
 					// Don't bother getting until we can use these.
-					let timeStart = activeCall.timeStart,
-						options = activeCall.options,
-						flags = activeCall._flags,
-						firstTick = !timeStart;
+					const options = activeCall.options,
+						flags = activeCall._flags;
+					let timeStart = activeCall.timeStart;
 
 					// If this is the first time that this call has been
 					// processed by tick() then we assign timeStart now so that
 					// it's value is as close to the real animation start time
 					// as possible.
-					if (firstTick) {
+					if (!timeStart) {
 						let queue = activeCall.queue != null ? activeCall.queue : options.queue;
 
 						timeStart = timeCurrent - deltaTime;
@@ -228,10 +226,33 @@ namespace VelocityStatic {
 						activeCall.timeStart += deltaTime;
 						continue;
 					}
-					let speed = activeCall.speed != null ? activeCall.speed : options.speed != null ? options.speed : defaultSpeed;
+					// Check if this animation is ready - if it's synced then it
+					// needs to wait for all other animations in the sync
+					if (!(flags & AnimationFlags.READY)) {
+						activeCall._flags |= AnimationFlags.READY;
+						options._ready++;
+					}
+				}
+				// Need to split the loop, as ready sync animations must all get
+				// the same start time.
+				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
+					const flags = activeCall._flags;
 
+					nextCall = activeCall._next;
+					if (!(flags & AnimationFlags.READY) || (flags & AnimationFlags.PAUSED)) {
+						continue;
+					}
+					let options = activeCall.options;
+
+					if ((flags & AnimationFlags.SYNC) && options._ready < options._total) {
+						activeCall.timeStart += deltaTime;
+						continue;
+					}
+					const speed = activeCall.speed != null ? activeCall.speed : options.speed != null ? options.speed : defaultSpeed;
+					let timeStart = activeCall.timeStart;
+
+					// Don't bother getting until we can use these.
 					if (!(flags & AnimationFlags.STARTED)) {
-						// Don't bother getting until we can use these.
 						let delay = activeCall.delay != null ? activeCall.delay : options.delay;
 
 						// Make sure anything we've delayed doesn't start
@@ -243,9 +264,6 @@ namespace VelocityStatic {
 							}
 							activeCall.timeStart = timeStart += delay / (delay > 0 ? speed : 1);
 						}
-
-						// TODO: Option: Sync - make sure all elements start at the same time, the behaviour of all(?) other JS libraries
-
 						activeCall._flags |= AnimationFlags.STARTED;
 						// The begin callback is fired once per call, not once
 						// per element, and is passed the full raw DOM element
@@ -282,12 +300,12 @@ namespace VelocityStatic {
 						}
 					}
 
-					let activeEasing = activeCall.easing != null ? activeCall.easing : options.easing != null ? options.easing : defaultEasing,
+					const activeEasing = activeCall.easing != null ? activeCall.easing : options.easing != null ? options.easing : defaultEasing,
 						millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart,
 						duration = activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaultDuration,
 						percentComplete = activeCall.percentComplete = mock ? 1 : Math.min(millisecondsEllapsed / duration, 1),
 						tweens = activeCall.tweens,
-						reverse = activeCall._flags & AnimationFlags.REVERSE;
+						reverse = flags & AnimationFlags.REVERSE;
 
 					if (percentComplete === 1) {
 						activeCall._nextComplete = undefined;
@@ -308,7 +326,7 @@ namespace VelocityStatic {
 							i = 0;
 
 						if (!pattern) {
-							console.warn("tick", property, JSON.stringify(tween))
+							console.warn("VelocityJS: Missing pattern:", property, JSON.stringify(tween[property]))
 						} else {
 							for (; i < pattern.length; i++) {
 								let startValue = tween[Tween.START][i];
@@ -329,7 +347,7 @@ namespace VelocityStatic {
 								activeCall.tween = currentValue;
 							} else {
 								// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-								CSS.setPropertyValue(element, property, currentValue);
+								CSS.setPropertyValue(activeCall.element, property, currentValue);
 							}
 						}
 					}

@@ -21,7 +21,8 @@ namespace VelocityStatic {
 		_promiseRejectEmpty: boolean,
 		_queue: string | false,
 		_repeat: number | true,
-		_speed: number;
+		_speed: number,
+		_sync: boolean;
 
 	export let defaults: StrictVelocityOptions & {reset?: () => void} = {
 		mobileHA: true
@@ -46,6 +47,7 @@ namespace VelocityStatic {
 				_queue = DEFAULT_QUEUE;
 				_repeat = DEFAULT_REPEAT;
 				_speed = DEFAULT_SPEED;
+				_sync = DEFAULT_SYNC;
 			}
 		},
 		cache: {
@@ -208,6 +210,18 @@ namespace VelocityStatic {
 				value = validateSpeed(value);
 				if (value !== undefined) {
 					_speed = value;
+				}
+			}
+		},
+		sync: {
+			enumerable: true,
+			get: function(): boolean {
+				return _sync;
+			},
+			set: function(value: boolean) {
+				value = validateSync(value);
+				if (value !== undefined) {
+					_sync = value;
 				}
 			}
 		}
