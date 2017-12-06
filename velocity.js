@@ -28,7 +28,7 @@ var __assign = this && this.__assign || Object.assign || function(t) {
  * version bump.
  */
 //["completeCall", "CSS", "State", "getEasing", "Easings", "data", "debug", "defaults", "hook", "init", "mock", "pauseAll", "queue", "dequeue", "freeAnimationCall", "Redirects", "RegisterEffect", "resumeAll", "RunSequence", "lastTick", "tick", "timestamp", "expandTween", "version"]
-var PUBLIC_MEMBERS = [ "version", "RegisterEffect", "style" ];
+var PUBLIC_MEMBERS = [ "version", "RegisterEffect", "style", "hook" ];
 
 /**
  * Without this it will only un-prefix properties that have a valid "normal"
@@ -2461,6 +2461,36 @@ var VelocityStatic;
     VelocityStatic.mock = false;
 })(VelocityStatic || (VelocityStatic = {}));
 
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    /**
+     * Used to patch any object to allow Velocity chaining. In order to chain an
+     * object must either be treatable as an array - with a <code>.length</code>
+     * property, and each member a Node, or a Node directly.
+     *
+     *
+     * By default Velocity will try to patch <code>window</code>,
+     * <code>jQuery</code>, <code>Zepto</code>, and several classes that return
+     * Nodes or lists of Nodes.
+     *
+     * @public
+     */
+    function patch(proto, global) {
+        try {
+            defineProperty(proto, (global ? "V" : "v") + "elocity", VelocityFn);
+        } catch (e) {
+            console.warn("VelocityJS: Error when trying to add prototype.", e);
+        }
+    }
+    VelocityStatic.patch = patch;
+})(VelocityStatic || (VelocityStatic = {}));
+
 ///<reference path="data.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -4169,11 +4199,6 @@ var IE = function() {
     return undefined;
 }();
 
-/*****************
- Dependencies
- *****************/
-var global = this;
-
 /******************
  Unsupported
  ******************/
@@ -4181,25 +4206,26 @@ if (IE <= 8) {
     throw new Error("VelocityJS cannot run on Internet Explorer 8 or earlier");
 }
 
-/******************
- Frameworks
- ******************/
-// Global call
-global.Velocity = VelocityFn;
-
-if (window === global) {
-    /* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls.
-     If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method.  Velocity
-     also registers itself onto a global container (window.jQuery || window.Zepto || window) so that certain features are
-     accessible beyond just a per-element scope. Accordingly, Velocity can both act on wrapped DOM elements and stand alone
-     for targeting raw DOM elements. */
-    defineProperty(window.jQuery, "Velocity", VelocityFn);
-    defineProperty(window.jQuery && window.jQuery.fn, "velocity", VelocityFn);
-    defineProperty(window.Zepto, "Velocity", VelocityFn);
-    defineProperty(window.Zepto && window.Zepto.fn, "velocity", VelocityFn);
-    defineProperty(Element && Element.prototype, "velocity", VelocityFn);
-    defineProperty(NodeList && NodeList.prototype, "velocity", VelocityFn);
-    defineProperty(HTMLCollection && HTMLCollection.prototype, "velocity", VelocityFn);
+if (window === this) {
+    /*
+     * Both jQuery and Zepto allow their $.fn object to be extended to allow
+     * wrapped elements to be subjected to plugin calls. If either framework is
+     * loaded, register a "velocity" extension pointing to Velocity's core
+     * animate() method. Velocity also registers itself onto a global container
+     * (window.jQuery || window.Zepto || window) so that certain features are
+     * accessible beyond just a per-element scope. Accordingly, Velocity can
+     * both act on wrapped DOM elements and stand alone for targeting raw DOM
+     * elements.
+     */
+    var patch = VelocityStatic.patch, jQuery = window.jQuery, Zepto = window.Zepto;
+    patch(window, true);
+    patch(Element && Element.prototype);
+    patch(NodeList && NodeList.prototype);
+    patch(HTMLCollection && HTMLCollection.prototype);
+    patch(jQuery, true);
+    patch(jQuery && jQuery.fn);
+    patch(Zepto, true);
+    patch(Zepto && Zepto.fn);
 }
 
 /******************

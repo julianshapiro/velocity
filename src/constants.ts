@@ -8,7 +8,7 @@
  */
 
 //["completeCall", "CSS", "State", "getEasing", "Easings", "data", "debug", "defaults", "hook", "init", "mock", "pauseAll", "queue", "dequeue", "freeAnimationCall", "Redirects", "RegisterEffect", "resumeAll", "RunSequence", "lastTick", "tick", "timestamp", "expandTween", "version"]
-const PUBLIC_MEMBERS = ["version", "RegisterEffect", "style"];
+const PUBLIC_MEMBERS = ["version", "RegisterEffect", "style", "hook"];
 /**
  * Without this it will only un-prefix properties that have a valid "normal"
  * version.

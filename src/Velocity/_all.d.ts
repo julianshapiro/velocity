@@ -7,6 +7,7 @@
 ///<reference path="debug.ts" />
 ///<reference path="defaults.ts" />
 ///<reference path="mock.ts" />
+///<reference path="patch.ts" />
 ///<reference path="queue.ts" />
 ///<reference path="redirects.ts" />
 ///<reference path="registereffect.ts" />

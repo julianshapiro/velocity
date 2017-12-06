@@ -414,12 +414,6 @@ var IE = (function() {
 	return undefined;
 })();
 
-/*****************
- Dependencies
- *****************/
-
-let global: any = this as Window;
-
 /******************
  Unsupported
  ******************/
@@ -432,30 +426,37 @@ if (IE <= 8) {
  Frameworks
  ******************/
 
-// Global call
-global.Velocity = VelocityFn;
-
 interface Window {
 	jQuery: {fn?: any};
 	Zepto: {fn?: any};
 	Velocity: any;
 }
 
-if (window === global) {
-	/* Both jQuery and Zepto allow their $.fn object to be extended to allow wrapped elements to be subjected to plugin calls.
-	 If either framework is loaded, register a "velocity" extension pointing to Velocity's core animate() method.  Velocity
-	 also registers itself onto a global container (window.jQuery || window.Zepto || window) so that certain features are
-	 accessible beyond just a per-element scope. Accordingly, Velocity can both act on wrapped DOM elements and stand alone
-	 for targeting raw DOM elements. */
+if (window === this) {
+	/*
+	 * Both jQuery and Zepto allow their $.fn object to be extended to allow
+	 * wrapped elements to be subjected to plugin calls. If either framework is
+	 * loaded, register a "velocity" extension pointing to Velocity's core
+	 * animate() method. Velocity also registers itself onto a global container
+	 * (window.jQuery || window.Zepto || window) so that certain features are
+	 * accessible beyond just a per-element scope. Accordingly, Velocity can
+	 * both act on wrapped DOM elements and stand alone for targeting raw DOM
+	 * elements.
+	 */
+	const patch = VelocityStatic.patch,
+		jQuery = window.jQuery,
+		Zepto = window.Zepto;
 
-	defineProperty(window.jQuery, "Velocity", VelocityFn);
-	defineProperty(window.jQuery && window.jQuery.fn, "velocity", VelocityFn);
-	defineProperty(window.Zepto, "Velocity", VelocityFn);
-	defineProperty(window.Zepto && window.Zepto.fn, "velocity", VelocityFn);
+	patch(window, true);
+	patch(Element && Element.prototype);
+	patch(NodeList && NodeList.prototype);
+	patch(HTMLCollection && HTMLCollection.prototype);
 
-	defineProperty(Element && Element.prototype, "velocity", VelocityFn);
-	defineProperty(NodeList && NodeList.prototype, "velocity", VelocityFn);
-	defineProperty(HTMLCollection && HTMLCollection.prototype, "velocity", VelocityFn);
+	patch(jQuery, true);
+	patch(jQuery && jQuery.fn);
+
+	patch(Zepto, true);
+	patch(Zepto && Zepto.fn);
 }
 
 /******************
