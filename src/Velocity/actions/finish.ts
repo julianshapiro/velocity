@@ -19,7 +19,7 @@ namespace VelocityStatic {
 			if (!(animation._flags & AnimationFlags.STARTED)) {
 				// Copied from tick.ts - ensure that the animation is completely
 				// valid and run begin() before complete().
-				let options = animation.options;
+				const options = animation.options;
 
 				// The begin callback is fired once per call, not once per
 				// element, and is passed the full raw DOM element set as both
@@ -36,14 +36,14 @@ namespace VelocityStatic {
 				animation._flags |= AnimationFlags.STARTED;
 			}
 			for (const property in animation.tweens) {
-				let tween = animation.tweens[property],
-					pattern = tween[Tween.PATTERN],
-					currentValue = "",
+				const tween = animation.tweens[property],
+					pattern = tween[Tween.PATTERN];
+				let currentValue = "",
 					i = 0;
 
 				if (pattern) {
 					for (; i < pattern.length; i++) {
-						let endValue = tween[Tween.END][i];
+						const endValue = tween[Tween.END][i];
 
 						currentValue += endValue == null ? pattern[i] : endValue;
 					}
@@ -59,7 +59,7 @@ namespace VelocityStatic {
 	 * @param {HTMLorSVGElement[]} elements The velocity elements
 	 */
 	function finish(args: any[], elements: VelocityResult, promiseHandler?: VelocityPromise): void {
-		let queueName: string | false = validateQueue(args[0], true),
+		const queueName: string | false = validateQueue(args[0], true),
 			defaultQueue: false | string = defaults.queue,
 			finishAll = args[queueName === undefined ? 0 : 1] === true;
 

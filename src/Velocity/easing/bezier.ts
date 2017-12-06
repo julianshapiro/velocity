@@ -35,7 +35,7 @@ namespace Easing {
 	}
 
 	export function generateBezier(mX1: number, mY1: number, mX2: number, mY2: number): VelocityEasingFn {
-		let NEWTON_ITERATIONS = 4,
+		const NEWTON_ITERATIONS = 4,
 			NEWTON_MIN_SLOPE = 0.001,
 			SUBDIVISION_PRECISION = 0.0000001,
 			SUBDIVISION_MAX_ITERATIONS = 10,
@@ -59,17 +59,17 @@ namespace Easing {
 		mX1 = fixRange(mX1);
 		mX2 = fixRange(mX2);
 
-		let mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
+		const mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
 
 		function newtonRaphsonIterate(aX, aGuessT) {
 			for (let i = 0; i < NEWTON_ITERATIONS; ++i) {
-				let currentSlope = getSlope(aGuessT, mX1, mX2);
+				const currentSlope = getSlope(aGuessT, mX1, mX2);
 
 				if (currentSlope === 0.0) {
 					return aGuessT;
 				}
 
-				let currentX = calcBezier(aGuessT, mX1, mX2) - aX;
+				const currentX = calcBezier(aGuessT, mX1, mX2) - aX;
 				aGuessT -= currentX / currentSlope;
 			}
 
@@ -109,7 +109,7 @@ namespace Easing {
 
 			--currentSample;
 
-			let dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]),
+			const dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]),
 				guessForT = intervalStart + dist * kSampleStepSize,
 				initialSlope = getSlope(guessForT, mX1, mX2);
 
@@ -131,7 +131,7 @@ namespace Easing {
 			}
 		}
 
-		let f = function(percentComplete: number, startValue: number, endValue: number, property?: string) {
+		const f = function(percentComplete: number, startValue: number, endValue: number, property?: string) {
 			if (!_precomputed) {
 				precompute();
 			}
@@ -151,7 +151,7 @@ namespace Easing {
 			return [{x: mX1, y: mY1}, {x: mX2, y: mY2}];
 		};
 
-		let str = "generateBezier(" + [mX1, mY1, mX2, mY2] + ")";
+		const str = "generateBezier(" + [mX1, mY1, mX2, mY2] + ")";
 		f.toString = function() {
 			return str;
 		};

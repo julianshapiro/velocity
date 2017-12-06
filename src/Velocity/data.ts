@@ -13,22 +13,23 @@ interface Element {
  */
 function Data(element: HTMLorSVGElement): ElementData {
 	// Use a string member so Uglify doesn't mangle it.
-	let data: ElementData = element["velocityData"];
+	const data = element["velocityData"];
 
-	if (!data) {
-		// Do it this way so it errors on incorrect data.
-		data = {
-			isSVG: isSVG(element),
-			count: 0,
-			computedStyle: null,
-			cache: Object.create(null),
-			queueList: Object.create(null),
-			lastAnimationList: Object.create(null),
-			lastFinishList: Object.create(null)
-		};
-		Object.defineProperty(element, "velocityData", {
-			value: data
-		});
+	if (data) {
+		return data;
 	}
-	return data;
+	// Do it this way so it errors on incorrect data.
+	let newData: ElementData = {
+		isSVG: isSVG(element),
+		count: 0,
+		computedStyle: null,
+		cache: Object.create(null),
+		queueList: Object.create(null),
+		lastAnimationList: Object.create(null),
+		lastFinishList: Object.create(null)
+	};
+	Object.defineProperty(element, "velocityData", {
+		value: newData
+	});
+	return newData;
 }

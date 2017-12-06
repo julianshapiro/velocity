@@ -15,7 +15,7 @@ namespace VelocityStatic {
 	 */
 	export function callBegin(activeCall: AnimationCall) {
 		try {
-			let elements = activeCall.elements;
+			const elements = activeCall.elements;
 
 			activeCall.options.begin.call(elements, elements, activeCall);
 		} catch (error) {
@@ -31,7 +31,7 @@ namespace VelocityStatic {
 	 */
 	function callProgress(activeCall: AnimationCall, timeCurrent: number) {
 		try {
-			let elements = activeCall.elements,
+			const elements = activeCall.elements,
 				percentComplete = activeCall.percentComplete,
 				options = activeCall.options,
 				tweenValue = activeCall.tween;
@@ -84,10 +84,10 @@ namespace VelocityStatic {
 		 * Shim for window.performance in case it doesn't exist
 		 */
 		performance = (function() {
-			let perf = window.performance || {} as Performance;
+			const perf = window.performance || {} as Performance;
 
 			if (typeof perf.now !== "function") {
-				let nowOffset = perf.timing && perf.timing.navigationStart ? perf.timing.navigationStart : _now();
+				const nowOffset = perf.timing && perf.timing.navigationStart ? perf.timing.navigationStart : _now();
 
 				perf.now = function() {
 					return _now() - nowOffset;
@@ -100,7 +100,7 @@ namespace VelocityStatic {
 			return window.requestAnimationFrame || function(callback) {
 				/* Dynamically set delay on a per-tick basis to match 60fps. */
 				/* Based on a technique by Erik Moller. MIT license: https://gist.github.com/paulirish/1579671 */
-				let timeCurrent = performance.now(), // High precision if we can
+				const timeCurrent = performance.now(), // High precision if we can
 					timeDelta = Math.max(0, FRAME_TIME - (timeCurrent - lastTick));
 
 				return setTimeout(function() {
@@ -120,7 +120,7 @@ namespace VelocityStatic {
 	 devices to avoid wasting battery power on inactive tabs. */
 	/* Note: Tab focus detection doesn't work on older versions of IE, but that's okay since they don't support rAF to begin with. */
 	if (!State.isMobile && document.hidden !== undefined) {
-		let updateTicker = function() {
+		const updateTicker = function() {
 			/* Reassign the rAF function (which the global tick() function uses) based on the tab's focus state. */
 			if (document.hidden) {
 				ticker = function(callback: any) {
@@ -164,15 +164,15 @@ namespace VelocityStatic {
 			/* We normally use RAF's high resolution timestamp but as it can be significantly offset when the browser is
 			 under high stress we give the option for choppiness over allowing the browser to drop huge chunks of frames.
 			 We use performance.now() and shim it if it doesn't exist for when the tab is hidden. */
-			let timeCurrent = timestamp && timestamp !== true ? timestamp : performance.now(),
+			const timeCurrent = timestamp && timestamp !== true ? timestamp : performance.now(),
 				deltaTime = lastTick ? timeCurrent - lastTick : FRAME_TIME,
-				activeCall: AnimationCall,
-				nextCall: AnimationCall,
-				lastProgress: AnimationCall,
-				lastComplete: AnimationCall,
 				defaultSpeed = defaults.speed,
 				defaultEasing = defaults.easing,
 				defaultDuration = defaults.duration;
+			let activeCall: AnimationCall,
+				nextCall: AnimationCall,
+				lastProgress: AnimationCall,
+				lastComplete: AnimationCall;
 
 			firstProgress = null;
 			firstComplete = null;
@@ -210,7 +210,7 @@ namespace VelocityStatic {
 					// it's value is as close to the real animation start time
 					// as possible.
 					if (!timeStart) {
-						let queue = activeCall.queue != null ? activeCall.queue : options.queue;
+						const queue = activeCall.queue != null ? activeCall.queue : options.queue;
 
 						timeStart = timeCurrent - deltaTime;
 						if (queue !== false) {
@@ -242,7 +242,7 @@ namespace VelocityStatic {
 					if (!(flags & AnimationFlags.READY) || (flags & AnimationFlags.PAUSED)) {
 						continue;
 					}
-					let options = activeCall.options;
+					const options = activeCall.options;
 
 					if ((flags & AnimationFlags.SYNC) && options._ready < options._total) {
 						activeCall.timeStart += deltaTime;
@@ -253,7 +253,7 @@ namespace VelocityStatic {
 
 					// Don't bother getting until we can use these.
 					if (!(flags & AnimationFlags.STARTED)) {
-						let delay = activeCall.delay != null ? activeCall.delay : options.delay;
+						const delay = activeCall.delay != null ? activeCall.delay : options.delay;
 
 						// Make sure anything we've delayed doesn't start
 						// animating yet, there might still be an active delay
@@ -280,10 +280,10 @@ namespace VelocityStatic {
 					}
 					if (speed !== 1) {
 						// On the first frame we may have a shorter delta
-						let delta = Math.min(deltaTime, timeCurrent - timeStart);
+						const delta = Math.min(deltaTime, timeCurrent - timeStart);
 
 						if (speed === 0) {
-							// If we're freezing the animation then don't let the
+							// If we're freezing the animation then don't const the
 							// time change
 							activeCall.timeStart = timeStart += delta;
 						} else {
@@ -316,27 +316,27 @@ namespace VelocityStatic {
 						}
 					}
 
-					for (let property in tweens) {
+					for (const property in tweens) {
 						// For every element, iterate through each property.
-						let tween = tweens[property],
+						const tween = tweens[property],
 							easing = tween[Tween.EASING] || activeEasing,
 							pattern = tween[Tween.PATTERN],
-							rounding = tween[Tween.ROUNDING],
-							currentValue = "",
+							rounding = tween[Tween.ROUNDING];
+						let currentValue = "",
 							i = 0;
 
 						if (!pattern) {
 							console.warn("VelocityJS: Missing pattern:", property, JSON.stringify(tween[property]))
 						} else {
 							for (; i < pattern.length; i++) {
-								let startValue = tween[Tween.START][i];
+								const startValue = tween[Tween.START][i];
 
 								if (startValue == null) {
 									currentValue += pattern[i];
 								} else {
 									// All easings must deal with numbers except for
 									// our internal ones
-									let result = easing(reverse ? 1 - percentComplete : percentComplete, startValue as number, tween[Tween.END][i] as number, property)
+									const result = easing(reverse ? 1 - percentComplete : percentComplete, startValue as number, tween[Tween.END][i] as number, property)
 
 									currentValue += rounding && rounding[i] ? Math.round(result) : result;
 								}

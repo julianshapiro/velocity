@@ -10,7 +10,7 @@ namespace VelocityStatic.CSS {
 	 Lists
 	 ************/
 
-	export let Lists = {
+	export const Lists = {
 		//colors: ["fill", "stroke", "stopColor", "color", "backgroundColor", "borderColor", "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor"],
 		//transformsBase: ["translateX", "translateY", "scale", "scaleX", "scaleY", "skewX", "skewY", "rotateZ"],
 		//transforms3D: ["transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY"],

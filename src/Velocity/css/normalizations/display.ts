@@ -19,13 +19,13 @@ namespace VelocityStatic.CSS {
 	function display(element: HTMLorSVGElement): string;
 	function display(element: HTMLorSVGElement, propertyValue: string): boolean;
 	function display(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
-		let style = element.style;
+		const style = element.style;
 
 		if (propertyValue === undefined) {
 			return getPropertyValue(element, "display", true);
 		}
 		if (propertyValue === "auto") {
-			let nodeName = element && element.nodeName,
+			const nodeName = element && element.nodeName,
 				data = Data(element);
 
 			if (inlineRx.test(nodeName)) {

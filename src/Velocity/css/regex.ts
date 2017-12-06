@@ -8,7 +8,7 @@
 
 namespace VelocityStatic.CSS {
 
-	export let RegEx = {
+	export const RegEx = {
 		isHex: /^#([A-f\d]{3}){1,2}$/i,
 		/* Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
 		valueUnwrap: /^[A-z]+\((.*)\)$/i,

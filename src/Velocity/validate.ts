@@ -68,7 +68,7 @@ function validateComplete(value: VelocityCallback, noError?: true): VelocityCall
  * @private
  */
 function validateDelay(value: "fast" | "normal" | "slow" | number): number {
-	let parsed = parseDuration(value);
+	const parsed = parseDuration(value);
 
 	if (!isNaN(parsed)) {
 		return parsed;
@@ -83,7 +83,7 @@ function validateDelay(value: "fast" | "normal" | "slow" | number): number {
  * @private
  */
 function validateDuration(value: "fast" | "normal" | "slow" | number, noError?: true): number {
-	let parsed = parseDuration(value);
+	const parsed = parseDuration(value);
 
 	if (!isNaN(parsed) && parsed >= 0) {
 		return parsed;
@@ -134,7 +134,7 @@ function validateFpsLimit(value: number | false): number {
 	if (value === false) {
 		return 0;
 	} else {
-		let parsed = parseInt(value as any, 10);
+		const parsed = parseInt(value as any, 10);
 
 		if (!isNaN(parsed) && parsed >= 0) {
 			return Math.min(parsed, 60);
@@ -156,7 +156,7 @@ function validateLoop(value: number | boolean): number | true {
 	} else if (value === true) {
 		return true;
 	} else {
-		let parsed = parseInt(value as any, 10);
+		const parsed = parseInt(value as any, 10);
 
 		if (!isNaN(parsed) && parsed >= 0) {
 			return parsed;
@@ -229,7 +229,7 @@ function validateRepeat(value: number | boolean): number | true {
 	} else if (value === true) {
 		return true;
 	} else {
-		let parsed = parseInt(value as any, 10);
+		const parsed = parseInt(value as any, 10);
 
 		if (!isNaN(parsed) && parsed >= 0) {
 			return parsed;

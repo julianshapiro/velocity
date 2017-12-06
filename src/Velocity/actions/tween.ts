@@ -37,10 +37,7 @@ namespace VelocityStatic {
 			// TODO: Allow more than a single element to return an array of results
 			throw new Error("VelocityJS: Cannot tween more than one element!");
 		}
-		let percentComplete: number = args[0],
-			properties: VelocityProperties = args[1],
-			singleResult: boolean,
-			easing: VelocityEasingType = args[2],
+		const percentComplete: number = args[0],
 			fakeAnimation = {
 				elements: elements,
 				element: elements[0],
@@ -50,7 +47,10 @@ namespace VelocityStatic {
 				},
 				tweens: null as {[property: string]: VelocityTween}
 			},
-			result: {[property: string]: string} = {},
+			result: {[property: string]: string} = {};
+		let properties: VelocityProperties = args[1],
+			singleResult: boolean,
+			easing: VelocityEasingType = args[2],
 			count = 0;
 
 		if (isString(args[1])) {
@@ -67,33 +67,32 @@ namespace VelocityStatic {
 			throw new Error("VelocityJS: Cannot tween an invalid property!");
 		}
 		if (requireForcefeeding) {
-			for (let property in properties) {
+			for (const property in properties) {
 				if (properties.hasOwnProperty(property) && (!Array.isArray(properties[property]) || properties[property].length < 2)) {
 					throw new Error("VelocityJS: When not supplying an element you must force-feed values: " + property);
 				}
 			}
 		}
-		let activeEasing = validateEasing(getValue(easing, defaults.easing), 1000);
+		const activeEasing = validateEasing(getValue(easing, defaults.easing), 1000);
 
 		expandProperties(fakeAnimation as AnimationCall, properties);
-		for (let property in fakeAnimation.tweens) {
+		for (const property in fakeAnimation.tweens) {
 			// For every element, iterate through each property.
-			let tween = fakeAnimation.tweens[property],
+			const tween = fakeAnimation.tweens[property],
 				easing = tween[Tween.EASING] || activeEasing,
 				pattern = tween[Tween.PATTERN],
-				rounding = tween[Tween.ROUNDING],
-				currentValue = "",
-				i = 0;
+				rounding = tween[Tween.ROUNDING];
+			let currentValue = "";
 
 			count++;
 			if (pattern) {
-				for (; i < pattern.length; i++) {
-					let startValue = tween[Tween.START][i];
+				for (let i = 0; i < pattern.length; i++) {
+					const startValue = tween[Tween.START][i];
 
 					if (startValue == null) {
 						currentValue += pattern[i];
 					} else {
-						let result = easing(percentComplete, startValue as number, tween[Tween.END][i] as number, property)
+						const result = easing(percentComplete, startValue as number, tween[Tween.END][i] as number, property)
 
 						currentValue += rounding && rounding[i] ? Math.round(result) : result;
 					}
@@ -102,7 +101,7 @@ namespace VelocityStatic {
 			result[property] = currentValue;
 		}
 		if (singleResult && count === 1) {
-			for (let property in result) {
+			for (const property in result) {
 				if (result.hasOwnProperty(property)) {
 					return result[property];
 				}

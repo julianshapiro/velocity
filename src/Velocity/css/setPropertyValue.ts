@@ -10,7 +10,7 @@ namespace VelocityStatic.CSS {
 	 * normalizations, hooks, and standard CSS properties.
 	 */
 	export function setPropertyValue(element: HTMLorSVGElement, propertyName: string, propertyValue: any) {
-		let data = Data(element);
+		const data = Data(element);
 
 		if (isString(propertyValue)
 			&& propertyValue[0] === "c"

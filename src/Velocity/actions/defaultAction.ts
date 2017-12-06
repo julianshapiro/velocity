@@ -26,7 +26,7 @@ namespace VelocityStatic {
 	function defaultAction(args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string): void {
 		// TODO: default is wrong, should be runSequence based, and needs all arguments
 		if (isString(action) && VelocityStatic.Redirects[action]) {
-			let options = isPlainObject(args[0]) ? args[0] as VelocityOptions : {},
+			const options = isPlainObject(args[0]) ? args[0] as VelocityOptions : {},
 				opts = {...options},
 				durationOriginal = parseFloat(options.duration as any),
 				delayOriginal = parseFloat(options.delay as any) || 0;
@@ -67,7 +67,7 @@ namespace VelocityStatic {
              (The performance overhead up to this point is virtually non-existant.) */
 			/* Note: The jQuery call chain is kept intact by returning the complete element set. */
 		} else {
-			let abortError = "Velocity: First argument (" + action + ") was not a property map, a known action, or a registered redirect. Aborting.";
+			const abortError = "Velocity: First argument (" + action + ") was not a property map, a known action, or a registered redirect. Aborting.";
 
 			if (promiseHandler) {
 				promiseHandler._rejecter(new Error(abortError));

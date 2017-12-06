@@ -24,7 +24,7 @@ namespace VelocityStatic.CSS {
 	 * @private
 	 */
 	export function registerNormalization(args?: [string, VelocityNormalizationsFn]) {
-		let name: string = args[0],
+		const name: string = args[0],
 			callback = args[1];
 
 		if (!isString(name)) {
@@ -64,13 +64,13 @@ namespace VelocityStatic.CSS {
 		CSS.Lists.transformsBase = CSS.Lists.transformsBase.concat(CSS.Lists.transforms3D);
 	}
 
-	for (let i = 0; i < CSS.Lists.transformsBase.length; i++) {
+	for (const i = 0; i < CSS.Lists.transformsBase.length; i++) {
 		/!* Wrap the dynamically generated normalization function in a new scope so that transformName's value is
 		 paired with its respective function. (Otherwise, all functions would take the final for loop's transformName.) *!/
 
-		let transformName = CSS.Lists.transformsBase[i];
+		const transformName = CSS.Lists.transformsBase[i];
 
-		let genericMethod = function (element, propertyValue) {
+		const genericMethod = function (element, propertyValue) {
 			if(propertyValue === undefined){
 				/!* If this transform has yet to be assigned a value, return its null value. *!/
 				if (Data(element) === undefined || Data(element).transformCache[transformName] === undefined) {
@@ -81,7 +81,7 @@ namespace VelocityStatic.CSS {
 				}
 				return Data(element).transformCache[transformName].replace(/[()]/g, "");
 			}else{
-				let invalid = false;
+				const invalid = false;
 
 				/!* If an individual transform property contains an unsupported unit type, the browser ignores the *entire* transform property.
 				 Thus, protect users from themselves by skipping setting for transform values supplied with invalid unit types. *!/

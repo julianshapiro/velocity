@@ -22,7 +22,7 @@ namespace VelocityStatic {
 	 * faster to access.
 	 */
 	export function expandProperties(animation: AnimationCall, properties: VelocityProperties) {
-		let tweens = animation.tweens = Object.create(null),
+		const tweens = animation.tweens = Object.create(null),
 			elements = animation.elements,
 			element = animation.element,
 			elementArrayIndex = elements.indexOf(element),
@@ -30,10 +30,10 @@ namespace VelocityStatic {
 			queue = getValue(animation.queue, animation.options.queue),
 			duration = getValue(animation.options.duration, defaults.duration);
 
-		for (let property in properties) {
+		for (const property in properties) {
 			if (properties.hasOwnProperty(property)) {
-				let propertyName = CSS.Names.camelCase(property),
-					valueData = properties[property];
+				const propertyName = CSS.Names.camelCase(property);
+				let valueData = properties[property];
 
 				if (!data.isSVG
 					&& propertyName !== "tween"
@@ -51,8 +51,8 @@ namespace VelocityStatic {
 					}
 					continue;
 				}
-				let tween: VelocityTween = tweens[propertyName] = new Array(Tween.length) as any,
-					endValue: string,
+				const tween: VelocityTween = tweens[propertyName] = new Array(Tween.length) as any;
+				let endValue: string,
 					startValue: string;
 
 				if (isFunction(valueData)) {
@@ -64,7 +64,7 @@ namespace VelocityStatic {
 				if (Array.isArray(valueData)) {
 					// valueData is an array in the form of
 					// [ endValue, [, easing] [, startValue] ]
-					let arr1 = valueData[1],
+					const arr1 = valueData[1],
 						arr2 = valueData[2];
 
 					endValue = valueData[0] as any;
@@ -116,16 +116,16 @@ namespace VelocityStatic {
 	 * based tween with arrays.
 	 */
 	function explodeTween(propertyName: string, tween: VelocityTween, duration: number) {
-		let endValue: string = tween[Tween.END] as any as string,
+		const endValue: string = tween[Tween.END] as any as string,
 			startValue: string = tween[Tween.START] as any as string;
 
 		if (!isString(endValue) || !isString(startValue)) {
 			return;
 		}
-		let easing = tween[Tween.EASING] as any,
-			arrayStart: (string | number)[] = tween[Tween.START] = [null],
+		const arrayStart: (string | number)[] = tween[Tween.START] = [null],
 			arrayEnd: (string | number)[] = tween[Tween.END] = [null],
-			pattern: (string | number)[] = tween[Tween.PATTERN] = [""],
+			pattern: (string | number)[] = tween[Tween.PATTERN] = [""];
+		let easing = tween[Tween.EASING] as any,
 			rounding: boolean[],
 			indexStart = 0, // index in startValue
 			indexEnd = 0, // index in endValue
@@ -336,16 +336,16 @@ namespace VelocityStatic {
 		}
 		// Check if we're actually already ready
 		if (!(activeCall._flags & AnimationFlags.EXPANDED)) {
-			let element = activeCall.element,
+			const element = activeCall.element,
 				tweens = activeCall.tweens,
 				duration = getValue(activeCall.options.duration, defaults.duration);
 
-			for (let propertyName in tweens) {
-				let tween = tweens[propertyName];
+			for (const propertyName in tweens) {
+				const tween = tweens[propertyName];
 
 				if (tween[Tween.START] == null) {
 					// Get the start value as it's not been passed in
-					let startValue = CSS.getPropertyValue(activeCall.element, propertyName);
+					const startValue = CSS.getPropertyValue(activeCall.element, propertyName);
 
 					if (isString(startValue)) {
 						tween[Tween.START] = CSS.fixColors(startValue) as any;

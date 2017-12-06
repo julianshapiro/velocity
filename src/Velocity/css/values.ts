@@ -6,7 +6,7 @@
 
 namespace VelocityStatic.CSS {
 
-	let rxDegree = /^(rotate|skew)/i,
+	const rxDegree = /^(rotate|skew)/i,
 		rxUnitless = /^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight|opacity)$/i, // TODO: These are wrong
 		rxShortForm = /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
 		rxLongForm = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i,
@@ -59,7 +59,7 @@ namespace VelocityStatic.CSS {
 					element.className += (element.className.length ? " " : "") + className;
 				} else {
 					// Work around for IE strict mode animating SVG - and anything else that doesn't behave correctly - the same way jQuery does it
-					let currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
+					const currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
 
 					element.setAttribute("class", currentClass + (currentClass ? " " : "") + className);
 				}
@@ -75,7 +75,7 @@ namespace VelocityStatic.CSS {
 					element.className = element.className.toString().replace(new RegExp("(^|\\s)" + className.split(" ").join("|") + "(\\s|$)", "gi"), " ");
 				} else {
 					// Work around for IE strict mode animating SVG - and anything else that doesn't behave correctly - the same way jQuery does it
-					let currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
+					const currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
 
 					element.setAttribute("class", currentClass.replace(new RegExp("(^|\s)" + className.split(" ").join("|") + "(\s|$)", "gi"), " "));
 				}

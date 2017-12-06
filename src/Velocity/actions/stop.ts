@@ -35,7 +35,7 @@ namespace VelocityStatic {
 	 * @param {string} action
 	 */
 	function stop(args: any[], elements: VelocityResult, promiseHandler?: VelocityPromise, action?: string): void {
-		let queueName: string | false = validateQueue(args[0], true),
+		const queueName: string | false = validateQueue(args[0], true),
 			defaultQueue: false | string = defaults.queue,
 			finishAll = args[queueName === undefined ? 0 : 1] === true;
 

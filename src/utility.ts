@@ -26,15 +26,15 @@ function _deepCopyObject<T, U>(target: T, ...sources: U[]): T & U {
 	if (target == null) { // TypeError if undefined or null
 		throw new TypeError("Cannot convert undefined or null to object");
 	}
-	let to = Object(target),
-		source: any,
+	const to = Object(target),
 		hasOwnProperty = Object.prototype.hasOwnProperty;
+	let source: any;
 
 	while ((source = sources.shift())) {
 		if (source != null) {
-			for (let key in source) {
+			for (const key in source) {
 				if (hasOwnProperty.call(source, key)) {
-					let value = source[key];
+					const value = source[key];
 
 					if (Array.isArray(value)) {
 						_deepCopyObject(to[key] = [], value);
@@ -61,19 +61,19 @@ function _position(element: HTMLorSVGElement): ClientRect {
  * Date.now() and save creating an object. If that doesn't exist then it'll
  * create one that gets GC.
  */
-let _now = Date.now ? Date.now : function() {
+const _now = Date.now ? Date.now : function() {
 	return (new Date()).getTime();
 };
 
 /**
  * Get the index of an element
  */
-let _indexOf = Array.prototype.indexOf;
+const _indexOf = Array.prototype.indexOf;
 
 /**
  * Shim for [].includes, can fallback to indexOf
  */
-let _inArray: (searchElement: any) => boolean =
+const _inArray: (searchElement: any) => boolean =
 	(Array.prototype as any).includes || function(value) {
 		return _indexOf.call(this, value) > -1;
 	};
@@ -95,7 +95,7 @@ function sanitizeElements(elements: HTMLorSVGElement | HTMLorSVGElement[]): HTML
 function getValue<T>(...args: T[]): T;
 function getValue<T>(args: any): T {
 	for (let i = 0, _args = arguments; i < _args.length; i++) {
-		let _arg = _args[i];
+		const _arg = _args[i];
 
 		if (_arg !== undefined && _arg === _arg) {
 			return _arg;

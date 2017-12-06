@@ -14,7 +14,7 @@ namespace VelocityStatic {
 	 * named queue is within an object within it.
 	 */
 	function animate(animation: AnimationCall) {
-		let prev = State.last;
+		const prev = State.last;
 
 		animation._prev = prev;
 		animation._next = undefined;
@@ -27,13 +27,10 @@ namespace VelocityStatic {
 		if (!State.firstNew) {
 			State.firstNew = animation;
 		}
-		let element = animation.element,
+		const element = animation.element,
 			data = Data(element),
-			queue = animation.queue;
+			queue = animation.queue == null ? animation.options.queue : animation.queue;
 
-		if (queue == null) {
-			queue = animation.options.queue;
-		}
 		if (queue !== false) {
 			// Store the last animation added so we can use it for the
 			// beginning of the next one.
@@ -59,8 +56,8 @@ namespace VelocityStatic {
 			if (!isString(queue)) {
 				queue = "";
 			}
-			let data = Data(element),
-				last = data.queueList[queue];
+			const data = Data(element);
+			let last = data.queueList[queue];
 
 			if (!last) {
 				if (last === null) {
@@ -89,7 +86,7 @@ namespace VelocityStatic {
 			if (!isString(queue)) {
 				queue = "";
 			}
-			let data = Data(element),
+			const data = Data(element),
 				animation = data.queueList[queue];
 
 			if (animation) {
@@ -111,13 +108,10 @@ namespace VelocityStatic {
 	 * mark us as finished.
 	 */
 	export function freeAnimationCall(animation: AnimationCall): void {
-		let next = animation._next,
+		const next = animation._next,
 			prev = animation._prev,
-			queue = animation.queue;
+			queue = animation.queue == null ? animation.options.queue : animation.queue;
 
-		if (queue == null) {
-			queue = animation.options.queue;
-		}
 		if (State.firstNew === animation) {
 			State.firstNew = next;
 		}
@@ -132,7 +126,7 @@ namespace VelocityStatic {
 			next._prev = prev;
 		}
 		if (queue) {
-			let data = Data(animation.element);
+			const data = Data(animation.element);
 
 			if (data) {
 				data.lastAnimationList[queue] = animation;

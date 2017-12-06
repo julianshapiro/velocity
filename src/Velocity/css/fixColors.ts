@@ -12,7 +12,7 @@ namespace VelocityStatic.CSS {
 		return "rgba(" + parseInt(r, 16) + "," + parseInt(g, 16) + "," + parseInt(b, 16) + ",1)";
 	}
 
-	let rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi,
+	const rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi,
 		rxColor3 = /#([a-f\d])([a-f\d])([a-f\d])/gi,
 		rxColorName = /(rgba?\(\s*)?(\b[a-z]+\b)/g,
 		rxRGB = /rgba?\([^\)]+\)/gi,

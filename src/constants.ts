@@ -8,7 +8,7 @@
  */
 
 //["completeCall", "CSS", "State", "getEasing", "Easings", "data", "debug", "defaults", "hook", "init", "mock", "pauseAll", "queue", "dequeue", "freeAnimationCall", "Redirects", "RegisterEffect", "resumeAll", "RunSequence", "lastTick", "tick", "timestamp", "expandTween", "version"]
-const PUBLIC_MEMBERS = ["version", "RegisterEffect", "style", "hook"];
+const PUBLIC_MEMBERS = ["version", "RegisterEffect", "style", "patch", "timestamp"];
 /**
  * Without this it will only un-prefix properties that have a valid "normal"
  * version.
@@ -33,6 +33,8 @@ const DEFAULT_QUEUE = "";
 const DEFAULT_REPEAT = 0;
 const DEFAULT_SPEED = 1;
 const DEFAULT_SYNC = true;
+
+const VERSION = "2.0.0";
 
 const Duration = {
 	"fast": DURATION_FAST,

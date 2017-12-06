@@ -24,7 +24,7 @@ namespace VelocityStatic {
 		_speed: number,
 		_sync: boolean;
 
-	export let defaults: StrictVelocityOptions & {reset?: () => void} = {
+	export const defaults: StrictVelocityOptions & {reset?: () => void} = {
 		mobileHA: true
 	};
 

@@ -28,7 +28,7 @@ namespace VelocityStatic {
 	 * as well.
 	 */
 	function pauseResume(args?: any[], elements?: VelocityResult, promiseHandler?: VelocityPromise, action?: string) {
-		let isPaused = action.indexOf("pause") === 0,
+		const isPaused = action.indexOf("pause") === 0,
 			queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined,
 			queueName = queue === "false" ? false : validateQueue(args[0]),
 			defaultQueue = defaults.queue;

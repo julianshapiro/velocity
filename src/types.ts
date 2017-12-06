@@ -47,7 +47,7 @@ function isWrapped(variable): variable is HTMLorSVGElement[] {
 }
 
 function isSVG(variable): variable is SVGElement {
-	return (window as any).SVGElement && (variable instanceof (window as any).SVGElement);
+	return SVGElement && variable instanceof SVGElement;
 }
 
 function isPlainObject(variable): variable is {} {

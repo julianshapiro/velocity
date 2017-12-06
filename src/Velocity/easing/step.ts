@@ -7,22 +7,22 @@
  */
 
 namespace Easing {
-	let cache: {[steps: number]: VelocityEasingFn} = {};
+	const cache: {[steps: number]: VelocityEasingFn} = {};
 
 	export function generateStep(steps): VelocityEasingFn {
-		let fn = cache[steps];
+		const fn = cache[steps];
 
-		if (!fn) {
-			fn = cache[steps] = function(percentComplete, startValue, endValue) {
-				if (percentComplete === 0) {
-					return startValue;
-				}
-				if (percentComplete === 1) {
-					return endValue;
-				}
-				return startValue + Math.round(percentComplete * steps) * (1 / steps) * (endValue - startValue);
-			};
+		if (fn) {
+			return fn;
 		}
-		return fn;
+		return cache[steps] = function(percentComplete, startValue, endValue) {
+			if (percentComplete === 0) {
+				return startValue;
+			}
+			if (percentComplete === 1) {
+				return endValue;
+			}
+			return startValue + Math.round(percentComplete * steps) * (1 / steps) * (endValue - startValue);
+		};
 	}
 };

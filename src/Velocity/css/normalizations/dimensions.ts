@@ -12,16 +12,16 @@ namespace VelocityStatic.CSS {
 	 * potential borders and whether we care about them.
 	 */
 	export function augmentDimension(element: HTMLorSVGElement, name: string, wantInner: boolean): number {
-		let isBorderBox = getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
+		const isBorderBox = getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
 
 		if (isBorderBox === wantInner) {
 			// in box-sizing mode, the CSS width / height accessors already
 			// give the outerWidth / outerHeight.
+			const sides = name === "width" ? ["Left", "Right"] : ["Top", "Bottom"],
+				fields = ["padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width"];
 			let i: number,
 				value: number,
-				augment = 0,
-				sides = name === "width" ? ["Left", "Right"] : ["Top", "Bottom"],
-				fields = ["padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width"];
+				augment = 0;
 
 			for (i = 0; i < fields.length; i++) {
 				value = parseFloat(getPropertyValue(element, fields[i]) as string);

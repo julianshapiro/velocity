@@ -23,7 +23,7 @@ namespace VelocityStatic {
 	 * @private
 	 */
 	export function registerAction(args?: [string, VelocityActionFn], internal?: boolean) {
-		let name: string = args[0],
+		const name: string = args[0],
 			callback = args[1];
 
 		if (!isString(name)) {

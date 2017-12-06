@@ -13,7 +13,7 @@
  * use. This is done as a read-only way. Any attempt to change these values will
  * be allowed.
  */
-for (let key in VelocityStatic) {
+for (const key in VelocityStatic) {
 	Object.defineProperty(VelocityFn, key, {
 		enumerable: PUBLIC_MEMBERS.indexOf(key) >= 0,
 		get: function() {
@@ -22,5 +22,4 @@ for (let key in VelocityStatic) {
 	});
 }
 
-// TODO: Go through the VeocityStatic members to see what should be visible
 // console.log("Velocity keys", Object.keys(VelocityStatic));

@@ -35,7 +35,7 @@ namespace VelocityStatic {
 	 * Velocity(elements, "style", "property") => ["value", ...];
 	 */
 	function styleAction(args?: any[], elements?: VelocityResult, promiseHandler?: VelocityPromise, action?: string): any {
-		let property = args[0],
+		const property = args[0],
 			value = args[1];
 
 		if (!property) {
@@ -49,10 +49,9 @@ namespace VelocityStatic {
 			if (elements.length === 1) {
 				return CSS.getPropertyValue(elements[0], property);
 			}
-			let i = 0,
-				result = [];
+			const result = [];
 
-			for (; i < elements.length; i++) {
+			for (let i = 0; i < elements.length; i++) {
 				result.push(CSS.getPropertyValue(elements[i], property));
 			}
 			return result;
@@ -61,9 +60,9 @@ namespace VelocityStatic {
 		let error: string;
 
 		if (isPlainObject(property)) {
-			for (let propertyName in property) {
+			for (const propertyName in property) {
 				for (let i = 0; i < elements.length; i++) {
-					let value = property[propertyName];
+					const value = property[propertyName];
 
 					if (isString(value) || isNumber(value)) {
 						CSS.setPropertyValue(elements[i], propertyName, property[propertyName]);

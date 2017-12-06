@@ -26,7 +26,7 @@ namespace Easing {
 	}
 
 	function springEvaluateStateWithDerivative(initialState: springState, dt: number, derivative: springDelta): springDelta {
-		let state = {
+		const state = {
 			x: initialState.x + derivative.dx * dt,
 			v: initialState.v + derivative.dv * dt,
 			tension: initialState.tension,
@@ -40,7 +40,7 @@ namespace Easing {
 	}
 
 	function springIntegrateState(state: springState, dt: number) {
-		let a = {
+		const a = {
 			dx: state.v,
 			dv: springAccelerationForState(state)
 		},

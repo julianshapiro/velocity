@@ -10,6 +10,6 @@
 namespace VelocityStatic {
 	registerAction(["reverse", function(args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) {
 		// TODO: Code needs to split out before here - but this is needed to prevent it being overridden
-		throw new SyntaxError("The 'reverse' action is private.");
+		throw new SyntaxError("VelocityJS: The 'reverse' action is private.");
 	}], true)
 }

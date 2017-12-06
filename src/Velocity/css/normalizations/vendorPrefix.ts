@@ -21,16 +21,13 @@ namespace VelocityStatic.CSS {
 		} as VelocityNormalizationsFn;
 	}
 
-	let vendors = [/^webkit[A-Z]/, /^moz[A-Z]/, /^ms[A-Z]/, /^o[A-Z]/],
-		prefixElement = State.prefixElement,
-		property: string,
-		unprefixed: string,
-		i: number;
+	const vendors = [/^webkit[A-Z]/, /^moz[A-Z]/, /^ms[A-Z]/, /^o[A-Z]/],
+		prefixElement = State.prefixElement;
 
-	for (property in prefixElement.style) {
-		for (i = 0; i < vendors.length; i++) {
+	for (const property in prefixElement.style) {
+		for (let i = 0; i < vendors.length; i++) {
 			if (vendors[i].test(property)) {
-				unprefixed = property.replace(/^[a-z]+([A-Z])/, ($, letter: string) => letter.toLowerCase());
+				let unprefixed = property.replace(/^[a-z]+([A-Z])/, ($, letter: string) => letter.toLowerCase());
 
 				if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
 					registerNormalization([unprefixed, vendorPrefix(property, unprefixed)]);

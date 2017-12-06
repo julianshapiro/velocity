@@ -29,11 +29,11 @@ namespace VelocityStatic {
 	 * returned to the user.
 	 */
 	function option(args?: any[], elements?: VelocityResult, promiseHandler?: VelocityPromise, action?: string): any {
-		let key = args[0],
-			value = args[1],
+		const key = args[0],
 			queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined,
-			queueName = queue === "false" ? false : validateQueue(queue, true),
-			animations: AnimationCall[];
+			queueName = queue === "false" ? false : validateQueue(queue, true);
+		let animations: AnimationCall[],
+			value = args[1];
 
 		if (!key) {
 			console.warn("VelocityJS: Cannot access a non-existant key!");
@@ -59,7 +59,7 @@ namespace VelocityStatic {
 					options = animations[0].options;
 
 				while (i < animations.length) {
-					if (animations[i].options !== options) {
+					if (animations[i++].options !== options) {
 						options = null;
 						break;
 					}
@@ -72,11 +72,10 @@ namespace VelocityStatic {
 		}
 		// GET
 		if (value === undefined) {
-			let i = 0,
-				result = [],
+			const result = [],
 				flag = animationFlags[key];
 
-			for (; i < animations.length; i++) {
+			for (let i = 0; i < animations.length; i++) {
 				if (flag === undefined) {
 					// A normal key to get.
 					result.push(getValue(animations[i][key], animations[i].options[key]));
@@ -127,7 +126,7 @@ namespace VelocityStatic {
 				break;
 			default:
 				if (key[0] !== "_") {
-					let num = parseFloat(value);
+					const num = parseFloat(value);
 
 					if (value == num) {
 						value = num;
@@ -148,7 +147,7 @@ namespace VelocityStatic {
 			return null;
 		}
 		for (let i = 0; i < animations.length; i++) {
-			let animation = animations[i];
+			const animation = animations[i];
 
 			if (isPercentComplete) {
 				animation.timeStart = lastTick - (getValue(animation.duration, animation.options.duration, defaults.duration) * value);

@@ -5,9 +5,9 @@
  */
 
 namespace VelocityStatic {
-	let generateBezier = Easing.generateBezier;
+	const generateBezier = Easing.generateBezier;
 
-	export let Easings: {[name: string]: VelocityEasingFn} = {
+	export const Easings: {[name: string]: VelocityEasingFn} = {
 		/* Basic (same as jQuery) easings. */
 		"linear": function(percentComplete, startValue, endValue) {
 			return startValue + percentComplete * (endValue - startValue);

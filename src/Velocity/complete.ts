@@ -13,7 +13,7 @@ namespace VelocityStatic {
 	 */
 	function callComplete(activeCall: AnimationCall) {
 		try {
-			let elements = activeCall.elements;
+			const elements = activeCall.elements;
 
 			activeCall.options.complete.call(elements, elements, activeCall);
 		} catch (error) {
@@ -32,7 +32,7 @@ namespace VelocityStatic {
 		//		console.log("complete", activeCall)
 		// TODO: Check if it's not been completed already
 
-		let options = activeCall.options,
+		const options = activeCall.options,
 			queue = getValue(activeCall.queue, options.queue),
 			isLoop = getValue(activeCall.loop, options.loop, defaults.loop),
 			isRepeat = getValue(activeCall.repeat, options.repeat, defaults.repeat),
@@ -61,7 +61,7 @@ namespace VelocityStatic {
 			activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
 			activeCall._flags &= ~AnimationFlags.STARTED;
 		} else {
-			let element = activeCall.element,
+			const element = activeCall.element,
 				data = Data(element);
 
 			if (!--data.count && !isStopped) {
@@ -87,7 +87,7 @@ namespace VelocityStatic {
 					callComplete(activeCall);
 					options.complete = null;
 				}
-				let resolver = options._resolver;
+				const resolver = options._resolver;
 
 				if (resolver) {
 					// Fulfil the Promise

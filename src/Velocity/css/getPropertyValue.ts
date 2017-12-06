@@ -8,10 +8,10 @@ namespace VelocityStatic.CSS {
 
 	// TODO: This is still a complete mess
 	function computePropertyValue(element: HTMLorSVGElement, property: string): string {
-		let data = Data(element),
-			computedValue: string | number = 0,
+		const data = Data(element),
 			// If computedStyle is cached, use it.
 			computedStyle = data && data.computedStyle ? data.computedStyle : window.getComputedStyle(element, null);
+		let computedValue: string | number = 0;
 
 		if (data && !data.computedStyle) {
 			data.computedStyle = computedStyle;
@@ -20,7 +20,7 @@ namespace VelocityStatic.CSS {
 			// Browsers do not return height and width values for elements
 			// that are set to display:"none". Thus, we temporarily toggle
 			// display to the element type's default value.
-			let toggleDisplay: boolean = getPropertyValue(element, "display") === "none";
+			const toggleDisplay: boolean = getPropertyValue(element, "display") === "none";
 
 			// When box-sizing isn't set to border-box, height and width
 			// style values are incorrectly computed when an element's
@@ -69,7 +69,7 @@ namespace VelocityStatic.CSS {
 		 property, which reverts to "auto", left's value is 0 relative to its parent element, but is often non-zero relative
 		 to its *containing* (not parent) element, which is the nearest "position:relative" ancestor or the viewport (and always the viewport in the case of "position:fixed"). */
 		if (computedValue === "auto" && /^(top|right|bottom|left)$/.test(property)) {
-			let position = getPropertyValue(element, "position"); /* GET */
+			const position = getPropertyValue(element, "position"); /* GET */
 
 			if (position === "fixed" || (position === "absolute" && /top|left/i.test(property))) {
 				/* Note: this has no pixel unit on its returned values; we re-add it here to conform with computePropertyValue's behavior. */
@@ -84,8 +84,8 @@ namespace VelocityStatic.CSS {
 	 * via any normalisations, then it will check the css values directly.
 	 */
 	export function getPropertyValue(element: HTMLorSVGElement, property: string, skipNormalisation?: boolean): string {
-		let propertyValue: string,
-			data = Data(element);
+		const data = Data(element);
+		let propertyValue: string;
 
 		if (data && data.cache[property] != null) {
 			propertyValue = data.cache[property];

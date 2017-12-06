@@ -13,8 +13,8 @@ namespace VelocityStatic.CSS {
 		start = start || 0;
 		if (property[start] && property[start] !== " ") {
 			for (let i = 0, units = CSS.Lists.units; i < units.length; i++) {
-				let j = 0,
-					unit = units[i];
+				const unit = units[i];
+				let j = 0;
 
 				do {
 					if (j >= unit.length) {

@@ -11,17 +11,16 @@ namespace VelocityStatic.CSS {
 	function genericReordering(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
 		if (propertyValue === undefined) {
 			propertyValue = getPropertyValue(element, "textShadow", true);
-
-			let newValue = "",
-				split = propertyValue.split(/\s/g),
+			const split = propertyValue.split(/\s/g),
 				firstPart = split[0];
+			let newValue = "";
 
 			if (Lists.colorNames[firstPart]) {
 				split.shift();
 				split.push(firstPart);
 				newValue = split.join(" ");
 			} else if (firstPart.match(/^#|^hsl|^rgb|-gradient/)) {
-				let matchedString = propertyValue.match(/(hsl.*\)|#[\da-fA-F]+|rgb.*\)|.*gradient.*\))\s/g)[0];
+				const matchedString = propertyValue.match(/(hsl.*\)|#[\da-fA-F]+|rgb.*\)|.*gradient.*\))\s/g)[0];
 
 				newValue = propertyValue.replace(matchedString, "") + " " + matchedString.trim();
 			} else {

@@ -24,17 +24,15 @@ function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProper
 function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
 function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
 function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityResult {
-	let
+	const
+		/**
+		 * A shortcut to the default options.
+		 */
+		defaults = VelocityStatic.defaults,
 		/**
 		 * Shortcut to arguments for file size.
 		 */
 		_arguments = arguments,
-		/**
-		 *  When Velocity is called via the utility function (Velocity()),
-		 * elements are explicitly passed in as the first parameter. Thus,
-		 * argument positioning varies.
-		 */
-		argumentIndex: number = 0,
 		/**
 		 * Cache of the first argument - this is used often enough to be saved.
 		 */
@@ -50,7 +48,14 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		 * "names" property.
 		 */
 		// TODO: Confirm which browsers - if <=IE8 the we can drop completely
-		syntacticSugar = isPlainObject(args0) && (args0.p || ((isPlainObject(args0.properties) && !(args0.properties as any).names) || isString(args0.properties))),
+		syntacticSugar = isPlainObject(args0) && (args0.p || ((isPlainObject(args0.properties) && !(args0.properties as any).names) || isString(args0.properties)));
+	let
+		/**
+		 *  When Velocity is called via the utility function (Velocity()),
+		 * elements are explicitly passed in as the first parameter. Thus,
+		 * argument positioning varies.
+		 */
+		argumentIndex: number = 0,
 		/**
 		 * The list of elements, extended with Promise and Velocity.
 		 */
@@ -75,10 +80,6 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		 * element's animations needs to be to the currently-running ones.
 		 */
 		animations: AnimationCall[],
-		/**
-		 * A shortcut to the default options.
-		 */
-		defaults = VelocityStatic.defaults,
 		/**
 		 * The promise that is returned.
 		 */
@@ -129,7 +130,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	}
 	// Get any options map passed in as arguments first, expand any direct
 	// options if possible.
-	let isAction = isString(propertiesMap),
+	const isAction = isString(propertiesMap),
 		opts = syntacticSugar ? getValue(args0.options, args0.o) : _arguments[argumentIndex];
 
 	if (isPlainObject(opts)) {
@@ -148,7 +149,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			// before the <code>.then()</code> function gets called.
 			resolver = function(args: VelocityResult) {
 				if (isVelocityResult(args)) {
-					let _then = args && args.then;
+					const _then = args && args.then;
 
 					if (_then) {
 						args.then = undefined; // Preserving enumeration etc
@@ -171,7 +172,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			}
 		}
 	}
-	let promiseRejectEmpty: boolean = getValue(optionsMap && optionsMap.promiseRejectEmpty, defaults.promiseRejectEmpty);
+	const promiseRejectEmpty: boolean = getValue(optionsMap && optionsMap.promiseRejectEmpty, defaults.promiseRejectEmpty);
 
 	if (promise) {
 		if (!elements && !isAction) {
@@ -196,7 +197,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	// NOTE: Can't use isAction here due to type inference - there are callbacks
 	// between so the type isn't considered safe.
 	if (isString(propertiesMap)) {
-		let args: any[] = [],
+		const args: any[] = [],
 			promiseHandler: VelocityPromise = promise && {
 				_promise: promise,
 				_resolver: resolver,
@@ -213,11 +214,11 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		// There is one special case - "reverse" - which is handled differently,
 		// by being stored on the animation and then expanded when the animation
 		// starts.
-		let action = propertiesMap.replace(/\..*$/, ""),
+		const action = propertiesMap.replace(/\..*$/, ""),
 			callback = VelocityStatic.Actions[action] || VelocityStatic.Actions["default"];
 
 		if (callback) {
-			let result = callback(args, elements, promiseHandler, propertiesMap);
+			const result = callback(args, elements, promiseHandler, propertiesMap);
 
 			if (result !== undefined) {
 				return result;
@@ -229,8 +230,8 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		/**
 		 * The options for this set of animations.
 		 */
-		let options: StrictVelocityOptions = {},
-			isSync = defaults.sync;
+		const options: StrictVelocityOptions = {};
+		let isSync = defaults.sync;
 
 		// Private options first - set as non-enumerable, and starting with an
 		// underscore so we can filter them out.
@@ -276,7 +277,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 				console.error("Deprecated 'options.visibility' used, this is now a property:", optionsMap.visibility);
 			}
 			// TODO: Allow functional options for different options per element
-			let optionsBegin = validateBegin(optionsMap.begin),
+			const optionsBegin = validateBegin(optionsMap.begin),
 				optionsComplete = validateComplete(optionsMap.complete),
 				optionsProgress = validateProgress(optionsMap.progress),
 				optionsSync = validateSync(optionsMap.sync);
@@ -295,8 +296,8 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			}
 		} else if (!syntacticSugar) {
 			// Expand any direct options if possible.
-			let offset = 0,
-				duration = validateDuration(_arguments[argumentIndex + offset], true);
+			const duration = validateDuration(_arguments[argumentIndex], true);
+			let offset = 0;
 
 			if (duration !== undefined) {
 				offset++;
@@ -304,14 +305,14 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			}
 			if (!isFunction(_arguments[argumentIndex + offset])) {
 				// Despite coming before Complete, we can't pass a fn easing
-				let easing = validateEasing(_arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration) as number, true);
+				const easing = validateEasing(_arguments[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration) as number, true);
 
 				if (easing !== undefined) {
 					offset++;
 					options.easing = easing;
 				}
 			}
-			let complete = validateComplete(_arguments[argumentIndex + offset], true);
+			const complete = validateComplete(_arguments[argumentIndex + offset], true);
 
 			if (complete !== undefined) {
 				options.complete = complete;
@@ -325,7 +326,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		/* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
 		 the call array is pushed to VelocityStatic.State.calls for live processing by the requestAnimationFrame tick. */
 
-		let rootAnimation: AnimationCall = {
+		const rootAnimation: AnimationCall = {
 			_prev: undefined,
 			_next: undefined,
 			_flags: isSync ? AnimationFlags.SYNC : 0,
@@ -338,11 +339,11 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		};
 
 		animations = [];
-		for (let index = 0, length = elements.length; index < length; index++) {
-			let element = elements[index];
+		for (let index = 0; index < elements.length; index++) {
+			const element = elements[index];
 
 			if (isNode(element)) {
-				let tweens = Object.create(null),
+				const tweens = Object.create(null),
 					animation: AnimationCall = Object.assign({
 						element: element,
 						tweens: tweens
@@ -402,10 +403,8 @@ var IE = (function() {
 			let div = document.createElement("div");
 
 			div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
-
 			if (div.getElementsByTagName("span").length) {
 				div = null;
-
 				return i;
 			}
 		}

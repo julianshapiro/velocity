@@ -11,22 +11,22 @@ namespace VelocityStatic.CSS {
 	 ************************/
 
 	/* Certain browsers require an SVG transform to be applied as an attribute. (Otherwise, application via CSS is preferable due to 3D support.) */
-	let SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2" + (IE || (State.isAndroid && !State.isChrome) ? "|transform" : ""),
+	const SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2" + (IE || (State.isAndroid && !State.isChrome) ? "|transform" : ""),
 		SVGAttributesRX = RegExp("^(" + SVGAttributes + ")$", "i"),
 		camelCase: {[property: string]: string} = {};
 
-	export let Names = {
+	export const Names = {
 		/* Camelcase a property name into its JavaScript notation (e.g. "background-color" ==> "backgroundColor").
 		 Camelcasing is used to normalize property names between and across calls. */
 		camelCase: function(property: string): string {
-			let fixed = camelCase[property];
+			const fixed = camelCase[property];
 
-			if (!fixed) {
-				fixed = camelCase[property] = property.replace(/-([a-z])/g, function(match: string, subMatch: string) {
-					return subMatch.toUpperCase();
-				})
+			if (fixed) {
+				return fixed;
 			}
-			return fixed;
+			return camelCase[property] = property.replace(/-([a-z])/g, function(match: string, subMatch: string) {
+				return subMatch.toUpperCase();
+			})
 		},
 		/* For SVG elements, some properties (namely, dimensional ones) are GET/SET via the element's HTML attributes (instead of via CSS styles). */
 		// TODO: Convert to Normalisations
@@ -42,7 +42,7 @@ namespace VelocityStatic.CSS {
 			if (State.prefixMatches[property]) {
 				return [State.prefixMatches[property], true];
 			} else {
-				let vendors = ["", "Webkit", "Moz", "ms", "O"];
+				const vendors = ["", "Webkit", "Moz", "ms", "O"];
 
 				for (let i = 0, vendorsLength = vendors.length; i < vendorsLength; i++) {
 					let propertyPrefixed;
@@ -57,7 +57,7 @@ namespace VelocityStatic.CSS {
 					}
 
 					/* Check if the browser supports this property as prefixed. */
-					let prefixElement = State.prefixElement;
+					const prefixElement = State.prefixElement;
 
 					if (prefixElement && isString(prefixElement.style[propertyPrefixed])) {
 						/* Cache the match. */
