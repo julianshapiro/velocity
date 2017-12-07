@@ -165,7 +165,7 @@ namespace VelocityStatic {
 				charEnd = endValue[indexEnd];
 
 			// If they're both numbers, then parse them as a whole
-			if (/[\d\.-]/.test(charStart) && /[\d\.-]/.test(charEnd)) {
+			if (TWEEN_NUMBER_REGEX.test(charStart) && TWEEN_NUMBER_REGEX.test(charEnd)) {
 				let tempStart = charStart, // temporary character buffer
 					tempEnd = charEnd, // temporary character buffer
 					dotStart = ".", // Make sure we can only ever match a single dot in a decimal
@@ -175,7 +175,7 @@ namespace VelocityStatic {
 					charStart = startValue[indexStart];
 					if (charStart === dotStart) {
 						dotStart = ".."; // Can never match two characters
-					} else if (!/\d/.test(charStart)) {
+					} else if (!isNumberWhenParsed(charStart)) {
 						break;
 					}
 					tempStart += charStart;
@@ -184,7 +184,7 @@ namespace VelocityStatic {
 					charEnd = endValue[indexEnd];
 					if (charEnd === dotEnd) {
 						dotEnd = ".."; // Can never match two characters
-					} else if (!/\d/.test(charEnd)) {
+					} else if (!isNumberWhenParsed(charEnd)) {
 						break;
 					}
 					tempEnd += charEnd;
@@ -335,30 +335,32 @@ namespace VelocityStatic {
 			State.firstNew = activeCall._next;
 		}
 		// Check if we're actually already ready
-		if (!(activeCall._flags & AnimationFlags.EXPANDED)) {
-			const element = activeCall.element,
-				tweens = activeCall.tweens,
-				duration = getValue(activeCall.options.duration, defaults.duration);
+		if (activeCall._flags & AnimationFlags.EXPANDED) {
+			return;
+		}
 
-			for (const propertyName in tweens) {
-				const tween = tweens[propertyName];
+		let element = activeCall.element,
+			tweens = activeCall.tweens,
+			duration = getValue(activeCall.options.duration, defaults.duration);
 
-				if (tween[Tween.START] == null) {
-					// Get the start value as it's not been passed in
-					const startValue = CSS.getPropertyValue(activeCall.element, propertyName);
+		for (const propertyName in tweens) {
+			const tween = tweens[propertyName];
 
-					if (isString(startValue)) {
-						tween[Tween.START] = CSS.fixColors(startValue) as any;
-						explodeTween(propertyName, tween, duration);
-					} else if (!Array.isArray(startValue)) {
-						console.warn("bad type", tween, propertyName, startValue)
-					}
-				}
-				if (debug) {
-					console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween), element);
+			if (tween[Tween.START] == null) {
+				// Get the start value as it's not been passed in
+				const startValue = CSS.getPropertyValue(activeCall.element, propertyName);
+
+				if (isString(startValue)) {
+					tween[Tween.START] = CSS.fixColors(startValue) as any;
+					explodeTween(propertyName, tween, duration);
+				} else if (!Array.isArray(startValue)) {
+					console.warn("bad type", tween, propertyName, startValue)
 				}
 			}
-			activeCall._flags |= AnimationFlags.EXPANDED;
+			if (debug) {
+				console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween), element);
+			}
 		}
+		activeCall._flags |= AnimationFlags.EXPANDED;
 	}
 }

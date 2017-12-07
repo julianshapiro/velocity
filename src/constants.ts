@@ -33,6 +33,7 @@ const DEFAULT_QUEUE = "";
 const DEFAULT_REPEAT = 0;
 const DEFAULT_SPEED = 1;
 const DEFAULT_SYNC = true;
+const TWEEN_NUMBER_REGEX = /[\d\.-]/;
 
 const VERSION = "2.0.0";
 

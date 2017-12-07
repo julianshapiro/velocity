@@ -41,7 +41,7 @@ namespace VelocityStatic {
 			let activeCall: AnimationCall = State.first;
 
 			while (activeCall) {
-				if (!elements || _inArray.call(elements, activeCall.element)) {
+				if (!elements || _inArray(elements, activeCall.element)) {
 					checkAnimation(activeCall, queueName, defaultQueue, isPaused);
 				}
 				activeCall = activeCall._next;

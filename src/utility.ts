@@ -66,17 +66,25 @@ const _now = Date.now ? Date.now : function() {
 };
 
 /**
- * Get the index of an element
+ * Check whether a value belongs to an array
+ * https://jsperf.com/includes-vs-indexof-vs-while-loop/6
+ * @param array The given array
+ * @param value The given element to check if it is part of the array
+ * @returns {boolean} True if it exists, false otherwise
  */
-const _indexOf = Array.prototype.indexOf;
+const _inArray = (array: any, value: any) => {
 
-/**
- * Shim for [].includes, can fallback to indexOf
- */
-const _inArray: (searchElement: any) => boolean =
-	(Array.prototype as any).includes || function(value) {
-		return _indexOf.call(this, value) > -1;
-	};
+	let includes = false;
+
+	for (let i = 0; i < array.length; i++) {
+		if (array[i] === value) {
+			includes = true;
+			break;
+		}
+	}
+
+	return includes;
+}
 
 /**
  * Convert an element or array-like element list into an array if needed.

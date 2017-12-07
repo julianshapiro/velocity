@@ -14,6 +14,15 @@ function isNumber(variable): variable is number {
 	return typeof variable === "number";
 }
 
+/**
+ * Faster way to parse a string/number as a number https://jsperf.com/number-vs-parseint-vs-plus/3
+ * @param variable The given string or number
+ * @returns {variable is number} Returns boolean true if it is a number, false otherwise
+ */
+function isNumberWhenParsed(variable: string | number): variable is number {
+	return !isNaN(Number(variable));
+}
+
 function isString(variable): variable is string {
 	return typeof variable === "string";
 }
@@ -35,6 +44,7 @@ function propertyIsEnumerable(object: Object, property: string): boolean {
 }
 
 /* Determine if variable is an array-like wrapped jQuery, Zepto or similar element, or even a NodeList etc. */
+
 /* NOTE: HTMLFormElements also have a length. */
 function isWrapped(variable): variable is HTMLorSVGElement[] {
 	return variable

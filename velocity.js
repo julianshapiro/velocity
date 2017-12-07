@@ -68,6 +68,8 @@ var DEFAULT_SPEED = 1;
 
 var DEFAULT_SYNC = true;
 
+var TWEEN_NUMBER_REGEX = /[\d\.-]/;
+
 var VERSION = "2.0.0";
 
 var Duration = {
@@ -89,6 +91,15 @@ function isBoolean(variable) {
 
 function isNumber(variable) {
     return typeof variable === "number";
+}
+
+/**
+ * Faster way to parse a string/number as a number https://jsperf.com/number-vs-parseint-vs-plus/3
+ * @param variable The given string or number
+ * @returns {variable is number} Returns boolean true if it is a number, false otherwise
+ */
+function isNumberWhenParsed(variable) {
+    return !isNaN(Number(variable));
 }
 
 function isString(variable) {
@@ -206,15 +217,21 @@ var _now = Date.now ? Date.now : function() {
 };
 
 /**
- * Get the index of an element
+ * Check whether a value belongs to an array
+ * https://jsperf.com/includes-vs-indexof-vs-while-loop/6
+ * @param array The given array
+ * @param value The given element to check if it is part of the array
+ * @returns {boolean} True if it exists, false otherwise
  */
-var _indexOf = Array.prototype.indexOf;
-
-/**
- * Shim for [].includes, can fallback to indexOf
- */
-var _inArray = Array.prototype.includes || function(value) {
-    return _indexOf.call(this, value) > -1;
+var _inArray = function(array, value) {
+    var includes = false;
+    for (var i = 0; i < array.length; i++) {
+        if (array[i] === value) {
+            includes = true;
+            break;
+        }
+    }
+    return includes;
 };
 
 /**
@@ -1702,7 +1719,7 @@ var VelocityStatic;
             }
             for (activeCall = VelocityStatic.State.first; activeCall && (finishAll || activeCall !== VelocityStatic.State.firstNew); activeCall = nextCall || VelocityStatic.State.firstNew) {
                 nextCall = activeCall._next;
-                if (!elements || _inArray.call(elements, activeCall.element)) {
+                if (!elements || _inArray(elements, activeCall.element)) {
                     checkAnimationShouldBeFinished(activeCall, queueName, defaultQueue);
                 }
             }
@@ -1921,7 +1938,7 @@ var VelocityStatic;
         } else {
             var activeCall = VelocityStatic.State.first;
             while (activeCall) {
-                if (!elements || _inArray.call(elements, activeCall.element)) {
+                if (!elements || _inArray(elements, activeCall.element)) {
                     checkAnimation(activeCall, queueName, defaultQueue, isPaused);
                 }
                 activeCall = activeCall._next;
@@ -2004,7 +2021,7 @@ var VelocityStatic;
             }
             for (activeCall = VelocityStatic.State.first; activeCall && (finishAll || activeCall !== VelocityStatic.State.firstNew); activeCall = nextCall || VelocityStatic.State.firstNew) {
                 nextCall = activeCall._next;
-                if (!elements || _inArray.call(elements, activeCall.element)) {
+                if (!elements || _inArray(elements, activeCall.element)) {
                     checkAnimationShouldBeStopped(activeCall, queueName, defaultQueue);
                 }
             }
@@ -3402,7 +3419,7 @@ var VelocityStatic;
         while (indexStart < startValue.length || indexEnd < endValue.length) {
             var charStart = startValue[indexStart], charEnd = endValue[indexEnd];
             // If they're both numbers, then parse them as a whole
-            if (/[\d\.-]/.test(charStart) && /[\d\.-]/.test(charEnd)) {
+            if (TWEEN_NUMBER_REGEX.test(charStart) && TWEEN_NUMBER_REGEX.test(charEnd)) {
                 var tempStart = charStart, // temporary character buffer
                 tempEnd = charEnd, // temporary character buffer
                 dotStart = ".", // Make sure we can only ever match a single dot in a decimal
@@ -3412,7 +3429,7 @@ var VelocityStatic;
                     charStart = startValue[indexStart];
                     if (charStart === dotStart) {
                         dotStart = "..";
-                    } else if (!/\d/.test(charStart)) {
+                    } else if (!isNumberWhenParsed(charStart)) {
                         break;
                     }
                     tempStart += charStart;
@@ -3421,7 +3438,7 @@ var VelocityStatic;
                     charEnd = endValue[indexEnd];
                     if (charEnd === dotEnd) {
                         dotEnd = "..";
-                    } else if (!/\d/.test(charEnd)) {
+                    } else if (!isNumberWhenParsed(charEnd)) {
                         break;
                     }
                     tempEnd += charEnd;
@@ -3559,26 +3576,27 @@ var VelocityStatic;
             VelocityStatic.State.firstNew = activeCall._next;
         }
         // Check if we're actually already ready
-        if (!(activeCall._flags & 1)) {
-            var element = activeCall.element, tweens = activeCall.tweens, duration = getValue(activeCall.options.duration, VelocityStatic.defaults.duration);
-            for (var propertyName in tweens) {
-                var tween_5 = tweens[propertyName];
-                if (tween_5[2] == null) {
-                    // Get the start value as it's not been passed in
-                    var startValue = VelocityStatic.CSS.getPropertyValue(activeCall.element, propertyName);
-                    if (isString(startValue)) {
-                        tween_5[2] = VelocityStatic.CSS.fixColors(startValue);
-                        explodeTween(propertyName, tween_5, duration);
-                    } else if (!Array.isArray(startValue)) {
-                        console.warn("bad type", tween_5, propertyName, startValue);
-                    }
-                }
-                if (VelocityStatic.debug) {
-                    console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween_5), element);
+        if (activeCall._flags & 1) {
+            return;
+        }
+        var element = activeCall.element, tweens = activeCall.tweens, duration = getValue(activeCall.options.duration, VelocityStatic.defaults.duration);
+        for (var propertyName in tweens) {
+            var tween_5 = tweens[propertyName];
+            if (tween_5[2] == null) {
+                // Get the start value as it's not been passed in
+                var startValue = VelocityStatic.CSS.getPropertyValue(activeCall.element, propertyName);
+                if (isString(startValue)) {
+                    tween_5[2] = VelocityStatic.CSS.fixColors(startValue);
+                    explodeTween(propertyName, tween_5, duration);
+                } else if (!Array.isArray(startValue)) {
+                    console.warn("bad type", tween_5, propertyName, startValue);
                 }
             }
-            activeCall._flags |= 1;
+            if (VelocityStatic.debug) {
+                console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween_5), element);
+            }
         }
+        activeCall._flags |= 1;
     }
     VelocityStatic.validateTweens = validateTweens;
 })(VelocityStatic || (VelocityStatic = {}));

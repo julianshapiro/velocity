@@ -52,7 +52,7 @@ namespace VelocityStatic {
 			}
 			for (activeCall = State.first; activeCall && (finishAll || activeCall !== State.firstNew); activeCall = nextCall || State.firstNew) {
 				nextCall = activeCall._next;
-				if (!elements || _inArray.call(elements, activeCall.element)) {
+				if (!elements || _inArray(elements, activeCall.element)) {
 					checkAnimationShouldBeStopped(activeCall, queueName, defaultQueue);
 				}
 			}
