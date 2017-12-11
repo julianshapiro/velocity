@@ -184,7 +184,9 @@ namespace VelocityStatic {
 				 ********************/
 
 				// Expand any tweens that might need it.
-				State.firstNew = undefined;
+				while ((activeCall = State.firstNew)) {
+					validateTweens(activeCall);
+				}
 				// Iterate through each active call.
 				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = activeCall._next) {
 					activeCall._flags |= AnimationFlags.EXPANDED;
