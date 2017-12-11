@@ -19,7 +19,7 @@ namespace VelocityStatic {
 
 			activeCall.options.begin.call(elements, elements, activeCall);
 		} catch (error) {
-			setTimeout(function() {
+			setTimeout(function () {
 				throw error;
 			}, 1);
 		}
@@ -43,8 +43,9 @@ namespace VelocityStatic {
 				activeCall.timeStart,
 				tweenValue !== undefined ? tweenValue : String(percentComplete * 100),
 				activeCall);
+
 		} catch (error) {
-			setTimeout(function() {
+			setTimeout(function () {
 				throw error;
 			}, 1);
 		}
@@ -70,7 +71,6 @@ namespace VelocityStatic {
 			/* If this call has finished tweening, pass it to complete() to handle call cleanup. */
 			completeCall(activeCall);
 		}
-
 	}
 
 	/**************
@@ -83,27 +83,27 @@ namespace VelocityStatic {
 		/**
 		 * Shim for window.performance in case it doesn't exist
 		 */
-		performance = (function() {
+		performance = (function () {
 			const perf = window.performance || {} as Performance;
 
 			if (typeof perf.now !== "function") {
 				const nowOffset = perf.timing && perf.timing.navigationStart ? perf.timing.navigationStart : _now();
 
-				perf.now = function() {
+				perf.now = function () {
 					return _now() - nowOffset;
 				};
 			}
 			return perf;
 		})(),
 		/* rAF shim. Gist: https://gist.github.com/julianshapiro/9497513 */
-		rAFShim = ticker = (function() {
-			return window.requestAnimationFrame || function(callback) {
+		rAFShim = ticker = (function () {
+			return window.requestAnimationFrame || function (callback) {
 				/* Dynamically set delay on a per-tick basis to match 60fps. */
 				/* Based on a technique by Erik Moller. MIT license: https://gist.github.com/paulirish/1579671 */
 				const timeCurrent = performance.now(), // High precision if we can
 					timeDelta = Math.max(0, FRAME_TIME - (timeCurrent - lastTick));
 
-				return setTimeout(function() {
+				return setTimeout(function () {
 					callback(timeCurrent + timeDelta);
 				}, timeDelta);
 			};
@@ -183,12 +183,11 @@ namespace VelocityStatic {
 				 Call Iteration
 				 ********************/
 
-				// Exapand any tweens that might need it.
-				while ((activeCall = State.firstNew)) {
-					validateTweens(activeCall);
-				}
+				// Expand any tweens that might need it.
+				State.firstNew = undefined;
 				// Iterate through each active call.
 				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = activeCall._next) {
+					activeCall._flags |= AnimationFlags.EXPANDED;
 					const element = activeCall.element;
 					let data: ElementData;
 
@@ -235,10 +234,9 @@ namespace VelocityStatic {
 				}
 				// Need to split the loop, as ready sync animations must all get
 				// the same start time.
-				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
+				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = activeCall._next) {
 					const flags = activeCall._flags;
 
-					nextCall = activeCall._next;
 					if (!(flags & AnimationFlags.READY) || (flags & AnimationFlags.PAUSED)) {
 						continue;
 					}
@@ -281,14 +279,7 @@ namespace VelocityStatic {
 					if (speed !== 1) {
 						// On the first frame we may have a shorter delta
 						const delta = Math.min(deltaTime, timeCurrent - timeStart);
-
-						if (speed === 0) {
-							// If we're freezing the animation then don't const the
-							// time change
-							activeCall.timeStart = timeStart += delta;
-						} else {
-							activeCall.timeStart = timeStart += delta * (1 - speed);
-						}
+						activeCall.timeStart = timeStart += delta * (1 - speed);
 					}
 
 					if (options._first === activeCall && options.progress) {
@@ -325,13 +316,11 @@ namespace VelocityStatic {
 						let currentValue = "",
 							i = 0;
 
-						if (!pattern) {
-							console.warn("VelocityJS: Missing pattern:", property, JSON.stringify(tween[property]))
-						} else {
+						if (pattern) {
 							for (; i < pattern.length; i++) {
 								const startValue = tween[Tween.START][i];
 
-								if (startValue == null) {
+								if (startValue === null) {
 									currentValue += pattern[i];
 								} else {
 									// All easings must deal with numbers except for
@@ -341,14 +330,16 @@ namespace VelocityStatic {
 									currentValue += rounding && rounding[i] ? Math.round(result) : result;
 								}
 							}
-							if (property === "tween") {
+							if (property !== "tween") {
+								// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
+								CSS.setPropertyValue(activeCall.element, property, currentValue);
+							} else {
 								// Skip the fake 'tween' property as that is only
 								// passed into the progress callback.
 								activeCall.tween = currentValue;
-							} else {
-								// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-								CSS.setPropertyValue(activeCall.element, property, currentValue);
 							}
+						} else {
+							console.warn("VelocityJS: Missing pattern:", property, JSON.stringify(tween[property]))
 						}
 					}
 				}
@@ -366,4 +357,4 @@ namespace VelocityStatic {
 		}
 		ticking = false;
 	}
-};
+}

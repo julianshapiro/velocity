@@ -16,6 +16,13 @@ const enum Tween {
 };
 
 namespace VelocityStatic {
+
+	let commands = new Map<string, any>();
+	commands.set("function", (value, element, elements, elementArrayIndex) => (value as any as VelocityPropertyValueFn).call(element, elementArrayIndex, elements.length))
+	commands.set("number", (value, element, elements, elementArrayIndex, propertyName) => CSS.fixColors(String(value) + CSS.Values.getUnitType(propertyName)));
+	commands.set("string", (value, element, elements, elementArrayIndex, propertyName) => CSS.fixColors(value));
+	commands.set("undefined", (value, element, elements, elementArrayIndex, propertyName) => CSS.fixColors(CSS.getPropertyValue(element, propertyName)));
+
 	/**
 	 * Expand a VelocityProperty argument into a valid sparse Tween array. This
 	 * pre-allocates the array as it is then the correct size and slightly
@@ -31,83 +38,59 @@ namespace VelocityStatic {
 			duration = getValue(animation.options.duration, defaults.duration);
 
 		for (const property in properties) {
-			if (properties.hasOwnProperty(property)) {
-				const propertyName = CSS.Names.camelCase(property);
-				let valueData = properties[property];
+			const propertyName = CSS.Names.camelCase(property);
+			let valueData = properties[property];
 
-				if (!data.isSVG
-					&& propertyName !== "tween"
-					&& CSS.Normalizations[propertyName] === undefined
-					&& (!State.prefixElement
-						|| !isString(State.prefixElement.style[propertyName]))) {
-					if (debug) {
-						console.log("Skipping [" + property + "] due to a lack of browser support.");
-					}
-					continue;
+			if (!data.isSVG
+				&& propertyName !== "tween"
+				&& CSS.Normalizations[propertyName] === undefined
+				&& (!State.prefixElement
+					|| !isString(State.prefixElement.style[propertyName]))) {
+				if (debug) {
+					console.log("Skipping [" + property + "] due to a lack of browser support.");
 				}
-				if (valueData == null) {
-					if (debug) {
-						console.log("Skipping [" + property + "] due to no value supplied.");
-					}
-					continue;
-				}
-				const tween: VelocityTween = tweens[propertyName] = new Array(Tween.length) as any;
-				let endValue: string,
-					startValue: string;
-
-				if (isFunction(valueData)) {
-					// If we have a function as the main argument then resolve
-					// it first, in case it returns an array that needs to be
-					// split.
-					valueData = (valueData as VelocityPropertyFn).call(element, elementArrayIndex, elements.length, elements);
-				}
-				if (Array.isArray(valueData)) {
-					// valueData is an array in the form of
-					// [ endValue, [, easing] [, startValue] ]
-					const arr1 = valueData[1],
-						arr2 = valueData[2];
-
-					endValue = valueData[0] as any;
-					if ((isString(arr1) && (/^[\d-]/.test(arr1) || CSS.RegEx.isHex.test(arr1))) || isFunction(arr1) || isNumber(arr1)) {
-						startValue = arr1 as any;
-					} else if ((isString(arr1) && Easings[arr1]) || Array.isArray(arr1)) {
-						tween[Tween.EASING] = arr1 as any;
-						startValue = arr2 as any;
-					} else {
-						startValue = arr1 || arr2 as any;
-					}
-				} else {
-					endValue = valueData as any;
-				}
-				// Fix endValue
-				if (isFunction(endValue)) {
-					endValue = (endValue as any as VelocityPropertyValueFn).call(element, elementArrayIndex, elements.length);
-				}
-				if (isNumber(endValue)) {
-					endValue = String(endValue) + CSS.Values.getUnitType(propertyName);
-				}
-				if (isString(endValue)) {
-					tween[Tween.END] = CSS.fixColors(endValue) as any;
-				} else {
-					console.warn("Velocity: Bad tween supplied!", propertyName, valueData)
-				}
-				// Fix startValue if it exists
-				if (isFunction(startValue)) {
-					startValue = (startValue as any as VelocityPropertyValueFn).call(element, elementArrayIndex, elements.length);
-				}
-				if (isNumber(startValue)) {
-					startValue = String(startValue) + CSS.Values.getUnitType(propertyName);
-				}
-				if (!isString(startValue) && (queue === false || data.queueList[queue] === undefined)) {
-					// If there's nothing currently running or queued then grab
-					// the value now - instead of grabbing it during a tick.
-					startValue = CSS.getPropertyValue(element, propertyName);
-				}
-				if (isString(startValue)) {
-					tween[Tween.START] = CSS.fixColors(startValue) as any;
-					explodeTween(propertyName, tween, duration);
-				}
+				continue;
 			}
+			if (valueData == null) {
+				if (debug) {
+					console.log("Skipping [" + property + "] due to no value supplied.");
+				}
+				continue;
+			}
+			const tween: VelocityTween = tweens[propertyName] = new Array(Tween.length) as any;
+			let endValue: string,
+				startValue: string;
+
+			if (isFunction(valueData)) {
+				// If we have a function as the main argument then resolve
+				// it first, in case it returns an array that needs to be
+				// split.
+				valueData = (valueData as VelocityPropertyFn).call(element, elementArrayIndex, elements.length, elements);
+			}
+
+			if (Array.isArray(valueData)) {
+				// valueData is an array in the form of
+				// [ endValue, [, easing] [, startValue] ]
+				const arr1 = valueData[1],
+					arr2 = valueData[2];
+
+				endValue = valueData[0] as any;
+				if ((isString(arr1) && (/^[\d-]/.test(arr1) || CSS.RegEx.isHex.test(arr1))) || isFunction(arr1) || isNumber(arr1)) {
+					startValue = arr1 as any;
+				} else if ((isString(arr1) && Easings[arr1]) || Array.isArray(arr1)) {
+					tween[Tween.EASING] = arr1 as any;
+					startValue = arr2 as any;
+				} else {
+					startValue = arr1 || arr2 as any;
+				}
+			} else {
+				endValue = valueData as any;
+			}
+
+			tween[Tween.END] = commands.get(typeof endValue)(endValue, element, elements, elementArrayIndex, propertyName);
+			tween[Tween.START] = commands.get(typeof startValue)(startValue, element, elements, elementArrayIndex, propertyName);
+
+			explodeTween(propertyName, tween, duration);
 		}
 	}
 
@@ -346,7 +329,7 @@ namespace VelocityStatic {
 		for (const propertyName in tweens) {
 			const tween = tweens[propertyName];
 
-			if (tween[Tween.START] == null) {
+			if (tween[Tween.START] === null) {
 				// Get the start value as it's not been passed in
 				const startValue = CSS.getPropertyValue(activeCall.element, propertyName);
 
@@ -361,6 +344,5 @@ namespace VelocityStatic {
 				console.log("tweensContainer (" + propertyName + "): " + JSON.stringify(tween), element);
 			}
 		}
-		activeCall._flags |= AnimationFlags.EXPANDED;
 	}
 }
