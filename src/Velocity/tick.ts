@@ -189,7 +189,6 @@ namespace VelocityStatic {
 				}
 				// Iterate through each active call.
 				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = activeCall._next) {
-					activeCall._flags |= AnimationFlags.EXPANDED;
 					const element = activeCall.element;
 					let data: ElementData;
 
@@ -236,9 +235,10 @@ namespace VelocityStatic {
 				}
 				// Need to split the loop, as ready sync animations must all get
 				// the same start time.
-				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = activeCall._next) {
+				for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
 					const flags = activeCall._flags;
 
+					nextCall = activeCall._next;
 					if (!(flags & AnimationFlags.READY) || (flags & AnimationFlags.PAUSED)) {
 						continue;
 					}
