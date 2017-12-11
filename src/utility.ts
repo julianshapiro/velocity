@@ -72,18 +72,15 @@ const _now = Date.now ? Date.now : function() {
  * @param value The given element to check if it is part of the array
  * @returns {boolean} True if it exists, false otherwise
  */
-const _inArray = (array: any, value: any) => {
+function _inArray<T>(array: T[], value: T): boolean {
+	let i = 0;
 
-	let includes = false;
-
-	for (let i = 0; i < array.length; i++) {
-		if (array[i] === value) {
-			includes = true;
-			break;
+	while (i < array.length) {
+		if (array[i++] === value) {
+			return true;
 		}
 	}
-
-	return includes;
+	return false;
 }
 
 /**

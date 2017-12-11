@@ -223,16 +223,15 @@ var _now = Date.now ? Date.now : function() {
  * @param value The given element to check if it is part of the array
  * @returns {boolean} True if it exists, false otherwise
  */
-var _inArray = function(array, value) {
-    var includes = false;
-    for (var i = 0; i < array.length; i++) {
-        if (array[i] === value) {
-            includes = true;
-            break;
+function _inArray(array, value) {
+    var i = 0;
+    while (i < array.length) {
+        if (array[i++] === value) {
+            return true;
         }
     }
-    return includes;
-};
+    return false;
+}
 
 /**
  * Convert an element or array-like element list into an array if needed.
