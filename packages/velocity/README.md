@@ -18,13 +18,13 @@ NPM: https://www.npmjs.com/package/velocity-react
 ## Quickstart
 ### Velocity (CDN, choose one of them):
 ```html
-<script src="//cdn.jsdelivr.net/velocity/1.5/velocity.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/velocity-animate@1.5/velocity.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.0/velocity.min.js"></script>
 ```
 
 ### Velocity UI pack (CDN, choose one of them): 
 ```html
-<script src="//cdn.jsdelivr.net/velocity/1.5/velocity.ui.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/velocity-animate@1.5/velocity.ui.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.0/velocity.ui.min.js"></script>
 ```
 
