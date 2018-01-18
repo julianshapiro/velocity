@@ -392,11 +392,10 @@ interface StrictVelocityOptions extends VelocityOptions, VelocityPromise {
  * used.
  */
 interface ElementData {
-	// TODO: Change this to a const enum, so further future types can be allowed.
 	/**
-	 * Cache whether this Element is an SVG element.
+	 * A generated enum of types of this element, used for Normalizations.
 	 */
-	isSVG?: boolean;
+	types: number;
 	/**
 	 * A local cache of the current style values we're using, this is 80x faster
 	 * than <code>element.style</code> access.
@@ -436,24 +435,6 @@ interface ElementData {
 	 * otherwise it will start as if one frame in already.
 	 */
 	lastFinishList: {[name: string]: number};
-}
-
-/**
- * @deprecated
- */
-interface ScrollData {
-	/**
-	 * @deprecated
-	 */
-	container?: any;
-	/**
-	 * @deprecated
-	 */
-	direction?: string;
-	/**
-	 * @deprecated
-	 */
-	alternateValue?: number;
 }
 
 type VelocityTween = [(string | number)[], VelocityEasingFn, (string | number)[], (string | number)[], boolean[]];

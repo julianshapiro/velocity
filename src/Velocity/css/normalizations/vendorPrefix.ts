@@ -30,7 +30,7 @@ namespace VelocityStatic.CSS {
 				let unprefixed = property.replace(/^[a-z]+([A-Z])/, ($, letter: string) => letter.toLowerCase());
 
 				if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
-					registerNormalization([unprefixed, vendorPrefix(property, unprefixed)]);
+					registerNormalization([Element, unprefixed, vendorPrefix(property, unprefixed)]);
 				}
 			}
 		}

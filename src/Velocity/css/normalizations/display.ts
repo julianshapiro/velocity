@@ -50,5 +50,5 @@ namespace VelocityStatic.CSS {
 		return true;
 	}
 
-	registerNormalization(["display", display]);
+	registerNormalization([Element, "display", display]);
 }

@@ -33,11 +33,14 @@ namespace VelocityStatic {
 		for (const property in properties) {
 			if (properties.hasOwnProperty(property)) {
 				const propertyName = CSS.Names.camelCase(property);
-				let valueData = properties[property];
+				let valueData = properties[property],
+					types = data.types,
+					found: boolean = propertyName === "tween";
 
-				if (!data.isSVG
-					&& propertyName !== "tween"
-					&& CSS.Normalizations[propertyName] === undefined
+				for (let index = 0; types && !found; types >>= 1, index++) {
+					found = !!(types & 1 && CSS.Normalizations[0][propertyName]);
+				}
+				if (!found
 					&& (!State.prefixElement
 						|| !isString(State.prefixElement.style[propertyName]))) {
 					if (debug) {

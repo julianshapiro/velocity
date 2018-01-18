@@ -18,9 +18,16 @@ function Data(element: HTMLorSVGElement): ElementData {
 	if (data) {
 		return data;
 	}
+	let types = 0;
+
+	for (let index = 0, constructors = VelocityStatic.CSS.constructors; index < constructors.length; index++) {
+		if (element instanceof constructors[index]) {
+			types |= 1 << index;
+		}
+	}
 	// Do it this way so it errors on incorrect data.
 	let newData: ElementData = {
-		isSVG: isSVG(element),
+		types: types,
 		count: 0,
 		computedStyle: null,
 		cache: Object.create(null),

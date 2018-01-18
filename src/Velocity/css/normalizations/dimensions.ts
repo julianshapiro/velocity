@@ -35,7 +35,7 @@ namespace VelocityStatic.CSS {
 	}
 
 	/**
-	 * Get/set the inner/outer dimension
+	 * Get/set the inner/outer dimension.
 	 */
 	function getDimension(name, wantInner: boolean) {
 		return function(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
@@ -47,8 +47,8 @@ namespace VelocityStatic.CSS {
 		} as VelocityNormalizationsFn;
 	}
 
-	registerNormalization(["innerWidth", getDimension("width", true)]);
-	registerNormalization(["innerHeight", getDimension("height", true)]);
-	registerNormalization(["outerWidth", getDimension("width", false)]);
-	registerNormalization(["outerHeight", getDimension("height", false)]);
+	registerNormalization([Element, "innerWidth", getDimension("width", true)]);
+	registerNormalization([Element, "innerHeight", getDimension("height", true)]);
+	registerNormalization([Element, "outerWidth", getDimension("width", false)]);
+	registerNormalization([Element, "outerHeight", getDimension("height", false)]);
 }

@@ -77,12 +77,10 @@ namespace VelocityStatic {
 	 Timing
 	 **************/
 
-	const FRAME_TIME = 1000 / 60;
-
-	let ticker: (callback: FrameRequestCallback) => number,
+	const FRAME_TIME = 1000 / 60,
 		/**
-		 * Shim for window.performance in case it doesn't exist
-		 */
+		* Shim for window.performance in case it doesn't exist
+		*/
 		performance = (function() {
 			const perf = window.performance || {} as Performance;
 
@@ -95,20 +93,25 @@ namespace VelocityStatic {
 			}
 			return perf;
 		})(),
+		/**
+		 * Proxy function for when rAF is not available - try to be as accurate
+		 * as possible with the setTimeout calls, however they are far less
+		 * accurate than rAF can be - so try not to use normally (unless the tab
+		 * is in the background).
+		 */
+		rAFProxy = function(callback: FrameRequestCallback) {
+			console.log("rAFProxy", Math.max(0, FRAME_TIME - (performance.now() - lastTick)), performance.now(), lastTick, FRAME_TIME)
+			return setTimeout(function() {
+				callback(performance.now());
+			}, Math.max(0, FRAME_TIME - (performance.now() - lastTick)));
+		},
 		/* rAF shim. Gist: https://gist.github.com/julianshapiro/9497513 */
-		rAFShim = ticker = (function() {
-			return window.requestAnimationFrame || function(callback) {
-				/* Dynamically set delay on a per-tick basis to match 60fps. */
-				/* Based on a technique by Erik Moller. MIT license: https://gist.github.com/paulirish/1579671 */
-				const timeCurrent = performance.now(), // High precision if we can
-					timeDelta = Math.max(0, FRAME_TIME - (timeCurrent - lastTick));
-
-				return setTimeout(function() {
-					callback(timeCurrent + timeDelta);
-				}, timeDelta);
-			};
-		})();
-
+		rAFShim = window.requestAnimationFrame || rAFProxy;
+	/**
+	 * The ticker function being used, either rAF, or a function that
+	 * emulates it.
+	 */
+	let ticker: (callback: FrameRequestCallback) => number = document.hidden ? rAFProxy : rAFShim;
 	/**
 	 * The time that the last animation frame ran at. Set from tick(), and used
 	 * for missing rAF (ie, when not in focus etc).
@@ -120,33 +123,28 @@ namespace VelocityStatic {
 	 devices to avoid wasting battery power on inactive tabs. */
 	/* Note: Tab focus detection doesn't work on older versions of IE, but that's okay since they don't support rAF to begin with. */
 	if (!State.isMobile && document.hidden !== undefined) {
-		const updateTicker = function() {
-			/* Reassign the rAF function (which the global tick() function uses) based on the tab's focus state. */
-			if (document.hidden) {
-				ticker = function(callback: any) {
-					/* The tick function needs a truthy first argument in order to pass its internal timestamp check. */
-					return setTimeout(function() {
-						callback(true);
-					}, 16);
-				};
+		document.addEventListener("visibilitychange", function updateTicker(event?: Event) {
+			console.log("updateTicker", event, document.hidden)
+			let hidden = document.hidden;
 
-				/* The rAF loop has been paused by the browser, so we manually restart the tick. */
-				tick();
-			} else {
-				ticker = rAFShim;
+			ticker = hidden ? rAFProxy : rAFShim;
+			if (event) {
+				console.log("setTimeout tick", ticker)
+				setTimeout(tick, 2000);
 			}
-		};
-
-		/* Page could be sitting in the background at this time (i.e. opened as new tab) so making sure we use correct ticker from the start */
-		updateTicker();
-
-		/* And then run check again every time visibility changes */
-		document.addEventListener("visibilitychange", updateTicker);
+			tick();
+		});
 	}
 
 	let ticking: boolean;
 
-	/* Note: All calls to Velocity are pushed to the Velocity.State.calls array, which is fully iterated through upon each tick. */
+	/**
+	 * Called on every tick, preferably through rAF. This is reponsible for
+	 * initialising any new animations, then starting any that need starting.
+	 * Finally it will expand any tweens and set the properties relating to
+	 * them. If there are any callbacks relating to the animations then they
+	 * will attempt to call at the end (with the exception of "begin").
+	 */
 	export function tick(timestamp?: number | boolean) {
 		if (ticking) {
 			// Should never happen - but if we've swapped back from hidden to
@@ -327,6 +325,7 @@ namespace VelocityStatic {
 
 						if (!pattern) {
 							console.warn("VelocityJS: Missing pattern:", property, JSON.stringify(tween[property]))
+							delete tweens[property];
 						} else {
 							for (; i < pattern.length; i++) {
 								const startValue = tween[Tween.START][i];

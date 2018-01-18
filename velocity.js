@@ -478,7 +478,7 @@ var VelocityStatic;
             if (data && !data.computedStyle) {
                 data.computedStyle = computedStyle;
             }
-            if (/^(width|height)$/.test(property)) {
+            if (property === "width" || property === "height") {
                 // Browsers do not return height and width values for elements
                 // that are set to display:"none". Thus, we temporarily toggle
                 // display to the element type's default value.
@@ -541,50 +541,42 @@ var VelocityStatic;
          * Get a property value. This will grab via the cache if it exists, then
          * via any normalisations, then it will check the css values directly.
          */
-        function getPropertyValue(element, property, skipNormalisation) {
+        function getPropertyValue(element, propertyName, skipNormalisation, skipCache) {
             var data = Data(element);
             var propertyValue;
-            if (data && data.cache[property] != null) {
-                propertyValue = data.cache[property];
+            if (CSS.NoCacheNormalizations.has(propertyName)) {
+                skipCache = true;
+            }
+            if (!skipCache && data && data.cache[propertyName] != null) {
+                propertyValue = data.cache[propertyName];
                 if (VelocityStatic.debug >= 2) {
-                    console.info("Get " + property + ": " + propertyValue);
+                    console.info("Get " + propertyName + ": " + propertyValue);
                 }
                 return propertyValue;
-            } else if (!skipNormalisation && CSS.Normalizations[property]) {
-                propertyValue = CSS.Normalizations[property](element);
-            } else if (data && data.isSVG && CSS.Names.SVGAttribute(property)) {
-                // Since the height/width attribute values must be set manually,
-                // they don't reflect computed values. Thus, we use use getBBox()
-                // to ensure we always get values for elements with undefined
-                // height/width attributes.
-                // For SVG elements, dimensional properties (which SVGAttribute()
-                // detects) are tweened via their HTML attribute values instead
-                // of their CSS style values.
-                // TODO: Make into a normalisation
-                if (/^(height|width)$/i.test(property)) {
-                    /* Firefox throws an error if .getBBox() is called on an SVG that isn't attached to the DOM. */
-                    try {
-                        propertyValue = element.getBBox()[property] + "px";
-                    } catch (e) {
-                        propertyValue = "0px";
-                    }
-                } else {
-                    propertyValue = element.getAttribute(property);
-                }
             } else {
-                // Note: Retrieving the value of a CSS property cannot simply be
-                // performed by checking an element's style attribute (which
-                // only reflects user-defined values). Instead, the browser must
-                // be queried for a property's *computed* value. You can read
-                // more about getComputedStyle here:
-                // https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle
-                propertyValue = computePropertyValue(element, property);
+                var types = data.types, best = void 0;
+                for (var index = 0; types; types >>= 1, index++) {
+                    if (types & 1) {
+                        best = CSS.Normalizations[0][propertyName] || best;
+                    }
+                }
+                if (best) {
+                    propertyValue = best(element);
+                } else {
+                    // Note: Retrieving the value of a CSS property cannot simply be
+                    // performed by checking an element's style attribute (which
+                    // only reflects user-defined values). Instead, the browser must
+                    // be queried for a property's *computed* value. You can read
+                    // more about getComputedStyle here:
+                    // https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle
+                    propertyValue = computePropertyValue(element, propertyName);
+                }
             }
             if (VelocityStatic.debug >= 2) {
-                console.info("Get " + property + ": " + propertyValue);
+                console.info("Get " + propertyName + ": " + propertyValue);
             }
             if (data) {
-                data.cache[property] = propertyValue;
+                data.cache[propertyName] = propertyValue;
             }
             return propertyValue;
         }
@@ -811,7 +803,9 @@ var VelocityStatic;
          CSS Property Names
          ************************/
         /* Certain browsers require an SVG transform to be applied as an attribute. (Otherwise, application via CSS is preferable due to 3D support.) */
-        var SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2" + (IE || VelocityStatic.State.isAndroid && !VelocityStatic.State.isChrome ? "|transform" : ""), SVGAttributesRX = RegExp("^(" + SVGAttributes + ")$", "i"), camelCase = {};
+        var //SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2" + (IE || (State.isAndroid && !State.isChrome) ? "|transform" : ""),
+        //SVGAttributesRX = RegExp("^(" + SVGAttributes + ")$", "i"),
+        camelCase = {};
         CSS.Names = {
             /* Camelcase a property name into its JavaScript notation (e.g. "background-color" ==> "backgroundColor").
              Camelcasing is used to normalize property names between and across calls. */
@@ -826,9 +820,9 @@ var VelocityStatic;
             },
             /* For SVG elements, some properties (namely, dimensional ones) are GET/SET via the element's HTML attributes (instead of via CSS styles). */
             // TODO: Convert to Normalisations
-            SVGAttribute: function(property) {
-                return SVGAttributesRX.test(property);
-            },
+            //SVGAttribute: function(property: string): boolean {
+            //	return SVGAttributesRX.test(property);
+            //},
             /* Determine whether a property should be set with a vendor prefix. */
             /* If a prefixed version of the property exists, return it. Otherwise, return the original property name.
              If the property is not at all supported by the browser, return a false flag. */
@@ -863,683 +857,6 @@ var VelocityStatic;
             }
         };
     })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Normalisations are used when getting or setting a (normally css compound
- * properties) value that can have a different order in different browsers.
- *
- * It can also be used to extend and create specific properties that otherwise
- * don't exist (such as for scrolling, or inner/outer dimensions).
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    var CSS;
-    (function(CSS) {
-        /**
-         * Unlike "actions", normalizations can always be replaced by users.
-         */
-        CSS.Normalizations = Object.create(null);
-        /**
-         * Used to register a normalization. This should never be called by users
-         * directly, instead it should be called via a Normalizations.
-         *
-         * @private
-         */
-        function registerNormalization(args) {
-            var name = args[0], callback = args[1];
-            if (!isString(name)) {
-                console.warn("VelocityJS: Trying to set 'registerNormalization' name to an invalid value:", name);
-            } else if (!isFunction(callback)) {
-                console.warn("VelocityJS: Trying to set 'registerNormalization' callback to an invalid value:", callback);
-            } else {
-                CSS.Normalizations[name] = callback;
-            }
-        }
-        CSS.registerNormalization = registerNormalization;
-        registerNormalization([ "registerNormalization", registerNormalization ]);
-    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-///<reference path="normalizations.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    var CSS;
-    (function(CSS) {
-        /**
-         * Figure out the dimensions for this width / height based on the
-         * potential borders and whether we care about them.
-         */
-        function augmentDimension(element, name, wantInner) {
-            var isBorderBox = CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
-            if (isBorderBox === wantInner) {
-                // in box-sizing mode, the CSS width / height accessors already
-                // give the outerWidth / outerHeight.
-                var sides = name === "width" ? [ "Left", "Right" ] : [ "Top", "Bottom" ], fields = [ "padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width" ];
-                var i = void 0, value = void 0, augment = 0;
-                for (i = 0; i < fields.length; i++) {
-                    value = parseFloat(CSS.getPropertyValue(element, fields[i]));
-                    if (!isNaN(value)) {
-                        augment += value;
-                    }
-                }
-                return wantInner ? -augment : augment;
-            }
-            return 0;
-        }
-        CSS.augmentDimension = augmentDimension;
-        /**
-         * Get/set the inner/outer dimension
-         */
-        function getDimension(name, wantInner) {
-            return function(element, propertyValue) {
-                if (propertyValue === undefined) {
-                    return augmentDimension(element, name, wantInner) + "px";
-                }
-                CSS.setPropertyValue(element, name, parseFloat(propertyValue) - augmentDimension(element, name, wantInner) + "px");
-                return true;
-            };
-        }
-        CSS.registerNormalization([ "innerWidth", getDimension("width", true) ]);
-        CSS.registerNormalization([ "innerHeight", getDimension("height", true) ]);
-        CSS.registerNormalization([ "outerWidth", getDimension("width", false) ]);
-        CSS.registerNormalization([ "outerHeight", getDimension("height", false) ]);
-    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-///<reference path="normalizations.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    var CSS;
-    (function(CSS) {
-        var inlineRx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i, listItemRx = /^(li)$/i, tableRowRx = /^(tr)$/i, tableRx = /^(table)$/i, tableRowGroupRx = /^(tbody)$/i;
-        function display(element, propertyValue) {
-            var style = element.style;
-            if (propertyValue === undefined) {
-                return CSS.getPropertyValue(element, "display", true);
-            }
-            if (propertyValue === "auto") {
-                var nodeName = element && element.nodeName, data = Data(element);
-                if (inlineRx.test(nodeName)) {
-                    propertyValue = "inline";
-                } else if (listItemRx.test(nodeName)) {
-                    propertyValue = "list-item";
-                } else if (tableRowRx.test(nodeName)) {
-                    propertyValue = "table-row";
-                } else if (tableRx.test(nodeName)) {
-                    propertyValue = "table";
-                } else if (tableRowGroupRx.test(nodeName)) {
-                    propertyValue = "table-row-group";
-                } else {
-                    // Default to "block" when no match is found.
-                    propertyValue = "block";
-                }
-                // IMPORTANT: We need to do this as getPropertyValue bypasses the
-                // Normalisation when it exists in the cache.
-                data.cache["display"] = propertyValue;
-            }
-            style.display = propertyValue;
-            return true;
-        }
-        CSS.registerNormalization([ "display", display ]);
-    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-///<reference path="normalizations.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    var CSS;
-    (function(CSS) {
-        function genericReordering(element, propertyValue) {
-            if (propertyValue === undefined) {
-                propertyValue = CSS.getPropertyValue(element, "textShadow", true);
-                var split = propertyValue.split(/\s/g), firstPart = split[0];
-                var newValue = "";
-                if (CSS.Lists.colorNames[firstPart]) {
-                    split.shift();
-                    split.push(firstPart);
-                    newValue = split.join(" ");
-                } else if (firstPart.match(/^#|^hsl|^rgb|-gradient/)) {
-                    var matchedString = propertyValue.match(/(hsl.*\)|#[\da-fA-F]+|rgb.*\)|.*gradient.*\))\s/g)[0];
-                    newValue = propertyValue.replace(matchedString, "") + " " + matchedString.trim();
-                } else {
-                    newValue = propertyValue;
-                }
-                return newValue;
-            }
-            return false;
-        }
-        CSS.registerNormalization([ "textShadow", genericReordering ]);
-    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-///<reference path="normalizations.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    var CSS;
-    (function(CSS) {
-        /**
-         * Return a Normalisation that can be used to set / get the vendor prefixed
-         * real name for a propery.
-         */
-        function vendorPrefix(property, unprefixed) {
-            return function(element, propertyValue) {
-                if (propertyValue === undefined) {
-                    return element.style[unprefixed];
-                }
-                CSS.setPropertyValue(element, property, propertyValue);
-                return true;
-            };
-        }
-        var vendors = [ /^webkit[A-Z]/, /^moz[A-Z]/, /^ms[A-Z]/, /^o[A-Z]/ ], prefixElement = VelocityStatic.State.prefixElement;
-        for (var property in prefixElement.style) {
-            for (var i = 0; i < vendors.length; i++) {
-                if (vendors[i].test(property)) {
-                    var unprefixed = property.replace(/^[a-z]+([A-Z])/, function($, letter) {
-                        return letter.toLowerCase();
-                    });
-                    if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
-                        CSS.registerNormalization([ unprefixed, vendorPrefix(property, unprefixed) ]);
-                    }
-                }
-            }
-        }
-    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Regular Expressions - cached as they can be expensive to create.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    var CSS;
-    (function(CSS) {
-        CSS.RegEx = {
-            isHex: /^#([A-f\d]{3}){1,2}$/i,
-            /* Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
-            valueUnwrap: /^[A-z]+\((.*)\)$/i,
-            wrappedValueAlreadyExtracted: /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
-            /* Split a multi-value property into an array of subvalues, e.g. "rgba(4, 3, 2, 1) 4px 3px 2px 1px" ==> [ "rgba(4, 3, 2, 1)", "4px", "3px", "2px", "1px" ]. */
-            valueSplit: /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/gi
-        };
-    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    var CSS;
-    (function(CSS) {
-        /**
-         * The singular setPropertyValue, which routes the logic for all
-         * normalizations, hooks, and standard CSS properties.
-         */
-        function setPropertyValue(element, propertyName, propertyValue) {
-            var data = Data(element);
-            if (isString(propertyValue) && propertyValue[0] === "c" && propertyValue[1] === "a" && propertyValue[2] === "l" && propertyValue[3] === "c" && propertyValue[4] === "(" && propertyValue[5] === "0") {
-                // Make sure we un-calc unit changing values - try not to trigger
-                // this code any more often than we have to since it's expensive
-                propertyValue = propertyValue.replace(/^calc\(0[^\d]* \+ ([^\(\)]+)\)$/, "$1");
-            }
-            if (data && data.cache[propertyName] !== propertyValue) {
-                // By setting it to undefined we force a true "get" later
-                data.cache[propertyName] = propertyValue || undefined;
-                if (!CSS.Normalizations[propertyName] || !CSS.Normalizations[propertyName](element, propertyValue)) {
-                    if (data.isSVG && CSS.Names.SVGAttribute(propertyName)) {
-                        // TODO: Add this as Normalisations
-                        /* Note: For SVG attributes, vendor-prefixed property names are never used. */
-                        /* Note: Not all CSS properties can be animated via attributes, but the browser won't throw an error for unsupported properties. */
-                        element.setAttribute(propertyName, propertyValue);
-                    } else {
-                        element.style[propertyName] = propertyValue;
-                    }
-                }
-                if (VelocityStatic.debug >= 2) {
-                    console.info("Set " + propertyName + ": " + propertyValue, element);
-                }
-            }
-        }
-        CSS.setPropertyValue = setPropertyValue;
-    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    var CSS;
-    (function(CSS) {
-        var rxDegree = /^(rotate|skew)/i, rxUnitless = /^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight|opacity)$/i, // TODO: These are wrong
-        rxShortForm = /^#?([a-f\d])([a-f\d])([a-f\d])$/i, rxLongForm = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i, rxCSSNull = /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i;
-        /************************
-         CSS Property Values
-         ************************/
-        CSS.Values = {
-            /* Hex to RGB conversion. Copyright Tim Down: http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb */
-            hexToRgb: function(hex) {
-                var rgbParts;
-                hex = hex.replace(rxShortForm, function(m, r, g, b) {
-                    return r + r + g + g + b + b;
-                });
-                rgbParts = rxLongForm.exec(hex);
-                return rgbParts ? [ parseInt(rgbParts[1], 16), parseInt(rgbParts[2], 16), parseInt(rgbParts[3], 16) ] : [ 0, 0, 0 ];
-            },
-            isCSSNullValue: function(value) {
-                /* The browser defaults CSS values that have not been set to either 0 or one of several possible null-value strings.
-                 Thus, we check for both falsiness and these special strings. */
-                /* Null-value checking is performed to default the special strings to 0 (for the sake of tweening) or their hook
-                 templates as defined as Hooks (for the sake of hook injection/extraction). */
-                /* Note: Chrome returns "rgba(0, 0, 0, 0)" for an undefined color whereas IE returns "transparent". */
-                return !value || rxCSSNull.test(value);
-            },
-            /* Retrieve a property's default unit type. Used for assigning a unit type when one is not supplied by the user. */
-            getUnitType: function(property) {
-                if (rxDegree.test(property)) {
-                    return "deg";
-                } else if (rxUnitless.test(property)) {
-                    /* The above properties are unitless. */
-                    return "";
-                } else {
-                    /* Default to px for all other properties. */
-                    return "px";
-                }
-            },
-            /* The class add/remove functions are used to temporarily apply a "velocity-animating" class to elements while they're animating. */
-            addClass: function(element, className) {
-                if (element) {
-                    if (element.classList) {
-                        element.classList.add(className);
-                    } else if (isString(element.className)) {
-                        // Element.className is around 15% faster then set/getAttribute
-                        element.className += (element.className.length ? " " : "") + className;
-                    } else {
-                        // Work around for IE strict mode animating SVG - and anything else that doesn't behave correctly - the same way jQuery does it
-                        var currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
-                        element.setAttribute("class", currentClass + (currentClass ? " " : "") + className);
-                    }
-                }
-            },
-            removeClass: function(element, className) {
-                if (element) {
-                    if (element.classList) {
-                        element.classList.remove(className);
-                    } else if (isString(element.className)) {
-                        // Element.className is around 15% faster then set/getAttribute
-                        // TODO: Need some jsperf tests on performance - can we get rid of the regex and maybe use split / array manipulation?
-                        element.className = element.className.toString().replace(new RegExp("(^|\\s)" + className.split(" ").join("|") + "(\\s|$)", "gi"), " ");
-                    } else {
-                        // Work around for IE strict mode animating SVG - and anything else that doesn't behave correctly - the same way jQuery does it
-                        var currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
-                        element.setAttribute("class", currentClass.replace(new RegExp("(^|s)" + className.split(" ").join("|") + "(s|$)", "gi"), " "));
-                    }
-                }
-            }
-        };
-    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License
- */
-var Easing;
-
-(function(Easing) {
-    /**
-     * Fix to a range of <code>0 <= num <= 1</code>.
-     */
-    function fixRange(num) {
-        return Math.min(Math.max(num, 0), 1);
-    }
-    function A(aA1, aA2) {
-        return 1 - 3 * aA2 + 3 * aA1;
-    }
-    function B(aA1, aA2) {
-        return 3 * aA2 - 6 * aA1;
-    }
-    function C(aA1) {
-        return 3 * aA1;
-    }
-    function calcBezier(aT, aA1, aA2) {
-        return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT;
-    }
-    function getSlope(aT, aA1, aA2) {
-        return 3 * A(aA1, aA2) * aT * aT + 2 * B(aA1, aA2) * aT + C(aA1);
-    }
-    function generateBezier(mX1, mY1, mX2, mY2) {
-        var NEWTON_ITERATIONS = 4, NEWTON_MIN_SLOPE = .001, SUBDIVISION_PRECISION = 1e-7, SUBDIVISION_MAX_ITERATIONS = 10, kSplineTableSize = 11, kSampleStepSize = 1 / (kSplineTableSize - 1), float32ArraySupported = "Float32Array" in window;
-        /* Must contain four arguments. */
-        if (arguments.length !== 4) {
-            return;
-        }
-        /* Arguments must be numbers. */
-        for (var i = 0; i < 4; ++i) {
-            if (typeof arguments[i] !== "number" || isNaN(arguments[i]) || !isFinite(arguments[i])) {
-                return;
-            }
-        }
-        /* X values must be in the [0, 1] range. */
-        mX1 = fixRange(mX1);
-        mX2 = fixRange(mX2);
-        var mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
-        function newtonRaphsonIterate(aX, aGuessT) {
-            for (var i = 0; i < NEWTON_ITERATIONS; ++i) {
-                var currentSlope = getSlope(aGuessT, mX1, mX2);
-                if (currentSlope === 0) {
-                    return aGuessT;
-                }
-                var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
-                aGuessT -= currentX / currentSlope;
-            }
-            return aGuessT;
-        }
-        function calcSampleValues() {
-            for (var i = 0; i < kSplineTableSize; ++i) {
-                mSampleValues[i] = calcBezier(i * kSampleStepSize, mX1, mX2);
-            }
-        }
-        function binarySubdivide(aX, aA, aB) {
-            var currentX, currentT, i = 0;
-            do {
-                currentT = aA + (aB - aA) / 2;
-                currentX = calcBezier(currentT, mX1, mX2) - aX;
-                if (currentX > 0) {
-                    aB = currentT;
-                } else {
-                    aA = currentT;
-                }
-            } while (Math.abs(currentX) > SUBDIVISION_PRECISION && ++i < SUBDIVISION_MAX_ITERATIONS);
-            return currentT;
-        }
-        function getTForX(aX) {
-            var intervalStart = 0, currentSample = 1, lastSample = kSplineTableSize - 1;
-            for (;currentSample !== lastSample && mSampleValues[currentSample] <= aX; ++currentSample) {
-                intervalStart += kSampleStepSize;
-            }
-            --currentSample;
-            var dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]), guessForT = intervalStart + dist * kSampleStepSize, initialSlope = getSlope(guessForT, mX1, mX2);
-            if (initialSlope >= NEWTON_MIN_SLOPE) {
-                return newtonRaphsonIterate(aX, guessForT);
-            } else if (initialSlope === 0) {
-                return guessForT;
-            } else {
-                return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize);
-            }
-        }
-        var _precomputed = false;
-        function precompute() {
-            _precomputed = true;
-            if (mX1 !== mY1 || mX2 !== mY2) {
-                calcSampleValues();
-            }
-        }
-        var f = function(percentComplete, startValue, endValue, property) {
-            if (!_precomputed) {
-                precompute();
-            }
-            if (percentComplete === 0) {
-                return startValue;
-            }
-            if (percentComplete === 1) {
-                return endValue;
-            }
-            if (mX1 === mY1 && mX2 === mY2) {
-                return startValue + percentComplete * (endValue - startValue);
-            }
-            return startValue + calcBezier(getTForX(percentComplete), mY1, mY2) * (endValue - startValue);
-        };
-        f.getControlPoints = function() {
-            return [ {
-                x: mX1,
-                y: mY1
-            }, {
-                x: mX2,
-                y: mY2
-            } ];
-        };
-        var str = "generateBezier(" + [ mX1, mY1, mX2, mY2 ] + ")";
-        f.toString = function() {
-            return str;
-        };
-        return f;
-    }
-    Easing.generateBezier = generateBezier;
-})(Easing || (Easing = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var Easing;
-
-(function(Easing) {
-    /* Runge-Kutta spring physics function generator. Adapted from Framer.js, copyright Koen Bok. MIT License: http://en.wikipedia.org/wiki/MIT_License */
-    /* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
-     then adjusts the time delta -- using the relation between actual time and duration -- to calculate the path for the duration-constrained animation. */
-    function springAccelerationForState(state) {
-        return -state.tension * state.x - state.friction * state.v;
-    }
-    function springEvaluateStateWithDerivative(initialState, dt, derivative) {
-        var state = {
-            x: initialState.x + derivative.dx * dt,
-            v: initialState.v + derivative.dv * dt,
-            tension: initialState.tension,
-            friction: initialState.friction
-        };
-        return {
-            dx: state.v,
-            dv: springAccelerationForState(state)
-        };
-    }
-    function springIntegrateState(state, dt) {
-        var a = {
-            dx: state.v,
-            dv: springAccelerationForState(state)
-        }, b = springEvaluateStateWithDerivative(state, dt * .5, a), c = springEvaluateStateWithDerivative(state, dt * .5, b), d = springEvaluateStateWithDerivative(state, dt, c), dxdt = 1 / 6 * (a.dx + 2 * (b.dx + c.dx) + d.dx), dvdt = 1 / 6 * (a.dv + 2 * (b.dv + c.dv) + d.dv);
-        state.x = state.x + dxdt * dt;
-        state.v = state.v + dvdt * dt;
-        return state;
-    }
-    function generateSpringRK4(tension, friction, duration) {
-        var initState = {
-            x: -1,
-            v: 0,
-            tension: parseFloat(tension) || 500,
-            friction: parseFloat(friction) || 20
-        }, path = [ 0 ], time_lapsed = 0, tolerance = 1 / 1e4, DT = 16 / 1e3, have_duration = duration != null, // deliberate "==", as undefined == null != 0
-        dt, last_state;
-        /* Calculate the actual time it takes for this animation to complete with the provided conditions. */
-        if (have_duration) {
-            /* Run the simulation without a duration. */
-            time_lapsed = generateSpringRK4(initState.tension, initState.friction);
-            /* Compute the adjusted time delta. */
-            dt = time_lapsed / duration * DT;
-        } else {
-            dt = DT;
-        }
-        while (true) {
-            /* Next/step function .*/
-            last_state = springIntegrateState(last_state || initState, dt);
-            /* Store the position. */
-            path.push(1 + last_state.x);
-            time_lapsed += 16;
-            /* If the change threshold is reached, break. */
-            if (!(Math.abs(last_state.x) > tolerance && Math.abs(last_state.v) > tolerance)) {
-                break;
-            }
-        }
-        /* If duration is not defined, return the actual time required for completing this animation. Otherwise, return a closure that holds the
-         computed path and returns a snapshot of the position according to a given percentComplete. */
-        return !have_duration ? time_lapsed : function(percentComplete, startValue, endValue) {
-            if (percentComplete === 0) {
-                return startValue;
-            }
-            if (percentComplete === 1) {
-                return endValue;
-            }
-            return startValue + path[percentComplete * (path.length - 1) | 0] * (endValue - startValue);
-        };
-    }
-    Easing.generateSpringRK4 = generateSpringRK4;
-})(Easing || (Easing = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details
- *
- * Step easing generator.
- */
-var Easing;
-
-(function(Easing) {
-    var cache = {};
-    function generateStep(steps) {
-        var fn = cache[steps];
-        if (fn) {
-            return fn;
-        }
-        return cache[steps] = function(percentComplete, startValue, endValue) {
-            if (percentComplete === 0) {
-                return startValue;
-            }
-            if (percentComplete === 1) {
-                return endValue;
-            }
-            return startValue + Math.round(percentComplete * steps) * (1 / steps) * (endValue - startValue);
-        };
-    }
-    Easing.generateStep = generateStep;
-})(Easing || (Easing = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Easings to act on strings, either set at the start or at the end depending on
- * need.
- */
-var Easing;
-
-(function(Easing) {
-    function atStart(percentComplete, startValue, endValue) {
-        return percentComplete === 0 ? startValue : endValue;
-    }
-    Easing.atStart = atStart;
-    function atEnd(percentComplete, startValue, endValue) {
-        return percentComplete === 1 ? endValue : startValue;
-    }
-    Easing.atEnd = atEnd;
-    function during(percentComplete, startValue, endValue) {
-        return percentComplete === 0 || percentComplete === 1 ? startValue : endValue;
-    }
-    Easing.during = during;
-})(Easing || (Easing = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    var generateBezier = Easing.generateBezier;
-    VelocityStatic.Easings = {
-        /* Basic (same as jQuery) easings. */
-        linear: function(percentComplete, startValue, endValue) {
-            return startValue + percentComplete * (endValue - startValue);
-        },
-        swing: function(percentComplete, startValue, endValue) {
-            return startValue + (.5 - Math.cos(percentComplete * Math.PI) / 2) * (endValue - startValue);
-        },
-        /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
-        spring: function(percentComplete, startValue, endValue) {
-            return startValue + (1 - Math.cos(percentComplete * 4.5 * Math.PI) * Math.exp(-percentComplete * 6)) * (endValue - startValue);
-        },
-        /* Common names */
-        ease: generateBezier(.25, .1, .25, 1),
-        easeIn: generateBezier(.42, 0, 1, 1),
-        easeOut: generateBezier(0, 0, .58, 1),
-        easeInOut: generateBezier(.42, 0, .58, 1),
-        easeInSine: generateBezier(.47, 0, .745, .715),
-        easeOutSine: generateBezier(.39, .575, .565, 1),
-        easeInOutSine: generateBezier(.445, .05, .55, .95),
-        easeInQuad: generateBezier(.55, .085, .68, .53),
-        easeOutQuad: generateBezier(.25, .46, .45, .94),
-        easeInOutQuad: generateBezier(.455, .03, .515, .955),
-        easeInCubic: generateBezier(.55, .055, .675, .19),
-        easeOutCubic: generateBezier(.215, .61, .355, 1),
-        easeInOutCubic: generateBezier(.645, .045, .355, 1),
-        easeInQuart: generateBezier(.895, .03, .685, .22),
-        easeOutQuart: generateBezier(.165, .84, .44, 1),
-        easeInOutQuart: generateBezier(.77, 0, .175, 1),
-        easeInQuint: generateBezier(.755, .05, .855, .06),
-        easeOutQuint: generateBezier(.23, 1, .32, 1),
-        easeInOutQuint: generateBezier(.86, 0, .07, 1),
-        easeInExpo: generateBezier(.95, .05, .795, .035),
-        easeOutExpo: generateBezier(.19, 1, .22, 1),
-        easeInOutExpo: generateBezier(1, 0, 0, 1),
-        easeInCirc: generateBezier(.6, .04, .98, .335),
-        easeOutCirc: generateBezier(.075, .82, .165, 1),
-        easeInOutCirc: generateBezier(.785, .135, .15, .86),
-        /* Dashed names */
-        "ease-in": generateBezier(.42, 0, 1, 1),
-        "ease-out": generateBezier(0, 0, .58, 1),
-        "ease-in-out": generateBezier(.42, 0, .58, 1),
-        /* String based - these are special cases, so don't follow the number pattern */
-        "at-start": Easing.atStart,
-        "at-end": Easing.atEnd,
-        during: Easing.during
-    };
 })(VelocityStatic || (VelocityStatic = {}));
 
 /*
@@ -2211,6 +1528,843 @@ var VelocityStatic;
     VelocityStatic.registerAction([ "tween", tweenAction ], true);
 })(VelocityStatic || (VelocityStatic = {}));
 
+///<reference path="../../actions/_all.d.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Normalisations are used when getting or setting a (normally css compound
+ * properties) value that can have a different order in different browsers.
+ *
+ * It can also be used to extend and create specific properties that otherwise
+ * don't exist (such as for scrolling, or inner/outer dimensions).
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        /**
+         * Unlike "actions", normalizations can always be replaced by users.
+         */
+        CSS.Normalizations = [];
+        /**
+         * Any normalisations that should never be cached are listed here.
+         * Faster than an array - https://jsperf.com/array-includes-and-find-methods-vs-set-has
+         */
+        CSS.NoCacheNormalizations = new Set();
+        /**
+         * An array of classes used for the per-class normalizations. This
+         * translates into a bitwise enum for quick cross-reference, and so that
+         * the element doesn't need multiple <code>instanceof</code> calls every
+         * frame.
+         */
+        CSS.constructors = [];
+        /**
+         * Used to register a normalization. This should never be called by users
+         * directly, instead it should be called via a Normalizations.
+         *
+         * The fourth argument can be an explicit <code>false</code>, which prevents
+         * the property from being cached. Please note that this can be dangerous
+         * for performance!
+         *
+         * @private
+         */
+        function registerNormalization(args) {
+            var constructor = args[0], name = args[1], callback = args[2];
+            if (isString(constructor) || !(constructor instanceof Object)) {
+                console.warn("VelocityJS: Trying to set 'registerNormalization' constructor to an invalid value:", constructor);
+            } else if (!isString(name)) {
+                console.warn("VelocityJS: Trying to set 'registerNormalization' name to an invalid value:", name);
+            } else if (!isFunction(callback)) {
+                console.warn("VelocityJS: Trying to set 'registerNormalization' callback to an invalid value:", callback);
+            } else {
+                var index = CSS.constructors.indexOf(constructor);
+                if (index < 0) {
+                    index = CSS.constructors.push(constructor) - 1;
+                    CSS.Normalizations[index] = Object.create(null);
+                }
+                CSS.Normalizations[index][name] = callback;
+                if (args[3] === false) {
+                    CSS.NoCacheNormalizations.add(name);
+                }
+            }
+        }
+        CSS.registerNormalization = registerNormalization;
+        VelocityStatic.registerAction([ "registerNormalization", registerNormalization ]);
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="../normalizations.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        /**
+         * Get/set the inner/outer dimension
+         */
+        function getAttribute(name) {
+            return function(element, propertyValue) {
+                if (propertyValue === undefined) {
+                    propertyValue = element.getAttribute(name);
+                }
+                element.setAttribute(name, propertyValue);
+                return true;
+            };
+        }
+        // TODO: Need a better way to determine the SVG attributes
+        [ "width", "height", "x", "y", "cx", "cy", "r", "rx", "ry", "x1", "x2", "y1", "y2", "points" ].forEach(function(attribute) {
+            CSS.registerNormalization([ SVGElement, attribute, getAttribute(attribute) ]);
+        });
+        if (IE || VelocityStatic.State.isAndroid && !VelocityStatic.State.isChrome) {
+            CSS.registerNormalization([ SVGElement, "transform", getAttribute("transform") ]);
+        }
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="../normalizations.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        /**
+         * Get/set the width or height.
+         */
+        function getDimension(name) {
+            return function(element, propertyValue) {
+                if (propertyValue === undefined) {
+                    // Firefox throws an error if .getBBox() is called on an SVG that isn't attached to the DOM.
+                    try {
+                        propertyValue = element.getBBox()[name] + "px";
+                    } catch (e) {
+                        propertyValue = "0px";
+                    }
+                }
+                element.setAttribute(name, propertyValue);
+                return true;
+            };
+        }
+        CSS.registerNormalization([ SVGElement, "width", getDimension("width") ]);
+        CSS.registerNormalization([ SVGElement, "height", getDimension("height") ]);
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="normalizations.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        /**
+         * Figure out the dimensions for this width / height based on the
+         * potential borders and whether we care about them.
+         */
+        function augmentDimension(element, name, wantInner) {
+            var isBorderBox = CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
+            if (isBorderBox === wantInner) {
+                // in box-sizing mode, the CSS width / height accessors already
+                // give the outerWidth / outerHeight.
+                var sides = name === "width" ? [ "Left", "Right" ] : [ "Top", "Bottom" ], fields = [ "padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width" ];
+                var i = void 0, value = void 0, augment = 0;
+                for (i = 0; i < fields.length; i++) {
+                    value = parseFloat(CSS.getPropertyValue(element, fields[i]));
+                    if (!isNaN(value)) {
+                        augment += value;
+                    }
+                }
+                return wantInner ? -augment : augment;
+            }
+            return 0;
+        }
+        CSS.augmentDimension = augmentDimension;
+        /**
+         * Get/set the inner/outer dimension.
+         */
+        function getDimension(name, wantInner) {
+            return function(element, propertyValue) {
+                if (propertyValue === undefined) {
+                    return augmentDimension(element, name, wantInner) + "px";
+                }
+                CSS.setPropertyValue(element, name, parseFloat(propertyValue) - augmentDimension(element, name, wantInner) + "px");
+                return true;
+            };
+        }
+        CSS.registerNormalization([ Element, "innerWidth", getDimension("width", true) ]);
+        CSS.registerNormalization([ Element, "innerHeight", getDimension("height", true) ]);
+        CSS.registerNormalization([ Element, "outerWidth", getDimension("width", false) ]);
+        CSS.registerNormalization([ Element, "outerHeight", getDimension("height", false) ]);
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="normalizations.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        var inlineRx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i, listItemRx = /^(li)$/i, tableRowRx = /^(tr)$/i, tableRx = /^(table)$/i, tableRowGroupRx = /^(tbody)$/i;
+        function display(element, propertyValue) {
+            var style = element.style;
+            if (propertyValue === undefined) {
+                return CSS.getPropertyValue(element, "display", true);
+            }
+            if (propertyValue === "auto") {
+                var nodeName = element && element.nodeName, data = Data(element);
+                if (inlineRx.test(nodeName)) {
+                    propertyValue = "inline";
+                } else if (listItemRx.test(nodeName)) {
+                    propertyValue = "list-item";
+                } else if (tableRowRx.test(nodeName)) {
+                    propertyValue = "table-row";
+                } else if (tableRx.test(nodeName)) {
+                    propertyValue = "table";
+                } else if (tableRowGroupRx.test(nodeName)) {
+                    propertyValue = "table-row-group";
+                } else {
+                    // Default to "block" when no match is found.
+                    propertyValue = "block";
+                }
+                // IMPORTANT: We need to do this as getPropertyValue bypasses the
+                // Normalisation when it exists in the cache.
+                data.cache["display"] = propertyValue;
+            }
+            style.display = propertyValue;
+            return true;
+        }
+        CSS.registerNormalization([ Element, "display", display ]);
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="normalizations.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        function genericReordering(element, propertyValue) {
+            if (propertyValue === undefined) {
+                propertyValue = CSS.getPropertyValue(element, "textShadow", true);
+                var split = propertyValue.split(/\s/g), firstPart = split[0];
+                var newValue = "";
+                if (CSS.Lists.colorNames[firstPart]) {
+                    split.shift();
+                    split.push(firstPart);
+                    newValue = split.join(" ");
+                } else if (firstPart.match(/^#|^hsl|^rgb|-gradient/)) {
+                    var matchedString = propertyValue.match(/(hsl.*\)|#[\da-fA-F]+|rgb.*\)|.*gradient.*\))\s/g)[0];
+                    newValue = propertyValue.replace(matchedString, "") + " " + matchedString.trim();
+                } else {
+                    newValue = propertyValue;
+                }
+                return newValue;
+            }
+            return false;
+        }
+        CSS.registerNormalization([ Element, "textShadow", genericReordering ]);
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="normalizations.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        function clientWidth(element, propertyValue) {
+            if (propertyValue == null) {
+                return element.clientWidth + "px";
+            }
+            return false;
+        }
+        function scrollWidth(element, propertyValue) {
+            if (propertyValue == null) {
+                return element.scrollWidth + "px";
+            }
+            return false;
+        }
+        function clientHeight(element, propertyValue) {
+            if (propertyValue == null) {
+                return element.clientHeight + "px";
+            }
+            return false;
+        }
+        function scrollHeight(element, propertyValue) {
+            if (propertyValue == null) {
+                return element.scrollHeight + "px";
+            }
+            return false;
+        }
+        function scrollTop(element, propertyValue) {
+            if (propertyValue == null) {
+                //			getPropertyValue(element, "clientWidth", false, true);
+                //			getPropertyValue(element, "scrollWidth", false, true);
+                //			getPropertyValue(element, "scrollLeft", false, true);
+                CSS.getPropertyValue(element, "clientHeight", false, true);
+                CSS.getPropertyValue(element, "scrollHeight", false, true);
+                CSS.getPropertyValue(element, "scrollTop", false, true);
+                return element.scrollTop + "px";
+            }
+            console.log("setScrollTop", propertyValue);
+            var value = parseFloat(propertyValue), unit = propertyValue.replace(String(value), "");
+            switch (unit) {
+              case "":
+              case "px":
+                element.scrollTop = value;
+                break;
+
+              case "%":
+                var clientHeight_1 = parseFloat(CSS.getPropertyValue(element, "clientHeight")), scrollHeight_1 = parseFloat(CSS.getPropertyValue(element, "scrollHeight"));
+                console.log("setScrollTop percent", scrollHeight_1, clientHeight_1, value, Math.max(0, scrollHeight_1 - clientHeight_1) * value / 100);
+                element.scrollTop = Math.max(0, scrollHeight_1 - clientHeight_1) * value / 100;
+            }
+            return false;
+        }
+        CSS.registerNormalization([ HTMLElement, "scrollTop", scrollTop, false ]);
+        CSS.registerNormalization([ HTMLElement, "scrollWidth", scrollWidth ]);
+        CSS.registerNormalization([ HTMLElement, "clientWidth", clientWidth ]);
+        CSS.registerNormalization([ HTMLElement, "scrollHeight", scrollHeight ]);
+        CSS.registerNormalization([ HTMLElement, "clientHeight", clientHeight ]);
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="normalizations.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        /**
+         * Return a Normalisation that can be used to set / get the vendor prefixed
+         * real name for a propery.
+         */
+        function vendorPrefix(property, unprefixed) {
+            return function(element, propertyValue) {
+                if (propertyValue === undefined) {
+                    return element.style[unprefixed];
+                }
+                CSS.setPropertyValue(element, property, propertyValue);
+                return true;
+            };
+        }
+        var vendors = [ /^webkit[A-Z]/, /^moz[A-Z]/, /^ms[A-Z]/, /^o[A-Z]/ ], prefixElement = VelocityStatic.State.prefixElement;
+        for (var property in prefixElement.style) {
+            for (var i = 0; i < vendors.length; i++) {
+                if (vendors[i].test(property)) {
+                    var unprefixed = property.replace(/^[a-z]+([A-Z])/, function($, letter) {
+                        return letter.toLowerCase();
+                    });
+                    if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
+                        CSS.registerNormalization([ Element, unprefixed, vendorPrefix(property, unprefixed) ]);
+                    }
+                }
+            }
+        }
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Regular Expressions - cached as they can be expensive to create.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        CSS.RegEx = {
+            isHex: /^#([A-f\d]{3}){1,2}$/i,
+            /* Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
+            valueUnwrap: /^[A-z]+\((.*)\)$/i,
+            wrappedValueAlreadyExtracted: /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
+            /* Split a multi-value property into an array of subvalues, e.g. "rgba(4, 3, 2, 1) 4px 3px 2px 1px" ==> [ "rgba(4, 3, 2, 1)", "4px", "3px", "2px", "1px" ]. */
+            valueSplit: /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/gi
+        };
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        /**
+         * The singular setPropertyValue, which routes the logic for all
+         * normalizations, hooks, and standard CSS properties.
+         */
+        function setPropertyValue(element, propertyName, propertyValue) {
+            var data = Data(element);
+            if (isString(propertyValue) && propertyValue[0] === "c" && propertyValue[1] === "a" && propertyValue[2] === "l" && propertyValue[3] === "c" && propertyValue[4] === "(" && propertyValue[5] === "0") {
+                // Make sure we un-calc unit changing values - try not to trigger
+                // this code any more often than we have to since it's expensive
+                propertyValue = propertyValue.replace(/^calc\(0[^\d]* \+ ([^\(\)]+)\)$/, "$1");
+            }
+            if (data && data.cache[propertyName] !== propertyValue) {
+                // By setting it to undefined we force a true "get" later
+                data.cache[propertyName] = propertyValue || undefined;
+                var types = data.types, best = void 0;
+                for (var index = 0; types; types >>= 1, index++) {
+                    if (types & 1) {
+                        best = CSS.Normalizations[0][propertyName] || best;
+                    }
+                }
+                if (!best || !best(element, propertyValue)) {
+                    element.style[propertyName] = propertyValue;
+                }
+                if (VelocityStatic.debug >= 2) {
+                    console.info("Set " + propertyName + ": " + propertyValue, element);
+                }
+            }
+        }
+        CSS.setPropertyValue = setPropertyValue;
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        var rxDegree = /^(rotate|skew)/i, rxUnitless = /^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight|opacity)$/i, // TODO: These are wrong
+        rxShortForm = /^#?([a-f\d])([a-f\d])([a-f\d])$/i, rxLongForm = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i, rxCSSNull = /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i;
+        /************************
+         CSS Property Values
+         ************************/
+        CSS.Values = {
+            /* Hex to RGB conversion. Copyright Tim Down: http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb */
+            hexToRgb: function(hex) {
+                var rgbParts;
+                hex = hex.replace(rxShortForm, function(m, r, g, b) {
+                    return r + r + g + g + b + b;
+                });
+                rgbParts = rxLongForm.exec(hex);
+                return rgbParts ? [ parseInt(rgbParts[1], 16), parseInt(rgbParts[2], 16), parseInt(rgbParts[3], 16) ] : [ 0, 0, 0 ];
+            },
+            isCSSNullValue: function(value) {
+                /* The browser defaults CSS values that have not been set to either 0 or one of several possible null-value strings.
+                 Thus, we check for both falsiness and these special strings. */
+                /* Null-value checking is performed to default the special strings to 0 (for the sake of tweening) or their hook
+                 templates as defined as Hooks (for the sake of hook injection/extraction). */
+                /* Note: Chrome returns "rgba(0, 0, 0, 0)" for an undefined color whereas IE returns "transparent". */
+                return !value || rxCSSNull.test(value);
+            },
+            /* Retrieve a property's default unit type. Used for assigning a unit type when one is not supplied by the user. */
+            getUnitType: function(property) {
+                if (rxDegree.test(property)) {
+                    return "deg";
+                } else if (rxUnitless.test(property)) {
+                    /* The above properties are unitless. */
+                    return "";
+                } else {
+                    /* Default to px for all other properties. */
+                    return "px";
+                }
+            },
+            /* The class add/remove functions are used to temporarily apply a "velocity-animating" class to elements while they're animating. */
+            addClass: function(element, className) {
+                if (element) {
+                    if (element.classList) {
+                        element.classList.add(className);
+                    } else if (isString(element.className)) {
+                        // Element.className is around 15% faster then set/getAttribute
+                        element.className += (element.className.length ? " " : "") + className;
+                    } else {
+                        // Work around for IE strict mode animating SVG - and anything else that doesn't behave correctly - the same way jQuery does it
+                        var currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
+                        element.setAttribute("class", currentClass + (currentClass ? " " : "") + className);
+                    }
+                }
+            },
+            removeClass: function(element, className) {
+                if (element) {
+                    if (element.classList) {
+                        element.classList.remove(className);
+                    } else if (isString(element.className)) {
+                        // Element.className is around 15% faster then set/getAttribute
+                        // TODO: Need some jsperf tests on performance - can we get rid of the regex and maybe use split / array manipulation?
+                        element.className = element.className.toString().replace(new RegExp("(^|\\s)" + className.split(" ").join("|") + "(\\s|$)", "gi"), " ");
+                    } else {
+                        // Work around for IE strict mode animating SVG - and anything else that doesn't behave correctly - the same way jQuery does it
+                        var currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
+                        element.setAttribute("class", currentClass.replace(new RegExp("(^|s)" + className.split(" ").join("|") + "(s|$)", "gi"), " "));
+                    }
+                }
+            }
+        };
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License
+ */
+var Easing;
+
+(function(Easing) {
+    /**
+     * Fix to a range of <code>0 <= num <= 1</code>.
+     */
+    function fixRange(num) {
+        return Math.min(Math.max(num, 0), 1);
+    }
+    function A(aA1, aA2) {
+        return 1 - 3 * aA2 + 3 * aA1;
+    }
+    function B(aA1, aA2) {
+        return 3 * aA2 - 6 * aA1;
+    }
+    function C(aA1) {
+        return 3 * aA1;
+    }
+    function calcBezier(aT, aA1, aA2) {
+        return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT;
+    }
+    function getSlope(aT, aA1, aA2) {
+        return 3 * A(aA1, aA2) * aT * aT + 2 * B(aA1, aA2) * aT + C(aA1);
+    }
+    function generateBezier(mX1, mY1, mX2, mY2) {
+        var NEWTON_ITERATIONS = 4, NEWTON_MIN_SLOPE = .001, SUBDIVISION_PRECISION = 1e-7, SUBDIVISION_MAX_ITERATIONS = 10, kSplineTableSize = 11, kSampleStepSize = 1 / (kSplineTableSize - 1), float32ArraySupported = "Float32Array" in window;
+        /* Must contain four arguments. */
+        if (arguments.length !== 4) {
+            return;
+        }
+        /* Arguments must be numbers. */
+        for (var i = 0; i < 4; ++i) {
+            if (typeof arguments[i] !== "number" || isNaN(arguments[i]) || !isFinite(arguments[i])) {
+                return;
+            }
+        }
+        /* X values must be in the [0, 1] range. */
+        mX1 = fixRange(mX1);
+        mX2 = fixRange(mX2);
+        var mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
+        function newtonRaphsonIterate(aX, aGuessT) {
+            for (var i = 0; i < NEWTON_ITERATIONS; ++i) {
+                var currentSlope = getSlope(aGuessT, mX1, mX2);
+                if (currentSlope === 0) {
+                    return aGuessT;
+                }
+                var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
+                aGuessT -= currentX / currentSlope;
+            }
+            return aGuessT;
+        }
+        function calcSampleValues() {
+            for (var i = 0; i < kSplineTableSize; ++i) {
+                mSampleValues[i] = calcBezier(i * kSampleStepSize, mX1, mX2);
+            }
+        }
+        function binarySubdivide(aX, aA, aB) {
+            var currentX, currentT, i = 0;
+            do {
+                currentT = aA + (aB - aA) / 2;
+                currentX = calcBezier(currentT, mX1, mX2) - aX;
+                if (currentX > 0) {
+                    aB = currentT;
+                } else {
+                    aA = currentT;
+                }
+            } while (Math.abs(currentX) > SUBDIVISION_PRECISION && ++i < SUBDIVISION_MAX_ITERATIONS);
+            return currentT;
+        }
+        function getTForX(aX) {
+            var intervalStart = 0, currentSample = 1, lastSample = kSplineTableSize - 1;
+            for (;currentSample !== lastSample && mSampleValues[currentSample] <= aX; ++currentSample) {
+                intervalStart += kSampleStepSize;
+            }
+            --currentSample;
+            var dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]), guessForT = intervalStart + dist * kSampleStepSize, initialSlope = getSlope(guessForT, mX1, mX2);
+            if (initialSlope >= NEWTON_MIN_SLOPE) {
+                return newtonRaphsonIterate(aX, guessForT);
+            } else if (initialSlope === 0) {
+                return guessForT;
+            } else {
+                return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize);
+            }
+        }
+        var _precomputed = false;
+        function precompute() {
+            _precomputed = true;
+            if (mX1 !== mY1 || mX2 !== mY2) {
+                calcSampleValues();
+            }
+        }
+        var f = function(percentComplete, startValue, endValue, property) {
+            if (!_precomputed) {
+                precompute();
+            }
+            if (percentComplete === 0) {
+                return startValue;
+            }
+            if (percentComplete === 1) {
+                return endValue;
+            }
+            if (mX1 === mY1 && mX2 === mY2) {
+                return startValue + percentComplete * (endValue - startValue);
+            }
+            return startValue + calcBezier(getTForX(percentComplete), mY1, mY2) * (endValue - startValue);
+        };
+        f.getControlPoints = function() {
+            return [ {
+                x: mX1,
+                y: mY1
+            }, {
+                x: mX2,
+                y: mY2
+            } ];
+        };
+        var str = "generateBezier(" + [ mX1, mY1, mX2, mY2 ] + ")";
+        f.toString = function() {
+            return str;
+        };
+        return f;
+    }
+    Easing.generateBezier = generateBezier;
+})(Easing || (Easing = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var Easing;
+
+(function(Easing) {
+    /* Runge-Kutta spring physics function generator. Adapted from Framer.js, copyright Koen Bok. MIT License: http://en.wikipedia.org/wiki/MIT_License */
+    /* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
+     then adjusts the time delta -- using the relation between actual time and duration -- to calculate the path for the duration-constrained animation. */
+    function springAccelerationForState(state) {
+        return -state.tension * state.x - state.friction * state.v;
+    }
+    function springEvaluateStateWithDerivative(initialState, dt, derivative) {
+        var state = {
+            x: initialState.x + derivative.dx * dt,
+            v: initialState.v + derivative.dv * dt,
+            tension: initialState.tension,
+            friction: initialState.friction
+        };
+        return {
+            dx: state.v,
+            dv: springAccelerationForState(state)
+        };
+    }
+    function springIntegrateState(state, dt) {
+        var a = {
+            dx: state.v,
+            dv: springAccelerationForState(state)
+        }, b = springEvaluateStateWithDerivative(state, dt * .5, a), c = springEvaluateStateWithDerivative(state, dt * .5, b), d = springEvaluateStateWithDerivative(state, dt, c), dxdt = 1 / 6 * (a.dx + 2 * (b.dx + c.dx) + d.dx), dvdt = 1 / 6 * (a.dv + 2 * (b.dv + c.dv) + d.dv);
+        state.x = state.x + dxdt * dt;
+        state.v = state.v + dvdt * dt;
+        return state;
+    }
+    function generateSpringRK4(tension, friction, duration) {
+        var initState = {
+            x: -1,
+            v: 0,
+            tension: parseFloat(tension) || 500,
+            friction: parseFloat(friction) || 20
+        }, path = [ 0 ], time_lapsed = 0, tolerance = 1 / 1e4, DT = 16 / 1e3, have_duration = duration != null, // deliberate "==", as undefined == null != 0
+        dt, last_state;
+        /* Calculate the actual time it takes for this animation to complete with the provided conditions. */
+        if (have_duration) {
+            /* Run the simulation without a duration. */
+            time_lapsed = generateSpringRK4(initState.tension, initState.friction);
+            /* Compute the adjusted time delta. */
+            dt = time_lapsed / duration * DT;
+        } else {
+            dt = DT;
+        }
+        while (true) {
+            /* Next/step function .*/
+            last_state = springIntegrateState(last_state || initState, dt);
+            /* Store the position. */
+            path.push(1 + last_state.x);
+            time_lapsed += 16;
+            /* If the change threshold is reached, break. */
+            if (!(Math.abs(last_state.x) > tolerance && Math.abs(last_state.v) > tolerance)) {
+                break;
+            }
+        }
+        /* If duration is not defined, return the actual time required for completing this animation. Otherwise, return a closure that holds the
+         computed path and returns a snapshot of the position according to a given percentComplete. */
+        return !have_duration ? time_lapsed : function(percentComplete, startValue, endValue) {
+            if (percentComplete === 0) {
+                return startValue;
+            }
+            if (percentComplete === 1) {
+                return endValue;
+            }
+            return startValue + path[percentComplete * (path.length - 1) | 0] * (endValue - startValue);
+        };
+    }
+    Easing.generateSpringRK4 = generateSpringRK4;
+})(Easing || (Easing = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details
+ *
+ * Step easing generator.
+ */
+var Easing;
+
+(function(Easing) {
+    var cache = {};
+    function generateStep(steps) {
+        var fn = cache[steps];
+        if (fn) {
+            return fn;
+        }
+        return cache[steps] = function(percentComplete, startValue, endValue) {
+            if (percentComplete === 0) {
+                return startValue;
+            }
+            if (percentComplete === 1) {
+                return endValue;
+            }
+            return startValue + Math.round(percentComplete * steps) * (1 / steps) * (endValue - startValue);
+        };
+    }
+    Easing.generateStep = generateStep;
+})(Easing || (Easing = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Easings to act on strings, either set at the start or at the end depending on
+ * need.
+ */
+var Easing;
+
+(function(Easing) {
+    function atStart(percentComplete, startValue, endValue) {
+        return percentComplete === 0 ? startValue : endValue;
+    }
+    Easing.atStart = atStart;
+    function atEnd(percentComplete, startValue, endValue) {
+        return percentComplete === 1 ? endValue : startValue;
+    }
+    Easing.atEnd = atEnd;
+    function during(percentComplete, startValue, endValue) {
+        return percentComplete === 0 || percentComplete === 1 ? startValue : endValue;
+    }
+    Easing.during = during;
+})(Easing || (Easing = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var generateBezier = Easing.generateBezier;
+    VelocityStatic.Easings = {
+        /* Basic (same as jQuery) easings. */
+        linear: function(percentComplete, startValue, endValue) {
+            return startValue + percentComplete * (endValue - startValue);
+        },
+        swing: function(percentComplete, startValue, endValue) {
+            return startValue + (.5 - Math.cos(percentComplete * Math.PI) / 2) * (endValue - startValue);
+        },
+        /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
+        spring: function(percentComplete, startValue, endValue) {
+            return startValue + (1 - Math.cos(percentComplete * 4.5 * Math.PI) * Math.exp(-percentComplete * 6)) * (endValue - startValue);
+        },
+        /* Common names */
+        ease: generateBezier(.25, .1, .25, 1),
+        easeIn: generateBezier(.42, 0, 1, 1),
+        easeOut: generateBezier(0, 0, .58, 1),
+        easeInOut: generateBezier(.42, 0, .58, 1),
+        easeInSine: generateBezier(.47, 0, .745, .715),
+        easeOutSine: generateBezier(.39, .575, .565, 1),
+        easeInOutSine: generateBezier(.445, .05, .55, .95),
+        easeInQuad: generateBezier(.55, .085, .68, .53),
+        easeOutQuad: generateBezier(.25, .46, .45, .94),
+        easeInOutQuad: generateBezier(.455, .03, .515, .955),
+        easeInCubic: generateBezier(.55, .055, .675, .19),
+        easeOutCubic: generateBezier(.215, .61, .355, 1),
+        easeInOutCubic: generateBezier(.645, .045, .355, 1),
+        easeInQuart: generateBezier(.895, .03, .685, .22),
+        easeOutQuart: generateBezier(.165, .84, .44, 1),
+        easeInOutQuart: generateBezier(.77, 0, .175, 1),
+        easeInQuint: generateBezier(.755, .05, .855, .06),
+        easeOutQuint: generateBezier(.23, 1, .32, 1),
+        easeInOutQuint: generateBezier(.86, 0, .07, 1),
+        easeInExpo: generateBezier(.95, .05, .795, .035),
+        easeOutExpo: generateBezier(.19, 1, .22, 1),
+        easeInOutExpo: generateBezier(1, 0, 0, 1),
+        easeInCirc: generateBezier(.6, .04, .98, .335),
+        easeOutCirc: generateBezier(.075, .82, .165, 1),
+        easeInOutCirc: generateBezier(.785, .135, .15, .86),
+        /* Dashed names */
+        "ease-in": generateBezier(.42, 0, 1, 1),
+        "ease-out": generateBezier(0, 0, .58, 1),
+        "ease-in-out": generateBezier(.42, 0, .58, 1),
+        /* String based - these are special cases, so don't follow the number pattern */
+        "at-start": Easing.atStart,
+        "at-end": Easing.atEnd,
+        during: Easing.during
+    };
+})(VelocityStatic || (VelocityStatic = {}));
+
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -2225,9 +2379,15 @@ function Data(element) {
     if (data) {
         return data;
     }
+    var types = 0;
+    for (var index = 0, constructors = VelocityStatic.CSS.constructors; index < constructors.length; index++) {
+        if (element instanceof constructors[index]) {
+            types |= 1 << index;
+        }
+    }
     // Do it this way so it errors on incorrect data.
     var newData = {
-        isSVG: isSVG(element),
+        types: types,
         count: 0,
         computedStyle: null,
         cache: Object.create(null),
@@ -3019,10 +3179,9 @@ var VelocityStatic;
     /**************
      Timing
      **************/
-    var FRAME_TIME = 1e3 / 60;
-    var ticker, /**
-     * Shim for window.performance in case it doesn't exist
-     */
+    var FRAME_TIME = 1e3 / 60, /**
+    * Shim for window.performance in case it doesn't exist
+    */
     performance = function() {
         var perf = window.performance || {};
         if (typeof perf.now !== "function") {
@@ -3032,18 +3191,24 @@ var VelocityStatic;
             };
         }
         return perf;
-    }(), /* rAF shim. Gist: https://gist.github.com/julianshapiro/9497513 */
-    rAFShim = ticker = function() {
-        return window.requestAnimationFrame || function(callback) {
-            /* Dynamically set delay on a per-tick basis to match 60fps. */
-            /* Based on a technique by Erik Moller. MIT license: https://gist.github.com/paulirish/1579671 */
-            var timeCurrent = performance.now(), // High precision if we can
-            timeDelta = Math.max(0, FRAME_TIME - (timeCurrent - VelocityStatic.lastTick));
-            return setTimeout(function() {
-                callback(timeCurrent + timeDelta);
-            }, timeDelta);
-        };
-    }();
+    }(), /**
+     * Proxy function for when rAF is not available - try to be as accurate
+     * as possible with the setTimeout calls, however they are far less
+     * accurate than rAF can be - so try not to use normally (unless the tab
+     * is in the background).
+     */
+    rAFProxy = function(callback) {
+        console.log("rAFProxy", Math.max(0, FRAME_TIME - (performance.now() - VelocityStatic.lastTick)), performance.now(), VelocityStatic.lastTick, FRAME_TIME);
+        return setTimeout(function() {
+            callback(performance.now());
+        }, Math.max(0, FRAME_TIME - (performance.now() - VelocityStatic.lastTick)));
+    }, /* rAF shim. Gist: https://gist.github.com/julianshapiro/9497513 */
+    rAFShim = window.requestAnimationFrame || rAFProxy;
+    /**
+     * The ticker function being used, either rAF, or a function that
+     * emulates it.
+     */
+    var ticker = document.hidden ? rAFProxy : rAFShim;
     /**
      * The time that the last animation frame ran at. Set from tick(), and used
      * for missing rAF (ie, when not in focus etc).
@@ -3054,28 +3219,25 @@ var VelocityStatic;
      devices to avoid wasting battery power on inactive tabs. */
     /* Note: Tab focus detection doesn't work on older versions of IE, but that's okay since they don't support rAF to begin with. */
     if (!VelocityStatic.State.isMobile && document.hidden !== undefined) {
-        var updateTicker = function() {
-            /* Reassign the rAF function (which the global tick() function uses) based on the tab's focus state. */
-            if (document.hidden) {
-                ticker = function(callback) {
-                    /* The tick function needs a truthy first argument in order to pass its internal timestamp check. */
-                    return setTimeout(function() {
-                        callback(true);
-                    }, 16);
-                };
-                /* The rAF loop has been paused by the browser, so we manually restart the tick. */
-                tick();
-            } else {
-                ticker = rAFShim;
+        document.addEventListener("visibilitychange", function updateTicker(event) {
+            console.log("updateTicker", event, document.hidden);
+            var hidden = document.hidden;
+            ticker = hidden ? rAFProxy : rAFShim;
+            if (event) {
+                console.log("setTimeout tick", ticker);
+                setTimeout(tick, 2e3);
             }
-        };
-        /* Page could be sitting in the background at this time (i.e. opened as new tab) so making sure we use correct ticker from the start */
-        updateTicker();
-        /* And then run check again every time visibility changes */
-        document.addEventListener("visibilitychange", updateTicker);
+            tick();
+        });
     }
     var ticking;
-    /* Note: All calls to Velocity are pushed to the Velocity.State.calls array, which is fully iterated through upon each tick. */
+    /**
+     * Called on every tick, preferably through rAF. This is reponsible for
+     * initialising any new animations, then starting any that need starting.
+     * Finally it will expand any tweens and set the properties relating to
+     * them. If there are any callbacks relating to the animations then they
+     * will attempt to call at the end (with the exception of "begin").
+     */
     function tick(timestamp) {
         if (ticking) {
             // Should never happen - but if we've swapped back from hidden to
@@ -3223,6 +3385,7 @@ var VelocityStatic;
                         var currentValue = "", i = 0;
                         if (!pattern) {
                             console.warn("VelocityJS: Missing pattern:", property, JSON.stringify(tween_3[property]));
+                            delete tweens[property];
                         } else {
                             for (;i < pattern.length; i++) {
                                 var startValue = tween_3[2][i];
@@ -3307,8 +3470,11 @@ var VelocityStatic;
         for (var property in properties) {
             if (properties.hasOwnProperty(property)) {
                 var propertyName = VelocityStatic.CSS.Names.camelCase(property);
-                var valueData = properties[property];
-                if (!data.isSVG && propertyName !== "tween" && VelocityStatic.CSS.Normalizations[propertyName] === undefined && (!VelocityStatic.State.prefixElement || !isString(VelocityStatic.State.prefixElement.style[propertyName]))) {
+                var valueData = properties[property], types = data.types, found = propertyName === "tween";
+                for (var index = 0; types && !found; types >>= 1, index++) {
+                    found = !!(types & 1 && VelocityStatic.CSS.Normalizations[0][propertyName]);
+                }
+                if (!found && (!VelocityStatic.State.prefixElement || !isString(VelocityStatic.State.prefixElement.style[propertyName]))) {
                     if (VelocityStatic.debug) {
                         console.log("Skipping [" + property + "] due to a lack of browser support.");
                     }
@@ -4176,10 +4342,9 @@ function VelocityFn() {
                 VelocityStatic.queue(element, animation, getValue(animation.queue, options.queue));
             }
         }
-        /* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */
         if (VelocityStatic.State.isTicking === false) {
-            VelocityStatic.State.isTicking = true;
-            /* Start the tick loop. */
+            // If the animation tick isn't running, start it. (Velocity shuts it
+            // off when there are no active calls to process.)
             VelocityStatic.tick();
         }
         if (animations) {

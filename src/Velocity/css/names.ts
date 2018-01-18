@@ -11,8 +11,8 @@ namespace VelocityStatic.CSS {
 	 ************************/
 
 	/* Certain browsers require an SVG transform to be applied as an attribute. (Otherwise, application via CSS is preferable due to 3D support.) */
-	const SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2" + (IE || (State.isAndroid && !State.isChrome) ? "|transform" : ""),
-		SVGAttributesRX = RegExp("^(" + SVGAttributes + ")$", "i"),
+	const //SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2" + (IE || (State.isAndroid && !State.isChrome) ? "|transform" : ""),
+		//SVGAttributesRX = RegExp("^(" + SVGAttributes + ")$", "i"),
 		camelCase: {[property: string]: string} = {};
 
 	export const Names = {
@@ -30,9 +30,9 @@ namespace VelocityStatic.CSS {
 		},
 		/* For SVG elements, some properties (namely, dimensional ones) are GET/SET via the element's HTML attributes (instead of via CSS styles). */
 		// TODO: Convert to Normalisations
-		SVGAttribute: function(property: string): boolean {
-			return SVGAttributesRX.test(property);
-		},
+		//SVGAttribute: function(property: string): boolean {
+		//	return SVGAttributesRX.test(property);
+		//},
 		/* Determine whether a property should be set with a vendor prefix. */
 		/* If a prefixed version of the property exists, return it. Otherwise, return the original property name.
 		 If the property is not at all supported by the browser, return a false flag. */

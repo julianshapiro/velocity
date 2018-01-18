@@ -355,11 +355,9 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 				VelocityStatic.queue(element, animation, getValue(animation.queue, options.queue));
 			}
 		}
-		/* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */
 		if (VelocityStatic.State.isTicking === false) {
-			VelocityStatic.State.isTicking = true;
-
-			/* Start the tick loop. */
+			// If the animation tick isn't running, start it. (Velocity shuts it
+			// off when there are no active calls to process.)
 			VelocityStatic.tick();
 		}
 		if (animations) {

@@ -16,7 +16,7 @@ namespace VelocityStatic.CSS {
 		if (data && !data.computedStyle) {
 			data.computedStyle = computedStyle;
 		}
-		if (/^(width|height)$/.test(property)) {
+		if (property === "width" || property === "height") {
 			// Browsers do not return height and width values for elements
 			// that are set to display:"none". Thus, we temporarily toggle
 			// display to the element type's default value.
@@ -83,53 +83,45 @@ namespace VelocityStatic.CSS {
 	 * Get a property value. This will grab via the cache if it exists, then
 	 * via any normalisations, then it will check the css values directly.
 	 */
-	export function getPropertyValue(element: HTMLorSVGElement, property: string, skipNormalisation?: boolean): string {
+	export function getPropertyValue(element: HTMLorSVGElement, propertyName: string, skipNormalisation?: boolean, skipCache?: boolean): string {
 		const data = Data(element);
 		let propertyValue: string;
 
-		if (data && data.cache[property] != null) {
-			propertyValue = data.cache[property];
+		if (CSS.NoCacheNormalizations.has(propertyName)) {
+			skipCache = true;
+		}
+		if (!skipCache && data && data.cache[propertyName] != null) {
+			propertyValue = data.cache[propertyName];
 			if (debug >= 2) {
-				console.info("Get " + property + ": " + propertyValue);
+				console.info("Get " + propertyName + ": " + propertyValue);
 			}
 			return propertyValue;
-		} else if (!skipNormalisation && Normalizations[property]) {
-			propertyValue = Normalizations[property](element);
-		} else if (data && data.isSVG && Names.SVGAttribute(property)) {
-			// Since the height/width attribute values must be set manually,
-			// they don't reflect computed values. Thus, we use use getBBox()
-			// to ensure we always get values for elements with undefined
-			// height/width attributes.
-
-			// For SVG elements, dimensional properties (which SVGAttribute()
-			// detects) are tweened via their HTML attribute values instead
-			// of their CSS style values.
-			// TODO: Make into a normalisation
-			if (/^(height|width)$/i.test(property)) {
-				/* Firefox throws an error if .getBBox() is called on an SVG that isn't attached to the DOM. */
-				try {
-					propertyValue = (element as SVGGraphicsElement).getBBox()[property] + "px";
-				} catch (e) {
-					propertyValue = "0px";
-				}
-				/* Otherwise, access the attribute value directly. */
-			} else {
-				propertyValue = element.getAttribute(property);
-			}
 		} else {
-			// Note: Retrieving the value of a CSS property cannot simply be
-			// performed by checking an element's style attribute (which
-			// only reflects user-defined values). Instead, the browser must
-			// be queried for a property's *computed* value. You can read
-			// more about getComputedStyle here:
-			// https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle
-			propertyValue = computePropertyValue(element, property);
+			let types = data.types,
+				best: VelocityNormalizationsFn;
+
+			for (let index = 0; types; types >>= 1, index++) {
+				if (types & 1) {
+					best = Normalizations[0][propertyName] || best;
+				}
+			}
+			if (best) {
+				propertyValue = best(element);
+			} else {
+				// Note: Retrieving the value of a CSS property cannot simply be
+				// performed by checking an element's style attribute (which
+				// only reflects user-defined values). Instead, the browser must
+				// be queried for a property's *computed* value. You can read
+				// more about getComputedStyle here:
+				// https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle
+				propertyValue = computePropertyValue(element, propertyName);
+			}
 		}
 		if (debug >= 2) {
-			console.info("Get " + property + ": " + propertyValue);
+			console.info("Get " + propertyName + ": " + propertyValue);
 		}
 		if (data) {
-			data.cache[property] = propertyValue;
+			data.cache[propertyName] = propertyValue;
 		}
 		return propertyValue;
 	}

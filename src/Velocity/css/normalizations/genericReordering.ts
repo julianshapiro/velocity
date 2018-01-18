@@ -31,5 +31,5 @@ namespace VelocityStatic.CSS {
 		return false;
 	}
 
-	registerNormalization(["textShadow", genericReordering]);
+	registerNormalization([Element, "textShadow", genericReordering]);
 }
