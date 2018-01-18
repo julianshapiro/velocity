@@ -43,6 +43,7 @@ namespace VelocityStatic {
 				activeCall.timeStart,
 				tweenValue !== undefined ? tweenValue : String(percentComplete * 100),
 				activeCall);
+
 		} catch (error) {
 			setTimeout(function() {
 				throw error;
@@ -70,7 +71,6 @@ namespace VelocityStatic {
 			/* If this call has finished tweening, pass it to complete() to handle call cleanup. */
 			completeCall(activeCall);
 		}
-
 	}
 
 	/**************
@@ -181,7 +181,7 @@ namespace VelocityStatic {
 				 Call Iteration
 				 ********************/
 
-				// Exapand any tweens that might need it.
+				// Expand any tweens that might need it.
 				while ((activeCall = State.firstNew)) {
 					validateTweens(activeCall);
 				}
@@ -279,14 +279,7 @@ namespace VelocityStatic {
 					if (speed !== 1) {
 						// On the first frame we may have a shorter delta
 						const delta = Math.min(deltaTime, timeCurrent - timeStart);
-
-						if (speed === 0) {
-							// If we're freezing the animation then don't const the
-							// time change
-							activeCall.timeStart = timeStart += delta;
-						} else {
-							activeCall.timeStart = timeStart += delta * (1 - speed);
-						}
+						activeCall.timeStart = timeStart += delta * (1 - speed);
 					}
 
 					if (options._first === activeCall && options.progress) {
@@ -323,10 +316,7 @@ namespace VelocityStatic {
 						let currentValue = "",
 							i = 0;
 
-						if (!pattern) {
-							console.warn("VelocityJS: Missing pattern:", property, JSON.stringify(tween[property]))
-							delete tweens[property];
-						} else {
+						if (pattern) {
 							for (; i < pattern.length; i++) {
 								const startValue = tween[Tween.START][i];
 
@@ -340,14 +330,17 @@ namespace VelocityStatic {
 									currentValue += rounding && rounding[i] ? Math.round(result) : result;
 								}
 							}
-							if (property === "tween") {
+							if (property !== "tween") {
+								// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
+								CSS.setPropertyValue(activeCall.element, property, currentValue);
+							} else {
 								// Skip the fake 'tween' property as that is only
 								// passed into the progress callback.
 								activeCall.tween = currentValue;
-							} else {
-								// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-								CSS.setPropertyValue(activeCall.element, property, currentValue);
 							}
+						} else {
+							console.warn("VelocityJS: Missing pattern:", property, JSON.stringify(tween[property]))
+							delete tweens[property];
 						}
 					}
 				}
@@ -365,4 +358,4 @@ namespace VelocityStatic {
 		}
 		ticking = false;
 	}
-};
+}

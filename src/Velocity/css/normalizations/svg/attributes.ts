@@ -13,7 +13,7 @@ namespace VelocityStatic.CSS {
 	function getAttribute(name: string) {
 		return function(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
 			if (propertyValue === undefined) {
-				propertyValue = element.getAttribute(name);
+				return element.getAttribute(name);
 			}
 			element.setAttribute(name, propertyValue);
 			return true;

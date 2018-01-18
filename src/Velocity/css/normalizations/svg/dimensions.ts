@@ -15,9 +15,9 @@ namespace VelocityStatic.CSS {
 			if (propertyValue === undefined) {
 				// Firefox throws an error if .getBBox() is called on an SVG that isn't attached to the DOM.
 				try {
-					propertyValue = (element as SVGGraphicsElement).getBBox()[name] + "px";
+					return (element as SVGGraphicsElement).getBBox()[name] + "px";
 				} catch (e) {
-					propertyValue = "0px";
+					return "0px";
 				}
 			}
 			element.setAttribute(name, propertyValue);
