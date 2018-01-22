@@ -59,6 +59,12 @@ namespace VelocityStatic {
 				[args[1]]: args[2]
 			};
 			easing = args[3];
+		} else if (Array.isArray(args[1])) {
+			singleResult = true;
+			properties = {
+				"tween": args[1]
+			} as any;
+			easing = args[2];
 		}
 		if (!isNumber(percentComplete) || percentComplete < 0 || percentComplete > 1) {
 			throw new Error("VelocityJS: Must tween a percentage from 0 to 1!");
