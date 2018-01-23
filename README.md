@@ -1,4 +1,4 @@
-﻿# Velocity 1.5.1
+﻿# Velocity 1.5.2
 
 ## Docs
 [http://VelocityJS.org](http://velocityjs.org)
@@ -15,13 +15,13 @@ NPM: https://www.npmjs.com/package/velocity-react
 ### Velocity (CDN, choose one of them):
 ```html
 <script src="//cdn.jsdelivr.net/npm/velocity-animate@1.5/velocity.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.1/velocity.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.2/velocity.min.js"></script>
 ```
 
 ### Velocity UI pack (CDN, choose one of them): 
 ```html
 <script src="//cdn.jsdelivr.net/npm/velocity-animate@1.5/velocity.ui.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.1/velocity.ui.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.2/velocity.ui.min.js"></script>
 ```
 
 > Please note that JSDelivr will automatically supply the latest release, while CloudFlare needs to ask for a specific version.
