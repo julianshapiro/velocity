@@ -87,7 +87,7 @@ namespace VelocityStatic {
 				endValue = valueData[0] as any;
 				if ((isString(arr1) && (/^[\d-]/.test(arr1) || CSS.RegEx.isHex.test(arr1))) || isFunction(arr1) || isNumber(arr1)) {
 					startValue = arr1 as any;
-				} else if ((isString(arr1) && Easings[arr1]) || Array.isArray(arr1)) {
+				} else if ((isString(arr1) && Easing.Easings[arr1]) || Array.isArray(arr1)) {
 					tween[Tween.EASING] = arr1 as any;
 					startValue = arr2 as any;
 				} else {
@@ -309,7 +309,9 @@ namespace VelocityStatic {
 			if (!/^(at-start|at-end|during)$/.test(easing)) {
 				easing = endValue === "hidden" ? "at-end" : "at-start";
 			}
-		} else if (isStringValue && !isFunction(easing) && !/^(at-start|at-end|during)$/.test(easing) && easing !== Easing.atStart && easing !== Easing.atEnd && easing !== Easing.during) {
+		} else if (isStringValue
+			&& easing !== "at-start" && easing !== "during" && easing !== "at-end"
+			&& easing !== Easing.Easings["at-Start"] && easing !== Easing.Easings["during"] && easing !== Easing.Easings["at-end"]) {
 			console.warn("Velocity: String easings must use one of 'at-start', 'during' or 'at-end': {" + propertyName + ": [\"" + endValue + "\", " + easing + ", \"" + startValue + "\"]}");
 			easing = "at-start";
 		}

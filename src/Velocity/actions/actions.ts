@@ -18,7 +18,8 @@ namespace VelocityStatic {
 
 	/**
 	 * Used to register an action. This should never be called by users
-	 * directly, instead it should be called via an Action.
+	 * directly, instead it should be called via  an action:<br/>
+	 * <code>Velocity("registerAction", "name", VelocityActionFn);</code>
 	 * 
 	 * @private
 	 */
@@ -29,9 +30,9 @@ namespace VelocityStatic {
 		if (!isString(name)) {
 			console.warn("VelocityJS: Trying to set 'registerAction' name to an invalid value:", name);
 		} else if (!isFunction(callback)) {
-			console.warn("VelocityJS: Trying to set 'registerAction' callback to an invalid value:", callback);
+			console.warn("VelocityJS: Trying to set 'registerAction' callback to an invalid value:", name, callback);
 		} else if (Actions[name] && !propertyIsEnumerable(Actions, name)) {
-			console.warn("VelocityJS: Trying to override internal 'registerAction' callback");
+			console.warn("VelocityJS: Trying to override internal 'registerAction' callback", name);
 		} else if (internal === true) {
 			defineProperty(Actions, name, callback);
 		} else {

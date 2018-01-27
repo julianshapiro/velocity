@@ -879,7 +879,8 @@ var VelocityStatic;
     VelocityStatic.Actions = Object.create(null);
     /**
      * Used to register an action. This should never be called by users
-     * directly, instead it should be called via an Action.
+     * directly, instead it should be called via  an action:<br/>
+     * <code>Velocity("registerAction", "name", VelocityActionFn);</code>
      *
      * @private
      */
@@ -888,9 +889,9 @@ var VelocityStatic;
         if (!isString(name)) {
             console.warn("VelocityJS: Trying to set 'registerAction' name to an invalid value:", name);
         } else if (!isFunction(callback)) {
-            console.warn("VelocityJS: Trying to set 'registerAction' callback to an invalid value:", callback);
+            console.warn("VelocityJS: Trying to set 'registerAction' callback to an invalid value:", name, callback);
         } else if (VelocityStatic.Actions[name] && !propertyIsEnumerable(VelocityStatic.Actions, name)) {
-            console.warn("VelocityJS: Trying to override internal 'registerAction' callback");
+            console.warn("VelocityJS: Trying to override internal 'registerAction' callback", name);
         } else if (internal === true) {
             defineProperty(VelocityStatic.Actions, name, callback);
         } else {
@@ -1569,7 +1570,8 @@ var VelocityStatic;
         CSS.constructors = [];
         /**
          * Used to register a normalization. This should never be called by users
-         * directly, instead it should be called via a Normalizations.
+         * directly, instead it should be called via an action:<br/>
+         * <code>Velocity("registerNormalization", Element, "name", VelocityNormalizationsFn[, false]);</code>
          *
          * The fourth argument can be an explicit <code>false</code>, which prevents
          * the property from being cached. Please note that this can be dangerous
@@ -1584,7 +1586,7 @@ var VelocityStatic;
             } else if (!isString(name)) {
                 console.warn("VelocityJS: Trying to set 'registerNormalization' name to an invalid value:", name);
             } else if (!isFunction(callback)) {
-                console.warn("VelocityJS: Trying to set 'registerNormalization' callback to an invalid value:", callback);
+                console.warn("VelocityJS: Trying to set 'registerNormalization' callback to an invalid value:", name, callback);
             } else {
                 var index = CSS.constructors.indexOf(constructor);
                 if (index < 0) {
@@ -2091,210 +2093,412 @@ var VelocityStatic;
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var Easing;
+    (function(Easing) {
+        Easing.Easings = Object.create(null);
+        /**
+         * Used to register a easing. This should never be called by users
+         * directly, instead it should be called via an action:<br/>
+         * <code>Velocity("registerEasing", "name", VelocityEasingFn);</code>
+         *
+         * @private
+         */
+        function registerEasing(args) {
+            var name = args[0], callback = args[1];
+            if (!isString(name)) {
+                console.warn("VelocityJS: Trying to set 'registerEasing' name to an invalid value:", name);
+            } else if (!isFunction(callback)) {
+                console.warn("VelocityJS: Trying to set 'registerEasing' callback to an invalid value:", name, callback);
+            } else if (Easing.Easings[name]) {
+                console.warn("VelocityJS: Trying to override 'registerEasing' callback", name);
+            } else {
+                Easing.Easings[name] = callback;
+            }
+        }
+        Easing.registerEasing = registerEasing;
+        /* Basic (same as jQuery) easings. */
+        registerEasing([ "linear", function(percentComplete, startValue, endValue) {
+            return startValue + percentComplete * (endValue - startValue);
+        } ]);
+        registerEasing([ "swing", function(percentComplete, startValue, endValue) {
+            return startValue + (.5 - Math.cos(percentComplete * Math.PI) / 2) * (endValue - startValue);
+        } ]);
+        /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
+        registerEasing([ "spring", function(percentComplete, startValue, endValue) {
+            return startValue + (1 - Math.cos(percentComplete * 4.5 * Math.PI) * Math.exp(-percentComplete * 6)) * (endValue - startValue);
+        } ]);
+    })(Easing = VelocityStatic.Easing || (VelocityStatic.Easing = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="easings.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License
  */
-var Easing;
+var VelocityStatic;
 
-(function(Easing) {
-    /**
-     * Fix to a range of <code>0 <= num <= 1</code>.
-     */
-    function fixRange(num) {
-        return Math.min(Math.max(num, 0), 1);
-    }
-    function A(aA1, aA2) {
-        return 1 - 3 * aA2 + 3 * aA1;
-    }
-    function B(aA1, aA2) {
-        return 3 * aA2 - 6 * aA1;
-    }
-    function C(aA1) {
-        return 3 * aA1;
-    }
-    function calcBezier(aT, aA1, aA2) {
-        return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT;
-    }
-    function getSlope(aT, aA1, aA2) {
-        return 3 * A(aA1, aA2) * aT * aT + 2 * B(aA1, aA2) * aT + C(aA1);
-    }
-    function generateBezier(mX1, mY1, mX2, mY2) {
-        var NEWTON_ITERATIONS = 4, NEWTON_MIN_SLOPE = .001, SUBDIVISION_PRECISION = 1e-7, SUBDIVISION_MAX_ITERATIONS = 10, kSplineTableSize = 11, kSampleStepSize = 1 / (kSplineTableSize - 1), float32ArraySupported = "Float32Array" in window;
-        /* Must contain four arguments. */
-        if (arguments.length !== 4) {
-            return;
+(function(VelocityStatic) {
+    var Easing;
+    (function(Easing) {
+        /**
+         * Fix to a range of <code>0 <= num <= 1</code>.
+         */
+        function fixRange(num) {
+            return Math.min(Math.max(num, 0), 1);
         }
-        /* Arguments must be numbers. */
-        for (var i = 0; i < 4; ++i) {
-            if (typeof arguments[i] !== "number" || isNaN(arguments[i]) || !isFinite(arguments[i])) {
+        function A(aA1, aA2) {
+            return 1 - 3 * aA2 + 3 * aA1;
+        }
+        function B(aA1, aA2) {
+            return 3 * aA2 - 6 * aA1;
+        }
+        function C(aA1) {
+            return 3 * aA1;
+        }
+        function calcBezier(aT, aA1, aA2) {
+            return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT;
+        }
+        function getSlope(aT, aA1, aA2) {
+            return 3 * A(aA1, aA2) * aT * aT + 2 * B(aA1, aA2) * aT + C(aA1);
+        }
+        function generateBezier(mX1, mY1, mX2, mY2) {
+            var NEWTON_ITERATIONS = 4, NEWTON_MIN_SLOPE = .001, SUBDIVISION_PRECISION = 1e-7, SUBDIVISION_MAX_ITERATIONS = 10, kSplineTableSize = 11, kSampleStepSize = 1 / (kSplineTableSize - 1), float32ArraySupported = "Float32Array" in window;
+            /* Must contain four arguments. */
+            if (arguments.length !== 4) {
                 return;
             }
-        }
-        /* X values must be in the [0, 1] range. */
-        mX1 = fixRange(mX1);
-        mX2 = fixRange(mX2);
-        var mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
-        function newtonRaphsonIterate(aX, aGuessT) {
-            for (var i = 0; i < NEWTON_ITERATIONS; ++i) {
-                var currentSlope = getSlope(aGuessT, mX1, mX2);
-                if (currentSlope === 0) {
-                    return aGuessT;
+            /* Arguments must be numbers. */
+            for (var i = 0; i < 4; ++i) {
+                if (typeof arguments[i] !== "number" || isNaN(arguments[i]) || !isFinite(arguments[i])) {
+                    return;
                 }
-                var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
-                aGuessT -= currentX / currentSlope;
             }
-            return aGuessT;
-        }
-        function calcSampleValues() {
-            for (var i = 0; i < kSplineTableSize; ++i) {
-                mSampleValues[i] = calcBezier(i * kSampleStepSize, mX1, mX2);
+            /* X values must be in the [0, 1] range. */
+            mX1 = fixRange(mX1);
+            mX2 = fixRange(mX2);
+            var mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
+            function newtonRaphsonIterate(aX, aGuessT) {
+                for (var i = 0; i < NEWTON_ITERATIONS; ++i) {
+                    var currentSlope = getSlope(aGuessT, mX1, mX2);
+                    if (currentSlope === 0) {
+                        return aGuessT;
+                    }
+                    var currentX = calcBezier(aGuessT, mX1, mX2) - aX;
+                    aGuessT -= currentX / currentSlope;
+                }
+                return aGuessT;
             }
-        }
-        function binarySubdivide(aX, aA, aB) {
-            var currentX, currentT, i = 0;
-            do {
-                currentT = aA + (aB - aA) / 2;
-                currentX = calcBezier(currentT, mX1, mX2) - aX;
-                if (currentX > 0) {
-                    aB = currentT;
+            function calcSampleValues() {
+                for (var i = 0; i < kSplineTableSize; ++i) {
+                    mSampleValues[i] = calcBezier(i * kSampleStepSize, mX1, mX2);
+                }
+            }
+            function binarySubdivide(aX, aA, aB) {
+                var currentX, currentT, i = 0;
+                do {
+                    currentT = aA + (aB - aA) / 2;
+                    currentX = calcBezier(currentT, mX1, mX2) - aX;
+                    if (currentX > 0) {
+                        aB = currentT;
+                    } else {
+                        aA = currentT;
+                    }
+                } while (Math.abs(currentX) > SUBDIVISION_PRECISION && ++i < SUBDIVISION_MAX_ITERATIONS);
+                return currentT;
+            }
+            function getTForX(aX) {
+                var intervalStart = 0, currentSample = 1, lastSample = kSplineTableSize - 1;
+                for (;currentSample !== lastSample && mSampleValues[currentSample] <= aX; ++currentSample) {
+                    intervalStart += kSampleStepSize;
+                }
+                --currentSample;
+                var dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]), guessForT = intervalStart + dist * kSampleStepSize, initialSlope = getSlope(guessForT, mX1, mX2);
+                if (initialSlope >= NEWTON_MIN_SLOPE) {
+                    return newtonRaphsonIterate(aX, guessForT);
+                } else if (initialSlope === 0) {
+                    return guessForT;
                 } else {
-                    aA = currentT;
+                    return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize);
                 }
-            } while (Math.abs(currentX) > SUBDIVISION_PRECISION && ++i < SUBDIVISION_MAX_ITERATIONS);
-            return currentT;
+            }
+            var _precomputed = false;
+            function precompute() {
+                _precomputed = true;
+                if (mX1 !== mY1 || mX2 !== mY2) {
+                    calcSampleValues();
+                }
+            }
+            var f = function(percentComplete, startValue, endValue, property) {
+                if (!_precomputed) {
+                    precompute();
+                }
+                if (percentComplete === 0) {
+                    return startValue;
+                }
+                if (percentComplete === 1) {
+                    return endValue;
+                }
+                if (mX1 === mY1 && mX2 === mY2) {
+                    return startValue + percentComplete * (endValue - startValue);
+                }
+                return startValue + calcBezier(getTForX(percentComplete), mY1, mY2) * (endValue - startValue);
+            };
+            f.getControlPoints = function() {
+                return [ {
+                    x: mX1,
+                    y: mY1
+                }, {
+                    x: mX2,
+                    y: mY2
+                } ];
+            };
+            var str = "generateBezier(" + [ mX1, mY1, mX2, mY2 ] + ")";
+            f.toString = function() {
+                return str;
+            };
+            return f;
         }
-        function getTForX(aX) {
-            var intervalStart = 0, currentSample = 1, lastSample = kSplineTableSize - 1;
-            for (;currentSample !== lastSample && mSampleValues[currentSample] <= aX; ++currentSample) {
-                intervalStart += kSampleStepSize;
+        Easing.generateBezier = generateBezier;
+        /* Common easings */
+        var easeIn = generateBezier(.42, 0, 1, 1), easeOut = generateBezier(0, 0, .58, 1), easeInOut = generateBezier(.42, 0, .58, 1);
+        Easing.registerEasing([ "ease", generateBezier(.25, .1, .25, 1) ]);
+        Easing.registerEasing([ "easeIn", easeIn ]);
+        Easing.registerEasing([ "ease-in", easeIn ]);
+        Easing.registerEasing([ "easeOut", easeOut ]);
+        Easing.registerEasing([ "ease-out", easeOut ]);
+        Easing.registerEasing([ "easeInOut", easeInOut ]);
+        Easing.registerEasing([ "ease-in-out", easeInOut ]);
+        Easing.registerEasing([ "easeInSine", generateBezier(.47, 0, .745, .715) ]);
+        Easing.registerEasing([ "easeOutSine", generateBezier(.39, .575, .565, 1) ]);
+        Easing.registerEasing([ "easeInOutSine", generateBezier(.445, .05, .55, .95) ]);
+        Easing.registerEasing([ "easeInQuad", generateBezier(.55, .085, .68, .53) ]);
+        Easing.registerEasing([ "easeOutQuad", generateBezier(.25, .46, .45, .94) ]);
+        Easing.registerEasing([ "easeInOutQuad", generateBezier(.455, .03, .515, .955) ]);
+        Easing.registerEasing([ "easeInCubic", generateBezier(.55, .055, .675, .19) ]);
+        Easing.registerEasing([ "easeOutCubic", generateBezier(.215, .61, .355, 1) ]);
+        Easing.registerEasing([ "easeInOutCubic", generateBezier(.645, .045, .355, 1) ]);
+        Easing.registerEasing([ "easeInQuart", generateBezier(.895, .03, .685, .22) ]);
+        Easing.registerEasing([ "easeOutQuart", generateBezier(.165, .84, .44, 1) ]);
+        Easing.registerEasing([ "easeInOutQuart", generateBezier(.77, 0, .175, 1) ]);
+        Easing.registerEasing([ "easeInQuint", generateBezier(.755, .05, .855, .06) ]);
+        Easing.registerEasing([ "easeOutQuint", generateBezier(.23, 1, .32, 1) ]);
+        Easing.registerEasing([ "easeInOutQuint", generateBezier(.86, 0, .07, 1) ]);
+        Easing.registerEasing([ "easeInExpo", generateBezier(.95, .05, .795, .035) ]);
+        Easing.registerEasing([ "easeOutExpo", generateBezier(.19, 1, .22, 1) ]);
+        Easing.registerEasing([ "easeInOutExpo", generateBezier(1, 0, 0, 1) ]);
+        Easing.registerEasing([ "easeInCirc", generateBezier(.6, .04, .98, .335) ]);
+        Easing.registerEasing([ "easeOutCirc", generateBezier(.075, .82, .165, 1) ]);
+        Easing.registerEasing([ "easeInOutCirc", generateBezier(.785, .135, .15, .86) ]);
+    })(Easing = VelocityStatic.Easing || (VelocityStatic.Easing = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="easings.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Bounce easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var Easing;
+    (function(Easing) {
+        function easeOutBounce(percentComplete) {
+            if (percentComplete < 1 / 2.75) {
+                return 7.5625 * percentComplete * percentComplete;
             }
-            --currentSample;
-            var dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]), guessForT = intervalStart + dist * kSampleStepSize, initialSlope = getSlope(guessForT, mX1, mX2);
-            if (initialSlope >= NEWTON_MIN_SLOPE) {
-                return newtonRaphsonIterate(aX, guessForT);
-            } else if (initialSlope === 0) {
-                return guessForT;
-            } else {
-                return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize);
+            if (percentComplete < 2 / 2.75) {
+                return 7.5625 * (percentComplete -= 1.5 / 2.75) * percentComplete + .75;
             }
+            if (percentComplete < 2.5 / 2.75) {
+                return 7.5625 * (percentComplete -= 2.25 / 2.75) * percentComplete + .9375;
+            }
+            return 7.5625 * (percentComplete -= 2.625 / 2.75) * percentComplete + .984375;
         }
-        var _precomputed = false;
-        function precompute() {
-            _precomputed = true;
-            if (mX1 !== mY1 || mX2 !== mY2) {
-                calcSampleValues();
-            }
+        function easeInBounce(percentComplete) {
+            return 1 - easeOutBounce(1 - percentComplete);
         }
-        var f = function(percentComplete, startValue, endValue, property) {
-            if (!_precomputed) {
-                precompute();
-            }
+        Easing.registerEasing([ "easeInBounce", function(percentComplete, startValue, endValue) {
             if (percentComplete === 0) {
                 return startValue;
             }
             if (percentComplete === 1) {
                 return endValue;
             }
-            if (mX1 === mY1 && mX2 === mY2) {
-                return startValue + percentComplete * (endValue - startValue);
+            return easeInBounce(percentComplete) * (endValue - startValue);
+        } ]);
+        Easing.registerEasing([ "easeOutBounce", function(percentComplete, startValue, endValue) {
+            if (percentComplete === 0) {
+                return startValue;
             }
-            return startValue + calcBezier(getTForX(percentComplete), mY1, mY2) * (endValue - startValue);
-        };
-        f.getControlPoints = function() {
-            return [ {
-                x: mX1,
-                y: mY1
-            }, {
-                x: mX2,
-                y: mY2
-            } ];
-        };
-        var str = "generateBezier(" + [ mX1, mY1, mX2, mY2 ] + ")";
-        f.toString = function() {
-            return str;
-        };
-        return f;
-    }
-    Easing.generateBezier = generateBezier;
-})(Easing || (Easing = {}));
+            if (percentComplete === 1) {
+                return endValue;
+            }
+            return easeOutBounce(percentComplete) * (endValue - startValue);
+        } ]);
+        Easing.registerEasing([ "easeInOutBounce", function(percentComplete, startValue, endValue) {
+            if (percentComplete === 0) {
+                return startValue;
+            }
+            if (percentComplete === 1) {
+                return endValue;
+            }
+            return (percentComplete < .5 ? easeInBounce(percentComplete * 2) * .5 : easeOutBounce(percentComplete * 2 - 1) * .5 + .5) * (endValue - startValue);
+        } ]);
+    })(Easing = VelocityStatic.Easing || (VelocityStatic.Easing = {}));
+})(VelocityStatic || (VelocityStatic = {}));
 
+///<reference path="easings.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * Elastic easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var Easing;
+    (function(Easing) {
+        var pi2 = Math.PI * 2;
+        function registerElasticIn(name, amplitude, period) {
+            Easing.registerEasing([ name, function(percentComplete, startValue, endValue) {
+                if (percentComplete === 0) {
+                    return startValue;
+                }
+                if (percentComplete === 1) {
+                    return endValue;
+                }
+                return -(amplitude * Math.pow(2, 10 * (percentComplete -= 1)) * Math.sin((percentComplete - period / pi2 * Math.asin(1 / amplitude)) * pi2 / period)) * (endValue - startValue);
+            } ]);
+        }
+        Easing.registerElasticIn = registerElasticIn;
+        function registerElasticOut(name, amplitude, period) {
+            Easing.registerEasing([ name, function(percentComplete, startValue, endValue) {
+                if (percentComplete === 0) {
+                    return startValue;
+                }
+                if (percentComplete === 1) {
+                    return endValue;
+                }
+                return (amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - period / pi2 * Math.asin(1 / amplitude)) * pi2 / period) + 1) * (endValue - startValue);
+            } ]);
+        }
+        Easing.registerElasticOut = registerElasticOut;
+        function registerElasticInOut(name, amplitude, period) {
+            Easing.registerEasing([ name, function(percentComplete, startValue, endValue) {
+                if (percentComplete === 0) {
+                    return startValue;
+                }
+                if (percentComplete === 1) {
+                    return endValue;
+                }
+                var s = period / pi2 * Math.asin(1 / amplitude);
+                percentComplete = percentComplete * 2 - 1;
+                if (percentComplete < 0) {
+                    return -.5 * (amplitude * Math.pow(2, 10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period));
+                }
+                return amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period) * .5 + 1;
+            } ]);
+        }
+        Easing.registerElasticInOut = registerElasticInOut;
+        registerElasticIn("easeInElastic", 1, .3);
+        registerElasticOut("easeOutElastic", 1, .3);
+        registerElasticInOut("easeInOutElastic", 1, .3 * 1.5);
+    })(Easing = VelocityStatic.Easing || (VelocityStatic.Easing = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="easings.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-var Easing;
+var VelocityStatic;
 
-(function(Easing) {
-    /* Runge-Kutta spring physics function generator. Adapted from Framer.js, copyright Koen Bok. MIT License: http://en.wikipedia.org/wiki/MIT_License */
-    /* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
-     then adjusts the time delta -- using the relation between actual time and duration -- to calculate the path for the duration-constrained animation. */
-    function springAccelerationForState(state) {
-        return -state.tension * state.x - state.friction * state.v;
-    }
-    function springEvaluateStateWithDerivative(initialState, dt, derivative) {
-        var state = {
-            x: initialState.x + derivative.dx * dt,
-            v: initialState.v + derivative.dv * dt,
-            tension: initialState.tension,
-            friction: initialState.friction
-        };
-        return {
-            dx: state.v,
-            dv: springAccelerationForState(state)
-        };
-    }
-    function springIntegrateState(state, dt) {
-        var a = {
-            dx: state.v,
-            dv: springAccelerationForState(state)
-        }, b = springEvaluateStateWithDerivative(state, dt * .5, a), c = springEvaluateStateWithDerivative(state, dt * .5, b), d = springEvaluateStateWithDerivative(state, dt, c), dxdt = 1 / 6 * (a.dx + 2 * (b.dx + c.dx) + d.dx), dvdt = 1 / 6 * (a.dv + 2 * (b.dv + c.dv) + d.dv);
-        state.x = state.x + dxdt * dt;
-        state.v = state.v + dvdt * dt;
-        return state;
-    }
-    function generateSpringRK4(tension, friction, duration) {
-        var initState = {
-            x: -1,
-            v: 0,
-            tension: parseFloat(tension) || 500,
-            friction: parseFloat(friction) || 20
-        }, path = [ 0 ], time_lapsed = 0, tolerance = 1 / 1e4, DT = 16 / 1e3, have_duration = duration != null, // deliberate "==", as undefined == null != 0
-        dt, last_state;
-        /* Calculate the actual time it takes for this animation to complete with the provided conditions. */
-        if (have_duration) {
-            /* Run the simulation without a duration. */
-            time_lapsed = generateSpringRK4(initState.tension, initState.friction);
-            /* Compute the adjusted time delta. */
-            dt = time_lapsed / duration * DT;
-        } else {
-            dt = DT;
+(function(VelocityStatic) {
+    var Easing;
+    (function(Easing) {
+        /* Runge-Kutta spring physics function generator. Adapted from Framer.js, copyright Koen Bok. MIT License: http://en.wikipedia.org/wiki/MIT_License */
+        /* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
+         then adjusts the time delta -- using the relation between actual time and duration -- to calculate the path for the duration-constrained animation. */
+        function springAccelerationForState(state) {
+            return -state.tension * state.x - state.friction * state.v;
         }
-        while (true) {
-            /* Next/step function .*/
-            last_state = springIntegrateState(last_state || initState, dt);
-            /* Store the position. */
-            path.push(1 + last_state.x);
-            time_lapsed += 16;
-            /* If the change threshold is reached, break. */
-            if (!(Math.abs(last_state.x) > tolerance && Math.abs(last_state.v) > tolerance)) {
-                break;
-            }
+        function springEvaluateStateWithDerivative(initialState, dt, derivative) {
+            var state = {
+                x: initialState.x + derivative.dx * dt,
+                v: initialState.v + derivative.dv * dt,
+                tension: initialState.tension,
+                friction: initialState.friction
+            };
+            return {
+                dx: state.v,
+                dv: springAccelerationForState(state)
+            };
         }
-        /* If duration is not defined, return the actual time required for completing this animation. Otherwise, return a closure that holds the
-         computed path and returns a snapshot of the position according to a given percentComplete. */
-        return !have_duration ? time_lapsed : function(percentComplete, startValue, endValue) {
-            if (percentComplete === 0) {
-                return startValue;
+        function springIntegrateState(state, dt) {
+            var a = {
+                dx: state.v,
+                dv: springAccelerationForState(state)
+            }, b = springEvaluateStateWithDerivative(state, dt * .5, a), c = springEvaluateStateWithDerivative(state, dt * .5, b), d = springEvaluateStateWithDerivative(state, dt, c), dxdt = 1 / 6 * (a.dx + 2 * (b.dx + c.dx) + d.dx), dvdt = 1 / 6 * (a.dv + 2 * (b.dv + c.dv) + d.dv);
+            state.x = state.x + dxdt * dt;
+            state.v = state.v + dvdt * dt;
+            return state;
+        }
+        function generateSpringRK4(tension, friction, duration) {
+            var initState = {
+                x: -1,
+                v: 0,
+                tension: parseFloat(tension) || 500,
+                friction: parseFloat(friction) || 20
+            }, path = [ 0 ], time_lapsed = 0, tolerance = 1 / 1e4, DT = 16 / 1e3, have_duration = duration != null, // deliberate "==", as undefined == null != 0
+            dt, last_state;
+            /* Calculate the actual time it takes for this animation to complete with the provided conditions. */
+            if (have_duration) {
+                /* Run the simulation without a duration. */
+                time_lapsed = generateSpringRK4(initState.tension, initState.friction);
+                /* Compute the adjusted time delta. */
+                dt = time_lapsed / duration * DT;
+            } else {
+                dt = DT;
             }
-            if (percentComplete === 1) {
-                return endValue;
+            while (true) {
+                /* Next/step function .*/
+                last_state = springIntegrateState(last_state || initState, dt);
+                /* Store the position. */
+                path.push(1 + last_state.x);
+                time_lapsed += 16;
+                /* If the change threshold is reached, break. */
+                if (!(Math.abs(last_state.x) > tolerance && Math.abs(last_state.v) > tolerance)) {
+                    break;
+                }
             }
-            return startValue + path[percentComplete * (path.length - 1) | 0] * (endValue - startValue);
-        };
-    }
-    Easing.generateSpringRK4 = generateSpringRK4;
-})(Easing || (Easing = {}));
+            /* If duration is not defined, return the actual time required for completing this animation. Otherwise, return a closure that holds the
+             computed path and returns a snapshot of the position according to a given percentComplete. */
+            return !have_duration ? time_lapsed : function(percentComplete, startValue, endValue) {
+                if (percentComplete === 0) {
+                    return startValue;
+                }
+                if (percentComplete === 1) {
+                    return endValue;
+                }
+                return startValue + path[percentComplete * (path.length - 1) | 0] * (endValue - startValue);
+            };
+        }
+        Easing.generateSpringRK4 = generateSpringRK4;
+    })(Easing = VelocityStatic.Easing || (VelocityStatic.Easing = {}));
+})(VelocityStatic || (VelocityStatic = {}));
 
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -2303,27 +2507,30 @@ var Easing;
  *
  * Step easing generator.
  */
-var Easing;
+var VelocityStatic;
 
-(function(Easing) {
-    var cache = {};
-    function generateStep(steps) {
-        var fn = cache[steps];
-        if (fn) {
-            return fn;
+(function(VelocityStatic) {
+    var Easing;
+    (function(Easing) {
+        var cache = {};
+        function generateStep(steps) {
+            var fn = cache[steps];
+            if (fn) {
+                return fn;
+            }
+            return cache[steps] = function(percentComplete, startValue, endValue) {
+                if (percentComplete === 0) {
+                    return startValue;
+                }
+                if (percentComplete === 1) {
+                    return endValue;
+                }
+                return startValue + Math.round(percentComplete * steps) * (1 / steps) * (endValue - startValue);
+            };
         }
-        return cache[steps] = function(percentComplete, startValue, endValue) {
-            if (percentComplete === 0) {
-                return startValue;
-            }
-            if (percentComplete === 1) {
-                return endValue;
-            }
-            return startValue + Math.round(percentComplete * steps) * (1 / steps) * (endValue - startValue);
-        };
-    }
-    Easing.generateStep = generateStep;
-})(Easing || (Easing = {}));
+        Easing.generateStep = generateStep;
+    })(Easing = VelocityStatic.Easing || (VelocityStatic.Easing = {}));
+})(VelocityStatic || (VelocityStatic = {}));
 
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -2333,79 +2540,32 @@ var Easing;
  * Easings to act on strings, either set at the start or at the end depending on
  * need.
  */
-var Easing;
-
-(function(Easing) {
-    function atStart(percentComplete, startValue, endValue) {
-        return percentComplete === 0 ? startValue : endValue;
-    }
-    Easing.atStart = atStart;
-    function atEnd(percentComplete, startValue, endValue) {
-        return percentComplete === 1 ? endValue : startValue;
-    }
-    Easing.atEnd = atEnd;
-    function during(percentComplete, startValue, endValue) {
-        return percentComplete === 0 || percentComplete === 1 ? startValue : endValue;
-    }
-    Easing.during = during;
-})(Easing || (Easing = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
 var VelocityStatic;
 
 (function(VelocityStatic) {
-    var generateBezier = Easing.generateBezier;
-    VelocityStatic.Easings = {
-        /* Basic (same as jQuery) easings. */
-        linear: function(percentComplete, startValue, endValue) {
-            return startValue + percentComplete * (endValue - startValue);
-        },
-        swing: function(percentComplete, startValue, endValue) {
-            return startValue + (.5 - Math.cos(percentComplete * Math.PI) / 2) * (endValue - startValue);
-        },
-        /* Bonus "spring" easing, which is a less exaggerated version of easeInOutElastic. */
-        spring: function(percentComplete, startValue, endValue) {
-            return startValue + (1 - Math.cos(percentComplete * 4.5 * Math.PI) * Math.exp(-percentComplete * 6)) * (endValue - startValue);
-        },
-        /* Common names */
-        ease: generateBezier(.25, .1, .25, 1),
-        easeIn: generateBezier(.42, 0, 1, 1),
-        easeOut: generateBezier(0, 0, .58, 1),
-        easeInOut: generateBezier(.42, 0, .58, 1),
-        easeInSine: generateBezier(.47, 0, .745, .715),
-        easeOutSine: generateBezier(.39, .575, .565, 1),
-        easeInOutSine: generateBezier(.445, .05, .55, .95),
-        easeInQuad: generateBezier(.55, .085, .68, .53),
-        easeOutQuad: generateBezier(.25, .46, .45, .94),
-        easeInOutQuad: generateBezier(.455, .03, .515, .955),
-        easeInCubic: generateBezier(.55, .055, .675, .19),
-        easeOutCubic: generateBezier(.215, .61, .355, 1),
-        easeInOutCubic: generateBezier(.645, .045, .355, 1),
-        easeInQuart: generateBezier(.895, .03, .685, .22),
-        easeOutQuart: generateBezier(.165, .84, .44, 1),
-        easeInOutQuart: generateBezier(.77, 0, .175, 1),
-        easeInQuint: generateBezier(.755, .05, .855, .06),
-        easeOutQuint: generateBezier(.23, 1, .32, 1),
-        easeInOutQuint: generateBezier(.86, 0, .07, 1),
-        easeInExpo: generateBezier(.95, .05, .795, .035),
-        easeOutExpo: generateBezier(.19, 1, .22, 1),
-        easeInOutExpo: generateBezier(1, 0, 0, 1),
-        easeInCirc: generateBezier(.6, .04, .98, .335),
-        easeOutCirc: generateBezier(.075, .82, .165, 1),
-        easeInOutCirc: generateBezier(.785, .135, .15, .86),
-        /* Dashed names */
-        "ease-in": generateBezier(.42, 0, 1, 1),
-        "ease-out": generateBezier(0, 0, .58, 1),
-        "ease-in-out": generateBezier(.42, 0, .58, 1),
-        /* String based - these are special cases, so don't follow the number pattern */
-        "at-start": Easing.atStart,
-        "at-end": Easing.atEnd,
-        during: Easing.during
-    };
+    var Easing;
+    (function(Easing) {
+        /**
+         * Easing function that sets to the specified value immediately after the
+         * animation starts.
+         */
+        Easing.registerEasing([ "at-start", function(percentComplete, startValue, endValue) {
+            return percentComplete === 0 ? startValue : endValue;
+        } ]);
+        /**
+         * Easing function that sets to the specified value while the animation is
+         * running.
+         */
+        Easing.registerEasing([ "during", function(percentComplete, startValue, endValue) {
+            return percentComplete === 0 || percentComplete === 1 ? startValue : endValue;
+        } ]);
+        /**
+         * Easing function that sets to the specified value when the animation ends.
+         */
+        Easing.registerEasing([ "at-end", function(percentComplete, startValue, endValue) {
+            return percentComplete === 1 ? endValue : startValue;
+        } ]);
+    })(Easing = VelocityStatic.Easing || (VelocityStatic.Easing = {}));
 })(VelocityStatic || (VelocityStatic = {}));
 
 /*
@@ -3550,7 +3710,7 @@ var VelocityStatic;
                 endValue = valueData[0];
                 if (isString(arr1) && (/^[\d-]/.test(arr1) || VelocityStatic.CSS.RegEx.isHex.test(arr1)) || isFunction(arr1) || isNumber(arr1)) {
                     startValue = arr1;
-                } else if (isString(arr1) && VelocityStatic.Easings[arr1] || Array.isArray(arr1)) {
+                } else if (isString(arr1) && VelocityStatic.Easing.Easings[arr1] || Array.isArray(arr1)) {
                     tween_4[1] = arr1;
                     startValue = arr2;
                 } else {
@@ -3748,7 +3908,7 @@ var VelocityStatic;
             if (!/^(at-start|at-end|during)$/.test(easing)) {
                 easing = endValue === "hidden" ? "at-end" : "at-start";
             }
-        } else if (isStringValue && !isFunction(easing) && !/^(at-start|at-end|during)$/.test(easing) && easing !== Easing.atStart && easing !== Easing.atEnd && easing !== Easing.during) {
+        } else if (isStringValue && easing !== "at-start" && easing !== "during" && easing !== "at-end" && easing !== VelocityStatic.Easing.Easings["at-Start"] && easing !== VelocityStatic.Easing.Easings["during"] && easing !== VelocityStatic.Easing.Easings["at-end"]) {
             console.warn("Velocity: String easings must use one of 'at-start', 'during' or 'at-end': {" + propertyName + ': ["' + endValue + '", ' + easing + ', "' + startValue + '"]}');
             easing = "at-start";
         }
@@ -3886,9 +4046,10 @@ function validateDuration(value, noError) {
  * @private
  */
 function validateEasing(value, duration, noError) {
+    var Easing = VelocityStatic.Easing;
     if (isString(value)) {
         // Named easing
-        return VelocityStatic.Easings[value];
+        return Easing.Easings[value];
     }
     if (isFunction(value)) {
         return value;
@@ -3897,13 +4058,15 @@ function validateEasing(value, duration, noError) {
         if (value.length === 1) {
             // Steps
             return Easing.generateStep(value[0]);
-        } else if (value.length === 2) {
+        }
+        if (value.length === 2) {
             // springRK4 must be passed the animation's duration.
             // Note: If the springRK4 array contains non-numbers,
             // generateSpringRK4() returns an easing function generated with
             // default tension and friction values.
             return Easing.generateSpringRK4(value[0], value[1], duration);
-        } else if (value.length === 4) {
+        }
+        if (value.length === 4) {
             // Note: If the bezier array contains non-numbers, generateBezier()
             // returns undefined.
             return Easing.generateBezier.apply(null, value) || false;

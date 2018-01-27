@@ -41,7 +41,8 @@ namespace VelocityStatic.CSS {
 
 	/**
 	 * Used to register a normalization. This should never be called by users
-	 * directly, instead it should be called via a Normalizations.
+	 * directly, instead it should be called via an action:<br/>
+	 * <code>Velocity("registerNormalization", Element, "name", VelocityNormalizationsFn[, false]);</code>
 	 * 
 	 * The fourth argument can be an explicit <code>false</code>, which prevents
 	 * the property from being cached. Please note that this can be dangerous
@@ -59,7 +60,7 @@ namespace VelocityStatic.CSS {
 		} else if (!isString(name)) {
 			console.warn("VelocityJS: Trying to set 'registerNormalization' name to an invalid value:", name);
 		} else if (!isFunction(callback)) {
-			console.warn("VelocityJS: Trying to set 'registerNormalization' callback to an invalid value:", callback);
+			console.warn("VelocityJS: Trying to set 'registerNormalization' callback to an invalid value:", name, callback);
 		} else {
 			let index = constructors.indexOf(constructor);
 

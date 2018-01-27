@@ -1,3 +1,4 @@
+///<reference path="easings.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -6,7 +7,7 @@
  * Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License
  */
 
-namespace Easing {
+namespace VelocityStatic.Easing {
 	/**
 	 * Fix to a range of <code>0 <= num <= 1</code>.
 	 */
@@ -158,4 +159,38 @@ namespace Easing {
 
 		return f;
 	}
+
+	/* Common easings */
+	const easeIn = generateBezier(0.42, 0.0, 1.00, 1.0),
+		easeOut = generateBezier(0.00, 0.0, 0.58, 1.0),
+		easeInOut = generateBezier(0.42, 0.0, 0.58, 1.0);
+
+	registerEasing(["ease", generateBezier(0.25, 0.1, 0.25, 1.0)]);
+	registerEasing(["easeIn", easeIn]);
+	registerEasing(["ease-in", easeIn]);
+	registerEasing(["easeOut", easeOut]);
+	registerEasing(["ease-out", easeOut]);
+	registerEasing(["easeInOut", easeInOut]);
+	registerEasing(["ease-in-out", easeInOut]);
+	registerEasing(["easeInSine", generateBezier(0.47, 0, 0.745, 0.715)]);
+	registerEasing(["easeOutSine", generateBezier(0.39, 0.575, 0.565, 1)]);
+	registerEasing(["easeInOutSine", generateBezier(0.445, 0.05, 0.55, 0.95)]);
+	registerEasing(["easeInQuad", generateBezier(0.55, 0.085, 0.68, 0.53)]);
+	registerEasing(["easeOutQuad", generateBezier(0.25, 0.46, 0.45, 0.94)]);
+	registerEasing(["easeInOutQuad", generateBezier(0.455, 0.03, 0.515, 0.955)]);
+	registerEasing(["easeInCubic", generateBezier(0.55, 0.055, 0.675, 0.19)]);
+	registerEasing(["easeOutCubic", generateBezier(0.215, 0.61, 0.355, 1)]);
+	registerEasing(["easeInOutCubic", generateBezier(0.645, 0.045, 0.355, 1)]);
+	registerEasing(["easeInQuart", generateBezier(0.895, 0.03, 0.685, 0.22)]);
+	registerEasing(["easeOutQuart", generateBezier(0.165, 0.84, 0.44, 1)]);
+	registerEasing(["easeInOutQuart", generateBezier(0.77, 0, 0.175, 1)]);
+	registerEasing(["easeInQuint", generateBezier(0.755, 0.05, 0.855, 0.06)]);
+	registerEasing(["easeOutQuint", generateBezier(0.23, 1, 0.32, 1)]);
+	registerEasing(["easeInOutQuint", generateBezier(0.86, 0, 0.07, 1)]);
+	registerEasing(["easeInExpo", generateBezier(0.95, 0.05, 0.795, 0.035)]);
+	registerEasing(["easeOutExpo", generateBezier(0.19, 1, 0.22, 1)]);
+	registerEasing(["easeInOutExpo", generateBezier(1, 0, 0, 1)]);
+	registerEasing(["easeInCirc", generateBezier(0.6, 0.04, 0.98, 0.335)]);
+	registerEasing(["easeOutCirc", generateBezier(0.075, 0.82, 0.165, 1)]);
+	registerEasing(["easeInOutCirc", generateBezier(0.785, 0.135, 0.15, 0.86)]);
 };

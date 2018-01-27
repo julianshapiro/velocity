@@ -1,3 +1,4 @@
+///<reference path="easings.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -6,7 +7,7 @@
  * Step easing generator.
  */
 
-namespace Easing {
+namespace VelocityStatic.Easing {
 	const cache: {[steps: number]: VelocityEasingFn} = {};
 
 	export function generateStep(steps): VelocityEasingFn {
@@ -15,7 +16,7 @@ namespace Easing {
 		if (fn) {
 			return fn;
 		}
-		return cache[steps] = function(percentComplete, startValue, endValue) {
+		return cache[steps] = function(percentComplete: number, startValue: number, endValue: number) {
 			if (percentComplete === 0) {
 				return startValue;
 			}

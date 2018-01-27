@@ -21,6 +21,15 @@ type VelocityActionFn = (args?: any[], elements?: VelocityResult, promiseHandler
 
 /**
  * Used for normalization callbacks.
+ * 
+ * @param element The element to be called on.
+ * 
+ * @param propertyValue The value to set. If <code>undefined</code> then this is
+ * a get action and must return a string value for that element.
+ * 
+ * @returns If a set action then returning any truthy value will prevent it
+ * trying to set the <code>element.style[propertyName]</code> value afterward
+ * returning.
  */
 type VelocityNormalizationsFn = ((element: HTMLorSVGElement, propertyValue: string) => boolean) & ((element: HTMLorSVGElement) => string);
 

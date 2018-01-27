@@ -98,9 +98,11 @@ function validateDuration(value: "fast" | "normal" | "slow" | number, noError?: 
  * @private
  */
 function validateEasing(value: VelocityEasingType, duration: number, noError?: true): VelocityEasingFn {
+	const Easing = VelocityStatic.Easing;
+
 	if (isString(value)) {
 		// Named easing
-		return VelocityStatic.Easings[value];
+		return Easing.Easings[value];
 	}
 	if (isFunction(value)) {
 		return value;
@@ -109,13 +111,15 @@ function validateEasing(value: VelocityEasingType, duration: number, noError?: t
 		if (value.length === 1) {
 			// Steps
 			return Easing.generateStep(value[0]);
-		} else if (value.length === 2) {
+		}
+		if (value.length === 2) {
 			// springRK4 must be passed the animation's duration.
 			// Note: If the springRK4 array contains non-numbers,
 			// generateSpringRK4() returns an easing function generated with
 			// default tension and friction values.
 			return Easing.generateSpringRK4(value[0], value[1], duration);
-		} else if (value.length === 4) {
+		}
+		if (value.length === 4) {
 			// Note: If the bezier array contains non-numbers, generateBezier()
 			// returns undefined.
 			return Easing.generateBezier.apply(null, value) || false;

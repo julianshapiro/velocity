@@ -1,3 +1,4 @@
+///<reference path="easings.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -7,22 +8,33 @@
  * need.
  */
 
-namespace Easing {
-	export function atStart(percentComplete: number, startValue: any, endValue: any): any {
+namespace VelocityStatic.Easing {
+	/**
+	 * Easing function that sets to the specified value immediately after the
+	 * animation starts.
+	 */
+	registerEasing(["at-start", function(percentComplete: number, startValue: any, endValue: any): any {
 		return percentComplete === 0
 			? startValue
 			: endValue;
-	}
+	} as any]);
 
-	export function atEnd(percentComplete: number, startValue: any, endValue: any): any {
-		return percentComplete === 1
-			? endValue
-			: startValue;
-	}
-
-	export function during(percentComplete: number, startValue: any, endValue: any): any {
+	/**
+	 * Easing function that sets to the specified value while the animation is
+	 * running.
+	 */
+	registerEasing(["during", function(percentComplete: number, startValue: any, endValue: any): any {
 		return percentComplete === 0 || percentComplete === 1
 			? startValue
 			: endValue;
-	}
+	} as any]);
+
+	/**
+	 * Easing function that sets to the specified value when the animation ends.
+	 */
+	registerEasing(["at-end", function(percentComplete: number, startValue: any, endValue: any): any {
+		return percentComplete === 1
+			? endValue
+			: startValue;
+	} as any]);
 };
