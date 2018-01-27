@@ -12,7 +12,7 @@ namespace VelocityStatic.CSS {
 	export function getUnit(property: string, start?: number): string {
 		start = start || 0;
 		if (property[start] && property[start] !== " ") {
-			for (let i = 0, units = CSS.Lists.units; i < units.length; i++) {
+			for (let i = 0, units = Units; i < units.length; i++) {
 				const unit = units[i];
 				let j = 0;
 

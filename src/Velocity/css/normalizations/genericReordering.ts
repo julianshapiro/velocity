@@ -15,7 +15,7 @@ namespace VelocityStatic.CSS {
 				firstPart = split[0];
 			let newValue = "";
 
-			if (Lists.colorNames[firstPart]) {
+			if (ColorNames[firstPart]) {
 				split.shift();
 				split.push(firstPart);
 				newValue = split.join(" ");

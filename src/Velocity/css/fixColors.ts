@@ -6,6 +6,13 @@
 
 namespace VelocityStatic.CSS {
 	/**
+	 * This is the list of color names -> rgb values. The object is in here so
+	 * that the actual name conversion can be in a separate file and not
+	 * included for custom builds.
+	 */
+	export const ColorNames: {[name: string]: string} = Object.create(null);
+
+	/**
 	 * Convert a hex list to an rgba value. Designed to be used in replace.
 	 */
 	function makeRGBA(ignore: any, r: string, g: string, b: string): string {
@@ -29,8 +36,8 @@ namespace VelocityStatic.CSS {
 				return makeRGBA($0, r + r, g + g, b + b);
 			})
 			.replace(rxColorName, function($0, $1, $2) {
-				if (Lists.colorNames.hasOwnProperty($2)) {
-					return ($1 ? $1 : "rgba(") + CSS.Lists.colorNames[$2] + ($1 ? "" : ",1)");
+				if (ColorNames.hasOwnProperty($2)) {
+					return ($1 ? $1 : "rgba(") + ColorNames[$2] + ($1 ? "" : ",1)");
 				}
 				return $0;
 			})

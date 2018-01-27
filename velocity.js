@@ -434,6 +434,12 @@ var VelocityStatic;
     var CSS;
     (function(CSS) {
         /**
+         * This is the list of color names -> rgb values. The object is in here so
+         * that the actual name conversion can be in a separate file and not
+         * included for custom builds.
+         */
+        CSS.ColorNames = Object.create(null);
+        /**
          * Convert a hex list to an rgba value. Designed to be used in replace.
          */
         function makeRGBA(ignore, r, g, b) {
@@ -448,8 +454,8 @@ var VelocityStatic;
             return str.replace(rxColor6, makeRGBA).replace(rxColor3, function($0, r, g, b) {
                 return makeRGBA($0, r + r, g + g, b + b);
             }).replace(rxColorName, function($0, $1, $2) {
-                if (CSS.Lists.colorNames.hasOwnProperty($2)) {
-                    return ($1 ? $1 : "rgba(") + CSS.Lists.colorNames[$2] + ($1 ? "" : ",1)");
+                if (CSS.ColorNames.hasOwnProperty($2)) {
+                    return ($1 ? $1 : "rgba(") + CSS.ColorNames[$2] + ($1 ? "" : ",1)");
                 }
                 return $0;
             }).replace(rxRGB, function($0) {
@@ -457,6 +463,178 @@ var VelocityStatic;
             });
         }
         CSS.fixColors = fixColors;
+    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="fixColors.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var CSS;
+    (function(CSS) {
+        // Converting from hex as it makes for a smaller file.
+        // TODO: When build system changes to webpack, make this one optional.
+        var colorValues = {
+            aliceblue: 15792383,
+            antiquewhite: 16444375,
+            aqua: 65535,
+            aquamarine: 8388564,
+            azure: 15794175,
+            beige: 16119260,
+            bisque: 16770244,
+            black: 0,
+            blanchedalmond: 16772045,
+            blue: 255,
+            blueviolet: 9055202,
+            brown: 10824234,
+            burlywood: 14596231,
+            cadetblue: 6266528,
+            chartreuse: 8388352,
+            chocolate: 13789470,
+            coral: 16744272,
+            cornflowerblue: 6591981,
+            cornsilk: 16775388,
+            crimson: 14423100,
+            cyan: 65535,
+            darkblue: 139,
+            darkcyan: 35723,
+            darkgoldenrod: 12092939,
+            darkgray: 11119017,
+            darkgrey: 11119017,
+            darkgreen: 25600,
+            darkkhaki: 12433259,
+            darkmagenta: 9109643,
+            darkolivegreen: 5597999,
+            darkorange: 16747520,
+            darkorchid: 10040012,
+            darkred: 9109504,
+            darksalmon: 15308410,
+            darkseagreen: 9419919,
+            darkslateblue: 4734347,
+            darkslategray: 3100495,
+            darkslategrey: 3100495,
+            darkturquoise: 52945,
+            darkviolet: 9699539,
+            deeppink: 16716947,
+            deepskyblue: 49151,
+            dimgray: 6908265,
+            dimgrey: 6908265,
+            dodgerblue: 2003199,
+            firebrick: 11674146,
+            floralwhite: 16775920,
+            forestgreen: 2263842,
+            fuchsia: 16711935,
+            gainsboro: 14474460,
+            ghostwhite: 16316671,
+            gold: 16766720,
+            goldenrod: 14329120,
+            gray: 8421504,
+            grey: 8421504,
+            green: 32768,
+            greenyellow: 11403055,
+            honeydew: 15794160,
+            hotpink: 16738740,
+            indianred: 13458524,
+            indigo: 4915330,
+            ivory: 16777200,
+            khaki: 15787660,
+            lavender: 15132410,
+            lavenderblush: 16773365,
+            lawngreen: 8190976,
+            lemonchiffon: 16775885,
+            lightblue: 11393254,
+            lightcoral: 15761536,
+            lightcyan: 14745599,
+            lightgoldenrodyellow: 16448210,
+            lightgray: 13882323,
+            lightgrey: 13882323,
+            lightgreen: 9498256,
+            lightpink: 16758465,
+            lightsalmon: 16752762,
+            lightseagreen: 2142890,
+            lightskyblue: 8900346,
+            lightslategray: 7833753,
+            lightslategrey: 7833753,
+            lightsteelblue: 11584734,
+            lightyellow: 16777184,
+            lime: 65280,
+            limegreen: 3329330,
+            linen: 16445670,
+            magenta: 16711935,
+            maroon: 8388608,
+            mediumaquamarine: 6737322,
+            mediumblue: 205,
+            mediumorchid: 12211667,
+            mediumpurple: 9662683,
+            mediumseagreen: 3978097,
+            mediumslateblue: 8087790,
+            mediumspringgreen: 64154,
+            mediumturquoise: 4772300,
+            mediumvioletred: 13047173,
+            midnightblue: 1644912,
+            mintcream: 16121850,
+            mistyrose: 16770273,
+            moccasin: 16770229,
+            navajowhite: 16768685,
+            navy: 128,
+            oldlace: 16643558,
+            olive: 8421376,
+            olivedrab: 7048739,
+            orange: 16753920,
+            orangered: 16729344,
+            orchid: 14315734,
+            palegoldenrod: 15657130,
+            palegreen: 10025880,
+            paleturquoise: 11529966,
+            palevioletred: 14381203,
+            papayawhip: 16773077,
+            peachpuff: 16767673,
+            peru: 13468991,
+            pink: 16761035,
+            plum: 14524637,
+            powderblue: 11591910,
+            purple: 8388736,
+            rebeccapurple: 6697881,
+            red: 16711680,
+            rosybrown: 12357519,
+            royalblue: 4286945,
+            saddlebrown: 9127187,
+            salmon: 16416882,
+            sandybrown: 16032864,
+            seagreen: 3050327,
+            seashell: 16774638,
+            sienna: 10506797,
+            silver: 12632256,
+            skyblue: 8900331,
+            slateblue: 6970061,
+            slategray: 7372944,
+            slategrey: 7372944,
+            snow: 16775930,
+            springgreen: 65407,
+            steelblue: 4620980,
+            tan: 13808780,
+            teal: 32896,
+            thistle: 14204888,
+            tomato: 16737095,
+            turquoise: 4251856,
+            violet: 15631086,
+            wheat: 16113331,
+            white: 16777215,
+            whitesmoke: 16119285,
+            yellow: 16776960,
+            yellowgreen: 10145074
+        };
+        for (var name_2 in colorValues) {
+            if (colorValues.hasOwnProperty(name_2)) {
+                var color = colorValues[name_2];
+                CSS.ColorNames[name_2] = Math.floor(color / 65536) + "," + Math.floor(color / 256 % 256) + "," + color % 256;
+            }
+        }
     })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
 })(VelocityStatic || (VelocityStatic = {}));
 
@@ -601,7 +779,7 @@ var VelocityStatic;
         function getUnit(property, start) {
             start = start || 0;
             if (property[start] && property[start] !== " ") {
-                for (var i = 0, units = CSS.Lists.units; i < units.length; i++) {
+                for (var i = 0, units = CSS.Units; i < units.length; i++) {
                     var unit = units[i];
                     var j = 0;
                     do {
@@ -630,161 +808,7 @@ var VelocityStatic;
 (function(VelocityStatic) {
     var CSS;
     (function(CSS) {
-        /************
-         Lists
-         ************/
-        CSS.Lists = {
-            //colors: ["fill", "stroke", "stopColor", "color", "backgroundColor", "borderColor", "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor"],
-            //transformsBase: ["translateX", "translateY", "scale", "scaleX", "scaleY", "skewX", "skewY", "rotateZ"],
-            //transforms3D: ["transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY"],
-            units: [ "%", "em", "ex", "ch", "rem", "vw", "vh", "vmin", "vmax", "cm", "mm", "Q", "in", "pc", "pt", "px", "deg", "grad", "rad", "turn", "s", "ms" ],
-            colorNames: {
-                aliceblue: "240,248,255",
-                antiquewhite: "250,235,215",
-                aquamarine: "127,255,212",
-                aqua: "0,255,255",
-                azure: "240,255,255",
-                beige: "245,245,220",
-                bisque: "255,228,196",
-                black: "0,0,0",
-                blanchedalmond: "255,235,205",
-                blueviolet: "138,43,226",
-                blue: "0,0,255",
-                brown: "165,42,42",
-                burlywood: "222,184,135",
-                cadetblue: "95,158,160",
-                chartreuse: "127,255,0",
-                chocolate: "210,105,30",
-                coral: "255,127,80",
-                cornflowerblue: "100,149,237",
-                cornsilk: "255,248,220",
-                crimson: "220,20,60",
-                cyan: "0,255,255",
-                darkblue: "0,0,139",
-                darkcyan: "0,139,139",
-                darkgoldenrod: "184,134,11",
-                darkgray: "169,169,169",
-                darkgrey: "169,169,169",
-                darkgreen: "0,100,0",
-                darkkhaki: "189,183,107",
-                darkmagenta: "139,0,139",
-                darkolivegreen: "85,107,47",
-                darkorange: "255,140,0",
-                darkorchid: "153,50,204",
-                darkred: "139,0,0",
-                darksalmon: "233,150,122",
-                darkseagreen: "143,188,143",
-                darkslateblue: "72,61,139",
-                darkslategray: "47,79,79",
-                darkturquoise: "0,206,209",
-                darkviolet: "148,0,211",
-                deeppink: "255,20,147",
-                deepskyblue: "0,191,255",
-                dimgray: "105,105,105",
-                dimgrey: "105,105,105",
-                dodgerblue: "30,144,255",
-                firebrick: "178,34,34",
-                floralwhite: "255,250,240",
-                forestgreen: "34,139,34",
-                fuchsia: "255,0,255",
-                gainsboro: "220,220,220",
-                ghostwhite: "248,248,255",
-                gold: "255,215,0",
-                goldenrod: "218,165,32",
-                gray: "128,128,128",
-                grey: "128,128,128",
-                greenyellow: "173,255,47",
-                green: "0,128,0",
-                honeydew: "240,255,240",
-                hotpink: "255,105,180",
-                indianred: "205,92,92",
-                indigo: "75,0,130",
-                ivory: "255,255,240",
-                khaki: "240,230,140",
-                lavenderblush: "255,240,245",
-                lavender: "230,230,250",
-                lawngreen: "124,252,0",
-                lemonchiffon: "255,250,205",
-                lightblue: "173,216,230",
-                lightcoral: "240,128,128",
-                lightcyan: "224,255,255",
-                lightgoldenrodyellow: "250,250,210",
-                lightgray: "211,211,211",
-                lightgrey: "211,211,211",
-                lightgreen: "144,238,144",
-                lightpink: "255,182,193",
-                lightsalmon: "255,160,122",
-                lightseagreen: "32,178,170",
-                lightskyblue: "135,206,250",
-                lightslategray: "119,136,153",
-                lightsteelblue: "176,196,222",
-                lightyellow: "255,255,224",
-                limegreen: "50,205,50",
-                lime: "0,255,0",
-                linen: "250,240,230",
-                magenta: "255,0,255",
-                maroon: "128,0,0",
-                mediumaquamarine: "102,205,170",
-                mediumblue: "0,0,205",
-                mediumorchid: "186,85,211",
-                mediumpurple: "147,112,219",
-                mediumseagreen: "60,179,113",
-                mediumslateblue: "123,104,238",
-                mediumspringgreen: "0,250,154",
-                mediumturquoise: "72,209,204",
-                mediumvioletred: "199,21,133",
-                midnightblue: "25,25,112",
-                mintcream: "245,255,250",
-                mistyrose: "255,228,225",
-                moccasin: "255,228,181",
-                navajowhite: "255,222,173",
-                navy: "0,0,128",
-                oldlace: "253,245,230",
-                olivedrab: "107,142,35",
-                olive: "128,128,0",
-                orangered: "255,69,0",
-                orange: "255,165,0",
-                orchid: "218,112,214",
-                palegoldenrod: "238,232,170",
-                palegreen: "152,251,152",
-                paleturquoise: "175,238,238",
-                palevioletred: "219,112,147",
-                papayawhip: "255,239,213",
-                peachpuff: "255,218,185",
-                peru: "205,133,63",
-                pink: "255,192,203",
-                plum: "221,160,221",
-                powderblue: "176,224,230",
-                purple: "128,0,128",
-                red: "255,0,0",
-                rosybrown: "188,143,143",
-                royalblue: "65,105,225",
-                saddlebrown: "139,69,19",
-                salmon: "250,128,114",
-                sandybrown: "244,164,96",
-                seagreen: "46,139,87",
-                seashell: "255,245,238",
-                sienna: "160,82,45",
-                silver: "192,192,192",
-                skyblue: "135,206,235",
-                slateblue: "106,90,205",
-                slategray: "112,128,144",
-                snow: "255,250,250",
-                springgreen: "0,255,127",
-                steelblue: "70,130,180",
-                tan: "210,180,140",
-                teal: "0,128,128",
-                thistle: "216,191,216",
-                tomato: "255,99,71",
-                turquoise: "64,224,208",
-                violet: "238,130,238",
-                wheat: "245,222,179",
-                whitesmoke: "245,245,245",
-                white: "255,255,255",
-                yellowgreen: "154,205,50",
-                yellow: "255,255,0"
-            }
-        };
+        CSS.Units = [ "%", "em", "ex", "ch", "rem", "vw", "vh", "vmin", "vmax", "cm", "mm", "Q", "in", "pc", "pt", "px", "deg", "grad", "rad", "turn", "s", "ms" ];
     })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
 })(VelocityStatic || (VelocityStatic = {}));
 
@@ -1819,7 +1843,7 @@ var VelocityStatic;
                 propertyValue = CSS.getPropertyValue(element, "textShadow", true);
                 var split = propertyValue.split(/\s/g), firstPart = split[0];
                 var newValue = "";
-                if (CSS.Lists.colorNames[firstPart]) {
+                if (CSS.ColorNames[firstPart]) {
                     split.shift();
                     split.push(firstPart);
                     newValue = split.join(" ");
@@ -2500,6 +2524,7 @@ var VelocityStatic;
     })(Easing = VelocityStatic.Easing || (VelocityStatic.Easing = {}));
 })(VelocityStatic || (VelocityStatic = {}));
 
+///<reference path="easings.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -2532,6 +2557,7 @@ var VelocityStatic;
     })(Easing = VelocityStatic.Easing || (VelocityStatic.Easing = {}));
 })(VelocityStatic || (VelocityStatic = {}));
 
+///<reference path="easings.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
