@@ -5,14 +5,14 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-namespace VelocityStatic.CSS {
+namespace VelocityStatic {
 
 	/**
 	 * Figure out the dimensions for this width / height based on the
 	 * potential borders and whether we care about them.
 	 */
 	export function augmentDimension(element: HTMLorSVGElement, name: string, wantInner: boolean): number {
-		const isBorderBox = getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
+		const isBorderBox = CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
 
 		if (isBorderBox === wantInner) {
 			// in box-sizing mode, the CSS width / height accessors already
@@ -24,7 +24,7 @@ namespace VelocityStatic.CSS {
 				augment = 0;
 
 			for (i = 0; i < fields.length; i++) {
-				value = parseFloat(getPropertyValue(element, fields[i]) as string);
+				value = parseFloat(CSS.getPropertyValue(element, fields[i]) as string);
 				if (!isNaN(value)) {
 					augment += value;
 				}
@@ -42,7 +42,7 @@ namespace VelocityStatic.CSS {
 			if (propertyValue === undefined) {
 				return augmentDimension(element, name, wantInner) + "px";
 			}
-			setPropertyValue(element, name, (parseFloat(propertyValue) - augmentDimension(element, name, wantInner)) + "px");
+			CSS.setPropertyValue(element, name, (parseFloat(propertyValue) - augmentDimension(element, name, wantInner)) + "px");
 			return true;
 		} as VelocityNormalizationsFn;
 	}

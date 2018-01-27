@@ -36,7 +36,7 @@ namespace VelocityStatic.CSS {
 				return makeRGBA($0, r + r, g + g, b + b);
 			})
 			.replace(rxColorName, function($0, $1, $2) {
-				if (ColorNames.hasOwnProperty($2)) {
+				if (ColorNames[$2]) {
 					return ($1 ? $1 : "rgba(") + ColorNames[$2] + ($1 ? "" : ",1)");
 				}
 				return $0;

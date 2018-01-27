@@ -5,17 +5,17 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-namespace VelocityStatic.CSS {
+namespace VelocityStatic {
 	function genericReordering(element: HTMLorSVGElement): string;
 	function genericReordering(element: HTMLorSVGElement, propertyValue: string): boolean;
 	function genericReordering(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
 		if (propertyValue === undefined) {
-			propertyValue = getPropertyValue(element, "textShadow", true);
+			propertyValue = CSS.getPropertyValue(element, "textShadow");
 			const split = propertyValue.split(/\s/g),
 				firstPart = split[0];
 			let newValue = "";
 
-			if (ColorNames[firstPart]) {
+			if (CSS.ColorNames[firstPart]) {
 				split.shift();
 				split.push(firstPart);
 				newValue = split.join(" ");

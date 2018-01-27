@@ -70,7 +70,7 @@ namespace VelocityStatic {
 				// Feature: Classname //
 				////////////////////////
 
-				CSS.Values.removeClass(element, "velocity-animating");
+				CSS.Values.removeClass(element, State.className);
 			}
 
 			//////////////////////

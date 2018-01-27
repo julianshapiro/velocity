@@ -1,4 +1,4 @@
-///<reference path="../../actions/_all.d.ts" />
+///<reference path="../actions/_all.d.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -11,7 +11,7 @@
  * don't exist (such as for scrolling, or inner/outer dimensions).
  */
 
-namespace VelocityStatic.CSS {
+namespace VelocityStatic {
 
 	/**
 	 * Unlike "actions", normalizations can always be replaced by users.

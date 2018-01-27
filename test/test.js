@@ -143,11 +143,11 @@ QUnit.test("CSS Object", function (assert) {
     //	}
     var testPropertyFake = "fakeProperty";
     /* Property name functions. */
-    assert.equal(CSS.Names.prefixCheck(testPropertyFake)[0], testPropertyFake, "Names.prefixCheck() returned unmatched property untouched.");
-    assert.equal(CSS.Names.prefixCheck(testPropertyFake)[1], false, "Names.prefixCheck() indicated that unmatched property waws unmatched.");
-    assert.equal(CSS.Values.isCSSNullValue("rgba(0,0,0,0)"), true, "Values.isCSSNullValue() matched null value #1.");
-    assert.equal(CSS.Values.isCSSNullValue("none"), true, "Values.isCSSNullValue() matched null value #2.");
-    assert.equal(CSS.Values.isCSSNullValue(10), false, "Values.isCSSNullValue() didn't match non-null value.");
+    //	assert.equal(CSS.Names.prefixCheck(testPropertyFake)[0], testPropertyFake, "Names.prefixCheck() returned unmatched property untouched.");
+    //	assert.equal(CSS.Names.prefixCheck(testPropertyFake)[1], false, "Names.prefixCheck() indicated that unmatched property was unmatched.");
+    //	assert.equal(CSS.Values.isCSSNullValue("rgba(0,0,0,0)"), true, "Values.isCSSNullValue() matched null value #1.");
+    //	assert.equal(CSS.Values.isCSSNullValue("none"), true, "Values.isCSSNullValue() matched null value #2.");
+    //	assert.equal(CSS.Values.isCSSNullValue(10), false, "Values.isCSSNullValue() didn't match non-null value.");
     var testUnitProperty1 = "rotateZ", testUnitPropertyUnit1 = "deg", testUnitProperty2 = "width", testUnitPropertyUnit2 = "px", testElementType1 = document.createElement("div"), testElementTypeDisplay1 = "block", testElementType2 = document.createElement("span"), testElementTypeDisplay2 = "inline";
     /* CSS value functions. */
     assert.equal(CSS.Values.getUnitType(testUnitProperty1), testUnitPropertyUnit1, "Unit type #1 was retrieved.");

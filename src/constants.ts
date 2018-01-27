@@ -35,6 +35,8 @@ const DEFAULT_SPEED = 1;
 const DEFAULT_SYNC = true;
 const TWEEN_NUMBER_REGEX = /[\d\.-]/;
 
+const CLASSNAME = "velocity-animating";
+
 const VERSION = "2.0.0";
 
 const Duration = {

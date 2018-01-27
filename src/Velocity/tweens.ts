@@ -46,13 +46,13 @@ namespace VelocityStatic {
 			duration = getValue(animation.options.duration, defaults.duration);
 
 		for (const property in properties) {
-			const propertyName = CSS.Names.camelCase(property);
+			const propertyName = CSS.camelCase(property);
 			let valueData = properties[property],
 				types = data.types,
 				found: boolean = propertyName === "tween";
 
 			for (let index = 0; types && !found; types >>= 1, index++) {
-				found = !!(types & 1 && CSS.Normalizations[0][propertyName]);
+				found = !!(types & 1 && Normalizations[index][propertyName]);
 			}
 			if (!found
 				&& (!State.prefixElement

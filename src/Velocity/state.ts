@@ -43,10 +43,6 @@ namespace VelocityStatic {
 			 */
 			prefixElement = isClient && document.createElement("div"),
 			/**
-			 * Cache every prefix match to avoid repeating lookups.
-			 */
-			prefixMatches = {},
-			/**
 			 * Retrieve the appropriate scroll anchor and property name for the
 			 * browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY
 			 */
@@ -65,6 +61,10 @@ namespace VelocityStatic {
 			 * scroll anchor.
 			 */
 			scrollPropertyTop = windowScrollAnchor ? "pageYOffset" : "scrollTop",
+			/**
+			 * The className we add / remove when animating.
+			 */
+			className = CLASSNAME,
 			/**
 			 * Keep track of whether our RAF tick is running.
 			 */

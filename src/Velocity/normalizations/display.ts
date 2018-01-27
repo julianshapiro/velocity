@@ -5,7 +5,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-namespace VelocityStatic.CSS {
+namespace VelocityStatic {
 	const inlineRx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
 		listItemRx = /^(li)$/i,
 		tableRowRx = /^(tr)$/i,
@@ -22,7 +22,7 @@ namespace VelocityStatic.CSS {
 		const style = element.style;
 
 		if (propertyValue === undefined) {
-			return getPropertyValue(element, "display", true);
+			return CSS.computePropertyValue(element, "display");
 		}
 		if (propertyValue === "auto") {
 			const nodeName = element && element.nodeName,

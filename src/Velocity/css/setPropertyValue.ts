@@ -31,7 +31,7 @@ namespace VelocityStatic.CSS {
 
 			for (let index = 0; types; types >>= 1, index++) {
 				if (types & 1) {
-					best = Normalizations[0][propertyName] || best;
+					best = Normalizations[index][propertyName] || best;
 				}
 			}
 			if (!best || !best(element, propertyValue)) {

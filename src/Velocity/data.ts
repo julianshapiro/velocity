@@ -20,7 +20,7 @@ function Data(element: HTMLorSVGElement): ElementData {
 	}
 	let types = 0;
 
-	for (let index = 0, constructors = VelocityStatic.CSS.constructors; index < constructors.length; index++) {
+	for (let index = 0, constructors = VelocityStatic.constructors; index < constructors.length; index++) {
 		if (element instanceof constructors[index]) {
 			types |= 1 << index;
 		}

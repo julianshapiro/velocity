@@ -5,7 +5,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-namespace VelocityStatic.CSS {
+namespace VelocityStatic {
 
 	/**
 	 * Return a Normalisation that can be used to set / get the vendor prefixed
@@ -16,7 +16,7 @@ namespace VelocityStatic.CSS {
 			if (propertyValue === undefined) {
 				return element.style[unprefixed];
 			}
-			setPropertyValue(element, property, propertyValue);
+			CSS.setPropertyValue(element, property, propertyValue);
 			return true;
 		} as VelocityNormalizationsFn;
 	}

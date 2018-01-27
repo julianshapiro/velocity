@@ -7,7 +7,7 @@
 namespace VelocityStatic.CSS {
 
 	// TODO: This is still a complete mess
-	function computePropertyValue(element: HTMLorSVGElement, property: string): string {
+	export function computePropertyValue(element: HTMLorSVGElement, property: string): string {
 		const data = Data(element),
 			// If computedStyle is cached, use it.
 			computedStyle = data && data.computedStyle ? data.computedStyle : window.getComputedStyle(element, null);
@@ -68,12 +68,16 @@ namespace VelocityStatic.CSS {
 		/* An example of why numeric conversion is necessary: When an element with "position:absolute" has an untouched "left"
 		 property, which reverts to "auto", left's value is 0 relative to its parent element, but is often non-zero relative
 		 to its *containing* (not parent) element, which is the nearest "position:relative" ancestor or the viewport (and always the viewport in the case of "position:fixed"). */
-		if (computedValue === "auto" && /^(top|right|bottom|left)$/.test(property)) {
-			const position = getPropertyValue(element, "position"); /* GET */
+		if (computedValue === "auto") {
+			if (/^(top|right|bottom|left)$/.test(property)) {
+				const position = getPropertyValue(element, "position"); /* GET */
 
-			if (position === "fixed" || (position === "absolute" && /top|left/i.test(property))) {
-				/* Note: this has no pixel unit on its returned values; we re-add it here to conform with computePropertyValue's behavior. */
-				computedValue = _position(element)[property] + "px"; /* GET */
+				if (position === "fixed" || (position === "absolute" && /top|left/i.test(property))) {
+					/* Note: this has no pixel unit on its returned values; we re-add it here to conform with computePropertyValue's behavior. */
+					computedValue = _position(element)[property] + "px"; /* GET */
+				}
+			} else {
+				computedValue = "0";
 			}
 		}
 		return computedValue ? String(computedValue) : "";
@@ -87,7 +91,7 @@ namespace VelocityStatic.CSS {
 		const data = Data(element);
 		let propertyValue: string;
 
-		if (CSS.NoCacheNormalizations.has(propertyName)) {
+		if (NoCacheNormalizations.has(propertyName)) {
 			skipCache = true;
 		}
 		if (!skipCache && data && data.cache[propertyName] != null) {
@@ -102,7 +106,7 @@ namespace VelocityStatic.CSS {
 
 			for (let index = 0; types; types >>= 1, index++) {
 				if (types & 1) {
-					best = Normalizations[0][propertyName] || best;
+					best = Normalizations[index][propertyName] || best;
 				}
 			}
 			if (best) {

@@ -1,10 +1,8 @@
+///<reference path="camelCase.ts" />
 ///<reference path="colors.ts" />
 ///<reference path="fixColors.ts" />
 ///<reference path="getPropertyValue.ts" />
 ///<reference path="getUnit.ts" />
-///<reference path="units.ts" />
-///<reference path="names.ts" />
-///<reference path="normalizations/_all.d.ts" />
 ///<reference path="regex.ts" />
 ///<reference path="setPropertyValue.ts" />
 ///<reference path="values.ts" />
