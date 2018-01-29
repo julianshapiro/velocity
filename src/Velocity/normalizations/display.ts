@@ -6,7 +6,7 @@
  */
 
 namespace VelocityStatic {
-	const inlineRx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
+	export const inlineRx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
 		listItemRx = /^(li)$/i,
 		tableRowRx = /^(tr)$/i,
 		tableRx = /^(table)$/i,

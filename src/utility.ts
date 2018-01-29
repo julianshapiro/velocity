@@ -101,3 +101,31 @@ function getValue<T>(args: any): T {
 		}
 	}
 }
+
+/**
+ * Add a single className to an Element.
+ */
+function addClass(element: HTMLorSVGElement, className: string): void {
+	if (element instanceof Element) {
+		if (element.classList) {
+			element.classList.add(className);
+		} else {
+			removeClass(element, className);
+			element.className += (element.className.length ? " " : "") + className;
+		}
+	}
+}
+
+/**
+ * Remove a single className from an Element.
+ */
+function removeClass(element: HTMLorSVGElement, className: string): void {
+	if (element instanceof Element) {
+		if (element.classList) {
+			element.classList.remove(className);
+		} else {
+			// TODO: Need some jsperf tests on performance - can we get rid of the regex and maybe use split / array manipulation?
+			element.className = element.className.toString().replace(new RegExp("(^|\\s)" + className + "(\\s|$)", "gi"), " ");
+		}
+	}
+}

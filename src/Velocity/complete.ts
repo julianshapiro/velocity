@@ -70,7 +70,7 @@ namespace VelocityStatic {
 				// Feature: Classname //
 				////////////////////////
 
-				CSS.Values.removeClass(element, State.className);
+				removeClass(element, State.className);
 			}
 
 			//////////////////////

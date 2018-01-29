@@ -22,7 +22,7 @@ namespace VelocityStatic {
 		return (value as any as VelocityPropertyValueFn).call(element, elementArrayIndex, elements.length);
 	})
 	commands.set("number", function(value, element, elements, elementArrayIndex, propertyName) {
-		return CSS.fixColors(String(value) + CSS.Values.getUnitType(propertyName));
+		return value + (element instanceof HTMLElement ? getUnitType(propertyName) : "");
 	});
 	commands.set("string", function(value, element, elements, elementArrayIndex, propertyName) {
 		return CSS.fixColors(value);
@@ -30,6 +30,52 @@ namespace VelocityStatic {
 	commands.set("undefined", function(value, element, elements, elementArrayIndex, propertyName) {
 		return CSS.fixColors(CSS.getPropertyValue(element, propertyName) || "");
 	});
+
+	const
+		/**
+		 * Properties that take "deg" as the default numeric suffix.
+		 */
+		degree = [
+			// "azimuth" // Deprecated
+		],
+		/**
+		 * Properties that take no default numeric suffix.
+		 */
+		unitless = [
+			"borderImageSlice",
+			"columnCount",
+			"counterIncrement",
+			"counterReset",
+			"flex",
+			"flexGrow",
+			"flexShrink",
+			"floodOpacity",
+			"fontSizeAdjust",
+			"fontWeight",
+			"lineHeight",
+			"opacity",
+			"order",
+			"orphans",
+			"shapeImageThreshold",
+			"tabSize",
+			"widows",
+			"zIndex"
+		];
+
+	/**
+	 * Retrieve a property's default unit type. Used for assigning a unit
+	 * type when one is not supplied by the user. These are only valid for
+	 * HTMLElement style properties.
+	 */
+	function getUnitType(property: string): string {
+		if (_inArray(degree, property)) {
+			return "deg";
+		}
+		if (_inArray(unitless, property)) {
+			return "";
+		}
+		return "px";
+	}
 
 	/**
 	 * Expand a VelocityProperty argument into a valid sparse Tween array. This

@@ -42,7 +42,7 @@ namespace VelocityStatic {
 			// Feature: Classname //
 			////////////////////////
 
-			CSS.Values.addClass(element, State.className);
+			addClass(element, State.className);
 		}
 	}
 

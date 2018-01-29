@@ -248,6 +248,34 @@ function getValue(args) {
     }
 }
 
+/**
+ * Add a single className to an Element.
+ */
+function addClass(element, className) {
+    if (element instanceof Element) {
+        if (element.classList) {
+            element.classList.add(className);
+        } else {
+            removeClass(element, className);
+            element.className += (element.className.length ? " " : "") + className;
+        }
+    }
+}
+
+/**
+ * Remove a single className from an Element.
+ */
+function removeClass(element, className) {
+    if (element instanceof Element) {
+        if (element.classList) {
+            element.classList.remove(className);
+        } else {
+            // TODO: Need some jsperf tests on performance - can we get rid of the regex and maybe use split / array manipulation?
+            element.className = element.className.toString().replace(new RegExp("(^|\\s)" + className + "(\\s|$)", "gi"), " ");
+        }
+    }
+}
+
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -1488,77 +1516,6 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
-    var CSS;
-    (function(CSS) {
-        var rxDegree = /^(rotate|skew)/i, rxUnitless = /^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight|opacity)$/i, // TODO: These are wrong
-        rxCSSNull = /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i;
-        /************************
-         CSS Property Values
-         ************************/
-        CSS.Values = {
-            /**
-             * Retrieve a property's default unit type. Used for assigning a unit
-             * type when one is not supplied by the user.
-             */
-            getUnitType: function(property) {
-                if (rxDegree.test(property)) {
-                    return "deg";
-                }
-                if (rxUnitless.test(property)) {
-                    /* The above properties are unitless. */
-                    return "";
-                }
-                /* Default to px for all other properties. */
-                return "px";
-            },
-            /**
-             * Add a single className to an Element.
-             */
-            addClass: function(element, className) {
-                if (element instanceof Element) {
-                    if (element.classList) {
-                        element.classList.add(className);
-                    } else if (isString(element.className)) {
-                        // Element.className is around 15% faster then set/getAttribute
-                        element.className += (element.className.length ? " " : "") + className;
-                    } else {
-                        var currentClass = element.getAttribute("class") || "";
-                        element.setAttribute("class", currentClass + (currentClass ? " " : "") + className);
-                    }
-                }
-            },
-            /**
-             * Remove a single className from an Element.
-             */
-            removeClass: function(element, className) {
-                if (element instanceof Element) {
-                    if (element.classList) {
-                        element.classList.remove(className);
-                    } else {
-                        var rx = new RegExp("(^|\\s)" + className + "(\\s|$)", "gi");
-                        if (isString(element.className)) {
-                            // Element.className is around 15% faster then set/getAttribute
-                            // TODO: Need some jsperf tests on performance - can we get rid of the regex and maybe use split / array manipulation?
-                            element.className = element.className.toString().replace(rx, " ");
-                        } else {
-                            var currentClass = element.getAttribute("class") || "";
-                            element.setAttribute("class", currentClass.replace(rx, " "));
-                        }
-                    }
-                }
-            }
-        };
-    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
     var Easing;
     (function(Easing) {
         Easing.Easings = Object.create(null);
@@ -2229,7 +2186,9 @@ var VelocityStatic;
 var VelocityStatic;
 
 (function(VelocityStatic) {
-    var inlineRx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i, listItemRx = /^(li)$/i, tableRowRx = /^(tr)$/i, tableRx = /^(table)$/i, tableRowGroupRx = /^(tbody)$/i;
+    VelocityStatic.inlineRx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i, 
+    VelocityStatic.listItemRx = /^(li)$/i, VelocityStatic.tableRowRx = /^(tr)$/i, VelocityStatic.tableRx = /^(table)$/i, 
+    VelocityStatic.tableRowGroupRx = /^(tbody)$/i;
     function display(element, propertyValue) {
         var style = element.style;
         if (propertyValue === undefined) {
@@ -2237,15 +2196,15 @@ var VelocityStatic;
         }
         if (propertyValue === "auto") {
             var nodeName = element && element.nodeName, data = Data(element);
-            if (inlineRx.test(nodeName)) {
+            if (VelocityStatic.inlineRx.test(nodeName)) {
                 propertyValue = "inline";
-            } else if (listItemRx.test(nodeName)) {
+            } else if (VelocityStatic.listItemRx.test(nodeName)) {
                 propertyValue = "list-item";
-            } else if (tableRowRx.test(nodeName)) {
+            } else if (VelocityStatic.tableRowRx.test(nodeName)) {
                 propertyValue = "table-row";
-            } else if (tableRx.test(nodeName)) {
+            } else if (VelocityStatic.tableRx.test(nodeName)) {
                 propertyValue = "table";
-            } else if (tableRowGroupRx.test(nodeName)) {
+            } else if (VelocityStatic.tableRowGroupRx.test(nodeName)) {
                 propertyValue = "table-row-group";
             } else {
                 // Default to "block" when no match is found.
@@ -2453,7 +2412,7 @@ var VelocityStatic;
                 ////////////////////////
                 // Feature: Classname //
                 ////////////////////////
-                VelocityStatic.CSS.Values.removeClass(element, VelocityStatic.State.className);
+                removeClass(element, VelocityStatic.State.className);
             }
             //////////////////////
             // Option: Complete //
@@ -2850,7 +2809,7 @@ var VelocityStatic;
             ////////////////////////
             // Feature: Classname //
             ////////////////////////
-            VelocityStatic.CSS.Values.addClass(element, VelocityStatic.State.className);
+            addClass(element, VelocityStatic.State.className);
         }
     }
     /**
@@ -2961,7 +2920,7 @@ var VelocityStatic;
                 paddingBottom: ""
             };
             if (opts.display === undefined) {
-                var isInline = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(element.nodeName.toLowerCase());
+                var isInline = VelocityStatic.inlineRx.test(element.nodeName.toLowerCase());
                 /* Show the element before slideDown begins and hide the element after slideUp completes. */
                 /* Note: Inline elements cannot have dimensions animated, so they're reverted to inline-block. */
                 opts.display = direction === "Down" ? isInline ? "inline-block" : "block" : "none";
@@ -3589,7 +3548,7 @@ var VelocityStatic;
         return value.call(element, elementArrayIndex, elements.length);
     });
     commands.set("number", function(value, element, elements, elementArrayIndex, propertyName) {
-        return VelocityStatic.CSS.fixColors(String(value) + VelocityStatic.CSS.Values.getUnitType(propertyName));
+        return value + (element instanceof HTMLElement ? getUnitType(propertyName) : "");
     });
     commands.set("string", function(value, element, elements, elementArrayIndex, propertyName) {
         return VelocityStatic.CSS.fixColors(value);
@@ -3597,6 +3556,27 @@ var VelocityStatic;
     commands.set("undefined", function(value, element, elements, elementArrayIndex, propertyName) {
         return VelocityStatic.CSS.fixColors(VelocityStatic.CSS.getPropertyValue(element, propertyName) || "");
     });
+    var /**
+     * Properties that take "deg" as the default numeric suffix.
+     */
+    degree = [], /**
+     * Properties that take no default numeric suffix.
+     */
+    unitless = [ "borderImageSlice", "columnCount", "counterIncrement", "counterReset", "flex", "flexGrow", "flexShrink", "floodOpacity", "fontSizeAdjust", "fontWeight", "lineHeight", "opacity", "order", "orphans", "shapeImageThreshold", "tabSize", "widows", "zIndex" ];
+    /**
+     * Retrieve a property's default unit type. Used for assigning a unit
+     * type when one is not supplied by the user. These are only valid for
+     * HTMLElement style properties.
+     */
+    function getUnitType(property) {
+        if (_inArray(degree, property)) {
+            return "deg";
+        }
+        if (_inArray(unitless, property)) {
+            return "";
+        }
+        return "px";
+    }
     /**
      * Expand a VelocityProperty argument into a valid sparse Tween array. This
      * pre-allocates the array as it is then the correct size and slightly

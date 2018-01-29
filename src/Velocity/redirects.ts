@@ -29,7 +29,7 @@ namespace VelocityStatic {
 				};
 
 			if (opts.display === undefined) {
-				let isInline = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(element.nodeName.toLowerCase());
+				let isInline = inlineRx.test(element.nodeName.toLowerCase());
 
 				/* Show the element before slideDown begins and hide the element after slideUp completes. */
 				/* Note: Inline elements cannot have dimensions animated, so they're reverted to inline-block. */
