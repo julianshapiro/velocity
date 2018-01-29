@@ -5,16 +5,15 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.test("End Value Setting (Note: Browser Tab Must Have Focus Due to rAF)", function(assert) {
+QUnit.test("End Value Setting", function(assert) {
 	var done = assert.async(1);
 
 	/* Standard properties. */
-	var $target1 = getTarget();
-	Velocity($target1, defaultProperties, {});
-	setTimeout(function() {
-		assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "width") as string), defaultProperties.width, "Standard end value #1 was set.");
-		assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "opacity") as string), defaultProperties.opacity, "Standard end value #2 was set.");
+	Velocity(getTarget(), defaultProperties)
+		.then(function(elements) {
+			assert.equal(Velocity(elements[0], "style", "width"), defaultProperties.width, "Standard end value #1 was set.");
+			assert.equal(Velocity(elements[0], "style", "opacity"), defaultProperties.opacity, "Standard end value #2 was set.");
 
-		done();
-	}, completeCheckDuration);
+			done();
+		});
 });

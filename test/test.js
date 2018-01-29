@@ -170,34 +170,24 @@ QUnit.test("CSS Object", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.todo("End Value Caching", function (assert) {
-    //	var done = assert.async(2),
-    //			newProperties = {height: "50px", width: "250px"},
-    //			$target1 = getTarget();
-    //
-    //	assert.expect(4);
-    //	Velocity($target1, defaultProperties, function() {
-    //
-    //		applyStartValues($target1, newProperties);
-    //		/* Called after the last call is complete (stale). Ensure that the newly-set (via $.css()) properties are used. */
-    //		Velocity($target1, defaultProperties);
-    //
-    //		setTimeout(function() {
-    //			assert.equal(Data($target1).style.width.startValue, parseFloat(newProperties.width), "Stale end value #1 wasn't pulled.");
-    //			assert.equal(Data($target1).style.height.startValue, parseFloat(newProperties.height), "Stale end value #2 wasn't pulled.");
-    //			done();
-    //		}, asyncCheckDuration);
-    //	});
-    //
-    //	var $target2 = getTarget();
-    //	Velocity($target2, defaultProperties);
-    //	Velocity($target2, newProperties, function() {
-    //		/* Chained onto a previous call (fresh). */
-    //		assert.equal(Data($target2).style.width.startValue, defaultProperties.width, "Chained end value #1 was pulled.");
-    //		assert.equal(Data($target2).style.height.startValue, defaultProperties.height, "Chained end value #2 was pulled.");
-    //
-    //		done();
-    //	});
+QUnit.test("End Value Caching", function (assert) {
+    var done = assert.async(2), newProperties = { height: "50px", width: "250px" };
+    assert.expect(4);
+    /* Called after the last call is complete (stale). Ensure that the newly-set (via $.css()) properties are used. */
+    Velocity(getTarget(newProperties), defaultProperties)
+        .then(function (elements) {
+        assert.equal(Data(elements[0]).cache.width, defaultProperties.width, "Stale end value #1 wasn't pulled.");
+        assert.equal(Data(elements[0]).cache.height, defaultProperties.height, "Stale end value #2 wasn't pulled.");
+        done();
+    });
+    Velocity(getTarget(), defaultProperties)
+        .velocity(newProperties)
+        .then(function (elements) {
+        /* Chained onto a previous call (fresh). */
+        assert.equal(Data(elements[0]).cache.width, newProperties.width, "Chained end value #1 was pulled.");
+        assert.equal(Data(elements[0]).cache.height, newProperties.height, "Chained end value #2 was pulled.");
+        done();
+    });
 });
 ///<reference path="_module.ts" />
 /*
@@ -205,16 +195,15 @@ QUnit.todo("End Value Caching", function (assert) {
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.test("End Value Setting (Note: Browser Tab Must Have Focus Due to rAF)", function (assert) {
+QUnit.test("End Value Setting", function (assert) {
     var done = assert.async(1);
     /* Standard properties. */
-    var $target1 = getTarget();
-    Velocity($target1, defaultProperties, {});
-    setTimeout(function () {
-        assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "width")), defaultProperties.width, "Standard end value #1 was set.");
-        assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target1, "opacity")), defaultProperties.opacity, "Standard end value #2 was set.");
+    Velocity(getTarget(), defaultProperties)
+        .then(function (elements) {
+        assert.equal(Velocity(elements[0], "style", "width"), defaultProperties.width, "Standard end value #1 was set.");
+        assert.equal(Velocity(elements[0], "style", "opacity"), defaultProperties.opacity, "Standard end value #2 was set.");
         done();
-    }, completeCheckDuration);
+    });
 });
 ///<reference path="_module.ts" />
 /*
@@ -1637,7 +1626,11 @@ QUnit.todo("Forcefeeding", function (assert) {
     /* Note: Start values are always converted into pixels. W test the conversion ratio we already know to avoid additional work. */
     var testStartWidth = "1rem", testStartWidthToPx = "16px", testStartHeight = "10px";
     var $target = getTarget();
-    Velocity($target, { width: [100, "linear", testStartWidth], height: [100, testStartHeight], opacity: [defaultProperties.opacity, "easeInQuad"] });
+    Velocity($target, {
+        width: [100, "linear", testStartWidth],
+        height: [100, testStartHeight],
+        opacity: [defaultProperties.opacity, "easeInQuad"]
+    });
     assert.equal(Data($target).cache.width, parseFloat(testStartWidthToPx), "Forcefed value #1 passed to tween.");
     assert.equal(Data($target).cache.height, parseFloat(testStartHeight), "Forcefed value #2 passed to tween.");
     assert.equal(Data($target).cache.opacity, defaultStyles.opacity, "Easing was misinterpreted as forcefed value.");
@@ -2092,9 +2085,9 @@ var defaultStyles = {
     colorGreen: 200,
     textShadowBlur: 3
 }, defaultProperties = {
-    opacity: defaultStyles.opacity / 2,
-    width: defaultStyles.width * 2,
-    height: defaultStyles.height * 2
+    opacity: defaultStyles.opacity / 2 + "px",
+    width: defaultStyles.width * 2 + "px",
+    height: defaultStyles.height * 2 + "px"
 }, defaultOptions = {
     queue: "",
     duration: 300,
@@ -2138,7 +2131,7 @@ function getNow() {
 function getPropertyValue(element, property) {
     return Velocity.CSS.getPropertyValue(element, property);
 }
-function getTarget() {
+function getTarget(startValues) {
     var div = document.createElement("div");
     div.className = "target";
     div.style.opacity = String(defaultStyles.opacity);
@@ -2149,6 +2142,9 @@ function getTarget() {
     div.style.textShadow = "0px 0px " + defaultStyles.textShadowBlur + "px red";
     $qunitStage.appendChild(div);
     targets.push(div);
+    if (startValues) {
+        applyStartValues(div, startValues);
+    }
     return div;
 }
 function once(func) {

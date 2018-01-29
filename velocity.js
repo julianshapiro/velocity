@@ -2121,49 +2121,19 @@ var VelocityStatic;
                 return true;
             };
         }
-        // TODO: Need a better way to determine the SVG attributes, this wastes space and isn't future-proof...
-        // Commented out lines are better as style properties, or invalid
-        [ "accent-height", "alignment-baseline", "allowReorder", "alphabetic", "amplitude", "arabic-form", "ascent", "autoReverse", "azimuth", "baseFrequency", "baseline-shift", "baseProfile", //		"bbox",
-        "bias", "by", "cap-height", //		"clip",
-        "clipPathUnits", //		"clip-path",
-        //		"clip-rule",
-        //		"color",
-        "color-interpolation", "color-interpolation-filters", "color-profile", "color-rendering", //		"cursor",
-        "cx", "cy", "d", "decelerate", "descent", "diffuseConstant", //		"direction",
-        //		"display",
-        "divisor", //		"dominant-baseline",
-        "dx", "dy", "edgeMode", "elevation", "enable-background", "exponent", //		"fill",
-        //		"fill-opacity",
-        //		"fill-rule",
-        //		"filter",
-        "filterUnits", "flood-color", "flood-opacity", //		"font-family",
-        //		"font-size",
-        //		"font-size-adjust",
-        //		"font-stretch",
-        //		"font-style",
-        //		"font-variant",
-        //		"font-weight",
-        "format", "fr", "fx", "fy", "g1", "g2", "glyph-name", "glyph-orientation-horizontal", "glyph-orientation-vertical", "glyphRef", "gradientTransform", "gradientUnits", "hanging", "height", "horiz-adv-x", "horiz-origin-x", "ideographic", "image-rendering", "in", "in2", "intercept", "k", "k1", "k2", "k3", "k4", "kernelMatrix", "kernelUnitLength", //		"kerning",
-        "keyPoints", "keySplines", "keyTimes", "lang", "lengthAdjust", //		"letter-spacing",
-        "lighting-color", "limitingConeAngle", "marker-end", "marker-mid", "marker-start", "markerHeight", "markerUnits", "markerWidth", //		"mask",
-        "maskContentUnits", "maskUnits", "mathematical", "media", "method", "mode", "numOctaves", "offset", //		"opacity",
-        "operator", "order", "orient", "orientation", "origin", //		"overflow",
-        "overline-position", "overline-thickness", "panose-1", //		"paint-order",
-        "pathLength", "patternContentUnits", "patternTransform", "patternUnits", //		"pointer-events",
-        "points", "pointsAtX", "pointsAtY", "pointsAtZ", "preserveAlpha", "preserveAspectRatio", "primitiveUnits", "r", "radius", "refX", "refY", "rendering-intent", "result", "rotate", "rx", "ry", "scale", "seed", "shape-rendering", "slope", "spacing", "specularConstant", "specularExponent", "spreadMethod", "startOffset", "stdDeviation", "stemh", "stemv", "stitchTiles", "stop-color", "stop-opacity", "strikethrough-position", "strikethrough-thickness", "string", //		"stroke",
-        //		"stroke-dasharray",
-        //		"stroke-dashoffset",
-        //		"stroke-linecap",
-        //		"stroke-linejoin",
-        //		"stroke-miterlimit",
-        //		"stroke-opacity",
-        //		"stroke-width",
-        "surfaceScale", "systemLanguage", "tableValues", "target", "targetX", "targetY", //		"text-anchor",
-        //		"text-decoration",
-        //		"text-rendering",
-        "textLength", "transform", "type", "u1", "u2", "underline-position", "underline-thickness", "unicode", "unicode-bidi", "unicode-range", "units-per-em", "v-alphabetic", "v-hanging", "v-ideographic", "v-mathematical", "values", "vert-adv-y", "vert-origin-x", "vert-origin-y", "viewBox", "viewTarget", //		"visibility",
-        "width", "widths", "word-spacing", "writing-mode", "x", "x-height", "x1", "x2", "xChannelSelector", "y", "y1", "y2", "yChannelSelector", "z", "zoomAndPan" ].forEach(function(attribute) {
-            VelocityStatic.registerNormalization([ SVGElement, attribute, getAttribute(attribute) ]);
+        var base = document.createElement("div"), rxSubtype = /^SVG(.*)Element$/, rxElement = /Element$/;
+        Object.getOwnPropertyNames(window).forEach(function(globals) {
+            var subtype = rxSubtype.exec(globals);
+            if (subtype) {
+                var element = document.createElementNS("http://www.w3.org/2000/svg", (subtype[1] || "svg").toLowerCase()), constructor = element.constructor;
+                for (var attribute in element) {
+                    var value = element[attribute];
+                    if (isString(attribute) && !(attribute[0] === "o" && attribute[1] === "n") && attribute !== attribute.toUpperCase() && !rxElement.test(attribute) && !(attribute in base) && !isFunction(value)) {
+                        // TODO: Should this all be set on the generic SVGElement, it would save space and time, but not as powerful
+                        VelocityStatic.registerNormalization([ constructor, attribute, getAttribute(attribute) ]);
+                    }
+                }
+            }
         });
     })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
 })(VelocityStatic || (VelocityStatic = {}));

@@ -45,9 +45,9 @@ const defaultStyles = {
 	textShadowBlur: 3
 },
 	defaultProperties: VelocityProperties = {
-		opacity: defaultStyles.opacity / 2,
-		width: defaultStyles.width * 2,
-		height: defaultStyles.height * 2
+		opacity: defaultStyles.opacity / 2 + "px",
+		width: defaultStyles.width * 2 + "px",
+		height: defaultStyles.height * 2 + "px"
 	},
 	defaultOptions: VelocityOptions = {
 		queue: "",
@@ -90,7 +90,7 @@ let targets: HTMLDivElement[] = [],
 
 QUnit.config.reorder = false;
 
-function applyStartValues(element, startValues) {
+function applyStartValues(element: HTMLElement, startValues: {[name: string]: string}) {
 	$.each(startValues, function(property, startValue) {
 		element.style[property] = startValue;
 	});
@@ -108,7 +108,7 @@ function getPropertyValue(element: HTMLElement, property: string): string {
 	return Velocity.CSS.getPropertyValue(element, property);
 }
 
-function getTarget(): HTMLDivElement {
+function getTarget(startValues?: {[name: string]: string}): HTMLDivElement {
 	var div = document.createElement("div") as HTMLDivElement;
 
 	div.className = "target";
@@ -120,6 +120,9 @@ function getTarget(): HTMLDivElement {
 	div.style.textShadow = "0px 0px " + defaultStyles.textShadowBlur + "px red";
 	$qunitStage.appendChild(div);
 	targets.push(div);
+	if (startValues) {
+		applyStartValues(div, startValues);
+	}
 	return div;
 }
 
