@@ -1,6 +1,5 @@
 ///<reference path="_module.ts" />
 ///<reference path="Arguments.ts" />
-///<reference path="CSS_Object.ts" />
 ///<reference path="End Value Caching.ts" />
 ///<reference path="End Value Setting.ts" />
 ///<reference path="Start Value Calculation.ts" />

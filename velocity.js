@@ -3577,6 +3577,7 @@ var VelocityStatic;
         }
         return "px";
     }
+    VelocityStatic.getUnitType = getUnitType;
     /**
      * Expand a VelocityProperty argument into a valid sparse Tween array. This
      * pre-allocates the array as it is then the correct size and slightly
