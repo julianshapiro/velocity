@@ -5,7 +5,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.todo("Packaged Effect: slideUp/Down", function(assert) {
+QUnit.skip("Packaged Effect: slideUp/Down", function(assert) {
 	var done = assert.async(4),
 		$target1 = getTarget(),
 		$target2 = getTarget(),

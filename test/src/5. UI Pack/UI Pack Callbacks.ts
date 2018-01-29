@@ -5,7 +5,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.todo("Callbacks", function(assert) {
+QUnit.skip("Callbacks", function(assert) {
 	var done = assert.async(2),
 		$targets = [getTarget(), getTarget()];
 

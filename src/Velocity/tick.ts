@@ -124,12 +124,10 @@ namespace VelocityStatic {
 	/* Note: Tab focus detection doesn't work on older versions of IE, but that's okay since they don't support rAF to begin with. */
 	if (!State.isMobile && document.hidden !== undefined) {
 		document.addEventListener("visibilitychange", function updateTicker(event?: Event) {
-			console.log("updateTicker", event, document.hidden)
 			let hidden = document.hidden;
 
 			ticker = hidden ? rAFProxy : rAFShim;
 			if (event) {
-				console.log("setTimeout tick", ticker)
 				setTimeout(tick, 2000);
 			}
 			tick();

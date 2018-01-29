@@ -49,17 +49,10 @@ namespace VelocityStatic.CSS {
 		//			property = "borderTopColor";
 		//		}
 
-		/* IE9 has a bug in which the "filter" property must be accessed from computedStyle using the getPropertyValue method
-		 instead of a direct property lookup. The getPropertyValue method is slower than a direct lookup, which is why we avoid it by default. */
-		/* TODO: add polyfill */
-		if (IE === 9 && property === "filter") {
-			computedValue = computedStyle.getPropertyValue(property); /* GET */
-		} else {
-			computedValue = computedStyle[property];
-		}
+		computedValue = computedStyle[property];
 		/* Fall back to the property's style value (if defined) when computedValue returns nothing,
 		 which can happen when the element hasn't been painted. */
-		if (computedValue === "" || computedValue === null) {
+		if (!computedValue) {
 			computedValue = element.style[property];
 		}
 		/* For top, right, bottom, and left (TRBL) values that are set to "auto" on elements of "fixed" or "absolute" position,
@@ -69,15 +62,25 @@ namespace VelocityStatic.CSS {
 		 property, which reverts to "auto", left's value is 0 relative to its parent element, but is often non-zero relative
 		 to its *containing* (not parent) element, which is the nearest "position:relative" ancestor or the viewport (and always the viewport in the case of "position:fixed"). */
 		if (computedValue === "auto") {
-			if (/^(top|right|bottom|left)$/.test(property)) {
-				const position = getPropertyValue(element, "position"); /* GET */
+			switch (property) {
+				case "top":
+				case "left":
+					let topLeft = true;
+				case "right":
+				case "bottom":
+					const position = getPropertyValue(element, "position"); /* GET */
 
-				if (position === "fixed" || (position === "absolute" && /top|left/i.test(property))) {
-					/* Note: this has no pixel unit on its returned values; we re-add it here to conform with computePropertyValue's behavior. */
-					computedValue = _position(element)[property] + "px"; /* GET */
-				}
-			} else {
-				computedValue = "0";
+					if (position === "fixed" || (topLeft && position === "absolute")) {
+						// Note: this has no pixel unit on its returned values,
+						// we re-add it here to conform with
+						// computePropertyValue's behavior.
+						computedValue = element.getBoundingClientRect[property] + "px"; /* GET */
+						break;
+					}
+				// Deliberate fallthrough!
+				default:
+					computedValue = "0px";
+					break
 			}
 		}
 		return computedValue ? String(computedValue) : "";

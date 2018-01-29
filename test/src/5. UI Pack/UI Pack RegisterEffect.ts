@@ -5,7 +5,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.todo("RegisterEffect", function(assert) {
+QUnit.skip("RegisterEffect", function(assert) {
 	var done = assert.async(1),
 		effectDefaultDuration = 800;
 

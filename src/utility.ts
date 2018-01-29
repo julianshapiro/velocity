@@ -50,12 +50,6 @@ function _deepCopyObject<T, U>(target: T, ...sources: U[]): T & U {
 	return to;
 }
 
-function _position(element: HTMLorSVGElement): ClientRect {
-	if (element) {
-		return element.getBoundingClientRect();
-	}
-}
-
 /**
  * Shim to get the current milliseconds - on anything except old IE it'll use
  * Date.now() and save creating an object. If that doesn't exist then it'll

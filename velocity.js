@@ -203,12 +203,6 @@ function _deepCopyObject(target) {
     return to;
 }
 
-function _position(element) {
-    if (element) {
-        return element.getBoundingClientRect();
-    }
-}
-
 /**
  * Shim to get the current milliseconds - on anything except old IE it'll use
  * Date.now() and save creating an object. If that doesn't exist then it'll
@@ -1294,17 +1288,10 @@ var VelocityStatic;
             //		if (property === "borderColor") {
             //			property = "borderTopColor";
             //		}
-            /* IE9 has a bug in which the "filter" property must be accessed from computedStyle using the getPropertyValue method
-             instead of a direct property lookup. The getPropertyValue method is slower than a direct lookup, which is why we avoid it by default. */
-            /* TODO: add polyfill */
-            if (IE === 9 && property === "filter") {
-                computedValue = computedStyle.getPropertyValue(property);
-            } else {
-                computedValue = computedStyle[property];
-            }
+            computedValue = computedStyle[property];
             /* Fall back to the property's style value (if defined) when computedValue returns nothing,
              which can happen when the element hasn't been painted. */
-            if (computedValue === "" || computedValue === null) {
+            if (!computedValue) {
                 computedValue = element.style[property];
             }
             /* For top, right, bottom, and left (TRBL) values that are set to "auto" on elements of "fixed" or "absolute" position,
@@ -1314,15 +1301,28 @@ var VelocityStatic;
              property, which reverts to "auto", left's value is 0 relative to its parent element, but is often non-zero relative
              to its *containing* (not parent) element, which is the nearest "position:relative" ancestor or the viewport (and always the viewport in the case of "position:fixed"). */
             if (computedValue === "auto") {
-                if (/^(top|right|bottom|left)$/.test(property)) {
+                switch (property) {
+                  case "top":
+                  case "left":
+                    var topLeft = true;
+
+                  case "right":
+                  case "bottom":
                     var position = getPropertyValue(element, "position");
                     /* GET */
-                    if (position === "fixed" || position === "absolute" && /top|left/i.test(property)) {
-                        /* Note: this has no pixel unit on its returned values; we re-add it here to conform with computePropertyValue's behavior. */
-                        computedValue = _position(element)[property] + "px";
+                    if (position === "fixed" || topLeft && position === "absolute") {
+                        // Note: this has no pixel unit on its returned values,
+                        // we re-add it here to conform with
+                        // computePropertyValue's behavior.
+                        computedValue = element.getBoundingClientRect[property] + "px";
+                        /* GET */
+                        break;
                     }
-                } else {
-                    computedValue = "0";
+
+                  // Deliberate fallthrough!
+                    default:
+                    computedValue = "0px";
+                    break;
                 }
             }
             return computedValue ? String(computedValue) : "";
@@ -3382,11 +3382,9 @@ var VelocityStatic;
     /* Note: Tab focus detection doesn't work on older versions of IE, but that's okay since they don't support rAF to begin with. */
     if (!VelocityStatic.State.isMobile && document.hidden !== undefined) {
         document.addEventListener("visibilitychange", function updateTicker(event) {
-            console.log("updateTicker", event, document.hidden);
             var hidden = document.hidden;
             ticker = hidden ? rAFProxy : rAFShim;
             if (event) {
-                console.log("setTimeout tick", ticker);
                 setTimeout(tick, 2e3);
             }
             tick();

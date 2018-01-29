@@ -5,7 +5,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.todo("In/Out", function(assert) {
+QUnit.skip("In/Out", function(assert) {
 	var done = assert.async(2),
 		$target1 = getTarget(),
 		$target2 = getTarget(),
