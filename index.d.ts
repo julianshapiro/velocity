@@ -738,12 +738,15 @@ interface VelocityExtended<TNode extends Node = HTMLorSVGElement> {
 // Action: Finish //
 ////////////////////
 interface Velocity {
-	(action: "finish", queue?: string): VelocityResult;
-	(elements: VelocityElements, action: "finish", queue?: string): VelocityResult;
+	(action: "finish", stopAll?: true): VelocityResult;
+	(action: "finish", queue?: string | false, stopAll?: true): VelocityResult;
+	(elements: VelocityElements, action: "finish", stopAll?: true): VelocityResult;
+	(elements: VelocityElements, action: "finish", queue?: string | false, stopAll?: true): VelocityResult;
 }
 
 interface VelocityChain {
-	(action: "finish", queue?: string): VelocityResult;
+	(action: "finish", stopAll?: true): VelocityResult;
+	(action: "finish", queue?: string | false, stopAll?: true): VelocityResult;
 }
 
 ////////////////////
@@ -801,12 +804,15 @@ interface VelocityChain {
 // Action: Stop //
 //////////////////
 interface Velocity {
-	(action: "stop", queue?: string): VelocityResult;
-	(elements: VelocityElements, action: "stop", queue?: string): VelocityResult;
+	(action: "stop", stopAll?: true): VelocityResult;
+	(action: "stop", queue?: string | false, stopAll?: true): VelocityResult;
+	(elements: VelocityElements, action: "stop", stopAll?: true): VelocityResult;
+	(elements: VelocityElements, action: "stop", queue?: string | false, stopAll?: true): VelocityResult;
 }
 
 interface VelocityChain {
-	(action: "stop", queue?: string): VelocityResult;
+	(action: "stop", stopAll?: true): VelocityResult;
+	(action: "stop", queue?: string | false, stopAll?: true): VelocityResult;
 }
 
 ///////////////////

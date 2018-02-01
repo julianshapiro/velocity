@@ -437,8 +437,18 @@ var VelocityStatic;
         }
     }
     /**
-     * Clear the currently-active delay on each targeted element.
-     * @param {HTMLorSVGElement[]} elements The velocity elements
+     * When the finish action is triggered, the elements' currently active call is
+     * immediately finished. When an element is finished, the next item in its
+     * animation queue is immediately triggered. If passed via a chained call
+     * then this will only target the animations in that call, and not the
+     * elements linked to it.
+     *
+     * A queue name may be passed in to specify that only animations on the
+     * named queue are finished. The default queue is named "". In addition the
+     * value of `false` is allowed for the queue name.
+     *
+     * An final argument may be passed in to clear an element's remaining queued
+     * calls. This may only be the value `true`.
      */
     function finish(args, elements, promiseHandler) {
         var queueName = validateQueue(args[0], true), defaultQueue = VelocityStatic.defaults.queue, finishAll = args[queueName === undefined ? 0 : 1] === true;
@@ -730,17 +740,22 @@ var VelocityStatic;
         }
     }
     /**
-     * When the stop action is triggered, the elements' currently active call is immediately stopped. The active call might have
-     * been applied to multiple elements, in which case all of the call's elements will be stopped. When an element
-     * is stopped, the next item in its animation queue is immediately triggered.
-     * An additional argument may be passed in to clear an element's remaining queued calls. Either true (which defaults to the "fx" queue)
-     * or a custom queue string can be passed in.
-     * Note: The stop command runs prior to Velocity's Queueing phase since its behavior is intended to take effect *immediately*,
-     * regardless of the element's current queue state.
-     * @param {any[]} args
-     * @param {VelocityResult} elements
-     * @param {VelocityPromise} promiseHandler
-     * @param {string} action
+     * When the stop action is triggered, the elements' currently active call is
+     * immediately stopped. When an element is stopped, the next item in its
+     * animation queue is immediately triggered. If passed via a chained call
+     * then this will only target the animations in that call, and not the
+     * elements linked to it.
+     *
+     * A queue name may be passed in to specify that only animations on the
+     * named queue are stopped. The default queue is named "". In addition the
+     * value of `false` is allowed for the queue name.
+     *
+     * An final argument may be passed in to clear an element's remaining queued
+     * calls. This may only be the value `true`.
+     *
+     * Note: The stop command runs prior to Velocity's Queueing phase since its
+     * behavior is intended to take effect *immediately*, regardless of the
+     * element's current queue state.
      */
     function stop(args, elements, promiseHandler, action) {
         var queueName = validateQueue(args[0], true), defaultQueue = VelocityStatic.defaults.queue, finishAll = args[queueName === undefined ? 0 : 1] === true;

@@ -1,9 +1,9 @@
-﻿# Velocity 2.0.0
+﻿# Velocity 2.0.0 beta
 
-# This is a dev branch - files are *not* available on CDN
+# This is a public beta - files are *not* available on CDN
 
 ## Docs
-[http://VelocityJS.org](http://velocityjs.org)
+[https://github.com/julianshapiro/velocity/wiki](https://github.com/julianshapiro/velocity/wiki)
 
 ## News
 WhatsApp, Tumblr, Windows, Samsung, Uber, and thousands of other companies rely on Velocity. Visit [Libscore.com](http://libscore.com/#$.Velocity) to see which sites use Velocity on their homepage.

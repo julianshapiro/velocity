@@ -55,8 +55,18 @@ namespace VelocityStatic {
 	}
 
 	/**
-	 * Clear the currently-active delay on each targeted element.
-	 * @param {HTMLorSVGElement[]} elements The velocity elements
+	 * When the finish action is triggered, the elements' currently active call is
+	 * immediately finished. When an element is finished, the next item in its
+	 * animation queue is immediately triggered. If passed via a chained call
+	 * then this will only target the animations in that call, and not the
+	 * elements linked to it.
+	 * 
+	 * A queue name may be passed in to specify that only animations on the
+	 * named queue are finished. The default queue is named "". In addition the
+	 * value of `false` is allowed for the queue name.
+	 * 
+	 * An final argument may be passed in to clear an element's remaining queued
+	 * calls. This may only be the value `true`.
 	 */
 	function finish(args: any[], elements: VelocityResult, promiseHandler?: VelocityPromise): void {
 		const queueName: string | false = validateQueue(args[0], true),
