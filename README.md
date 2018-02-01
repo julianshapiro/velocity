@@ -1,7 +1,9 @@
-﻿# Velocity 1.5.1
+﻿# Velocity 2.0.0 beta
+
+# This is a public beta - files are *not* available on CDN
 
 ## Docs
-[http://VelocityJS.org](http://velocityjs.org)
+[https://github.com/julianshapiro/velocity/wiki](https://github.com/julianshapiro/velocity/wiki)
 
 ## News
 WhatsApp, Tumblr, Windows, Samsung, Uber, and thousands of other companies rely on Velocity. Visit [Libscore.com](http://libscore.com/#$.Velocity) to see which sites use Velocity on their homepage.
@@ -14,17 +16,17 @@ NPM: https://www.npmjs.com/package/velocity-react
 ## Quickstart
 ### Velocity (CDN, choose one of them):
 ```html
-<script src="//cdn.jsdelivr.net/npm/velocity-animate@1.5/velocity.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.1/velocity.min.js"></script>
+<script src="//cdn.jsdelivr.net/velocity/2.0/velocity.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.0/velocity.min.js"></script>
 ```
 
 ### Velocity UI pack (CDN, choose one of them): 
 ```html
-<script src="//cdn.jsdelivr.net/npm/velocity-animate@1.5/velocity.ui.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.1/velocity.ui.min.js"></script>
+<script src="//cdn.jsdelivr.net/velocity/2.0/velocity.ui.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.0/velocity.ui.min.js"></script>
 ```
 
-> Please note that JSDelivr will automatically supply the latest release, while CloudFlare needs to ask for a specific version.
+> Please note that JSDelivr can automatically supply the latest release, while CloudFlare needs to ask for a specific version.
 
 ### Package managers:
 _npm:_ `npm install velocity-animate`<br>
@@ -34,6 +36,7 @@ _bower:_ `bower install velocity`
 Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you add the `[velocity.js]` and `[javascript]` tags).
 
 ## Updates
+- **[2.0](https://github.com/julianshapiro/velocity/compare/1.5.0...2.0.0)**: Typescript update and complete refactoring.
 - **[1.5](https://github.com/julianshapiro/velocity/compare/1.4.0...1.5.0)**: Bugfixes, IE9 compatibility fixes.
 - **[1.4](https://github.com/julianshapiro/velocity/compare/1.3.0...1.4.0)**: Pause / Resume (per element or global).<br>
 Forcefed string animation (just have matching number spaces) including unit conversions and colour names (ie `background:["rgba(red,0.1)", "blue"]`).
@@ -57,6 +60,6 @@ Various fixes including ticker (loading Velocity in a background window) and col
 
 ====
 
-[MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).<br>
-[Stripe](https://stripe.com/blog/stripe-open-source-retreat) sponsors Velocity's development.<br>
-[BrowserStack](http://www.browserstack.com/) provides testing services.
+[MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).
+
+[![Kiss My Button](https://presskit.kissmybutton.gr/logos/kissmybutton-logo-small.png)](https://kissmybutton.gr)  sponsors Velocity's development.

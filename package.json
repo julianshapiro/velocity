@@ -1,6 +1,6 @@
 {
   "name": "velocity-animate",
-  "version": "1.5.1",
+  "version": "2.0.0",
   "description": "Accelerated JavaScript animation.",
   "keywords": [
     "velocity",
@@ -36,8 +36,14 @@
     "velocity.ui.min.js"
   ],
   "devDependencies": {
+    "@types/qunit": "^2.0.31",
     "grunt": "^1.0.1",
     "grunt-contrib-jshint": "~1.1.0",
-    "grunt-contrib-uglify": "~2.2.0"
+    "grunt-contrib-uglify": "~3.3.0",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-load-options": "^1.0.0",
+    "grunt-ts": "^6.0.0-beta.17",
+    "load-grunt-tasks": "^3.5.2",
+    "typescript": "^2.7.1"
   }
 }
