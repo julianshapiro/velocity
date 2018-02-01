@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"allowUnreachableCode": true,
+		"allowUnusedLabels": true,
+		"alwaysStrict": false,
+		"forceConsistentCasingInFileNames": true,
+		"noEmitOnError": true,
+		"noImplicitAny": false,
+		"outFile": "build/velocity.js",
+		"preserveConstEnums": true,
+		"removeComments": false,
+		"sourceMap": true,
+		"inlineSources": true,
+		"target": "es5",
+		"lib" : [
+			"es6",
+			"dom",
+			"scripthost"
+		]
+	},
+	"files": [
+		"src/app.ts"
+	]
+}
