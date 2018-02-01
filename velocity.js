@@ -3243,7 +3243,7 @@ var VelocityStatic;
     function callProgress(activeCall, timeCurrent) {
         try {
             var elements = activeCall.elements, percentComplete = activeCall.percentComplete, options = activeCall.options, tweenValue = activeCall.tween;
-            activeCall.options.progress.call(elements, elements, percentComplete, Math.max(0, activeCall.timeStart + (activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : VelocityStatic.defaults.duration) - timeCurrent), activeCall.timeStart, tweenValue !== undefined ? tweenValue : String(percentComplete * 100), activeCall);
+            activeCall.options.progress.call(elements, elements, percentComplete, Math.max(0, activeCall.timeStart + (activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : VelocityStatic.defaults.duration) - timeCurrent), tweenValue !== undefined ? tweenValue : String(percentComplete * 100), activeCall);
         } catch (error) {
             setTimeout(function() {
                 throw error;

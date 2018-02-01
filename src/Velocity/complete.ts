@@ -15,7 +15,7 @@ namespace VelocityStatic {
 		try {
 			const elements = activeCall.elements;
 
-			activeCall.options.complete.call(elements, elements, activeCall);
+			(activeCall.options.complete as VelocityCallback).call(elements, elements, activeCall);
 		} catch (error) {
 			setTimeout(function() {
 				throw error;

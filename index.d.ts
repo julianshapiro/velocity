@@ -115,7 +115,7 @@ type VelocityCallback = (this: VelocityExtended & HTMLorSVGElement[], elements?:
 /**
  * A callback used for progress tracking.
  */
-type VelocityProgress = (this: VelocityExtended & HTMLorSVGElement[], elements?: VelocityExtended & HTMLorSVGElement[], percentComplete?: number, remaining?: number, start?: number, tweenValue?: number) => void;
+type VelocityProgress = (this: VelocityExtended & HTMLorSVGElement[], elements?: VelocityExtended & HTMLorSVGElement[], percentComplete?: number, remaining?: number, tweenValue?: number, activeCall?: AnimationCall) => void;
 
 // TODO: Clean this up, add comments, remove deprecated options
 interface VelocityOptions {

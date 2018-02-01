@@ -17,7 +17,7 @@ namespace VelocityStatic {
 		try {
 			const elements = activeCall.elements;
 
-			activeCall.options.begin.call(elements, elements, activeCall);
+			(activeCall.options.begin as VelocityCallback).call(elements, elements, activeCall);
 		} catch (error) {
 			setTimeout(function() {
 				throw error;
@@ -36,14 +36,12 @@ namespace VelocityStatic {
 				options = activeCall.options,
 				tweenValue = activeCall.tween;
 
-			activeCall.options.progress.call(elements,
+			(activeCall.options.progress as VelocityProgress).call(elements,
 				elements,
 				percentComplete,
 				Math.max(0, activeCall.timeStart + (activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaults.duration) - timeCurrent),
-				activeCall.timeStart,
 				tweenValue !== undefined ? tweenValue : String(percentComplete * 100),
 				activeCall);
-
 		} catch (error) {
 			setTimeout(function() {
 				throw error;
