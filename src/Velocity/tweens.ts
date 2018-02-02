@@ -319,7 +319,7 @@ namespace VelocityStatic {
 					}
 					while (indexStart < startValue.length) {
 						charStart = startValue[indexStart++];
-						if (charStart === " ") {
+						if (charStart === " " || TWEEN_NUMBER_REGEX.test(charStart)) {
 							break;
 						} else {
 							arrayStart[arrayStart.length - 1] += charStart;
@@ -327,7 +327,7 @@ namespace VelocityStatic {
 					}
 					while (indexEnd < endValue.length) {
 						charEnd = endValue[indexEnd++];
-						if (charEnd === " ") {
+						if (charEnd === " " || TWEEN_NUMBER_REGEX.test(charEnd)) {
 							break;
 						} else {
 							arrayEnd[arrayEnd.length - 1] += charEnd;
