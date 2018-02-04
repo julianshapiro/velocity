@@ -45,7 +45,7 @@ const defaultStyles = {
 	textShadowBlur: 3
 },
 	defaultProperties: VelocityProperties = {
-		opacity: defaultStyles.opacity / 2 + "px",
+		opacity: String(defaultStyles.opacity / 2),
 		width: defaultStyles.width * 2 + "px",
 		height: defaultStyles.height * 2 + "px"
 	},

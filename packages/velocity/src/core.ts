@@ -130,7 +130,8 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	}
 	// Get any options map passed in as arguments first, expand any direct
 	// options if possible.
-	const isAction = isString(propertiesMap),
+	const isReverse = propertiesMap === "reverse",
+		isAction = !isReverse && isString(propertiesMap),
 		opts = syntacticSugar ? getValue(args0.options, args0.o) : _arguments[argumentIndex];
 
 	if (isPlainObject(opts)) {
@@ -193,10 +194,9 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		return promise as any;
 	}
 
-	// TODO: exception for the special "reverse" property
 	// NOTE: Can't use isAction here due to type inference - there are callbacks
 	// between so the type isn't considered safe.
-	if (isString(propertiesMap)) {
+	if (isAction) {
 		const args: any[] = [],
 			promiseHandler: VelocityPromise = promise && {
 				_promise: promise,
@@ -214,11 +214,11 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		// There is one special case - "reverse" - which is handled differently,
 		// by being stored on the animation and then expanded when the animation
 		// starts.
-		const action = propertiesMap.replace(/\..*$/, ""),
+		const action = (propertiesMap as string).replace(/\..*$/, ""),
 			callback = VelocityStatic.Actions[action] || VelocityStatic.Actions["default"];
 
 		if (callback) {
-			const result = callback(args, elements, promiseHandler, propertiesMap);
+			const result = callback(args, elements, promiseHandler, propertiesMap as string);
 
 			if (result !== undefined) {
 				return result;
@@ -226,7 +226,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		} else {
 			console.warn("VelocityJS: Unknown action:", propertiesMap);
 		}
-	} else if (isPlainObject(propertiesMap)) {
+	} else if (isPlainObject(propertiesMap) || isReverse) {
 		/**
 		 * The options for this set of animations.
 		 */
@@ -268,13 +268,15 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 				/* Note: You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
 				options.mobileHA = true;
 			}
-			if (optionsMap.display != null) {
-				(propertiesMap as VelocityProperties).display = optionsMap.display as string;
-				console.error("Deprecated 'options.display' used, this is now a property:", optionsMap.display);
-			}
-			if (optionsMap.visibility != null) {
-				(propertiesMap as VelocityProperties).visibility = optionsMap.visibility as string;
-				console.error("Deprecated 'options.visibility' used, this is now a property:", optionsMap.visibility);
+			if (!isReverse) {
+				if (optionsMap.display != null) {
+					(propertiesMap as VelocityProperties).display = optionsMap.display as string;
+					console.error("Deprecated 'options.display' used, this is now a property:", optionsMap.display);
+				}
+				if (optionsMap.visibility != null) {
+					(propertiesMap as VelocityProperties).visibility = optionsMap.visibility as string;
+					console.error("Deprecated 'options.visibility' used, this is now a property:", optionsMap.visibility);
+				}
 			}
 			// TODO: Allow functional options for different options per element
 			const optionsBegin = validateBegin(optionsMap.begin),
@@ -343,16 +345,24 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			const element = elements[index];
 
 			if (isNode(element)) {
-				const tweens = Object.create(null),
-					animation: AnimationCall = Object.assign({
-						element: element,
-						tweens: tweens
-					}, rootAnimation);
+				if (isReverse && options.queue !== false) {
+					const lastAnimation = Data(element).lastAnimationList[options.queue];
 
-				options._total++;
-				animations.push(animation);
-				VelocityStatic.expandProperties(animation, propertiesMap);
-				VelocityStatic.queue(element, animation, getValue(animation.queue, options.queue));
+					propertiesMap = lastAnimation && lastAnimation.tweens;
+				}
+				if (propertiesMap) {
+					const tweens = Object.create(null),
+						animation: AnimationCall = Object.assign({
+							element: element,
+							tweens: tweens
+						}, rootAnimation);
+
+					options._total++;
+					animations.push(animation);
+
+					VelocityStatic.expandProperties(animation, propertiesMap, isReverse);
+					VelocityStatic.queue(element, animation, getValue(animation.queue, options.queue));
+				}
 			}
 		}
 		if (VelocityStatic.State.isTicking === false) {

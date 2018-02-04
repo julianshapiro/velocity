@@ -28,14 +28,8 @@ namespace VelocityStatic {
 			State.firstNew = animation;
 		}
 		const element = animation.element,
-			data = Data(element),
-			queue = animation.queue == null ? animation.options.queue : animation.queue;
+			data = Data(element);
 
-		if (queue !== false) {
-			// Store the last animation added so we can use it for the
-			// beginning of the next one.
-			data.lastAnimationList[queue] = animation;
-		}
 		if (!data.count++) {
 
 			////////////////////////
@@ -49,14 +43,20 @@ namespace VelocityStatic {
 	/**
 	 * Add an item to an animation queue.
 	 */
-	export function queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: string | false): void {
+	export function queue(element: HTMLorSVGElement, animation: AnimationCall, queue: string | false): void {
+		const data = Data(element);
+
+		if (queue !== false) {
+			// Store the last animation added so we can use it for the
+			// beginning of the next one.
+			data.lastAnimationList[queue] = animation;
+		}
 		if (queue === false) {
 			animate(animation);
 		} else {
 			if (!isString(queue)) {
 				queue = "";
 			}
-			const data = Data(element);
 			let last = data.queueList[queue];
 
 			if (!last) {
@@ -129,7 +129,6 @@ namespace VelocityStatic {
 			const data = Data(animation.element);
 
 			if (data) {
-				data.lastAnimationList[queue] = animation;
 				animation._next = animation._prev = undefined;
 			}
 		}

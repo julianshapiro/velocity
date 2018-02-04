@@ -14,9 +14,9 @@
 * There are APIs for extending Velocity - see the various register* commands.
 * Display - This is a property, no longer an option.
 * Visibility - This is a property, no longer an option.
+* Reverse - Now reverses the last animation at time of adding, not when playing.
 
 # Currently disabled / not updated:
 
 * UI-Pack
-* Reverse
 * Scroll (working, but not happy with interface - it's a property if people want to play, alias of scrollTop, there's also scrollLeft)
