@@ -788,16 +788,23 @@ interface VelocityChain {
 	(action: "resume", queue?: string): VelocityResult;
 }
 
-////////////////////
-// Action: Resume //
-////////////////////
+/////////////////////
+// Action: Reverse //
+/////////////////////
 interface Velocity {
-	(action: "resume", queue?: string): VelocityResult;
-	(elements: VelocityElements, action: "resume", queue?: string): VelocityResult;
+	(elements: VelocityElements, action: "reverse", complete?: () => void): VelocityResult;
+	(elements: VelocityElements, action: "reverse", duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+	(elements: VelocityElements, action: "reverse", duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
+	(elements: VelocityElements, action: "reverse", easing?: string | number[], complete?: () => void): VelocityResult;
+	(elements: VelocityElements, action: "reverse", options?: VelocityOptions): VelocityResult;
 }
 
 interface VelocityChain {
-	(action: "resume", queue?: string): VelocityResult;
+	(action: "reverse", complete?: () => void): VelocityResult;
+	(action: "reverse", duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+	(action: "reverse", duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
+	(action: "reverse", easing?: string | number[], complete?: () => void): VelocityResult;
+	(action: "reverse", options?: VelocityOptions): VelocityResult;
 }
 
 //////////////////

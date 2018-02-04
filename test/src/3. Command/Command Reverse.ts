@@ -5,27 +5,47 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-QUnit.skip("Reverse", function(assert) {
-	var done = assert.async(1),
-		testEasing = "spring",
-		$target = getTarget();
+QUnit.test("Reverse", function(assert) {
+	var $target = getTarget(),
+		opacity = $target.velocity("style", "opacity"),
+		width = $target.velocity("style", "width");
 
-	assert.expect(4);
-	Velocity($target, {opacity: defaultProperties.opacity, width: defaultProperties.width}, {easing: testEasing});
-	Velocity($target, "reverse", function() {
-		//					assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target, "opacity")), defaultStyles.opacity, "Reversed to initial property #1.");
-		//					assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target, "width")), defaultStyles.width, "Reversed to initial property #2.");
-		//
-		//					done();
+	if (width === "0") {
+		// Browsers don't always suffix, but Velocity does.
+		width = "0px";
+	}
+	async(assert, 2, function(done) {
+		Velocity($target, defaultProperties, {
+			complete: function(elements) {
+				assert.equal(elements[0].velocity("style", "opacity"), defaultProperties.opacity, "Initial property #1 set correctly.");
+				assert.equal(elements[0].velocity("style", "width"), defaultProperties.width, "Initial property #2 set correctly.");
+
+				done();
+			}
+		});
 	});
-	/* Check chained reverses. */
-	Velocity($target, "reverse", function() {
-		assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target, "opacity") as string), defaultProperties.opacity, "Reversed to reversed property #1.");
-		assert.equal(parseFloat(Velocity.CSS.getPropertyValue($target, "width") as string), defaultProperties.width, "Reversed to reversed property #2.");
 
-		/* Ensure the options were passed through until the end. */
-		//		assert.equal(Data($target).opts.easing, testEasing, "Options object passed through.");
+	async(assert, 2, function(done) {
+		Velocity($target, "reverse", {
+			complete: function(elements) {
+				assert.equal(elements[0].velocity("style", "opacity"), opacity, "Reversed property #1 set correctly.");
+				assert.equal(elements[0].velocity("style", "width"), width, "Reversed property #2 set correctly.");
 
-		done();
+				done();
+			}
+		});
 	});
+
+	async(assert, 2, function(done) {
+		Velocity($target, "reverse", {
+			complete: function(elements) {
+				assert.equal(elements[0].velocity("style", "opacity"), defaultProperties.opacity, "Chained reversed property #1 set correctly.");
+				assert.equal(elements[0].velocity("style", "width"), defaultProperties.width, "Chained reversed property #2 set correctly.");
+
+				done();
+			}
+		});
+	});
+
+	assert.expect(async());
 });
