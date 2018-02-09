@@ -58,8 +58,11 @@ Various fixes including ticker (loading Velocity in a background window) and col
 - **jQuery's $.animate()** is slow and poorly-equipped for motion design.
 - **Velocity** is a fast, feature-rich standalone alternative to jQuery's $.animate().
 
-====
-
+## License
 [MIT License](LICENSE.md). © Julian Shapiro (http://twitter.com/shapiro).
 
+## Sponsors
+
 [![Kiss My Button](https://presskit.kissmybutton.gr/logos/kissmybutton-logo-small.png)](https://kissmybutton.gr)  sponsors Velocity's development.
+
+[![BrowserStack](https://raw.githubusercontent.com/julianshapiro/velocity/master/.github/browserstack-logo-182x96.png)](https://browserstack.com/)  provides browser testing services for Velocity.
