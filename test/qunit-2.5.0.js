@@ -1,17 +1,17 @@
 /*!
- * QUnit 2.4.0
+ * QUnit 2.5.0
  * https://qunitjs.com/
  *
  * Copyright jQuery Foundation and other contributors
  * Released under the MIT license
  * https://jquery.org/license
  *
- * Date: 2017-07-08T15:20Z
+ * Date: 2018-01-10T02:56Z
  */
 (function (global$1) {
   'use strict';
 
-  global$1 = global$1 && 'default' in global$1 ? global$1['default'] : global$1;
+  global$1 = global$1 && global$1.hasOwnProperty('default') ? global$1['default'] : global$1;
 
   var window = global$1.window;
   var self$1 = global$1.self;
@@ -1115,7 +1115,7 @@
 
   			config.queue.shift()();
   		} else {
-  			setTimeout(advance, 13);
+  			setTimeout(advance);
   			break;
   		}
   	}
@@ -1388,6 +1388,13 @@
   		this.async = false;
   		this.expected = 0;
   	} else {
+  		if (typeof this.callback !== "function") {
+  			var method = this.todo ? "todo" : "test";
+
+  			// eslint-disable-next-line max-len
+  			throw new TypeError("You must provide a function as a test callback to QUnit." + method + "(\"" + settings.testName + "\")");
+  		}
+
   		this.assert = new Assert(this);
   	}
   }
@@ -1686,7 +1693,7 @@
 
   	pushResult: function pushResult(resultInfo) {
   		if (this !== config.current) {
-  			throw new Error("Assertion occured after test had finished.");
+  			throw new Error("Assertion occurred after test had finished.");
   		}
 
   		// Destructure of resultInfo = { result, actual, expected, message, negative }
@@ -1697,12 +1704,15 @@
   			result: resultInfo.result,
   			message: resultInfo.message,
   			actual: resultInfo.actual,
-  			expected: resultInfo.expected,
   			testId: this.testId,
   			negative: resultInfo.negative || false,
   			runtime: now() - this.started,
   			todo: !!this.todo
   		};
+
+  		if (hasOwn.call(resultInfo, "expected")) {
+  			details.expected = resultInfo.expected;
+  		}
 
   		if (!resultInfo.result) {
   			source = resultInfo.source || sourceFromStacktrace();
@@ -1729,7 +1739,6 @@
   			result: false,
   			message: message || "error",
   			actual: actual || null,
-  			expected: null,
   			source: source
   		});
   	},
@@ -1765,18 +1774,24 @@
   			then = promise.then;
   			if (objectType(then) === "function") {
   				resume = internalStop(test);
-  				then.call(promise, function () {
-  					resume();
-  				}, function (error) {
-  					message = "Promise rejected " + (!phase ? "during" : phase.replace(/Each$/, "")) + " \"" + test.testName + "\": " + (error && error.message || error);
-  					test.pushFailure(message, extractStacktrace(error, 0));
+  				if (config.notrycatch) {
+  					then.call(promise, function () {
+  						resume();
+  					});
+  				} else {
+  					then.call(promise, function () {
+  						resume();
+  					}, function (error) {
+  						message = "Promise rejected " + (!phase ? "during" : phase.replace(/Each$/, "")) + " \"" + test.testName + "\": " + (error && error.message || error);
+  						test.pushFailure(message, extractStacktrace(error, 0));
 
-  					// Else next test will carry the responsibility
-  					saveGlobal();
+  						// Else next test will carry the responsibility
+  						saveGlobal();
 
-  					// Unblock
-  					resume();
-  				});
+  						// Unblock
+  						resume();
+  					});
+  				}
   			}
   		}
   	},
@@ -2040,7 +2055,7 @@
   			}
 
   			begin();
-  		}, 13);
+  		});
   	} else {
   		begin();
   	}
@@ -2141,6 +2156,7 @@
   		key: "verifySteps",
   		value: function verifySteps(steps, message) {
   			this.deepEqual(this.test.steps, steps, message);
+  			this.test.steps.length = 0;
   		}
 
   		// Specify the number of expected assertions to guarantee that failed test
@@ -2418,6 +2434,100 @@
   				message: message
   			});
   		}
+  	}, {
+  		key: "rejects",
+  		value: function rejects(promise, expected, message) {
+  			var result = false;
+
+  			var currentTest = this instanceof Assert && this.test || config.current;
+
+  			// 'expected' is optional unless doing string comparison
+  			if (objectType(expected) === "string") {
+  				if (message === undefined) {
+  					message = expected;
+  					expected = undefined;
+  				} else {
+  					message = "assert.rejects does not accept a string value for the expected " + "argument.\nUse a non-string object value (e.g. validator function) instead " + "if necessary.";
+
+  					currentTest.assert.pushResult({
+  						result: false,
+  						message: message
+  					});
+
+  					return;
+  				}
+  			}
+
+  			var then = promise && promise.then;
+  			if (objectType(then) !== "function") {
+  				var _message = "The value provided to `assert.rejects` in " + "\"" + currentTest.testName + "\" was not a promise.";
+
+  				currentTest.assert.pushResult({
+  					result: false,
+  					message: _message,
+  					actual: promise
+  				});
+
+  				return;
+  			}
+
+  			var done = this.async();
+
+  			return then.call(promise, function handleFulfillment() {
+  				var message = "The promise returned by the `assert.rejects` callback in " + "\"" + currentTest.testName + "\" did not reject.";
+
+  				currentTest.assert.pushResult({
+  					result: false,
+  					message: message,
+  					actual: promise
+  				});
+
+  				done();
+  			}, function handleRejection(actual) {
+  				if (actual) {
+  					var expectedType = objectType(expected);
+
+  					// We don't want to validate
+  					if (expected === undefined) {
+  						result = true;
+  						expected = null;
+
+  						// Expected is a regexp
+  					} else if (expectedType === "regexp") {
+  						result = expected.test(errorString(actual));
+
+  						// Expected is a constructor, maybe an Error constructor
+  					} else if (expectedType === "function" && actual instanceof expected) {
+  						result = true;
+
+  						// Expected is an Error object
+  					} else if (expectedType === "object") {
+  						result = actual instanceof expected.constructor && actual.name === expected.name && actual.message === expected.message;
+
+  						// Expected is a validation function which returns true if validation passed
+  					} else {
+  						if (expectedType === "function") {
+  							result = expected.call({}, actual) === true;
+  							expected = null;
+
+  							// Expected is some other invalid type
+  						} else {
+  							result = false;
+  							message = "invalid expected value provided to `assert.rejects` " + "callback in \"" + currentTest.testName + "\": " + expectedType + ".";
+  						}
+  					}
+  				}
+
+  				currentTest.assert.pushResult({
+  					result: result,
+  					actual: actual,
+  					expected: expected,
+  					message: message
+  				});
+
+  				done();
+  			});
+  		}
   	}]);
   	return Assert;
   }();
@@ -2633,6 +2743,25 @@
   	return false;
   }
 
+  // Handle an unhandled rejection
+  function onUnhandledRejection(reason) {
+  	var resultInfo = {
+  		result: false,
+  		message: reason.message || "error",
+  		actual: reason,
+  		source: reason.stack || sourceFromStacktrace(3)
+  	};
+
+  	var currentTest = config.current;
+  	if (currentTest) {
+  		currentTest.assert.pushResult(resultInfo);
+  	} else {
+  		test("global failure", extend(function (assert) {
+  			assert.pushResult(resultInfo);
+  		}, { validTest: true }));
+  	}
+  }
+
   var focused = false;
   var QUnit = {};
   var globalSuite = new SuiteReport();
@@ -2650,7 +2779,7 @@
   QUnit.isLocal = !(defined.document && window.location.protocol !== "file:");
 
   // Expose the current QUnit version
-  QUnit.version = "2.4.0";
+  QUnit.version = "2.5.0";
 
   function createModule(name, testEnvironment, modifiers) {
   	var parentModule = moduleStack.length ? moduleStack.slice(-1)[0] : null;
@@ -2868,7 +2997,9 @@
   		return sourceFromStacktrace(offset);
   	},
 
-  	onError: onError
+  	onError: onError,
+
+  	onUnhandledRejection: onUnhandledRejection
   });
 
   QUnit.pushFailure = pushFailure;
@@ -2886,7 +3017,7 @@
   	if (defined.setTimeout) {
   		setTimeout(function () {
   			begin();
-  		}, 13);
+  		});
   	} else {
   		begin();
   	}
@@ -3284,7 +3415,8 @@
   			// Skip inherited or undefined properties
   			if (hasOwn.call(params, key) && params[key] !== undefined) {
 
-  				// Output a parameter for each value of this key (but usually just one)
+  				// Output a parameter for each value of this key
+  				// (but usually just one)
   				arrValue = [].concat(params[key]);
   				for (i = 0; i < arrValue.length; i++) {
   					querystring += encodeURIComponent(key);
@@ -3705,7 +3837,8 @@
   		if (config.altertitle && document$$1.title) {
 
   			// Show ✖ for good, ✔ for bad suite result in title
-  			// use escape sequences in case file gets loaded with non-utf-8-charset
+  			// use escape sequences in case file gets loaded with non-utf-8
+  			// charset
   			document$$1.title = [stats.failedTests ? "\u2716" : "\u2714", document$$1.title.replace(/^[\u2714\u2716] /i, "")].join(" ");
   		}
 
@@ -3743,7 +3876,7 @@
   		if (running) {
   			bad = QUnit.config.reorder && details.previousFailure;
 
-  			running.innerHTML = (bad ? "Rerunning previously failed test: <br />" : "Running: <br />") + getNameHtml(details.name, details.module);
+  			running.innerHTML = [bad ? "Rerunning previously failed test: <br />" : "Running: <br />", getNameHtml(details.name, details.module)].join("");
   		}
   	});
 
@@ -3974,6 +4107,11 @@
 
   		return ret;
   	};
+
+  	// Listen for unhandled rejections, and call QUnit.onUnhandledRejection
+  	window.addEventListener("unhandledrejection", function (event) {
+  		QUnit.onUnhandledRejection(event.reason);
+  	});
   })();
 
   /*
@@ -4874,7 +5012,9 @@
   				line = text.substring(lineStart, lineEnd + 1);
   				lineStart = lineEnd + 1;
 
-  				if (lineHash.hasOwnProperty ? lineHash.hasOwnProperty(line) : lineHash[line] !== undefined) {
+  				var lineHashExists = lineHash.hasOwnProperty ? lineHash.hasOwnProperty(line) : lineHash[line] !== undefined;
+
+  				if (lineHashExists) {
   					chars += String.fromCharCode(lineHash[line]);
   				} else {
   					chars += String.fromCharCode(lineArrayLength);
