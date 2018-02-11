@@ -1,6 +1,6 @@
 ﻿# Velocity 2.0.1 beta
 
-# This is a public beta - files are *not* available on CDN
+## NPM: `npm install velocity-animate@beta`
 
 ## Docs
 [https://github.com/julianshapiro/velocity/wiki](https://github.com/julianshapiro/velocity/wiki)
@@ -16,21 +16,20 @@ NPM: https://www.npmjs.com/package/velocity-react
 ## Quickstart
 ### Velocity (CDN, choose one of them):
 ```html
-<script src="//cdn.jsdelivr.net/velocity/2.0/velocity.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.0/velocity.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/velocity-animate@2.0/velocity.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.1/velocity.min.js"></script>
 ```
 
 ### Velocity UI pack (CDN, choose one of them): 
 ```html
-<script src="//cdn.jsdelivr.net/velocity/2.0/velocity.ui.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.0/velocity.ui.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/velocity-animate@2.0/velocity.ui.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.1/velocity.ui.min.js"></script>
 ```
 
 > Please note that JSDelivr can automatically supply the latest release, while CloudFlare needs to ask for a specific version.
 
 ### Package managers:
-_npm:_ `npm install velocity-animate`<br>
-_bower:_ `bower install velocity`
+_npm:_ `npm install velocity-animate@beta`
 
 ## Questions or Problems?
 Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you add the `[velocity.js]` and `[javascript]` tags).
