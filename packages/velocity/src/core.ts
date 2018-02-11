@@ -323,6 +323,10 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			options.repeat = options.repeatAgain = defaults.repeat;
 		}
 
+		if (isReverse && options.queue === false) {
+			throw new Error("VelocityJS: Cannot reverse a queue:false animation.");
+		}
+
 		/* When a set of elements is targeted by a Velocity call, the set is broken up and each element has the current Velocity call individually queued onto it.
 		 In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
 		/* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
@@ -343,26 +347,36 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		animations = [];
 		for (let index = 0; index < elements.length; index++) {
 			const element = elements[index];
+			let flags = 0;
 
-			if (isNode(element)) {
-				if (isReverse && options.queue !== false) {
-					const lastAnimation = Data(element).lastAnimationList[options.queue];
+			if (isNode(element)) { // TODO: This needs to check for valid animation targets, not just Elements
+				if (isReverse) {
+					const lastAnimation = Data(element).lastAnimationList[options.queue as string];
 
 					propertiesMap = lastAnimation && lastAnimation.tweens;
+					if (!propertiesMap) {
+						console.error("VelocityJS: Attempting to reverse an animation on an element with no previous animation:", element);
+						continue;
+					}
+					flags |= AnimationFlags.REVERSE & ~(lastAnimation._flags & AnimationFlags.REVERSE);
 				}
-				if (propertiesMap) {
-					const tweens = Object.create(null),
-						animation: AnimationCall = Object.assign({
-							element: element,
-							tweens: tweens
-						}, rootAnimation);
+				const tweens = Object.create(null),
+					animation: AnimationCall = Object.assign({
+						element: element,
+						tweens: tweens
+					}, rootAnimation);
 
-					options._total++;
-					animations.push(animation);
-
-					VelocityStatic.expandProperties(animation, propertiesMap, isReverse);
-					VelocityStatic.queue(element, animation, getValue(animation.queue, options.queue));
+				options._total++;
+				animation._flags |= flags;
+				animations.push(animation);
+				if (isReverse) {
+					// In this case we're using the previous animation, so
+					// it will be expanded correctly when that one runs.
+					animation.tweens = propertiesMap as any;
+				} else {
+					VelocityStatic.expandProperties(animation, propertiesMap);
 				}
+				VelocityStatic.queue(element, animation, options.queue);
 			}
 		}
 		if (VelocityStatic.State.isTicking === false) {

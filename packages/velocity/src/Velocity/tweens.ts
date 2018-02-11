@@ -82,7 +82,7 @@ namespace VelocityStatic {
 	 * pre-allocates the array as it is then the correct size and slightly
 	 * faster to access.
 	 */
-	export function expandProperties(animation: AnimationCall, properties: VelocityProperties, reverse?: boolean) {
+	export function expandProperties(animation: AnimationCall, properties: VelocityProperties) {
 		const tweens = animation.tweens = Object.create(null),
 			elements = animation.elements,
 			element = animation.element,
@@ -115,46 +115,38 @@ namespace VelocityStatic {
 				continue;
 			}
 			const tween: VelocityTween = tweens[propertyName] = new Array(Tween.length) as any;
-			if (reverse) {
-				tween[Tween.START] = valueData[Tween.END];
-				tween[Tween.EASING] = valueData[Tween.EASING];
-				tween[Tween.END] = valueData[Tween.START];
-				tween[Tween.PATTERN] = valueData[Tween.PATTERN];
-				tween[Tween.ROUNDING] = valueData[Tween.ROUNDING];
-			} else {
-				let endValue: string,
-					startValue: string;
+			let endValue: string,
+				startValue: string;
 
-				if (isFunction(valueData)) {
-					// If we have a function as the main argument then resolve
-					// it first, in case it returns an array that needs to be
-					// split.
-					valueData = (valueData as VelocityPropertyFn).call(element, elementArrayIndex, elements.length, elements);
-				}
-				if (Array.isArray(valueData)) {
-					// valueData is an array in the form of
-					// [ endValue, [, easing] [, startValue] ]
-					const arr1 = valueData[1],
-						arr2 = valueData[2];
-
-					endValue = valueData[0] as any;
-					if ((isString(arr1) && (/^[\d-]/.test(arr1) || CSS.RegEx.isHex.test(arr1))) || isFunction(arr1) || isNumber(arr1)) {
-						startValue = arr1 as any;
-					} else if ((isString(arr1) && Easing.Easings[arr1]) || Array.isArray(arr1)) {
-						tween[Tween.EASING] = arr1 as any;
-						startValue = arr2 as any;
-					} else {
-						startValue = arr1 || arr2 as any;
-					}
-				} else {
-					endValue = valueData as any;
-				}
-				tween[Tween.END] = commands.get(typeof endValue)(endValue, element, elements, elementArrayIndex, propertyName) as any;
-				if (startValue != null || (queue === false || data.queueList[queue] === undefined)) {
-					tween[Tween.START] = commands.get(typeof startValue)(startValue, element, elements, elementArrayIndex, propertyName) as any;
-				}
-				explodeTween(propertyName, tween, duration, !!startValue);
+			if (isFunction(valueData)) {
+				// If we have a function as the main argument then resolve
+				// it first, in case it returns an array that needs to be
+				// split.
+				valueData = (valueData as VelocityPropertyFn).call(element, elementArrayIndex, elements.length, elements);
 			}
+			if (Array.isArray(valueData)) {
+				// valueData is an array in the form of
+				// [ endValue, [, easing] [, startValue] ]
+				const arr1 = valueData[1],
+					arr2 = valueData[2];
+
+				endValue = valueData[0] as any;
+				if ((isString(arr1) && (/^[\d-]/.test(arr1) || CSS.RegEx.isHex.test(arr1))) || isFunction(arr1) || isNumber(arr1)) {
+					startValue = arr1 as any;
+				} else if ((isString(arr1) && Easing.Easings[arr1]) || Array.isArray(arr1)) {
+					tween[Tween.EASING] = arr1 as any;
+					startValue = arr2 as any;
+				} else {
+					startValue = arr1 || arr2 as any;
+				}
+			} else {
+				endValue = valueData as any;
+			}
+			tween[Tween.END] = commands.get(typeof endValue)(endValue, element, elements, elementArrayIndex, propertyName) as any;
+			if (startValue != null || (queue === false || data.queueList[queue] === undefined)) {
+				tween[Tween.START] = commands.get(typeof startValue)(startValue, element, elements, elementArrayIndex, propertyName) as any;
+			}
+			explodeTween(propertyName, tween, duration, !!startValue);
 		}
 	}
 

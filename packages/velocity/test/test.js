@@ -1201,8 +1201,8 @@ QUnit.test("Reverse", function (assert) {
     async(assert, 2, function (done) {
         Velocity($target, defaultProperties, {
             complete: function (elements) {
-                assert.equal(elements[0].velocity("style", "opacity"), defaultProperties.opacity, "Initial property #1 set correctly.");
-                assert.equal(elements[0].velocity("style", "width"), defaultProperties.width, "Initial property #2 set correctly.");
+                assert.equal(elements[0].velocity("style", "opacity"), defaultProperties.opacity, "Initial property #1 set correctly. (" + defaultProperties.opacity + ")");
+                assert.equal(elements[0].velocity("style", "width"), defaultProperties.width, "Initial property #2 set correctly. (" + defaultProperties.width + ")");
                 done();
             }
         });
@@ -1210,8 +1210,8 @@ QUnit.test("Reverse", function (assert) {
     async(assert, 2, function (done) {
         Velocity($target, "reverse", {
             complete: function (elements) {
-                assert.equal(elements[0].velocity("style", "opacity"), opacity, "Reversed property #1 set correctly.");
-                assert.equal(elements[0].velocity("style", "width"), width, "Reversed property #2 set correctly.");
+                assert.equal(elements[0].velocity("style", "opacity"), opacity, "Reversed property #1 set correctly. (" + opacity + ")");
+                assert.equal(elements[0].velocity("style", "width"), width, "Reversed property #2 set correctly. (" + width + ")");
                 done();
             }
         });
@@ -1219,8 +1219,8 @@ QUnit.test("Reverse", function (assert) {
     async(assert, 2, function (done) {
         Velocity($target, "reverse", {
             complete: function (elements) {
-                assert.equal(elements[0].velocity("style", "opacity"), defaultProperties.opacity, "Chained reversed property #1 set correctly.");
-                assert.equal(elements[0].velocity("style", "width"), defaultProperties.width, "Chained reversed property #2 set correctly.");
+                assert.equal(elements[0].velocity("style", "opacity"), defaultProperties.opacity, "Chained reversed property #1 set correctly. (" + defaultProperties.opacity + ")");
+                assert.equal(elements[0].velocity("style", "width"), defaultProperties.width, "Chained reversed property #2 set correctly. (" + defaultProperties.width + ")");
                 done();
             }
         });
