@@ -3596,7 +3596,7 @@ var VelocityStatic;
      * pre-allocates the array as it is then the correct size and slightly
      * faster to access.
      */
-    function expandProperties(animation, properties, reverse) {
+    function expandProperties(animation, properties) {
         var tweens = animation.tweens = Object.create(null), elements = animation.elements, element = animation.element, elementArrayIndex = elements.indexOf(element), data = Data(element), queue = getValue(animation.queue, animation.options.queue), duration = getValue(animation.options.duration, VelocityStatic.defaults.duration);
         for (var property in properties) {
             var propertyName = VelocityStatic.CSS.camelCase(property);
@@ -3617,42 +3617,34 @@ var VelocityStatic;
                 continue;
             }
             var tween_4 = tweens[propertyName] = new Array(5);
-            if (reverse) {
-                tween_4[2] = valueData[0];
-                tween_4[1] = valueData[1];
-                tween_4[0] = valueData[2];
-                tween_4[3] = valueData[3];
-                tween_4[4] = valueData[4];
-            } else {
-                var endValue = void 0, startValue = void 0;
-                if (isFunction(valueData)) {
-                    // If we have a function as the main argument then resolve
-                    // it first, in case it returns an array that needs to be
-                    // split.
-                    valueData = valueData.call(element, elementArrayIndex, elements.length, elements);
-                }
-                if (Array.isArray(valueData)) {
-                    // valueData is an array in the form of
-                    // [ endValue, [, easing] [, startValue] ]
-                    var arr1 = valueData[1], arr2 = valueData[2];
-                    endValue = valueData[0];
-                    if (isString(arr1) && (/^[\d-]/.test(arr1) || VelocityStatic.CSS.RegEx.isHex.test(arr1)) || isFunction(arr1) || isNumber(arr1)) {
-                        startValue = arr1;
-                    } else if (isString(arr1) && VelocityStatic.Easing.Easings[arr1] || Array.isArray(arr1)) {
-                        tween_4[1] = arr1;
-                        startValue = arr2;
-                    } else {
-                        startValue = arr1 || arr2;
-                    }
-                } else {
-                    endValue = valueData;
-                }
-                tween_4[0] = commands.get(typeof endValue)(endValue, element, elements, elementArrayIndex, propertyName);
-                if (startValue != null || (queue === false || data.queueList[queue] === undefined)) {
-                    tween_4[2] = commands.get(typeof startValue)(startValue, element, elements, elementArrayIndex, propertyName);
-                }
-                explodeTween(propertyName, tween_4, duration, !!startValue);
+            var endValue = void 0, startValue = void 0;
+            if (isFunction(valueData)) {
+                // If we have a function as the main argument then resolve
+                // it first, in case it returns an array that needs to be
+                // split.
+                valueData = valueData.call(element, elementArrayIndex, elements.length, elements);
             }
+            if (Array.isArray(valueData)) {
+                // valueData is an array in the form of
+                // [ endValue, [, easing] [, startValue] ]
+                var arr1 = valueData[1], arr2 = valueData[2];
+                endValue = valueData[0];
+                if (isString(arr1) && (/^[\d-]/.test(arr1) || VelocityStatic.CSS.RegEx.isHex.test(arr1)) || isFunction(arr1) || isNumber(arr1)) {
+                    startValue = arr1;
+                } else if (isString(arr1) && VelocityStatic.Easing.Easings[arr1] || Array.isArray(arr1)) {
+                    tween_4[1] = arr1;
+                    startValue = arr2;
+                } else {
+                    startValue = arr1 || arr2;
+                }
+            } else {
+                endValue = valueData;
+            }
+            tween_4[0] = commands.get(typeof endValue)(endValue, element, elements, elementArrayIndex, propertyName);
+            if (startValue != null || (queue === false || data.queueList[queue] === undefined)) {
+                tween_4[2] = commands.get(typeof startValue)(startValue, element, elements, elementArrayIndex, propertyName);
+            }
+            explodeTween(propertyName, tween_4, duration, !!startValue);
         }
     }
     VelocityStatic.expandProperties = expandProperties;
@@ -4462,6 +4454,9 @@ function VelocityFn() {
             options.loop = defaults.loop;
             options.repeat = options.repeatAgain = defaults.repeat;
         }
+        if (isReverse && options.queue === false) {
+            throw new Error("VelocityJS: Cannot reverse a queue:false animation.");
+        }
         /* When a set of elements is targeted by a Velocity call, the set is broken up and each element has the current Velocity call individually queued onto it.
          In this way, each element's existing queue is respected; some elements may already be animating and accordingly should not have this current Velocity call triggered immediately. */
         /* In each queue, tween data is processed for each animating property then pushed onto the call-wide calls array. When the last element in the set has had its tweens processed,
@@ -4480,21 +4475,32 @@ function VelocityFn() {
         animations = [];
         for (var index = 0; index < elements.length; index++) {
             var element = elements[index];
+            var flags = 0;
             if (isNode(element)) {
-                if (isReverse && options.queue !== false) {
+                if (isReverse) {
                     var lastAnimation = Data(element).lastAnimationList[options.queue];
                     propertiesMap = lastAnimation && lastAnimation.tweens;
+                    if (!propertiesMap) {
+                        console.error("VelocityJS: Attempting to reverse an animation on an element with no previous animation:", element);
+                        continue;
+                    }
+                    flags |= 64 & ~(lastAnimation._flags & 64);
                 }
-                if (propertiesMap) {
-                    var tweens = Object.create(null), animation = Object.assign({
-                        element: element,
-                        tweens: tweens
-                    }, rootAnimation);
-                    options._total++;
-                    animations.push(animation);
-                    VelocityStatic.expandProperties(animation, propertiesMap, isReverse);
-                    VelocityStatic.queue(element, animation, getValue(animation.queue, options.queue));
+                var tweens = Object.create(null), animation = Object.assign({
+                    element: element,
+                    tweens: tweens
+                }, rootAnimation);
+                options._total++;
+                animation._flags |= flags;
+                animations.push(animation);
+                if (isReverse) {
+                    // In this case we're using the previous animation, so
+                    // it will be expanded correctly when that one runs.
+                    animation.tweens = propertiesMap;
+                } else {
+                    VelocityStatic.expandProperties(animation, propertiesMap);
                 }
+                VelocityStatic.queue(element, animation, options.queue);
             }
         }
         if (VelocityStatic.State.isTicking === false) {
