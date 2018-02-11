@@ -37,7 +37,7 @@ const TWEEN_NUMBER_REGEX = /[\d\.-]/;
 
 const CLASSNAME = "velocity-animating";
 
-const VERSION = "2.0.0";
+const VERSION = "2.0.1";
 
 const Duration = {
 	"fast": DURATION_FAST,

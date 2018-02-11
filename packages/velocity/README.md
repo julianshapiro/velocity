@@ -1,4 +1,4 @@
-﻿# Velocity 2.0.0 beta
+﻿# Velocity 2.0.1 beta
 
 # This is a public beta - files are *not* available on CDN
 
