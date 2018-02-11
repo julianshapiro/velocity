@@ -28,6 +28,7 @@
     }
   ],
   "main": "velocity.js",
+  "types": "index.d.ts",
   "repository": "julianshapiro/velocity",
   "files": [
     "velocity.js",
@@ -37,7 +38,7 @@
   ],
   "devDependencies": {
     "@types/qunit": "^2.0.31",
-    "grunt": "^1.0.1",
+    "grunt": "^1.0.2",
     "grunt-contrib-jshint": "~1.1.0",
     "grunt-contrib-uglify": "~3.3.0",
     "grunt-contrib-watch": "^1.0.0",
