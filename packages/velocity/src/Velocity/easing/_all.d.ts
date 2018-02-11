@@ -1,4 +1,5 @@
 ///<reference path="easings.ts" />
+///<reference path="back.ts" />
 ///<reference path="bezier.ts" />
 ///<reference path="bounce.ts" />
 ///<reference path="elastic.ts" />
