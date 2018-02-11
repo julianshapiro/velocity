@@ -52,6 +52,9 @@ namespace VelocityStatic.Easing {
 		if (percentComplete === 1) {
 			return endValue;
 		}
-		return (percentComplete < 0.5 ? easeInBounce(percentComplete * 2) * .5 : easeOutBounce(percentComplete * 2 - 1) * 0.5 + 0.5) * (endValue - startValue);
+		return (percentComplete < 0.5
+			? easeInBounce(percentComplete * 2) * .5
+			: easeOutBounce(percentComplete * 2 - 1) * 0.5 + 0.5
+		) * (endValue - startValue);
 	}]);
 };

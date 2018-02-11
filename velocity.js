@@ -1534,6 +1534,63 @@ var VelocityStatic;
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
+ * Back easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
+ */
+var VelocityStatic;
+
+(function(VelocityStatic) {
+    var Easing;
+    (function(Easing) {
+        function registerBackIn(name, amount) {
+            Easing.registerEasing([ name, function(percentComplete, startValue, endValue) {
+                if (percentComplete === 0) {
+                    return startValue;
+                }
+                if (percentComplete === 1) {
+                    return endValue;
+                }
+                return Math.pow(percentComplete, 2) * ((amount + 1) * percentComplete - amount) * (endValue - startValue);
+            } ]);
+        }
+        Easing.registerBackIn = registerBackIn;
+        function registerBackOut(name, amount) {
+            Easing.registerEasing([ name, function(percentComplete, startValue, endValue) {
+                if (percentComplete === 0) {
+                    return startValue;
+                }
+                if (percentComplete === 1) {
+                    return endValue;
+                }
+                return (Math.pow(--percentComplete, 2) * ((amount + 1) * percentComplete + amount) + 1) * (endValue - startValue);
+            } ]);
+        }
+        Easing.registerBackOut = registerBackOut;
+        function registerBackInOut(name, amount) {
+            amount *= 1.525;
+            Easing.registerEasing([ name, function(percentComplete, startValue, endValue) {
+                if (percentComplete === 0) {
+                    return startValue;
+                }
+                if (percentComplete === 1) {
+                    return endValue;
+                }
+                return ((percentComplete *= 2) < 1 ? Math.pow(percentComplete, 2) * ((amount + 1) * percentComplete - amount) : Math.pow(percentComplete -= 2, 2) * ((amount + 1) * percentComplete + amount) + 2) * .5 * (endValue - startValue);
+            } ]);
+        }
+        Easing.registerBackInOut = registerBackInOut;
+        registerBackIn("easeInBack", 1.7);
+        registerBackOut("easeOutBack", 1.7);
+        registerBackInOut("easeInOutBack", 1.7);
+        // TODO: Expose these as actions to register custom easings?
+        })(Easing = VelocityStatic.Easing || (VelocityStatic.Easing = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="easings.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
  * Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License
  */
 var VelocityStatic;
@@ -1795,10 +1852,7 @@ var VelocityStatic;
                 }
                 var s = period / pi2 * Math.asin(1 / amplitude);
                 percentComplete = percentComplete * 2 - 1;
-                if (percentComplete < 0) {
-                    return -.5 * (amplitude * Math.pow(2, 10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period));
-                }
-                return amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period) * .5 + 1;
+                return (percentComplete < 0 ? -.5 * (amplitude * Math.pow(2, 10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period)) : amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period) * .5 + 1) * (endValue - startValue);
             } ]);
         }
         Easing.registerElasticInOut = registerElasticInOut;

@@ -45,10 +45,10 @@ namespace VelocityStatic.Easing {
 			const s = period / pi2 * Math.asin(1 / amplitude);
 
 			percentComplete = percentComplete * 2 - 1;
-			if (percentComplete < 0) {
-				return -0.5 * (amplitude * Math.pow(2, 10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period));
-			}
-			return amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period) * 0.5 + 1;
+			return (percentComplete < 0
+				? -0.5 * (amplitude * Math.pow(2, 10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period))
+				: amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period) * 0.5 + 1
+			) * (endValue - startValue);
 		}]);
 	}
 
