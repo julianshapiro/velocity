@@ -2705,7 +2705,6 @@ var VelocityStatic;
      * object must either be treatable as an array - with a <code>.length</code>
      * property, and each member a Node, or a Node directly.
      *
-     *
      * By default Velocity will try to patch <code>window</code>,
      * <code>jQuery</code>, <code>Zepto</code>, and several classes that return
      * Nodes or lists of Nodes.
