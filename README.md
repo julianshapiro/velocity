@@ -31,8 +31,12 @@ NPM: https://www.npmjs.com/package/velocity-react
 ### Package managers:
 _npm:_ `npm install velocity-animate@beta`
 
+### Automagic chaining:
+
+If using the `.velocity(...)` chained function in libraries such as jQuery or Zepto you need to ensure that Velocity is loaded after them. If you wish to add it to anything loaded afterwards then look at the [Velocity.patch()](https://github.com/julianshapiro/velocity/wiki/Advanced---Patch) method.
+
 ## Questions or Problems?
-Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you add the `[velocity.js]` and `[javascript]` tags).
+Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you add the `[velocity.js]` and the `[javascript]` or `[typescript]` tags).
 
 ## Updates
 - **[2.0](https://github.com/julianshapiro/velocity/compare/1.5.0...2.0.0)**: Typescript update and complete refactoring.
