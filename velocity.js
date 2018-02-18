@@ -1460,7 +1460,7 @@ var VelocityStatic;
          */
         function setPropertyValue(element, propertyName, propertyValue) {
             var data = Data(element);
-            if (isString(propertyValue) && propertyValue[0] === "c" && propertyValue[1] === "a" && propertyValue[2] === "l" && propertyValue[3] === "c" && propertyValue[4] === "(" && propertyValue[5] === "0") {
+            if (isString(propertyValue) && propertyValue[0] === "c" && propertyValue[1] === "a" && propertyValue[2] === "l" && propertyValue[3] === "c" && propertyValue[4] === "(" && propertyValue[5] === "0" && propertyValue[5] === " ") {
                 // Make sure we un-calc unit changing values - try not to trigger
                 // this code any more often than we have to since it's expensive
                 propertyValue = propertyValue.replace(/^calc\(0[^\d]* \+ ([^\(\)]+)\)$/, "$1");
@@ -1516,6 +1516,7 @@ var VelocityStatic;
             }
         }
         Easing.registerEasing = registerEasing;
+        VelocityStatic.registerAction([ "registerEasing", registerEasing ], true);
         /* Basic (same as jQuery) easings. */        registerEasing([ "linear", function(percentComplete, startValue, endValue) {
             return startValue + percentComplete * (endValue - startValue);
         } ]);
@@ -2303,8 +2304,8 @@ var VelocityStatic;
             VelocityStatic.CSS.getPropertyValue(element, "scrollTop", false, true);
             return element.scrollTop + "px";
         }
-        console.log("setScrollTop", propertyValue);
-        var value = parseFloat(propertyValue), unit = propertyValue.replace(String(value), "");
+        //		console.log("setScrollTop", propertyValue)
+                var value = parseFloat(propertyValue), unit = propertyValue.replace(String(value), "");
         switch (unit) {
           case "":
           case "px":
@@ -2313,12 +2314,39 @@ var VelocityStatic;
 
           case "%":
             var clientHeight_1 = parseFloat(VelocityStatic.CSS.getPropertyValue(element, "clientHeight")), scrollHeight_1 = parseFloat(VelocityStatic.CSS.getPropertyValue(element, "scrollHeight"));
-            console.log("setScrollTop percent", scrollHeight_1, clientHeight_1, value, Math.max(0, scrollHeight_1 - clientHeight_1) * value / 100);
-            element.scrollTop = Math.max(0, scrollHeight_1 - clientHeight_1) * value / 100;
+            //				console.log("setScrollTop percent", scrollHeight, clientHeight, value, Math.max(0, scrollHeight - clientHeight) * value / 100)
+                        element.scrollTop = Math.max(0, scrollHeight_1 - clientHeight_1) * value / 100;
         }
         return false;
     }
+    function scrollLeft(element, propertyValue) {
+        if (propertyValue == null) {
+            //			getPropertyValue(element, "clientWidth", false, true);
+            //			getPropertyValue(element, "scrollWidth", false, true);
+            //			getPropertyValue(element, "scrollLeft", false, true);
+            VelocityStatic.CSS.getPropertyValue(element, "clientWidth", false, true);
+            VelocityStatic.CSS.getPropertyValue(element, "scrollWidth", false, true);
+            VelocityStatic.CSS.getPropertyValue(element, "scrollLeft", false, true);
+            return element.scrollLeft + "px";
+        }
+        //		console.log("setScrollLeft", propertyValue)
+                var value = parseFloat(propertyValue), unit = propertyValue.replace(String(value), "");
+        switch (unit) {
+          case "":
+          case "px":
+            element.scrollLeft = value;
+            break;
+
+          case "%":
+            var clientWidth_1 = parseFloat(VelocityStatic.CSS.getPropertyValue(element, "clientWidth")), scrollWidth_1 = parseFloat(VelocityStatic.CSS.getPropertyValue(element, "scrollWidth"));
+            //				console.log("setScrollLeft percent", scrollWidth, clientWidth, value, Math.max(0, scrollWidth - clientWidth) * value / 100)
+                        element.scrollTop = Math.max(0, scrollWidth_1 - clientWidth_1) * value / 100;
+        }
+        return false;
+    }
+    VelocityStatic.registerNormalization([ HTMLElement, "scroll", scrollTop, false ]);
     VelocityStatic.registerNormalization([ HTMLElement, "scrollTop", scrollTop, false ]);
+    VelocityStatic.registerNormalization([ HTMLElement, "scrollLeft", scrollLeft, false ]);
     VelocityStatic.registerNormalization([ HTMLElement, "scrollWidth", scrollWidth ]);
     VelocityStatic.registerNormalization([ HTMLElement, "clientWidth", clientWidth ]);
     VelocityStatic.registerNormalization([ HTMLElement, "scrollHeight", scrollHeight ]);

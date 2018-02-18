@@ -29,6 +29,8 @@ namespace VelocityStatic.Easing {
 		}
 	}
 
+	registerAction(["registerEasing", registerEasing], true);
+
 	/* Basic (same as jQuery) easings. */
 	registerEasing(["linear", function(percentComplete, startValue, endValue) {
 		return startValue + percentComplete * (endValue - startValue);
