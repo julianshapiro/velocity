@@ -69,7 +69,7 @@ namespace VelocityStatic {
 			CSS.getPropertyValue(element, "scrollTop", false, true);
 			return element.scrollTop + "px";
 		}
-		console.log("setScrollTop", propertyValue)
+		//		console.log("setScrollTop", propertyValue)
 		const value = parseFloat(propertyValue),
 			unit = propertyValue.replace(String(value), "");
 
@@ -83,13 +83,50 @@ namespace VelocityStatic {
 				let clientHeight = parseFloat(CSS.getPropertyValue(element, "clientHeight")),
 					scrollHeight = parseFloat(CSS.getPropertyValue(element, "scrollHeight"));
 
-				console.log("setScrollTop percent", scrollHeight, clientHeight, value, Math.max(0, scrollHeight - clientHeight) * value / 100)
+				//				console.log("setScrollTop percent", scrollHeight, clientHeight, value, Math.max(0, scrollHeight - clientHeight) * value / 100)
 				element.scrollTop = Math.max(0, scrollHeight - clientHeight) * value / 100;
 		}
 		return false;
 	}
 
+	/**
+	 * Scroll an element (horizontal).
+	 */
+	function scrollLeft(element: HTMLorSVGElement): string;
+	function scrollLeft(element: HTMLorSVGElement, propertyValue: string): boolean;
+	function scrollLeft(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
+		if (propertyValue == null) {
+			//			getPropertyValue(element, "clientWidth", false, true);
+			//			getPropertyValue(element, "scrollWidth", false, true);
+			//			getPropertyValue(element, "scrollLeft", false, true);
+			CSS.getPropertyValue(element, "clientWidth", false, true);
+			CSS.getPropertyValue(element, "scrollWidth", false, true);
+			CSS.getPropertyValue(element, "scrollLeft", false, true);
+			return element.scrollLeft + "px";
+		}
+		//		console.log("setScrollLeft", propertyValue)
+		const value = parseFloat(propertyValue),
+			unit = propertyValue.replace(String(value), "");
+
+		switch (unit) {
+			case "":
+			case "px":
+				element.scrollLeft = value;
+				break;
+
+			case "%":
+				let clientWidth = parseFloat(CSS.getPropertyValue(element, "clientWidth")),
+					scrollWidth = parseFloat(CSS.getPropertyValue(element, "scrollWidth"));
+
+				//				console.log("setScrollLeft percent", scrollWidth, clientWidth, value, Math.max(0, scrollWidth - clientWidth) * value / 100)
+				element.scrollTop = Math.max(0, scrollWidth - clientWidth) * value / 100;
+		}
+		return false;
+	}
+
+	registerNormalization([HTMLElement, "scroll", scrollTop, false]);
 	registerNormalization([HTMLElement, "scrollTop", scrollTop, false]);
+	registerNormalization([HTMLElement, "scrollLeft", scrollLeft, false]);
 	registerNormalization([HTMLElement, "scrollWidth", scrollWidth]);
 	registerNormalization([HTMLElement, "clientWidth", clientWidth]);
 	registerNormalization([HTMLElement, "scrollHeight", scrollHeight]);

@@ -18,7 +18,8 @@ namespace VelocityStatic.CSS {
 			&& propertyValue[2] === "l"
 			&& propertyValue[3] === "c"
 			&& propertyValue[4] === "("
-			&& propertyValue[5] === "0") {
+			&& propertyValue[5] === "0"
+			&& propertyValue[5] === " ") {
 			// Make sure we un-calc unit changing values - try not to trigger
 			// this code any more often than we have to since it's expensive
 			propertyValue = propertyValue.replace(/^calc\(0[^\d]* \+ ([^\(\)]+)\)$/, "$1");
