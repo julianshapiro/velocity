@@ -11,7 +11,7 @@ namespace VelocityStatic {
 	 * Figure out the dimensions for this width / height based on the
 	 * potential borders and whether we care about them.
 	 */
-	export function augmentDimension(element: HTMLorSVGElement, name: string, wantInner: boolean): number {
+	export function augmentDimension(element: HTMLorSVGElement, name: "width" | "height", wantInner: boolean): number {
 		const isBorderBox = CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
 
 		if (isBorderBox === wantInner) {
@@ -37,13 +37,12 @@ namespace VelocityStatic {
 	/**
 	 * Get/set the inner/outer dimension.
 	 */
-	function getDimension(name, wantInner: boolean) {
-		return function(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
+	function getDimension(name: "width" | "height", wantInner: boolean) {
+		return function(element: HTMLorSVGElement, propertyValue?: string): string | void {
 			if (propertyValue === undefined) {
 				return augmentDimension(element, name, wantInner) + "px";
 			}
 			CSS.setPropertyValue(element, name, (parseFloat(propertyValue) - augmentDimension(element, name, wantInner)) + "px");
-			return true;
 		} as VelocityNormalizationsFn;
 	}
 

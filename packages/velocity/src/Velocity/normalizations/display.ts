@@ -17,8 +17,8 @@ namespace VelocityStatic {
 	 * based on the type of element.
 	 */
 	function display(element: HTMLorSVGElement): string;
-	function display(element: HTMLorSVGElement, propertyValue: string): boolean;
-	function display(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
+	function display(element: HTMLorSVGElement, propertyValue: string): void;
+	function display(element: HTMLorSVGElement, propertyValue?: string): string | void {
 		const style = element.style;
 
 		if (propertyValue === undefined) {
@@ -47,7 +47,6 @@ namespace VelocityStatic {
 			data.cache["display"] = propertyValue;
 		}
 		style.display = propertyValue;
-		return true;
 	}
 
 	registerNormalization([Element, "display", display]);

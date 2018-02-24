@@ -4,6 +4,12 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
+interface VelocityEasingsType {
+	"linear": true;
+	"swing": true;
+	"spring": true;
+}
+
 namespace VelocityStatic.Easing {
 	export const Easings: {[name: string]: VelocityEasingFn} = Object.create(null);
 

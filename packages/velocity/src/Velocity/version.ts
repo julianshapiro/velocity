@@ -7,5 +7,5 @@
  */
 
 namespace VelocityStatic {
-	export let version = VERSION;
+	export let version = "2.0.1";
 };

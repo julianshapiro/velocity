@@ -27,27 +27,26 @@ type VelocityActionFn = (args?: any[], elements?: VelocityResult, promiseHandler
  * @param propertyValue The value to set. If <code>undefined</code> then this is
  * a get action and must return a string value for that element.
  * 
- * @returns If a set action then returning any truthy value will prevent it
- * trying to set the <code>element.style[propertyName]</code> value afterward
- * returning.
+ * @returns When getting a value it must return a string, otherwise the return
+ * value is ignored.
  */
-type VelocityNormalizationsFn = ((element: HTMLorSVGElement, propertyValue: string) => boolean) & ((element: HTMLorSVGElement) => string);
+type VelocityNormalizationsFn = ((element: HTMLorSVGElement, propertyValue: string) => void) & ((element: HTMLorSVGElement) => string);
+
+/**
+ * All easings. This is used for "easing:true" mapping, so that they can be
+ * recognised for auto-completion and type-safety with custom builds of
+ * Velocity.
+ */
+interface VelocityEasingsType {} // TODO: This needs to be auto-generated
 
 /**
  * List of all easing types for easy code completion in TypeScript
  */
 type VelocityEasingType = VelocityEasingFn
-	| "linear" | "swing" | "spring"
-	| "ease" | "easeIn" | "easeOut" | "easeInOut" | "easeInSine" | "easeOutSine"
-	| "easeInOutSine" | "easeInQuad" | "easeOutQuad" | "easeInOutQuad"
-	| "easeInCubic" | "easeOutCubic" | "easeInOutCubic" | "easeInQuart"
-	| "easeOutQuart" | "easeInOutQuart" | "easeInQuint" | "easeOutQuint"
-	| "easeInOutQuint" | "easeInExpo" | "easeOutExpo" | "easeInOutExpo"
-	| "easeInCirc" | "easeOutCirc" | "easeInOutCirc"
-	| "ease-in" | "ease-out" | "ease-in-out"
-	| "at-start" | "at-end" | "during"
-	| string
-	| number[];
+	| keyof VelocityEasingsType
+	| string // Need to leave in to prevent errors.
+	| [number] | [number, number] | [number, number, number, number]
+	| number[]; // Need to leave in to prevent errors.
 
 /**
  * The return type of any velocity call. If this is called via a "utility"
@@ -446,7 +445,61 @@ interface ElementData {
 	lastFinishList: {[name: string]: number};
 }
 
-type VelocityTween = [(string | number)[], VelocityEasingFn, (string | number)[], (string | number)[], boolean[]];
+type TweenPattern = ReadonlyArray<string | boolean>;
+type TweenValues = ReadonlyArray<string | number>;
+
+interface TweenStep extends ReadonlyArray<TweenValues> {
+	/**
+	 * Percent of animation.
+	 */
+	percent?: number;
+	/**
+	 * Easing function.
+	 */
+	easing?: VelocityEasingFn | null;
+	/**
+	 * Values to tween and insert into pattern.
+	 */
+	[index: number]: TweenValues;
+}
+
+interface VelocitySequence {
+	/**
+	 * Pattern to use for tweening.
+	 */
+	pattern: TweenPattern;
+	/**
+	 * Step value.
+	 */
+	[index: number]: TweenStep;
+}
+
+interface VelocityTween {
+	/**
+	 * Pattern to use for tweening (excludes sequence).
+	 */
+	pattern?: TweenPattern;
+	/**
+	 * Normalization function - cached at animation creation time.
+	 */
+	fn: VelocityNormalizationsFn;
+	/**
+	 * Sequence to use for tweening (excludes pattern).
+	 */
+	sequence?: VelocitySequence;
+	/**
+	 * Easing function to use for entire tween.
+	 */
+	easing?: VelocityEasingFn;
+	/**
+	 * Start value.
+	 */
+	start?: TweenValues;
+	/**
+	 * End value.
+	 */
+	end: TweenValues;
+}
 
 /**
  * AnimationFlags are used internally. These are subject to change as they are
@@ -616,6 +669,7 @@ interface Velocity {
 	}
 
 	CSS: {
+		ColorNames: {[name: string]: string};
 		getPropertyValue(element: HTMLorSVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean): string;
 		getUnit(str: string, start?: number): string;
 		fixColors(str: string): string;

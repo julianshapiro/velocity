@@ -306,29 +306,28 @@ namespace VelocityStatic {
 					for (const property in tweens) {
 						// For every element, iterate through each property.
 						const tween = tweens[property],
-							easing = tween[Tween.EASING] || activeEasing,
-							pattern = tween[Tween.PATTERN],
-							rounding = tween[Tween.ROUNDING];
+							easing = tween.easing || activeEasing,
+							pattern = tween.pattern;
 						let currentValue = "",
 							i = 0;
 
 						if (pattern) {
 							for (; i < pattern.length; i++) {
-								const startValue = tween[Tween.START][i];
+								const startValue = tween.start[i];
 
 								if (startValue == null) {
 									currentValue += pattern[i];
 								} else {
 									// All easings must deal with numbers except for
 									// our internal ones
-									const result = easing(reverse ? 1 - percentComplete : percentComplete, startValue as number, tween[Tween.END][i] as number, property)
+									const result = easing(reverse ? 1 - percentComplete : percentComplete, startValue as number, tween.end[i] as number, property)
 
-									currentValue += rounding && rounding[i] ? Math.round(result) : result;
+									currentValue += pattern[i] === true ? Math.round(result) : result;
 								}
 							}
 							if (property !== "tween") {
 								// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-								CSS.setPropertyValue(activeCall.element, property, currentValue);
+								CSS.setPropertyValue(activeCall.element, property, currentValue, tween.fn);
 							} else {
 								// Skip the fake 'tween' property as that is only
 								// passed into the progress callback.

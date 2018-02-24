@@ -22,7 +22,7 @@ namespace VelocityStatic.CSS {
 	const rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi,
 		rxColor3 = /#([a-f\d])([a-f\d])([a-f\d])/gi,
 		rxColorName = /(rgba?\(\s*)?(\b[a-z]+\b)/g,
-		rxRGB = /rgba?\([^\)]+\)/gi,
+		rxRGB = /rgb(a?)\(([^\)]+)\)/gi,
 		rxSpaces = /\s+/g;
 
 	/**
@@ -41,8 +41,8 @@ namespace VelocityStatic.CSS {
 				}
 				return $0;
 			})
-			.replace(rxRGB, function($0) {
-				return $0.replace(rxSpaces, "");
+			.replace(rxRGB, function($0, $1, $2: string) {
+				return "rgba(" + $2.replace(rxSpaces, "") + ($1 ? "" : ",1") + ")";
 			});
 	}
 }

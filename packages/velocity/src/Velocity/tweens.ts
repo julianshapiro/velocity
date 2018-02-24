@@ -6,61 +6,46 @@
  * Tweens
  */
 
-const enum Tween {
-	END,
-	EASING,
-	START,
-	PATTERN,
-	ROUNDING,
-	length
-};
-
 namespace VelocityStatic {
-	let commands = new Map<string, (value: any, element: HTMLorSVGElement, elements: HTMLorSVGElement[], elementArrayIndex: number, propertyName: string) => string>();
+	const rxHex = /^#([A-f\d]{3}){1,2}$/i;
+	let commands = new Map<string, (value: any, element: HTMLorSVGElement, elements: HTMLorSVGElement[], elementArrayIndex: number, propertyName: string, tween: VelocityTween) => string>();
 
-	commands.set("function", function(value: any, element: HTMLorSVGElement, elements: HTMLorSVGElement[], elementArrayIndex: number) {
+	commands.set("function", function(value, element, elements, elementArrayIndex, propertyName, tween) {
 		return (value as any as VelocityPropertyValueFn).call(element, elementArrayIndex, elements.length);
 	})
-	commands.set("number", function(value, element, elements, elementArrayIndex, propertyName) {
+	commands.set("number", function(value, element, elements, elementArrayIndex, propertyName, tween) {
 		return value + (element instanceof HTMLElement ? getUnitType(propertyName) : "");
 	});
-	commands.set("string", function(value, element, elements, elementArrayIndex, propertyName) {
+	commands.set("string", function(value, element, elements, elementArrayIndex, propertyName, tween) {
 		return CSS.fixColors(value);
 	});
-	commands.set("undefined", function(value, element, elements, elementArrayIndex, propertyName) {
-		return CSS.fixColors(CSS.getPropertyValue(element, propertyName) || "");
+	commands.set("undefined", function(value, element, elements, elementArrayIndex, propertyName, tween) {
+		return CSS.fixColors(CSS.getPropertyValue(element, propertyName, tween.fn) || "");
 	});
 
-	const
-		/**
-		 * Properties that take "deg" as the default numeric suffix.
-		 */
-		degree = [
-			// "azimuth" // Deprecated
-		],
-		/**
-		 * Properties that take no default numeric suffix.
-		 */
-		unitless = [
-			"borderImageSlice",
-			"columnCount",
-			"counterIncrement",
-			"counterReset",
-			"flex",
-			"flexGrow",
-			"flexShrink",
-			"floodOpacity",
-			"fontSizeAdjust",
-			"fontWeight",
-			"lineHeight",
-			"opacity",
-			"order",
-			"orphans",
-			"shapeImageThreshold",
-			"tabSize",
-			"widows",
-			"zIndex"
-		];
+	/**
+	 * Properties that take no default numeric suffix.
+	 */
+	const unitless = [
+		"borderImageSlice",
+		"columnCount",
+		"counterIncrement",
+		"counterReset",
+		"flex",
+		"flexGrow",
+		"flexShrink",
+		"floodOpacity",
+		"fontSizeAdjust",
+		"fontWeight",
+		"lineHeight",
+		"opacity",
+		"order",
+		"orphans",
+		"shapeImageThreshold",
+		"tabSize",
+		"widows",
+		"zIndex"
+	];
 
 	/**
 	 * Retrieve a property's default unit type. Used for assigning a unit
@@ -68,13 +53,7 @@ namespace VelocityStatic {
 	 * HTMLElement style properties.
 	 */
 	function getUnitType(property: string): string {
-		if (_inArray(degree, property)) {
-			return "deg";
-		}
-		if (_inArray(unitless, property)) {
-			return "";
-		}
-		return "px";
+		return _inArray(unitless, property) ? "" : "px";
 	}
 
 	/**
@@ -94,15 +73,9 @@ namespace VelocityStatic {
 		for (const property in properties) {
 			const propertyName = CSS.camelCase(property);
 			let valueData = properties[property],
-				types = data.types,
-				found: boolean = propertyName === "tween";
+				fn = getNormalization(element, propertyName);
 
-			for (let index = 0; types && !found; types >>= 1, index++) {
-				found = !!(types & 1 && Normalizations[index][propertyName]);
-			}
-			if (!found
-				&& (!State.prefixElement
-					|| !isString(State.prefixElement.style[propertyName]))) {
+			if (!fn && propertyName !== "tween") {
 				if (debug) {
 					console.log("Skipping [" + property + "] due to a lack of browser support.");
 				}
@@ -114,10 +87,11 @@ namespace VelocityStatic {
 				}
 				continue;
 			}
-			const tween: VelocityTween = tweens[propertyName] = new Array(Tween.length) as any;
+			const tween: VelocityTween = tweens[propertyName] = Object.create(null) as any;
 			let endValue: string,
 				startValue: string;
 
+			tween.fn = fn;
 			if (isFunction(valueData)) {
 				// If we have a function as the main argument then resolve
 				// it first, in case it returns an array that needs to be
@@ -131,10 +105,10 @@ namespace VelocityStatic {
 					arr2 = valueData[2];
 
 				endValue = valueData[0] as any;
-				if ((isString(arr1) && (/^[\d-]/.test(arr1) || CSS.RegEx.isHex.test(arr1))) || isFunction(arr1) || isNumber(arr1)) {
+				if ((isString(arr1) && (/^[\d-]/.test(arr1) || rxHex.test(arr1))) || isFunction(arr1) || isNumber(arr1)) {
 					startValue = arr1 as any;
 				} else if ((isString(arr1) && Easing.Easings[arr1]) || Array.isArray(arr1)) {
-					tween[Tween.EASING] = arr1 as any;
+					tween.easing = arr1 as any;
 					startValue = arr2 as any;
 				} else {
 					startValue = arr1 || arr2 as any;
@@ -142,9 +116,9 @@ namespace VelocityStatic {
 			} else {
 				endValue = valueData as any;
 			}
-			tween[Tween.END] = commands.get(typeof endValue)(endValue, element, elements, elementArrayIndex, propertyName) as any;
+			tween.end = commands.get(typeof endValue)(endValue, element, elements, elementArrayIndex, propertyName, tween) as any;
 			if (startValue != null || (queue === false || data.queueList[queue] === undefined)) {
-				tween[Tween.START] = commands.get(typeof startValue)(startValue, element, elements, elementArrayIndex, propertyName) as any;
+				tween.start = commands.get(typeof startValue)(startValue, element, elements, elementArrayIndex, propertyName, tween) as any;
 			}
 			explodeTween(propertyName, tween, duration, !!startValue);
 		}
@@ -155,8 +129,8 @@ namespace VelocityStatic {
 	 * based tween with arrays.
 	 */
 	function explodeTween(propertyName: string, tween: VelocityTween, duration: number, isForcefeed?: boolean) {
-		const endValue: string = tween[Tween.END] as any as string;
-		let startValue: string = tween[Tween.START] as any as string;
+		const endValue: string = tween.end as any as string;
+		let startValue: string = tween.start as any as string;
 
 		if (!isString(endValue) || !isString(startValue)) {
 			return;
@@ -164,11 +138,10 @@ namespace VelocityStatic {
 		let runAgain = false; // Can only be set once if the Start value doesn't match the End value and it's not forcefed
 		do {
 			runAgain = false;
-			const arrayStart: (string | number)[] = tween[Tween.START] = [null],
-				arrayEnd: (string | number)[] = tween[Tween.END] = [null],
-				pattern: (string | number)[] = tween[Tween.PATTERN] = [""];
-			let easing = tween[Tween.EASING] as any,
-				rounding: boolean[],
+			const arrayStart: (string | number)[] = tween.start = [null],
+				arrayEnd: (string | number)[] = tween.end = [null],
+				pattern: (string | boolean)[] = tween.pattern = [""];
+			let easing = tween.easing as any,
 				indexStart = 0, // index in startValue
 				indexEnd = 0, // index in endValue
 				inCalc = 0, // Keep track of being inside a "calc()" so we don't duplicate it
@@ -248,13 +221,7 @@ namespace VelocityStatic {
 							// Same numbers, so just copy over
 							pattern[pattern.length - 1] += tempStart + unitStart;
 						} else {
-							if (inRGB) {
-								if (!rounding) {
-									rounding = tween[Tween.ROUNDING] = [];
-								}
-								rounding[arrayStart.length] = true;
-							}
-							pattern.push(0, unitStart);
+							pattern.push(inRGB ? true : false, unitStart);
 							arrayStart.push(parseFloat(tempStart), null);
 							arrayEnd.push(parseFloat(tempEnd), null);
 						}
@@ -264,7 +231,7 @@ namespace VelocityStatic {
 						// look out for the final "calc(0 + " prefix and remove
 						// it from the value when it finds it.
 						pattern[pattern.length - 1] += inCalc ? "+ (" : "calc(";
-						pattern.push(0, unitStart + " + ", 0, unitEnd + ")");
+						pattern.push(false, unitStart + " + ", false, unitEnd + ")");
 						arrayStart.push(parseFloat(tempStart) || 0, null, 0, null);
 						arrayEnd.push(0, null, parseFloat(tempEnd) || 0, null);
 					}
@@ -386,7 +353,7 @@ namespace VelocityStatic {
 					console.warn("Velocity: String easings must use one of 'at-start', 'during' or 'at-end': {" + propertyName + ": [\"" + endValue + "\", " + easing + ", \"" + startValue + "\"]}");
 					easing = "at-start";
 				}
-				tween[Tween.EASING] = validateEasing(easing, duration);
+				tween.easing = validateEasing(easing, duration);
 			}
 			// This can only run a second time once - if going from automatic startValue to "fixed" pattern from endValue with startValue numbers
 		} while (runAgain);
@@ -415,12 +382,12 @@ namespace VelocityStatic {
 		for (const propertyName in tweens) {
 			const tween = tweens[propertyName];
 
-			if (tween[Tween.START] == null) {
+			if (tween.start == null) {
 				// Get the start value as it's not been passed in
 				const startValue = CSS.getPropertyValue(activeCall.element, propertyName);
 
 				if (isString(startValue)) {
-					tween[Tween.START] = CSS.fixColors(startValue) as any;
+					tween.start = CSS.fixColors(startValue) as any;
 					explodeTween(propertyName, tween, duration);
 				} else if (!Array.isArray(startValue)) {
 					console.warn("bad type", tween, propertyName, startValue)

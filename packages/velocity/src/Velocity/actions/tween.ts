@@ -85,22 +85,21 @@ namespace VelocityStatic {
 		for (const property in fakeAnimation.tweens) {
 			// For every element, iterate through each property.
 			const tween = fakeAnimation.tweens[property],
-				easing = tween[Tween.EASING] || activeEasing,
-				pattern = tween[Tween.PATTERN],
-				rounding = tween[Tween.ROUNDING];
+				easing = tween.easing || activeEasing,
+				pattern = tween.pattern;
 			let currentValue = "";
 
 			count++;
 			if (pattern) {
 				for (let i = 0; i < pattern.length; i++) {
-					const startValue = tween[Tween.START][i];
+					const startValue = tween.start[i];
 
 					if (startValue == null) {
 						currentValue += pattern[i];
 					} else {
-						const result = easing(percentComplete, startValue as number, tween[Tween.END][i] as number, property)
+						const result = easing(percentComplete, startValue as number, tween.end[i] as number, property)
 
-						currentValue += rounding && rounding[i] ? Math.round(result) : result;
+						currentValue += pattern[i] === true ? Math.round(result) : result;
 					}
 				}
 			}

@@ -22,8 +22,6 @@ namespace VelocityStatic.CSS {
 		if (fixed) {
 			return fixed;
 		}
-		return cache[property] = property.replace(/-([a-z])/g, function(match: string, subMatch: string) {
-			return subMatch.toUpperCase();
-		})
+		return cache[property] = property.replace(/-([a-z])/g, ($: string, letter: string) => letter.toUpperCase());
 	}
 }

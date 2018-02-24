@@ -7,6 +7,12 @@
  * Back easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
  */
 
+interface VelocityEasingsType {
+	"easeInBack": true;
+	"easeOutBack": true;
+	"easeInOutBack": true;
+}
+
 namespace VelocityStatic.Easing {
 	export function registerBackIn(name: string, amount: number) {
 		registerEasing([name, function(percentComplete: number, startValue: number, endValue: number): number {
