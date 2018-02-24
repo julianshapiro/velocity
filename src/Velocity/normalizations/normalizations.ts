@@ -14,6 +14,11 @@
 namespace VelocityStatic {
 
 	/**
+	 * The highest type index for finding the best normalization for a property.
+	 */
+	export let MaxType: number = -1;
+
+	/**
 	 * Unlike "actions", normalizations can always be replaced by users.
 	 */
 	export const Normalizations: {[name: string]: VelocityNormalizationsFn}[] = [];
@@ -65,7 +70,7 @@ namespace VelocityStatic {
 			let index = constructors.indexOf(constructor);
 
 			if (index < 0) {
-				index = constructors.push(constructor) - 1;
+				MaxType = index = constructors.push(constructor) - 1;
 				Normalizations[index] = Object.create(null);
 			}
 			Normalizations[index][name] = callback;
@@ -75,5 +80,29 @@ namespace VelocityStatic {
 		}
 	}
 
-	registerAction(["registerNormalization", registerNormalization as any]);
+	/**
+	 * Used to check if a normalisation exists on a specific class.
+	 */
+	export function hasNormalization(args?: [ClassConstructor, string]) {
+		const constructor = args[0],
+			name: string = args[1];
+		let index = constructors.indexOf(constructor);
+
+		return !!Normalizations[index][name];
+	}
+
+	export function getNormalization(element: HTMLorSVGElement, propertyName: string) {
+		const data = Data(element);
+		let fn: VelocityNormalizationsFn;
+
+		for (let index = MaxType, types = data.types; !fn && index >= 0; index--) {
+			if (types & (1 << index)) {
+				fn = Normalizations[index][propertyName];
+			}
+		}
+		return fn;
+	}
+
+	registerAction(["registerNormalization", registerNormalization]);
+	registerAction(["hasNormalization", hasNormalization]);
 }

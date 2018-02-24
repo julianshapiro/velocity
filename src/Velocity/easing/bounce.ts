@@ -7,6 +7,12 @@
  * Bounce easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
  */
 
+interface VelocityEasingsType {
+	"easeInBounce": true;
+	"easeOutBounce": true;
+	"easeInOutBounce": true;
+}
+
 namespace VelocityStatic.Easing {
 	function easeOutBounce(percentComplete: number): number {
 		if (percentComplete < 1 / 2.75) {

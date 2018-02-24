@@ -7,6 +7,12 @@
  * Elastic easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
  */
 
+interface VelocityEasingsType {
+	"easeInElastic": true;
+	"easeOutElastic": true;
+	"easeInOutElastic": true;
+}
+
 namespace VelocityStatic.Easing {
 	const pi2 = Math.PI * 2;
 

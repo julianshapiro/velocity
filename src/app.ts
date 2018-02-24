@@ -14,12 +14,26 @@
  * be allowed.
  */
 for (const key in VelocityStatic) {
-	Object.defineProperty(VelocityFn, key, {
-		enumerable: PUBLIC_MEMBERS.indexOf(key) >= 0,
-		get: function() {
-			return VelocityStatic[key];
-		}
-	});
+	let value = VelocityStatic[key];
+
+	if (isString(value) || isNumber(value) || isBoolean(value)) {
+		Object.defineProperty(VelocityFn, key, {
+			enumerable: PUBLIC_MEMBERS.indexOf(key) >= 0,
+			get: function() {
+				return VelocityStatic[key];
+			},
+			set: function(value?: any) {
+				VelocityStatic[key] = value;
+			}
+		});
+	} else {
+		Object.defineProperty(VelocityFn, key, {
+			enumerable: PUBLIC_MEMBERS.indexOf(key) >= 0,
+			get: function() {
+				return VelocityStatic[key];
+			}
+		});
+	}
 }
 
 // console.log("Velocity keys", Object.keys(VelocityStatic));

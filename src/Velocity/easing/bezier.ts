@@ -7,6 +7,37 @@
  * Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License
  */
 
+interface VelocityEasingsType {
+	"ease": true;
+	"easeIn": true;
+	"ease-in": true;
+	"easeOut": true;
+	"ease-out": true;
+	"easeInOut": true;
+	"ease-in-out": true;
+	"easeInSine": true;
+	"easeOutSine": true;
+	"easeInOutSine": true;
+	"easeInQuad": true;
+	"easeOutQuad": true;
+	"easeInOutQuad": true;
+	"easeInCubic": true;
+	"easeOutCubic": true;
+	"easeInOutCubic": true;
+	"easeInQuart": true;
+	"easeOutQuart": true;
+	"easeInOutQuart": true;
+	"easeInQuint": true;
+	"easeOutQuint": true;
+	"easeInOutQuint": true;
+	"easeInExpo": true;
+	"easeOutExpo": true;
+	"easeInOutExpo": true;
+	"easeInCirc": true;
+	"easeOutCirc": true;
+	"easeInOutCirc": true;
+}
+
 namespace VelocityStatic.Easing {
 	/**
 	 * Fix to a range of <code>0 <= num <= 1</code>.

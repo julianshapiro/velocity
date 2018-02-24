@@ -16,11 +16,9 @@ function parseDuration(duration: "fast" | "normal" | "slow" | number, def?: "fas
 	if (isNumber(duration)) {
 		return duration;
 	}
-
 	if (isString(duration)) {
 		return Duration[duration.toLowerCase()] || parseFloat(duration.replace("ms", "").replace("s", "000"));
 	}
-
 	return def == null ? undefined : parseDuration(def);
 }
 

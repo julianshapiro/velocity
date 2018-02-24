@@ -7,9 +7,9 @@
 namespace VelocityStatic.CSS {
 	/**
 	 * The singular setPropertyValue, which routes the logic for all
-	 * normalizations, hooks, and standard CSS properties.
+	 * normalizations.
 	 */
-	export function setPropertyValue(element: HTMLorSVGElement, propertyName: string, propertyValue: any) {
+	export function setPropertyValue(element: HTMLorSVGElement, propertyName: string, propertyValue: any, fn?: VelocityNormalizationsFn) {
 		const data = Data(element);
 
 		if (isString(propertyValue)
@@ -27,16 +27,9 @@ namespace VelocityStatic.CSS {
 		if (data && data.cache[propertyName] !== propertyValue) {
 			// By setting it to undefined we force a true "get" later
 			data.cache[propertyName] = propertyValue || undefined;
-			let types = data.types,
-				best: VelocityNormalizationsFn;
-
-			for (let index = 0; types; types >>= 1, index++) {
-				if (types & 1) {
-					best = Normalizations[index][propertyName] || best;
-				}
-			}
-			if (!best || !best(element, propertyValue)) {
-				element.style[propertyName] = propertyValue;
+			fn = fn || getNormalization(element, propertyName);
+			if (fn) {
+				fn(element, propertyValue);
 			}
 			if (debug >= 2) {
 				console.info("Set " + propertyName + ": " + propertyValue, element);

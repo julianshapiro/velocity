@@ -45,9 +45,6 @@ namespace VelocityStatic.CSS {
 		 Also, in all browsers, when border colors aren't all the same, a compound value is returned that Velocity isn't setup to parse.
 		 So, as a polyfill for querying individual border side colors, we just return the top border's color and animate all borders from that value. */
 		/* TODO: There is a borderColor normalisation in legacy/ - figure out where this is needed... */
-		//		if (property === "borderColor") {
-		//			property = "borderTopColor";
-		//		}
 
 		computedValue = computedStyle[property];
 		/* Fall back to the property's style value (if defined) when computedValue returns nothing,
@@ -88,9 +85,9 @@ namespace VelocityStatic.CSS {
 
 	/**
 	 * Get a property value. This will grab via the cache if it exists, then
-	 * via any normalisations, then it will check the css values directly.
+	 * via any normalisations.
 	 */
-	export function getPropertyValue(element: HTMLorSVGElement, propertyName: string, skipNormalisation?: boolean, skipCache?: boolean): string {
+	export function getPropertyValue(element: HTMLorSVGElement, propertyName: string, fn?: VelocityNormalizationsFn, skipCache?: boolean): string {
 		const data = Data(element);
 		let propertyValue: string;
 
@@ -99,36 +96,17 @@ namespace VelocityStatic.CSS {
 		}
 		if (!skipCache && data && data.cache[propertyName] != null) {
 			propertyValue = data.cache[propertyName];
-			if (debug >= 2) {
-				console.info("Get " + propertyName + ": " + propertyValue);
-			}
-			return propertyValue;
 		} else {
-			let types = data.types,
-				best: VelocityNormalizationsFn;
-
-			for (let index = 0; types; types >>= 1, index++) {
-				if (types & 1) {
-					best = Normalizations[index][propertyName] || best;
+			fn = fn || getNormalization(element, propertyName);
+			if (fn) {
+				propertyValue = fn(element);
+				if (data) {
+					data.cache[propertyName] = propertyValue;
 				}
-			}
-			if (best) {
-				propertyValue = best(element);
-			} else {
-				// Note: Retrieving the value of a CSS property cannot simply be
-				// performed by checking an element's style attribute (which
-				// only reflects user-defined values). Instead, the browser must
-				// be queried for a property's *computed* value. You can read
-				// more about getComputedStyle here:
-				// https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle
-				propertyValue = computePropertyValue(element, propertyName);
 			}
 		}
 		if (debug >= 2) {
 			console.info("Get " + propertyName + ": " + propertyValue);
-		}
-		if (data) {
-			data.cache[propertyName] = propertyValue;
 		}
 		return propertyValue;
 	}

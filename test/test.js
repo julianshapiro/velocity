@@ -1921,45 +1921,66 @@ QUnit.module("Properties");
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
-QUnit.todo("GenericReordering", function (assert) {
+QUnit.test("GenericReordering", function (assert) {
+    function genericReordering(element, propertyValue) {
+        if (propertyValue === undefined) {
+            propertyValue = Velocity(element, "style", "textShadow");
+            var split = propertyValue.split(/\s/g), firstPart = split[0];
+            var newValue = "";
+            if (Velocity.CSS.ColorNames[firstPart]) {
+                split.shift();
+                split.push(firstPart);
+                newValue = split.join(" ");
+            }
+            else if (firstPart.match(/^#|^hsl|^rgb|-gradient/)) {
+                var matchedString = propertyValue.match(/(hsl.*\)|#[\da-fA-F]+|rgb.*\)|.*gradient.*\))\s/g)[0];
+                newValue = propertyValue.replace(matchedString, "") + " " + matchedString.trim();
+            }
+            else {
+                newValue = propertyValue;
+            }
+            return newValue;
+        }
+    }
+    Velocity("registerNormalization", Element, "genericReordering", genericReordering);
     var tests = [
         {
             test: "hsl(16, 100%, 66%) 1px 1px 1px",
             result: "1px 1px 1px hsl(16, 100%, 66%)",
         }, {
             test: "-webkit-linear-gradient(red, yellow) 1px 1px 1px",
-            result: "1px 1px 1px -webkit-linear-gradient(red, yellow)",
+            result: "1px 1px 1px -webkit-linear-gradient(rgba(255,0,0,1), rgba(255,255,0,1))",
         }, {
             test: "-o-linear-gradient(red, yellow) 1px 1px 1px",
-            result: "1px 1px 1px -o-linear-gradient(red, yellow)",
+            result: "1px 1px 1px -o-linear-gradient(rgba(255,0,0,1), rgba(255,255,0,1))",
         }, {
             test: "-moz-linear-gradient(red, yellow) 1px 1px 1px",
-            result: "1px 1px 1px -moz-linear-gradient(red, yellow)",
+            result: "1px 1px 1px -moz-linear-gradient(rgba(255,0,0,1), rgba(255,255,0,1))",
         }, {
             test: "linear-gradient(red, yellow) 1px 1px 1px",
-            result: "1px 1px 1px linear-gradient(red, yellow)",
+            result: "1px 1px 1px linear-gradient(rgba(255,0,0,1), rgba(255,255,0,1))",
         }, {
             test: "red 1px 1px 1px",
-            result: "1px 1px 1px red",
+            result: "1px 1px 1px rgba(255,0,0,1)",
         }, {
             test: "#000000 1px 1px 1px",
-            result: "1px 1px 1px #000000",
+            result: "1px 1px 1px rgba(0,0,0,1)",
         }, {
             test: "rgb(0, 0, 0) 1px 1px 1px",
-            result: "1px 1px 1px rgb(0, 0, 0)",
+            result: "1px 1px 1px rgba(0,0,0,1)",
         }, {
             test: "rgba(0, 0, 0, 1) 1px 1px 1px",
-            result: "1px 1px 1px rgba(0, 0, 0, 1)",
+            result: "1px 1px 1px rgba(0,0,0,1)",
         }, {
             test: "1px 1px 1px rgb(0, 0, 0)",
-            result: "1px 1px 1px rgb(0, 0, 0)",
+            result: "1px 1px 1px rgba(0,0,0,1)",
         },
     ];
     for (var _i = 0, tests_1 = tests; _i < tests_1.length; _i++) {
         var test = tests_1[_i];
         var element = getTarget();
-        element.style.textShadow = test.test;
-        assert.equal(Velocity.CSS.Normalizations["textShadow"](element), test.result, test.test);
+        element.velocity("style", "textShadow", test.test);
+        assert.equal(element.velocity("style", "genericReordering"), test.result, test.test);
     }
 });
 ///<reference path="_module.ts" />

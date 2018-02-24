@@ -8,6 +8,12 @@
  * need.
  */
 
+interface VelocityEasingsType {
+	"at-start": true;
+	"during": true;
+	"at-end": true;
+}
+
 namespace VelocityStatic.Easing {
 	/**
 	 * Easing function that sets to the specified value immediately after the

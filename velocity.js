@@ -71,8 +71,6 @@ var TWEEN_NUMBER_REGEX = /[\d\.-]/;
 
 var CLASSNAME = "velocity-animating";
 
-var VERSION = "2.0.1";
-
 var Duration = {
     fast: DURATION_FAST,
     normal: DURATION_NORMAL,
@@ -405,15 +403,15 @@ function getValue(args) {
                 animation._flags |= 4 /* STARTED */;
             }
             for (var property in animation.tweens) {
-                var tween_1 = animation.tweens[property], pattern = tween_1[3 /* PATTERN */ ];
+                var tween_1 = animation.tweens[property], pattern = tween_1.pattern;
                 var currentValue = "", i = 0;
                 if (pattern) {
                     for (;i < pattern.length; i++) {
-                        var endValue = tween_1[0 /* END */ ][i];
+                        var endValue = tween_1.end[i];
                         currentValue += endValue == null ? pattern[i] : endValue;
                     }
                 }
-                VelocityStatic.CSS.setPropertyValue(animation.element, property, currentValue);
+                VelocityStatic.CSS.setPropertyValue(animation.element, property, currentValue, tween_1.fn);
             }
             VelocityStatic.completeCall(animation);
         }
@@ -799,11 +797,11 @@ function getValue(args) {
             // If only a single animation is found and we're only targetting a
             // single element, then return the value directly
             if (elements.length === 1) {
-                return VelocityStatic.CSS.getPropertyValue(elements[0], property);
+                return VelocityStatic.CSS.fixColors(VelocityStatic.CSS.getPropertyValue(elements[0], property));
             }
             var result = [];
             for (var i = 0; i < elements.length; i++) {
-                result.push(VelocityStatic.CSS.getPropertyValue(elements[i], property));
+                result.push(VelocityStatic.CSS.fixColors(VelocityStatic.CSS.getPropertyValue(elements[i], property)));
             }
             return result;
         }
@@ -909,17 +907,17 @@ function getValue(args) {
         VelocityStatic.expandProperties(fakeAnimation, properties);
         for (var property in fakeAnimation.tweens) {
             // For every element, iterate through each property.
-            var tween_2 = fakeAnimation.tweens[property], easing_1 = tween_2[1 /* EASING */ ] || activeEasing, pattern = tween_2[3 /* PATTERN */ ], rounding = tween_2[4 /* ROUNDING */ ];
+            var tween_2 = fakeAnimation.tweens[property], easing_1 = tween_2.easing || activeEasing, pattern = tween_2.pattern;
             var currentValue = "";
             count++;
             if (pattern) {
                 for (var i = 0; i < pattern.length; i++) {
-                    var startValue = tween_2[2 /* START */ ][i];
+                    var startValue = tween_2.start[i];
                     if (startValue == null) {
                         currentValue += pattern[i];
                     } else {
-                        var result_1 = easing_1(percentComplete, startValue, tween_2[0 /* END */ ][i], property);
-                        currentValue += rounding && rounding[i] ? Math.round(result_1) : result_1;
+                        var result_1 = easing_1(percentComplete, startValue, tween_2.end[i], property);
+                        currentValue += pattern[i] === true ? Math.round(result_1) : result_1;
                     }
                 }
             }
@@ -1036,8 +1034,8 @@ var VelocityStatic;
             if (fixed) {
                 return fixed;
             }
-            return cache[property] = property.replace(/-([a-z])/g, function(match, subMatch) {
-                return subMatch.toUpperCase();
+            return cache[property] = property.replace(/-([a-z])/g, function($, letter) {
+                return letter.toUpperCase();
             });
         }
         CSS.camelCase = camelCase;
@@ -1064,7 +1062,7 @@ var VelocityStatic;
          */        function makeRGBA(ignore, r, g, b) {
             return "rgba(" + parseInt(r, 16) + "," + parseInt(g, 16) + "," + parseInt(b, 16) + ",1)";
         }
-        var rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi, rxColor3 = /#([a-f\d])([a-f\d])([a-f\d])/gi, rxColorName = /(rgba?\(\s*)?(\b[a-z]+\b)/g, rxRGB = /rgba?\([^\)]+\)/gi, rxSpaces = /\s+/g;
+        var rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi, rxColor3 = /#([a-f\d])([a-f\d])([a-f\d])/gi, rxColorName = /(rgba?\(\s*)?(\b[a-z]+\b)/g, rxRGB = /rgb(a?)\(([^\)]+)\)/gi, rxSpaces = /\s+/g;
         /**
          * Replace any css colour name with its rgba() value. It is possible to use
          * the name within an "rgba(blue, 0.4)" string this way.
@@ -1076,8 +1074,8 @@ var VelocityStatic;
                     return ($1 ? $1 : "rgba(") + CSS.ColorNames[$2] + ($1 ? "" : ",1)");
                 }
                 return $0;
-            }).replace(rxRGB, function($0) {
-                return $0.replace(rxSpaces, "");
+            }).replace(rxRGB, function($0, $1, $2) {
+                return "rgba(" + $2.replace(rxSpaces, "") + ($1 ? "" : ",1") + ")";
             });
         }
         CSS.fixColors = fixColors;
@@ -1299,11 +1297,7 @@ var VelocityStatic;
             /* IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
              Also, in all browsers, when border colors aren't all the same, a compound value is returned that Velocity isn't setup to parse.
              So, as a polyfill for querying individual border side colors, we just return the top border's color and animate all borders from that value. */
-            /* TODO: There is a borderColor normalisation in legacy/ - figure out where this is needed... */
-            //		if (property === "borderColor") {
-            //			property = "borderTopColor";
-            //		}
-                        computedValue = computedStyle[property];
+            /* TODO: There is a borderColor normalisation in legacy/ - figure out where this is needed... */            computedValue = computedStyle[property];
             /* Fall back to the property's style value (if defined) when computedValue returns nothing,
              which can happen when the element hasn't been painted. */            if (!computedValue) {
                 computedValue = element.style[property];
@@ -1341,8 +1335,8 @@ var VelocityStatic;
         CSS.computePropertyValue = computePropertyValue;
         /**
          * Get a property value. This will grab via the cache if it exists, then
-         * via any normalisations, then it will check the css values directly.
-         */        function getPropertyValue(element, propertyName, skipNormalisation, skipCache) {
+         * via any normalisations.
+         */        function getPropertyValue(element, propertyName, fn, skipCache) {
             var data = Data(element);
             var propertyValue;
             if (VelocityStatic.NoCacheNormalizations.has(propertyName)) {
@@ -1350,34 +1344,17 @@ var VelocityStatic;
             }
             if (!skipCache && data && data.cache[propertyName] != null) {
                 propertyValue = data.cache[propertyName];
-                if (VelocityStatic.debug >= 2) {
-                    console.info("Get " + propertyName + ": " + propertyValue);
-                }
-                return propertyValue;
             } else {
-                var types = data.types, best = void 0;
-                for (var index = 0; types; types >>= 1, index++) {
-                    if (types & 1) {
-                        best = VelocityStatic.Normalizations[index][propertyName] || best;
+                fn = fn || VelocityStatic.getNormalization(element, propertyName);
+                if (fn) {
+                    propertyValue = fn(element);
+                    if (data) {
+                        data.cache[propertyName] = propertyValue;
                     }
-                }
-                if (best) {
-                    propertyValue = best(element);
-                } else {
-                    // Note: Retrieving the value of a CSS property cannot simply be
-                    // performed by checking an element's style attribute (which
-                    // only reflects user-defined values). Instead, the browser must
-                    // be queried for a property's *computed* value. You can read
-                    // more about getComputedStyle here:
-                    // https://developer.mozilla.org/en/docs/Web/API/window.getComputedStyle
-                    propertyValue = computePropertyValue(element, propertyName);
                 }
             }
             if (VelocityStatic.debug >= 2) {
                 console.info("Get " + propertyName + ": " + propertyValue);
-            }
-            if (data) {
-                data.cache[propertyName] = propertyValue;
             }
             return propertyValue;
         }
@@ -1427,28 +1404,6 @@ var VelocityStatic;
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
- * Regular Expressions - cached as they can be expensive to create.
- */ var VelocityStatic;
-
-(function(VelocityStatic) {
-    var CSS;
-    (function(CSS) {
-        CSS.RegEx = {
-            isHex: /^#([A-f\d]{3}){1,2}$/i,
-            /* Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
-            valueUnwrap: /^[A-z]+\((.*)\)$/i,
-            wrappedValueAlreadyExtracted: /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
-            /* Split a multi-value property into an array of subvalues, e.g. "rgba(4, 3, 2, 1) 4px 3px 2px 1px" ==> [ "rgba(4, 3, 2, 1)", "4px", "3px", "2px", "1px" ]. */
-            valueSplit: /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/gi
-        };
-    })(CSS = VelocityStatic.CSS || (VelocityStatic.CSS = {}));
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
  */ var VelocityStatic;
 
 (function(VelocityStatic) {
@@ -1456,9 +1411,9 @@ var VelocityStatic;
     (function(CSS) {
         /**
          * The singular setPropertyValue, which routes the logic for all
-         * normalizations, hooks, and standard CSS properties.
+         * normalizations.
          */
-        function setPropertyValue(element, propertyName, propertyValue) {
+        function setPropertyValue(element, propertyName, propertyValue, fn) {
             var data = Data(element);
             if (isString(propertyValue) && propertyValue[0] === "c" && propertyValue[1] === "a" && propertyValue[2] === "l" && propertyValue[3] === "c" && propertyValue[4] === "(" && propertyValue[5] === "0" && propertyValue[5] === " ") {
                 // Make sure we un-calc unit changing values - try not to trigger
@@ -1468,14 +1423,9 @@ var VelocityStatic;
             if (data && data.cache[propertyName] !== propertyValue) {
                 // By setting it to undefined we force a true "get" later
                 data.cache[propertyName] = propertyValue || undefined;
-                var types = data.types, best = void 0;
-                for (var index = 0; types; types >>= 1, index++) {
-                    if (types & 1) {
-                        best = VelocityStatic.Normalizations[index][propertyName] || best;
-                    }
-                }
-                if (!best || !best(element, propertyValue)) {
-                    element.style[propertyName] = propertyValue;
+                fn = fn || VelocityStatic.getNormalization(element, propertyName);
+                if (fn) {
+                    fn(element, propertyValue);
                 }
                 if (VelocityStatic.debug >= 2) {
                     console.info("Set " + propertyName + ": " + propertyValue, element);
@@ -2025,9 +1975,12 @@ var VelocityStatic;
 
 (function(VelocityStatic) {
     /**
-     * Unlike "actions", normalizations can always be replaced by users.
+     * The highest type index for finding the best normalization for a property.
      */
-    VelocityStatic.Normalizations = [];
+    VelocityStatic.MaxType = -1;
+    /**
+     * Unlike "actions", normalizations can always be replaced by users.
+     */    VelocityStatic.Normalizations = [];
     /**
      * Any normalisations that should never be cached are listed here.
      * Faster than an array - https://jsperf.com/array-includes-and-find-methods-vs-set-has
@@ -2059,7 +2012,7 @@ var VelocityStatic;
         } else {
             var index = VelocityStatic.constructors.indexOf(constructor);
             if (index < 0) {
-                index = VelocityStatic.constructors.push(constructor) - 1;
+                VelocityStatic.MaxType = index = VelocityStatic.constructors.push(constructor) - 1;
                 VelocityStatic.Normalizations[index] = Object.create(null);
             }
             VelocityStatic.Normalizations[index][name] = callback;
@@ -2069,7 +2022,27 @@ var VelocityStatic;
         }
     }
     VelocityStatic.registerNormalization = registerNormalization;
+    /**
+     * Used to check if a normalisation exists on a specific class.
+     */    function hasNormalization(args) {
+        var constructor = args[0], name = args[1];
+        var index = VelocityStatic.constructors.indexOf(constructor);
+        return !!VelocityStatic.Normalizations[index][name];
+    }
+    VelocityStatic.hasNormalization = hasNormalization;
+    function getNormalization(element, propertyName) {
+        var data = Data(element);
+        var fn;
+        for (var index = VelocityStatic.MaxType, types = data.types; !fn && index >= 0; index--) {
+            if (types & 1 << index) {
+                fn = VelocityStatic.Normalizations[index][propertyName];
+            }
+        }
+        return fn;
+    }
+    VelocityStatic.getNormalization = getNormalization;
     VelocityStatic.registerAction([ "registerNormalization", registerNormalization ]);
+    VelocityStatic.registerAction([ "hasNormalization", hasNormalization ]);
 })(VelocityStatic || (VelocityStatic = {}));
 
 ///<reference path="../normalizations.ts" />
@@ -2091,20 +2064,23 @@ var VelocityStatic;
                     return element.getAttribute(name);
                 }
                 element.setAttribute(name, propertyValue);
-                return true;
             };
         }
         var base = document.createElement("div"), rxSubtype = /^SVG(.*)Element$/, rxElement = /Element$/;
         Object.getOwnPropertyNames(window).forEach(function(globals) {
             var subtype = rxSubtype.exec(globals);
-            if (subtype) {
-                var element = document.createElementNS("http://www.w3.org/2000/svg", (subtype[1] || "svg").toLowerCase()), constructor = element.constructor;
-                for (var attribute in element) {
-                    var value = element[attribute];
-                    if (isString(attribute) && !(attribute[0] === "o" && attribute[1] === "n") && attribute !== attribute.toUpperCase() && !rxElement.test(attribute) && !(attribute in base) && !isFunction(value)) {
-                        // TODO: Should this all be set on the generic SVGElement, it would save space and time, but not as powerful
-                        VelocityStatic.registerNormalization([ constructor, attribute, getAttribute(attribute) ]);
+            if (subtype && subtype[1] !== "SVG") {
+                try {
+                    var element = subtype[1] ? document.createElementNS("http://www.w3.org/2000/svg", (subtype[1] || "svg").toLowerCase()) : document.createElement("svg"), constructor = element.constructor;
+                    for (var attribute in element) {
+                        var value = element[attribute];
+                        if (isString(attribute) && !(attribute[0] === "o" && attribute[1] === "n") && attribute !== attribute.toUpperCase() && !rxElement.test(attribute) && !(attribute in base) && !isFunction(value)) {
+                            // TODO: Should this all be set on the generic SVGElement, it would save space and time, but not as powerful
+                            VelocityStatic.registerNormalization([ constructor, attribute, getAttribute(attribute) ]);
+                        }
                     }
+                } catch (e) {
+                    console.error("VelocityJS: Error when trying to identify SVG attributes on " + globals + ".", e);
                 }
             }
         });
@@ -2135,7 +2111,6 @@ var VelocityStatic;
                     }
                 }
                 element.setAttribute(name, propertyValue);
-                return true;
             };
         }
         VelocityStatic.registerNormalization([ SVGElement, "width", getDimension("width") ]);
@@ -2181,7 +2156,6 @@ var VelocityStatic;
                 return augmentDimension(element, name, wantInner) + "px";
             }
             VelocityStatic.CSS.setPropertyValue(element, name, parseFloat(propertyValue) - augmentDimension(element, name, wantInner) + "px");
-            return true;
         };
     }
     VelocityStatic.registerNormalization([ Element, "innerWidth", getDimension("width", true) ]);
@@ -2227,39 +2201,8 @@ var VelocityStatic;
                         data.cache["display"] = propertyValue;
         }
         style.display = propertyValue;
-        return true;
     }
     VelocityStatic.registerNormalization([ Element, "display", display ]);
-})(VelocityStatic || (VelocityStatic = {}));
-
-///<reference path="normalizations.ts" />
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */ var VelocityStatic;
-
-(function(VelocityStatic) {
-    function genericReordering(element, propertyValue) {
-        if (propertyValue === undefined) {
-            propertyValue = VelocityStatic.CSS.getPropertyValue(element, "textShadow");
-            var split = propertyValue.split(/\s/g), firstPart = split[0];
-            var newValue = "";
-            if (VelocityStatic.CSS.ColorNames[firstPart]) {
-                split.shift();
-                split.push(firstPart);
-                newValue = split.join(" ");
-            } else if (firstPart.match(/^#|^hsl|^rgb|-gradient/)) {
-                var matchedString = propertyValue.match(/(hsl.*\)|#[\da-fA-F]+|rgb.*\)|.*gradient.*\))\s/g)[0];
-                newValue = propertyValue.replace(matchedString, "") + " " + matchedString.trim();
-            } else {
-                newValue = propertyValue;
-            }
-            return newValue;
-        }
-        return false;
-    }
-    VelocityStatic.registerNormalization([ Element, "textShadow", genericReordering ]);
 })(VelocityStatic || (VelocityStatic = {}));
 
 ///<reference path="normalizations.ts" />
@@ -2274,79 +2217,49 @@ var VelocityStatic;
         if (propertyValue == null) {
             return element.clientWidth + "px";
         }
-        return false;
     }
     function scrollWidth(element, propertyValue) {
         if (propertyValue == null) {
             return element.scrollWidth + "px";
         }
-        return false;
     }
     function clientHeight(element, propertyValue) {
         if (propertyValue == null) {
             return element.clientHeight + "px";
         }
-        return false;
     }
     function scrollHeight(element, propertyValue) {
         if (propertyValue == null) {
             return element.scrollHeight + "px";
         }
-        return false;
     }
-    function scrollTop(element, propertyValue) {
-        if (propertyValue == null) {
-            //			getPropertyValue(element, "clientWidth", false, true);
-            //			getPropertyValue(element, "scrollWidth", false, true);
-            //			getPropertyValue(element, "scrollLeft", false, true);
-            VelocityStatic.CSS.getPropertyValue(element, "clientHeight", false, true);
-            VelocityStatic.CSS.getPropertyValue(element, "scrollHeight", false, true);
-            VelocityStatic.CSS.getPropertyValue(element, "scrollTop", false, true);
-            return element.scrollTop + "px";
-        }
-        //		console.log("setScrollTop", propertyValue)
-                var value = parseFloat(propertyValue), unit = propertyValue.replace(String(value), "");
-        switch (unit) {
-          case "":
-          case "px":
-            element.scrollTop = value;
-            break;
+    function scroll(direction, end) {
+        return function(element, propertyValue) {
+            if (propertyValue == null) {
+                // Make sure we have these values cached.
+                VelocityStatic.CSS.getPropertyValue(element, "client" + direction, null, true);
+                VelocityStatic.CSS.getPropertyValue(element, "scroll" + direction, null, true);
+                VelocityStatic.CSS.getPropertyValue(element, "scroll" + end, null, true);
+                return element["scroll" + end] + "px";
+            }
+            //		console.log("setScrollTop", propertyValue)
+                        var value = parseFloat(propertyValue), unit = propertyValue.replace(String(value), "");
+            switch (unit) {
+              case "":
+              case "px":
+                element["scroll" + end] = value;
+                break;
 
-          case "%":
-            var clientHeight_1 = parseFloat(VelocityStatic.CSS.getPropertyValue(element, "clientHeight")), scrollHeight_1 = parseFloat(VelocityStatic.CSS.getPropertyValue(element, "scrollHeight"));
-            //				console.log("setScrollTop percent", scrollHeight, clientHeight, value, Math.max(0, scrollHeight - clientHeight) * value / 100)
-                        element.scrollTop = Math.max(0, scrollHeight_1 - clientHeight_1) * value / 100;
-        }
-        return false;
+              case "%":
+                var client = parseFloat(VelocityStatic.CSS.getPropertyValue(element, "client" + direction)), scroll_1 = parseFloat(VelocityStatic.CSS.getPropertyValue(element, "scroll" + direction));
+                //				console.log("setScrollTop percent", scrollHeight, clientHeight, value, Math.max(0, scrollHeight - clientHeight) * value / 100)
+                                element["scroll" + end] = Math.max(0, scroll_1 - client) * value / 100;
+            }
+        };
     }
-    function scrollLeft(element, propertyValue) {
-        if (propertyValue == null) {
-            //			getPropertyValue(element, "clientWidth", false, true);
-            //			getPropertyValue(element, "scrollWidth", false, true);
-            //			getPropertyValue(element, "scrollLeft", false, true);
-            VelocityStatic.CSS.getPropertyValue(element, "clientWidth", false, true);
-            VelocityStatic.CSS.getPropertyValue(element, "scrollWidth", false, true);
-            VelocityStatic.CSS.getPropertyValue(element, "scrollLeft", false, true);
-            return element.scrollLeft + "px";
-        }
-        //		console.log("setScrollLeft", propertyValue)
-                var value = parseFloat(propertyValue), unit = propertyValue.replace(String(value), "");
-        switch (unit) {
-          case "":
-          case "px":
-            element.scrollLeft = value;
-            break;
-
-          case "%":
-            var clientWidth_1 = parseFloat(VelocityStatic.CSS.getPropertyValue(element, "clientWidth")), scrollWidth_1 = parseFloat(VelocityStatic.CSS.getPropertyValue(element, "scrollWidth"));
-            //				console.log("setScrollLeft percent", scrollWidth, clientWidth, value, Math.max(0, scrollWidth - clientWidth) * value / 100)
-                        element.scrollTop = Math.max(0, scrollWidth_1 - clientWidth_1) * value / 100;
-        }
-        return false;
-    }
-    VelocityStatic.registerNormalization([ HTMLElement, "scroll", scrollTop, false ]);
-    VelocityStatic.registerNormalization([ HTMLElement, "scrollTop", scrollTop, false ]);
-    VelocityStatic.registerNormalization([ HTMLElement, "scrollLeft", scrollLeft, false ]);
+    VelocityStatic.registerNormalization([ HTMLElement, "scroll", scroll("Height", "Top"), false ]);
+    VelocityStatic.registerNormalization([ HTMLElement, "scrollTop", scroll("Height", "Top"), false ]);
+    VelocityStatic.registerNormalization([ HTMLElement, "scrollLeft", scroll("Width", "Left"), false ]);
     VelocityStatic.registerNormalization([ HTMLElement, "scrollWidth", scrollWidth ]);
     VelocityStatic.registerNormalization([ HTMLElement, "clientWidth", clientWidth ]);
     VelocityStatic.registerNormalization([ HTMLElement, "scrollHeight", scrollHeight ]);
@@ -2358,35 +2271,67 @@ var VelocityStatic;
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
+ * This handles all CSS style properties. With browser prefixed properties it
+ * will register a version that handles setting (and getting) both the prefixed
+ * and non-prefixed version.
  */ var VelocityStatic;
 
 (function(VelocityStatic) {
     /**
-     * Return a Normalisation that can be used to set / get the vendor prefixed
-     * real name for a propery.
+     * Return a Normalisation that can be used to set / get a prefixed style
+     * property.
      */
-    function vendorPrefix(property, unprefixed) {
+    function getSetPrefixed(propertyName, unprefixed) {
         return function(element, propertyValue) {
             if (propertyValue === undefined) {
-                return element.style[unprefixed];
+                return VelocityStatic.CSS.computePropertyValue(element, propertyName) || VelocityStatic.CSS.computePropertyValue(element, unprefixed);
             }
-            VelocityStatic.CSS.setPropertyValue(element, property, propertyValue);
-            return true;
+            element.style[propertyName] = element.style[unprefixed] = propertyValue;
         };
     }
-    var vendors = [ /^webkit[A-Z]/, /^moz[A-Z]/, /^ms[A-Z]/, /^o[A-Z]/ ], prefixElement = VelocityStatic.State.prefixElement;
-    for (var property in prefixElement.style) {
-        for (var i = 0; i < vendors.length; i++) {
-            if (vendors[i].test(property)) {
-                var unprefixed = property.replace(/^[a-z]+([A-Z])/, function($, letter) {
-                    return letter.toLowerCase();
-                });
-                if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
-                    VelocityStatic.registerNormalization([ Element, unprefixed, vendorPrefix(property, unprefixed) ]);
-                }
+    /**
+     * Return a Normalisation that can be used to set / get a style property.
+     */    function getSetStyle(propertyName) {
+        return function(element, propertyValue) {
+            if (propertyValue === undefined) {
+                return VelocityStatic.CSS.computePropertyValue(element, propertyName);
             }
+            element.style[propertyName] = propertyValue;
+        };
+    }
+    var rxVendors = /^(webkit|moz|ms|o)[A-Z]/, rxUnit = /^\d+([a-z]+)/, prefixElement = VelocityStatic.State.prefixElement;
+    for (var propertyName in prefixElement.style) {
+        if (rxVendors.test(propertyName)) {
+            var unprefixed = propertyName.replace(/^[a-z]+([A-Z])/, function($, letter) {
+                return letter.toLowerCase();
+            });
+            if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
+                VelocityStatic.registerNormalization([ Element, unprefixed, getSetPrefixed(propertyName, unprefixed) ]);
+            }
+        } else if (!VelocityStatic.hasNormalization([ Element, propertyName ])) {
+            VelocityStatic.registerNormalization([ Element, propertyName, getSetStyle(propertyName) ]);
         }
     }
+})(VelocityStatic || (VelocityStatic = {}));
+
+///<reference path="normalizations.ts" />
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */ var VelocityStatic;
+
+(function(VelocityStatic) {
+    /**
+     * A fake normalization used to allow the "tween" property easy access.
+     */
+    function getSetTween(element, propertyValue) {
+        if (propertyValue === undefined) {
+            return "";
+        }
+    }
+    VelocityStatic.registerNormalization([ Element, "tween", getSetTween ]);
 })(VelocityStatic || (VelocityStatic = {}));
 
 /*
@@ -3473,23 +3418,23 @@ var VelocityStatic;
                     }
                     for (var property in tweens) {
                         // For every element, iterate through each property.
-                        var tween_3 = tweens[property], easing = tween_3[1 /* EASING */ ] || activeEasing, pattern = tween_3[3 /* PATTERN */ ], rounding = tween_3[4 /* ROUNDING */ ];
+                        var tween_3 = tweens[property], easing = tween_3.easing || activeEasing, pattern = tween_3.pattern;
                         var currentValue = "", i = 0;
                         if (pattern) {
                             for (;i < pattern.length; i++) {
-                                var startValue = tween_3[2 /* START */ ][i];
+                                var startValue = tween_3.start[i];
                                 if (startValue == null) {
                                     currentValue += pattern[i];
                                 } else {
                                     // All easings must deal with numbers except for
                                     // our internal ones
-                                    var result = easing(reverse ? 1 - percentComplete : percentComplete, startValue, tween_3[0 /* END */ ][i], property);
-                                    currentValue += rounding && rounding[i] ? Math.round(result) : result;
+                                    var result = easing(reverse ? 1 - percentComplete : percentComplete, startValue, tween_3.end[i], property);
+                                    currentValue += pattern[i] === true ? Math.round(result) : result;
                                 }
                             }
                             if (property !== "tween") {
                                 // TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-                                VelocityStatic.CSS.setPropertyValue(activeCall.element, property, currentValue);
+                                VelocityStatic.CSS.setPropertyValue(activeCall.element, property, currentValue, tween_3.fn);
                             } else {
                                 // Skip the fake 'tween' property as that is only
                                 // passed into the progress callback.
@@ -3537,54 +3482,32 @@ var VelocityStatic;
  *
  * Tweens
  */
-var Tween;
-
-(function(Tween) {
-    Tween[Tween["END"] = 0] = "END";
-    Tween[Tween["EASING"] = 1] = "EASING";
-    Tween[Tween["START"] = 2] = "START";
-    Tween[Tween["PATTERN"] = 3] = "PATTERN";
-    Tween[Tween["ROUNDING"] = 4] = "ROUNDING";
-    Tween[Tween["length"] = 5] = "length";
-})(Tween || (Tween = {}));
-
 var VelocityStatic;
 
 (function(VelocityStatic) {
+    var rxHex = /^#([A-f\d]{3}){1,2}$/i;
     var commands = new Map();
-    commands.set("function", function(value, element, elements, elementArrayIndex) {
+    commands.set("function", function(value, element, elements, elementArrayIndex, propertyName, tween) {
         return value.call(element, elementArrayIndex, elements.length);
     });
-    commands.set("number", function(value, element, elements, elementArrayIndex, propertyName) {
+    commands.set("number", function(value, element, elements, elementArrayIndex, propertyName, tween) {
         return value + (element instanceof HTMLElement ? getUnitType(propertyName) : "");
     });
-    commands.set("string", function(value, element, elements, elementArrayIndex, propertyName) {
+    commands.set("string", function(value, element, elements, elementArrayIndex, propertyName, tween) {
         return VelocityStatic.CSS.fixColors(value);
     });
-    commands.set("undefined", function(value, element, elements, elementArrayIndex, propertyName) {
-        return VelocityStatic.CSS.fixColors(VelocityStatic.CSS.getPropertyValue(element, propertyName) || "");
+    commands.set("undefined", function(value, element, elements, elementArrayIndex, propertyName, tween) {
+        return VelocityStatic.CSS.fixColors(VelocityStatic.CSS.getPropertyValue(element, propertyName, tween.fn) || "");
     });
-    var 
-    /**
-     * Properties that take "deg" as the default numeric suffix.
-     */
-    degree = [], 
     /**
      * Properties that take no default numeric suffix.
-     */
-    unitless = [ "borderImageSlice", "columnCount", "counterIncrement", "counterReset", "flex", "flexGrow", "flexShrink", "floodOpacity", "fontSizeAdjust", "fontWeight", "lineHeight", "opacity", "order", "orphans", "shapeImageThreshold", "tabSize", "widows", "zIndex" ];
+     */    var unitless = [ "borderImageSlice", "columnCount", "counterIncrement", "counterReset", "flex", "flexGrow", "flexShrink", "floodOpacity", "fontSizeAdjust", "fontWeight", "lineHeight", "opacity", "order", "orphans", "shapeImageThreshold", "tabSize", "widows", "zIndex" ];
     /**
      * Retrieve a property's default unit type. Used for assigning a unit
      * type when one is not supplied by the user. These are only valid for
      * HTMLElement style properties.
      */    function getUnitType(property) {
-        if (_inArray(degree, property)) {
-            return "deg";
-        }
-        if (_inArray(unitless, property)) {
-            return "";
-        }
-        return "px";
+        return _inArray(unitless, property) ? "" : "px";
     }
     /**
      * Expand a VelocityProperty argument into a valid sparse Tween array. This
@@ -3594,11 +3517,8 @@ var VelocityStatic;
         var tweens = animation.tweens = Object.create(null), elements = animation.elements, element = animation.element, elementArrayIndex = elements.indexOf(element), data = Data(element), queue = getValue(animation.queue, animation.options.queue), duration = getValue(animation.options.duration, VelocityStatic.defaults.duration);
         for (var property in properties) {
             var propertyName = VelocityStatic.CSS.camelCase(property);
-            var valueData = properties[property], types = data.types, found = propertyName === "tween";
-            for (var index = 0; types && !found; types >>= 1, index++) {
-                found = !!(types & 1 && VelocityStatic.Normalizations[index][propertyName]);
-            }
-            if (!found && (!VelocityStatic.State.prefixElement || !isString(VelocityStatic.State.prefixElement.style[propertyName]))) {
+            var valueData = properties[property], fn = VelocityStatic.getNormalization(element, propertyName);
+            if (!fn && propertyName !== "tween") {
                 if (VelocityStatic.debug) {
                     console.log("Skipping [" + property + "] due to a lack of browser support.");
                 }
@@ -3610,8 +3530,9 @@ var VelocityStatic;
                 }
                 continue;
             }
-            var tween_4 = tweens[propertyName] = new Array(5 /* length */);
+            var tween_4 = tweens[propertyName] = Object.create(null);
             var endValue = void 0, startValue = void 0;
+            tween_4.fn = fn;
             if (isFunction(valueData)) {
                 // If we have a function as the main argument then resolve
                 // it first, in case it returns an array that needs to be
@@ -3623,10 +3544,10 @@ var VelocityStatic;
                 // [ endValue, [, easing] [, startValue] ]
                 var arr1 = valueData[1], arr2 = valueData[2];
                 endValue = valueData[0];
-                if (isString(arr1) && (/^[\d-]/.test(arr1) || VelocityStatic.CSS.RegEx.isHex.test(arr1)) || isFunction(arr1) || isNumber(arr1)) {
+                if (isString(arr1) && (/^[\d-]/.test(arr1) || rxHex.test(arr1)) || isFunction(arr1) || isNumber(arr1)) {
                     startValue = arr1;
                 } else if (isString(arr1) && VelocityStatic.Easing.Easings[arr1] || Array.isArray(arr1)) {
-                    tween_4[1 /* EASING */ ] = arr1;
+                    tween_4.easing = arr1;
                     startValue = arr2;
                 } else {
                     startValue = arr1 || arr2;
@@ -3634,9 +3555,9 @@ var VelocityStatic;
             } else {
                 endValue = valueData;
             }
-            tween_4[0 /* END */ ] = commands.get(typeof endValue)(endValue, element, elements, elementArrayIndex, propertyName);
+            tween_4.end = commands.get(typeof endValue)(endValue, element, elements, elementArrayIndex, propertyName, tween_4);
             if (startValue != null || (queue === false || data.queueList[queue] === undefined)) {
-                tween_4[2 /* START */ ] = commands.get(typeof startValue)(startValue, element, elements, elementArrayIndex, propertyName);
+                tween_4.start = commands.get(typeof startValue)(startValue, element, elements, elementArrayIndex, propertyName, tween_4);
             }
             explodeTween(propertyName, tween_4, duration, !!startValue);
         }
@@ -3646,8 +3567,8 @@ var VelocityStatic;
      * Convert a string-based tween with start and end strings, into a pattern
      * based tween with arrays.
      */    function explodeTween(propertyName, tween, duration, isForcefeed) {
-        var endValue = tween[0 /* END */ ];
-        var startValue = tween[2 /* START */ ];
+        var endValue = tween.end;
+        var startValue = tween.start;
         if (!isString(endValue) || !isString(startValue)) {
             return;
         }
@@ -3655,8 +3576,8 @@ var VelocityStatic;
  // Can only be set once if the Start value doesn't match the End value and it's not forcefed
                 do {
             runAgain = false;
-            var arrayStart = tween[2 /* START */ ] = [ null ], arrayEnd = tween[0 /* END */ ] = [ null ], pattern = tween[3 /* PATTERN */ ] = [ "" ];
-            var easing = tween[1 /* EASING */ ], rounding = void 0, indexStart = 0, // index in startValue
+            var arrayStart = tween.start = [ null ], arrayEnd = tween.end = [ null ], pattern = tween.pattern = [ "" ];
+            var easing = tween.easing, indexStart = 0, // index in startValue
             indexEnd = 0, // index in endValue
             inCalc = 0, // Keep track of being inside a "calc()" so we don't duplicate it
             inRGB = 0, // Keep track of being inside an RGB as we can't use fractional values
@@ -3709,13 +3630,7 @@ var VelocityStatic;
                             // Same numbers, so just copy over
                             pattern[pattern.length - 1] += tempStart + unitStart;
                         } else {
-                            if (inRGB) {
-                                if (!rounding) {
-                                    rounding = tween[4 /* ROUNDING */ ] = [];
-                                }
-                                rounding[arrayStart.length] = true;
-                            }
-                            pattern.push(0, unitStart);
+                            pattern.push(inRGB ? true : false, unitStart);
                             arrayStart.push(parseFloat(tempStart), null);
                             arrayEnd.push(parseFloat(tempEnd), null);
                         }
@@ -3725,7 +3640,7 @@ var VelocityStatic;
                         // look out for the final "calc(0 + " prefix and remove
                         // it from the value when it finds it.
                         pattern[pattern.length - 1] += inCalc ? "+ (" : "calc(";
-                        pattern.push(0, unitStart + " + ", 0, unitEnd + ")");
+                        pattern.push(false, unitStart + " + ", false, unitEnd + ")");
                         arrayStart.push(parseFloat(tempStart) || 0, null, 0, null);
                         arrayEnd.push(0, null, parseFloat(tempEnd) || 0, null);
                     }
@@ -3857,7 +3772,7 @@ var VelocityStatic;
                     console.warn("Velocity: String easings must use one of 'at-start', 'during' or 'at-end': {" + propertyName + ': ["' + endValue + '", ' + easing + ', "' + startValue + '"]}');
                     easing = "at-start";
                 }
-                tween[1 /* EASING */ ] = validateEasing(easing, duration);
+                tween.easing = validateEasing(easing, duration);
             }
             // This can only run a second time once - if going from automatic startValue to "fixed" pattern from endValue with startValue numbers
                 } while (runAgain);
@@ -3879,11 +3794,11 @@ var VelocityStatic;
         var element = activeCall.element, tweens = activeCall.tweens, duration = getValue(activeCall.options.duration, VelocityStatic.defaults.duration);
         for (var propertyName in tweens) {
             var tween_5 = tweens[propertyName];
-            if (tween_5[2 /* START */ ] == null) {
+            if (tween_5.start == null) {
                 // Get the start value as it's not been passed in
                 var startValue = VelocityStatic.CSS.getPropertyValue(activeCall.element, propertyName);
                 if (isString(startValue)) {
-                    tween_5[2 /* START */ ] = VelocityStatic.CSS.fixColors(startValue);
+                    tween_5.start = VelocityStatic.CSS.fixColors(startValue);
                     explodeTween(propertyName, tween_5, duration);
                 } else if (!Array.isArray(startValue)) {
                     console.warn("bad type", tween_5, propertyName, startValue);
@@ -4153,7 +4068,7 @@ var VelocityStatic;
  */ var VelocityStatic;
 
 (function(VelocityStatic) {
-    VelocityStatic.version = VERSION;
+    VelocityStatic.version = "2.0.1";
 })(VelocityStatic || (VelocityStatic = {}));
 
 /*
@@ -4575,12 +4490,25 @@ if (window === this) {
 /* The CSS spec mandates that the translateX/Y/Z transforms are %-relative to the element itself -- not its parent.
  Velocity, however, doesn't make this distinction. Thus, converting to or from the % unit with these subproperties
  will produce an inaccurate conversion value. The same issue exists with the cx/cy attributes of SVG circles and ellipses. */ var _loop_3 = function(key) {
-    Object.defineProperty(VelocityFn, key, {
-        enumerable: PUBLIC_MEMBERS.indexOf(key) >= 0,
-        get: function() {
-            return VelocityStatic[key];
-        }
-    });
+    var value = VelocityStatic[key];
+    if (isString(value) || isNumber(value) || isBoolean(value)) {
+        Object.defineProperty(VelocityFn, key, {
+            enumerable: PUBLIC_MEMBERS.indexOf(key) >= 0,
+            get: function() {
+                return VelocityStatic[key];
+            },
+            set: function(value) {
+                VelocityStatic[key] = value;
+            }
+        });
+    } else {
+        Object.defineProperty(VelocityFn, key, {
+            enumerable: PUBLIC_MEMBERS.indexOf(key) >= 0,
+            get: function() {
+                return VelocityStatic[key];
+            }
+        });
+    }
 };
 
 ///<reference path="../index.d.ts" />

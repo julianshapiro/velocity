@@ -11,7 +11,7 @@ namespace VelocityStatic.CSS {
 	 * Get/set the width or height.
 	 */
 	function getDimension(name: string) {
-		return function(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
+		return function(element: HTMLorSVGElement, propertyValue?: string): string | void {
 			if (propertyValue === undefined) {
 				// Firefox throws an error if .getBBox() is called on an SVG that isn't attached to the DOM.
 				try {
@@ -21,7 +21,6 @@ namespace VelocityStatic.CSS {
 				}
 			}
 			element.setAttribute(name, propertyValue);
-			return true;
 		} as VelocityNormalizationsFn;
 	}
 

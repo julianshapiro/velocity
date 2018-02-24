@@ -3,5 +3,4 @@
 ///<reference path="fixColors.ts" />
 ///<reference path="getPropertyValue.ts" />
 ///<reference path="getUnit.ts" />
-///<reference path="regex.ts" />
 ///<reference path="setPropertyValue.ts" />

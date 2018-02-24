@@ -47,12 +47,12 @@ namespace VelocityStatic {
 			// If only a single animation is found and we're only targetting a
 			// single element, then return the value directly
 			if (elements.length === 1) {
-				return CSS.getPropertyValue(elements[0], property);
+				return CSS.fixColors(CSS.getPropertyValue(elements[0], property));
 			}
 			const result = [];
 
 			for (let i = 0; i < elements.length; i++) {
-				result.push(CSS.getPropertyValue(elements[i], property));
+				result.push(CSS.fixColors(CSS.getPropertyValue(elements[i], property)));
 			}
 			return result;
 		}

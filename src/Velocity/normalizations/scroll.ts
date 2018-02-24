@@ -10,123 +10,83 @@ namespace VelocityStatic {
 	 * Get the scrollWidth of an element.
 	 */
 	function clientWidth(element: HTMLorSVGElement): string;
-	function clientWidth(element: HTMLorSVGElement, propertyValue: string): boolean;
-	function clientWidth(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
+	function clientWidth(element: HTMLorSVGElement, propertyValue: string): void;
+	function clientWidth(element: HTMLorSVGElement, propertyValue?: string): string | void {
 		if (propertyValue == null) {
 			return element.clientWidth + "px";
 		}
-		return false;
 	}
 
 	/**
 	 * Get the scrollWidth of an element.
 	 */
 	function scrollWidth(element: HTMLorSVGElement): string;
-	function scrollWidth(element: HTMLorSVGElement, propertyValue: string): boolean;
-	function scrollWidth(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
+	function scrollWidth(element: HTMLorSVGElement, propertyValue: string): void;
+	function scrollWidth(element: HTMLorSVGElement, propertyValue?: string): string | void {
 		if (propertyValue == null) {
 			return element.scrollWidth + "px";
 		}
-		return false;
 	}
 
 	/**
 	 * Get the scrollHeight of an element.
 	 */
 	function clientHeight(element: HTMLorSVGElement): string;
-	function clientHeight(element: HTMLorSVGElement, propertyValue: string): boolean;
-	function clientHeight(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
+	function clientHeight(element: HTMLorSVGElement, propertyValue: string): void;
+	function clientHeight(element: HTMLorSVGElement, propertyValue?: string): string | void {
 		if (propertyValue == null) {
 			return element.clientHeight + "px";
 		}
-		return false;
 	}
 
 	/**
 	 * Get the scrollHeight of an element.
 	 */
 	function scrollHeight(element: HTMLorSVGElement): string;
-	function scrollHeight(element: HTMLorSVGElement, propertyValue: string): boolean;
-	function scrollHeight(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
+	function scrollHeight(element: HTMLorSVGElement, propertyValue: string): void;
+	function scrollHeight(element: HTMLorSVGElement, propertyValue?: string): string | void {
 		if (propertyValue == null) {
 			return element.scrollHeight + "px";
 		}
-		return false;
 	}
 
 	/**
-	 * Scroll an element (vertical).
+	 * Scroll an element.
 	 */
-	function scrollTop(element: HTMLorSVGElement): string;
-	function scrollTop(element: HTMLorSVGElement, propertyValue: string): boolean;
-	function scrollTop(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
-		if (propertyValue == null) {
-			//			getPropertyValue(element, "clientWidth", false, true);
-			//			getPropertyValue(element, "scrollWidth", false, true);
-			//			getPropertyValue(element, "scrollLeft", false, true);
-			CSS.getPropertyValue(element, "clientHeight", false, true);
-			CSS.getPropertyValue(element, "scrollHeight", false, true);
-			CSS.getPropertyValue(element, "scrollTop", false, true);
-			return element.scrollTop + "px";
-		}
-		//		console.log("setScrollTop", propertyValue)
-		const value = parseFloat(propertyValue),
-			unit = propertyValue.replace(String(value), "");
+	function scroll(direction: "Height", end: "Top"): VelocityNormalizationsFn;
+	function scroll(direction: "Width", end: "Left"): VelocityNormalizationsFn;
+	function scroll(direction: "Height" | "Width", end: "Top" | "Left"): VelocityNormalizationsFn {
+		return function(element: HTMLorSVGElement, propertyValue?: string): string | void {
+			if (propertyValue == null) {
+				// Make sure we have these values cached.
+				CSS.getPropertyValue(element, "client" + direction, null, true);
+				CSS.getPropertyValue(element, "scroll" + direction, null, true);
+				CSS.getPropertyValue(element, "scroll" + end, null, true);
+				return element["scroll" + end] + "px";
+			}
+			//		console.log("setScrollTop", propertyValue)
+			const value = parseFloat(propertyValue),
+				unit = propertyValue.replace(String(value), "");
 
-		switch (unit) {
-			case "":
-			case "px":
-				element.scrollTop = value;
-				break;
+			switch (unit) {
+				case "":
+				case "px":
+					element["scroll" + end] = value;
+					break;
 
-			case "%":
-				let clientHeight = parseFloat(CSS.getPropertyValue(element, "clientHeight")),
-					scrollHeight = parseFloat(CSS.getPropertyValue(element, "scrollHeight"));
+				case "%":
+					let client = parseFloat(CSS.getPropertyValue(element, "client" + direction)),
+						scroll = parseFloat(CSS.getPropertyValue(element, "scroll" + direction));
 
-				//				console.log("setScrollTop percent", scrollHeight, clientHeight, value, Math.max(0, scrollHeight - clientHeight) * value / 100)
-				element.scrollTop = Math.max(0, scrollHeight - clientHeight) * value / 100;
-		}
-		return false;
+					//				console.log("setScrollTop percent", scrollHeight, clientHeight, value, Math.max(0, scrollHeight - clientHeight) * value / 100)
+					element["scroll" + end] = Math.max(0, scroll - client) * value / 100;
+			}
+		} as VelocityNormalizationsFn;
 	}
 
-	/**
-	 * Scroll an element (horizontal).
-	 */
-	function scrollLeft(element: HTMLorSVGElement): string;
-	function scrollLeft(element: HTMLorSVGElement, propertyValue: string): boolean;
-	function scrollLeft(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
-		if (propertyValue == null) {
-			//			getPropertyValue(element, "clientWidth", false, true);
-			//			getPropertyValue(element, "scrollWidth", false, true);
-			//			getPropertyValue(element, "scrollLeft", false, true);
-			CSS.getPropertyValue(element, "clientWidth", false, true);
-			CSS.getPropertyValue(element, "scrollWidth", false, true);
-			CSS.getPropertyValue(element, "scrollLeft", false, true);
-			return element.scrollLeft + "px";
-		}
-		//		console.log("setScrollLeft", propertyValue)
-		const value = parseFloat(propertyValue),
-			unit = propertyValue.replace(String(value), "");
-
-		switch (unit) {
-			case "":
-			case "px":
-				element.scrollLeft = value;
-				break;
-
-			case "%":
-				let clientWidth = parseFloat(CSS.getPropertyValue(element, "clientWidth")),
-					scrollWidth = parseFloat(CSS.getPropertyValue(element, "scrollWidth"));
-
-				//				console.log("setScrollLeft percent", scrollWidth, clientWidth, value, Math.max(0, scrollWidth - clientWidth) * value / 100)
-				element.scrollTop = Math.max(0, scrollWidth - clientWidth) * value / 100;
-		}
-		return false;
-	}
-
-	registerNormalization([HTMLElement, "scroll", scrollTop, false]);
-	registerNormalization([HTMLElement, "scrollTop", scrollTop, false]);
-	registerNormalization([HTMLElement, "scrollLeft", scrollLeft, false]);
+	registerNormalization([HTMLElement, "scroll", scroll("Height", "Top"), false]);
+	registerNormalization([HTMLElement, "scrollTop", scroll("Height", "Top"), false]);
+	registerNormalization([HTMLElement, "scrollLeft", scroll("Width", "Left"), false]);
 	registerNormalization([HTMLElement, "scrollWidth", scrollWidth]);
 	registerNormalization([HTMLElement, "clientWidth", clientWidth]);
 	registerNormalization([HTMLElement, "scrollHeight", scrollHeight]);
