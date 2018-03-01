@@ -1,49 +1,107 @@
 {
-  "name": "velocity-animate",
-  "version": "2.0.0",
-  "description": "Accelerated JavaScript animation.",
-  "keywords": [
-    "velocity",
-    "animation",
-    "jquery",
-    "animate",
-    "ui",
-    "velocity.js",
-    "velocityjs",
-    "javascript"
+  "name": "velocity",
+  "version": "0.0.0",
+  "description": "",
+  "keywords": [],
+  "main": "dist/velocity.umd.js",
+  "module": "dist/velocity.es5.js",
+  "typings": "dist/types/velocity.d.ts",
+  "files": [
+    "dist"
   ],
-  "homepage": "http://velocityjs.org",
-  "bugs": {
-    "url": "http://github.com/julianshapiro/velocity/issues"
+  "author": "Duskfall <cyber_andrew6@hotmail.com>",
+  "repository": {
+    "type": "git",
+    "url": ""
   },
   "license": "MIT",
-  "authors": [
-    {
-      "name": "Julian Shapiro",
-      "url": "http://julian.com/"
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "scripts": {
+    "lint": "tslint -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
+    "prebuild": "rimraf dist",
+    "build": "tsc --module commonjs --outDir dist/lib && rollup -c rollup.config.ts && typedoc --out dist/docs --target es6 --theme minimal --mode file src",
+    "start": "rollup -c rollup.config.ts -w",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:prod": "npm run lint && npm run test -- --coverage --no-cache",
+    "deploy-docs": "ts-node tools/gh-pages-publish",
+    "report-coverage": "cat ./coverage/lcov.info | coveralls",
+    "commit": "git-cz",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
+    "semantic-release-prepare": "ts-node tools/semantic-release-prepare",
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "{src,test}/**/*.ts": [
+      "prettier --write --no-semi --single-quote",
+      "git add"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-conventional-changelog"
     },
-    {
-      "name": "Ryc O'Chet",
-      "url": "https://github.com/Rycochet"
+    "validate-commit-msg": {
+      "types": "conventional-commit-types",
+      "helpMessage": "Use \"npm run commit\" instead, we use conventional-changelog format :) (https://github.com/commitizen/cz-cli)"
     }
-  ],
-  "main": "velocity.js",
-  "repository": "julianshapiro/velocity",
-  "files": [
-    "velocity.js",
-    "velocity.min.js",
-    "velocity.ui.js",
-    "velocity.ui.min.js"
-  ],
+  },
+  "jest": {
+    "transform": {
+      ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/test/"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 90,
+        "functions": 95,
+        "lines": 95,
+        "statements": 95
+      }
+    },
+    "collectCoverage": true,
+    "mapCoverage": true
+  },
   "devDependencies": {
-    "@types/qunit": "^2.0.31",
-    "grunt": "^1.0.1",
-    "grunt-contrib-jshint": "~1.1.0",
-    "grunt-contrib-uglify": "~3.3.0",
-    "grunt-contrib-watch": "^1.0.0",
-    "grunt-load-options": "^1.0.0",
-    "grunt-ts": "^6.0.0-beta.17",
-    "load-grunt-tasks": "^3.5.2",
-    "typescript": "^2.7.1"
+    "@types/jest": "^22.1.3",
+    "@types/node": "^9.4.5",
+    "colors": "^1.1.2",
+    "commitizen": "^2.9.6",
+    "coveralls": "^3.0.0",
+    "cross-env": "^5.0.1",
+    "cz-conventional-changelog": "^2.0.0",
+    "husky": "^0.14.0",
+    "jest": "^22.0.2",
+    "lint-staged": "^6.0.0",
+    "lodash.camelcase": "^4.3.0",
+    "prettier": "^1.4.4",
+    "prompt": "^1.0.0",
+    "replace-in-file": "^3.0.0-beta.2",
+    "rimraf": "^2.6.1",
+    "rollup": "^0.54.0",
+    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-sourcemaps": "^0.4.2",
+    "rollup-plugin-typescript2": "^0.10.0",
+    "semantic-release": "^12.2.2",
+    "ts-jest": "^22.0.0",
+    "ts-node": "^4.1.0",
+    "tslint": "^5.8.0",
+    "tslint-config-prettier": "^1.1.0",
+    "tslint-config-standard": "^7.0.0",
+    "typedoc": "^0.10.0",
+    "typescript": "^2.6.2",
+    "validate-commit-msg": "^2.12.2"
   }
 }

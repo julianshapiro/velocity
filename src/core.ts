@@ -1,3 +1,13 @@
+import {isPlainObject, isString, isBoolean, isNode, isWrapped, isVelocityResult, isFunction} from "./types";
+import { defineProperty, getValue } from "./utility";
+import {validateDuration, validateDelay, validateEasing, validateLoop, validateRepeat, validateSpeed, validateQueue, validateBegin, validateComplete, validateProgress, validateSync} from "./validate";
+import {defaults} from "./defaults";
+import {State} from "./state";
+import {tick} from "./tick";
+import {expandProperties} from "./tweens";
+import {queue} from "./queue";
+import {Actions} from "./actions/actions";
+
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -13,22 +23,18 @@ interface Document {
 /**
  * The main Velocity function. Acts as a gateway to everything else.
  */
-function VelocityFn(options: VelocityObjectArgs): VelocityResult;
-function VelocityFn(elements: VelocityElements, propertyMap: string | VelocityProperties, options?: VelocityOptions): VelocityResult;
-function VelocityFn(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-function VelocityFn(elements: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-function VelocityFn(elements: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
-function VelocityFn(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
-function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
-function VelocityFn(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
-function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityResult {
+export function Velocity(options: VelocityObjectArgs): VelocityResult;
+export function Velocity(elements: VelocityElements, propertyMap: string | VelocityProperties, options?: VelocityOptions): VelocityResult;
+export function Velocity(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+export function Velocity(elements: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
+export function Velocity(elements: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
+export function Velocity(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
+export function Velocity(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+export function Velocity(this: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
+export function Velocity(this: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
+export function Velocity(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
+export function Velocity(this: VelocityElements | void, ...__args: any[]): VelocityResult {
 	const
-		/**
-		 * A shortcut to the default options.
-		 */
-		defaults = VelocityStatic.defaults,
 		/**
 		 * Shortcut to arguments for file size.
 		 */
@@ -116,7 +122,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	}
 	// Allow elements to be chained.
 	if (elements) {
-		defineProperty(elements, "velocity", VelocityFn.bind(elements));
+		defineProperty(elements, "velocity", Velocity.bind(elements));
 		if (animations) {
 			defineProperty(elements.velocity, "animations", animations);
 		}
@@ -215,7 +221,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		// by being stored on the animation and then expanded when the animation
 		// starts.
 		const action = propertiesMap.replace(/\..*$/, ""),
-			callback = VelocityStatic.Actions[action] || VelocityStatic.Actions["default"];
+			callback = Actions[action] || Actions["default"];
 
 		if (callback) {
 			const result = callback(args, elements, promiseHandler, propertiesMap);
@@ -261,7 +267,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 				options.promise = optionsMap.promise;
 			}
 			options.queue = getValue(validateQueue(optionsMap.queue), defaults.queue);
-			if (optionsMap.mobileHA && !VelocityStatic.State.isGingerbread) {
+			if (optionsMap.mobileHA && !State.isGingerbread) {
 				/* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack)
 				 on animating elements. HA is removed from the element at the completion of its animation. */
 				/* Note: Android Gingerbread doesn't support HA. If a null transform hack (mobileHA) is in fact set, it will prevent other tranform subproperties from taking effect. */
@@ -351,14 +357,14 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 
 				options._total++;
 				animations.push(animation);
-				VelocityStatic.expandProperties(animation, propertiesMap);
-				VelocityStatic.queue(element, animation, getValue(animation.queue, options.queue));
+				expandProperties(animation, propertiesMap);
+				queue(element, animation, getValue(animation.queue, options.queue));
 			}
 		}
-		if (VelocityStatic.State.isTicking === false) {
+		if (State.isTicking === false) {
 			// If the animation tick isn't running, start it. (Velocity shuts it
 			// off when there are no active calls to process.)
-			VelocityStatic.tick();
+			tick();
 		}
 		if (animations) {
 			defineProperty(elements.velocity, "animations", animations);
@@ -370,9 +376,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 
 	/* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
 	return elements || promise as any;
-};
-
-
+}
 /***************
  Summary
  ***************/
@@ -393,44 +397,44 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
  *********************/
 
 /* IE detection. Gist: https://gist.github.com/julianshapiro/9098609 */
-var IE = (function() {
-	if (document.documentMode) {
-		return document.documentMode;
-	} else {
-		for (let i = 7; i > 4; i--) {
-			let div = document.createElement("div");
+/*const IE = (function () {
+  if (document.documentMode) {
+    return document.documentMode;
+  } else {
+    for (let i = 7; i > 4; i--) {
+      let div = document.createElement("div");
 
-			div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
-			if (div.getElementsByTagName("span").length) {
-				div = null;
-				return i;
-			}
-		}
-	}
+      div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
+      if (div.getElementsByTagName("span").length) {
+        div = null;
+        return i;
+      }
+    }
+  }
 
-	return undefined;
+  return undefined;
 })();
 
-/******************
+/!******************
  Unsupported
- ******************/
+ ******************!/
 
 if (IE <= 8) {
 	throw new Error("VelocityJS cannot run on Internet Explorer 8 or earlier");
 }
 
-/******************
+/!******************
  Frameworks
- ******************/
+ ******************!/
 
 interface Window {
 	jQuery: {fn?: any};
 	Zepto: {fn?: any};
 	Velocity: any;
-}
+}*/
 
-if (window === this) {
-	/*
+/*if (window === this) {
+	/!*
 	 * Both jQuery and Zepto allow their $.fn object to be extended to allow
 	 * wrapped elements to be subjected to plugin calls. If either framework is
 	 * loaded, register a "velocity" extension pointing to Velocity's core
@@ -439,8 +443,8 @@ if (window === this) {
 	 * accessible beyond just a per-element scope. Accordingly, Velocity can
 	 * both act on wrapped DOM elements and stand alone for targeting raw DOM
 	 * elements.
-	 */
-	const patch = VelocityStatic.patch,
+	 *!/
+	const patch = patch,
 		jQuery = window.jQuery,
 		Zepto = window.Zepto;
 
@@ -454,7 +458,7 @@ if (window === this) {
 
 	patch(Zepto, true);
 	patch(Zepto && Zepto.fn);
-}
+}*/
 
 /******************
  Known Issues

@@ -1,24 +1,22 @@
 {
-	"compilerOptions": {
-		"allowUnreachableCode": true,
-		"allowUnusedLabels": true,
-		"alwaysStrict": false,
-		"forceConsistentCasingInFileNames": true,
-		"noEmitOnError": true,
-		"noImplicitAny": false,
-		"outFile": "build/velocity.js",
-		"preserveConstEnums": true,
-		"removeComments": false,
-		"sourceMap": true,
-		"inlineSources": true,
-		"target": "es5",
-		"lib" : [
-			"es6",
-			"dom",
-			"scripthost"
-		]
-	},
-	"files": [
-		"src/app.ts"
-	]
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "target": "es5",
+    "module":"es2015",
+    "lib": ["es2015", "es2016", "es2017", "dom"],
+    //"strict": true,
+    "sourceMap": true,
+    "declaration": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "declarationDir": "dist/types",
+    "outDir": "dist/es",
+    "typeRoots": [
+      "node_modules/@types"
+    ]
+  },
+  "include": [
+    "src"
+  ]
 }

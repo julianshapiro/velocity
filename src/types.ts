@@ -5,11 +5,11 @@
  *
  * Runtime type checking methods.
  */
-
+export
 function isBoolean(variable): variable is boolean {
 	return variable === true || variable === false;
 }
-
+export
 function isNumber(variable): variable is number {
 	return typeof variable === "number";
 }
@@ -19,26 +19,26 @@ function isNumber(variable): variable is number {
  * @param variable The given string or number
  * @returns {variable is number} Returns boolean true if it is a number, false otherwise
  */
-function isNumberWhenParsed(variable: string | number): variable is number {
+export function isNumberWhenParsed(variable: string | number): variable is number {
 	return !isNaN(Number(variable));
 }
-
+export
 function isString(variable): variable is string {
 	return typeof variable === "string";
 }
-
+export
 function isFunction(variable): variable is Function {
 	return Object.prototype.toString.call(variable) === "[object Function]";
 }
-
+export
 function isNode(variable): variable is HTMLorSVGElement {
 	return !!(variable && variable.nodeType);
 }
-
+export
 function isVelocityResult(variable): variable is VelocityResult {
 	return variable && isNumber(variable.length) && isFunction((variable as VelocityResult).velocity);
 }
-
+export
 function propertyIsEnumerable(object: Object, property: string): boolean {
 	return Object.prototype.propertyIsEnumerable.call(object, property);
 }
@@ -46,7 +46,7 @@ function propertyIsEnumerable(object: Object, property: string): boolean {
 /* Determine if variable is an array-like wrapped jQuery, Zepto or similar element, or even a NodeList etc. */
 
 /* NOTE: HTMLFormElements also have a length. */
-function isWrapped(variable): variable is HTMLorSVGElement[] {
+export function isWrapped(variable): variable is HTMLorSVGElement[] {
 	return variable
 		&& variable !== window
 		&& isNumber(variable.length)
@@ -55,11 +55,11 @@ function isWrapped(variable): variable is HTMLorSVGElement[] {
 		&& !isNode(variable)
 		&& (variable.length === 0 || isNode(variable[0]));
 }
-
+export
 function isSVG(variable): variable is SVGElement {
 	return SVGElement && variable instanceof SVGElement;
 }
-
+export
 function isPlainObject(variable): variable is {} {
 	if (!variable || typeof variable !== "object" || variable.nodeType || Object.prototype.toString.call(variable) !== "[object Object]") {
 		return false;
@@ -68,7 +68,7 @@ function isPlainObject(variable): variable is {} {
 
 	return !proto || (proto.hasOwnProperty("constructor") && proto.constructor === Object);
 }
-
+export
 function isEmptyObject(variable): variable is {} {
 	for (let name in variable) {
 		if (variable.hasOwnProperty(name)) {
