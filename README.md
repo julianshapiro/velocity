@@ -1,4 +1,6 @@
-﻿# Velocity 2.0.1 beta
+﻿# Velocity beta
+
+[![npm](https://img.shields.io/npm/v/velocity-animate.svg)]() [![npm (tag)](https://img.shields.io/npm/v/velocity-animate/beta.svg)]()
 
 ## NPM: `npm install velocity-animate@beta`
 
