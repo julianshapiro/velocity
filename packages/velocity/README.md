@@ -7,6 +7,8 @@
 ## Docs
 [https://github.com/julianshapiro/velocity/wiki](https://github.com/julianshapiro/velocity/wiki)
 
+# IMPORTANT: velocityjs.org refers to V1, not V2 beta - use the wiki for documentation!
+
 ## News
 WhatsApp, Tumblr, Windows, Samsung, Uber, and thousands of other companies rely on Velocity. Visit [Libscore.com](http://libscore.com/#$.Velocity) to see which sites use Velocity on their homepage.
 
