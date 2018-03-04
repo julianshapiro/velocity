@@ -360,7 +360,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 					}
 					flags |= AnimationFlags.REVERSE & ~(lastAnimation._flags & AnimationFlags.REVERSE);
 				}
-				const tweens = Object.create(null),
+				const tweens = createEmptyObject(),
 					animation: AnimationCall = Object.assign({
 						element: element,
 						tweens: tweens

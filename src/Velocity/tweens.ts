@@ -14,7 +14,7 @@ namespace VelocityStatic {
 		return (value as any as VelocityPropertyValueFn).call(element, elementArrayIndex, elements.length);
 	})
 	commands.set("number", function(value, element, elements, elementArrayIndex, propertyName, tween) {
-		return value + (element instanceof HTMLElement ? getUnitType(propertyName) : "");
+		return value + getNormalizationUnit(tween.fn);
 	});
 	commands.set("string", function(value, element, elements, elementArrayIndex, propertyName, tween) {
 		return CSS.fixColors(value);
@@ -24,45 +24,12 @@ namespace VelocityStatic {
 	});
 
 	/**
-	 * Properties that take no default numeric suffix.
-	 */
-	const unitless = [
-		"borderImageSlice",
-		"columnCount",
-		"counterIncrement",
-		"counterReset",
-		"flex",
-		"flexGrow",
-		"flexShrink",
-		"floodOpacity",
-		"fontSizeAdjust",
-		"fontWeight",
-		"lineHeight",
-		"opacity",
-		"order",
-		"orphans",
-		"shapeImageThreshold",
-		"tabSize",
-		"widows",
-		"zIndex"
-	];
-
-	/**
-	 * Retrieve a property's default unit type. Used for assigning a unit
-	 * type when one is not supplied by the user. These are only valid for
-	 * HTMLElement style properties.
-	 */
-	function getUnitType(property: string): string {
-		return _inArray(unitless, property) ? "" : "px";
-	}
-
-	/**
 	 * Expand a VelocityProperty argument into a valid sparse Tween array. This
 	 * pre-allocates the array as it is then the correct size and slightly
 	 * faster to access.
 	 */
 	export function expandProperties(animation: AnimationCall, properties: VelocityProperties) {
-		const tweens = animation.tweens = Object.create(null),
+		const tweens = animation.tweens = createEmptyObject(),
 			elements = animation.elements,
 			element = animation.element,
 			elementArrayIndex = elements.indexOf(element),
@@ -87,7 +54,7 @@ namespace VelocityStatic {
 				}
 				continue;
 			}
-			const tween: VelocityTween = tweens[propertyName] = Object.create(null) as any;
+			const tween: VelocityTween = tweens[propertyName] = createEmptyObject() as any;
 			let endValue: string,
 				startValue: string;
 

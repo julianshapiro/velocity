@@ -5,6 +5,13 @@
  */
 
 /**
+ * Creates an empty object without any prototype chain.
+ */
+function createEmptyObject() {
+	return Object.create(null);
+}
+
+/**
  * The <strong><code>defineProperty()</code></strong> function provides a
  * shortcut to defining a property that cannot be accidentally iterated across.
  */
@@ -16,38 +23,6 @@ function defineProperty(proto: any, name: string, value: Function | any) {
 			value: value
 		});
 	}
-}
-
-/**
- * Perform a deep copy of an object - also copies children so they're not
- * going to be affected by changing original.
- */
-function _deepCopyObject<T, U>(target: T, ...sources: U[]): T & U {
-	if (target == null) { // TypeError if undefined or null
-		throw new TypeError("Cannot convert undefined or null to object");
-	}
-	const to = Object(target),
-		hasOwnProperty = Object.prototype.hasOwnProperty;
-	let source: any;
-
-	while ((source = sources.shift())) {
-		if (source != null) {
-			for (const key in source) {
-				if (hasOwnProperty.call(source, key)) {
-					const value = source[key];
-
-					if (Array.isArray(value)) {
-						_deepCopyObject(to[key] = [], value);
-					} else if (isPlainObject(value)) {
-						_deepCopyObject(to[key] = {}, value);
-					} else {
-						to[key] = value;
-					}
-				}
-			}
-		}
-	}
-	return to;
 }
 
 /**
