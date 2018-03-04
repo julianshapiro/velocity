@@ -1,6 +1,6 @@
 ﻿# Velocity beta
 
-[![npm](https://img.shields.io/npm/v/velocity-animate.svg)]() [![npm (tag)](https://img.shields.io/npm/v/velocity-animate/beta.svg)]()
+[![npm](https://img.shields.io/npm/v/velocity-animate.svg)](https://www.npmjs.com/package/velocity-animate) [![npm (tag)](https://img.shields.io/npm/v/velocity-animate/beta.svg)](https://www.npmjs.com/package/velocity-animate) [![cdnjs version](https://img.shields.io/cdnjs/v/velocity.svg)](https://cdnjs.com/libraries/velocity) [![npm downloads](https://img.shields.io/npm/dm/velocity-animate.svg)](https://www.npmjs.com/package/velocity-animate) [![jsdelivr downloads](https://data.jsdelivr.com/v1/package/npm/velocity-animate/badge)](https://www.jsdelivr.com/package/npm/velocity-animate)
 
 ## NPM: `npm install velocity-animate@beta`
 
@@ -21,13 +21,13 @@ NPM: https://www.npmjs.com/package/velocity-react
 ### Velocity (CDN, choose one of them):
 ```html
 <script src="//cdn.jsdelivr.net/npm/velocity-animate@2.0/velocity.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.1/velocity.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.2/velocity.min.js"></script>
 ```
 
 ### Velocity UI pack (CDN, choose one of them): 
 ```html
 <script src="//cdn.jsdelivr.net/npm/velocity-animate@2.0/velocity.ui.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.1/velocity.ui.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.2/velocity.ui.min.js"></script>
 ```
 
 > Please note that JSDelivr can automatically supply the latest release, while CloudFlare needs to ask for a specific version.
