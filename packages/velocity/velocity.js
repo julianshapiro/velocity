@@ -1,4 +1,4 @@
-/*! VelocityJS.org (2.0.1) (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
+/*! VelocityJS.org (2.0.2) (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 (function(root, factory) {
 	if (typeof define === 'function' && define.amd) {
 		define('velocity-animate', [], factory);
@@ -4158,7 +4158,7 @@ var VelocityStatic;
  */ var VelocityStatic;
 
 (function(VelocityStatic) {
-    VelocityStatic.version = "2.0.1";
+    VelocityStatic.version = "2.0.2";
 })(VelocityStatic || (VelocityStatic = {}));
 
 /*
