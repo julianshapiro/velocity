@@ -15,9 +15,7 @@ module.exports = {
 			banner: `/*! VelocityJS.org (<%= pkg.version %>) (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 (function(root, factory) {
 	if (typeof define === 'function' && define.amd) {
-		define('Velocity', [], function() {
-			return (root['Velocity'] = factory());
-		});
+		define('velocity-animate', [], factory);
 	} else if (typeof module === 'object' && module.exports) {
 		module.exports = factory();
 	} else {
