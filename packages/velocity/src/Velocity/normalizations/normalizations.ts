@@ -24,6 +24,14 @@ namespace VelocityStatic {
 	export const Normalizations: {[name: string]: VelocityNormalizationsFn}[] = [];
 
 	/**
+	 * Store a cross-reference to units to be added to specific normalization
+	 * functions if the user supplies a unit-less number.
+	 * 
+	 * This is pretty much confined to adding "px" to several css properties.
+	 */
+	export const NormalizationUnits: {[unit: string]: VelocityNormalizationsFn[]} = createEmptyObject();
+
+	/**
 	 * Any normalisations that should never be cached are listed here.
 	 * Faster than an array - https://jsperf.com/array-includes-and-find-methods-vs-set-has
 	 */
@@ -55,7 +63,7 @@ namespace VelocityStatic {
 	 *
 	 * @private
 	 */
-	export function registerNormalization(args?: [ClassConstructor, string, VelocityNormalizationsFn] | [ClassConstructor, string, VelocityNormalizationsFn, boolean]) {
+	export function registerNormalization(args?: [ClassConstructor, string, VelocityNormalizationsFn] | [ClassConstructor, string, VelocityNormalizationsFn, boolean] | [ClassConstructor, string, VelocityNormalizationsFn, string] | [ClassConstructor, string, VelocityNormalizationsFn, string, boolean]) {
 		const constructor = args[0],
 			name: string = args[1],
 			callback = args[2];
@@ -67,14 +75,24 @@ namespace VelocityStatic {
 		} else if (!isFunction(callback)) {
 			console.warn("VelocityJS: Trying to set 'registerNormalization' callback to an invalid value:", name, callback);
 		} else {
-			let index = constructors.indexOf(constructor);
+			let index = constructors.indexOf(constructor),
+				nextArg = 3;
 
 			if (index < 0) {
 				MaxType = index = constructors.push(constructor) - 1;
-				Normalizations[index] = Object.create(null);
+				Normalizations[index] = createEmptyObject();
 			}
 			Normalizations[index][name] = callback;
-			if (args[3] === false) {
+			if (isString(args[nextArg])) {
+				let unit = args[nextArg++] as string,
+					units = NormalizationUnits[unit];
+
+				if (!units) {
+					units = NormalizationUnits[unit] = [];
+				}
+				units.push(callback);
+			}
+			if (args[nextArg] === false) {
 				NoCacheNormalizations.add(name);
 			}
 		}
@@ -91,6 +109,23 @@ namespace VelocityStatic {
 		return !!Normalizations[index][name];
 	}
 
+	/**
+	 * Get the unit to add to a unitless number based on the normalization used.
+	 */
+	export function getNormalizationUnit(fn: VelocityNormalizationsFn) {
+		for (let unit in NormalizationUnits) {
+			if (_inArray(NormalizationUnits[unit], fn)) {
+				return unit;
+			}
+		}
+		return "";
+	}
+
+	/**
+	 * Get the normalization for an element and propertyName combination. This
+	 * value should be cached at asking time, as it may change if the user adds
+	 * more normalizations.
+	 */
 	export function getNormalization(element: HTMLorSVGElement, propertyName: string) {
 		const data = Data(element);
 		let fn: VelocityNormalizationsFn;

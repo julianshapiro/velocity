@@ -9,7 +9,7 @@ namespace VelocityStatic.CSS {
 	/**
 	 * Cache every camelCase match to avoid repeating lookups.
 	 */
-	const cache: {[property: string]: string} = Object.create(null);
+	const cache: {[property: string]: string} = createEmptyObject();
 
 	/**
 	 * Camelcase a property name into its JavaScript notation (e.g.

@@ -30,10 +30,10 @@ function Data(element: HTMLorSVGElement): ElementData {
 		types: types,
 		count: 0,
 		computedStyle: null,
-		cache: Object.create(null),
-		queueList: Object.create(null),
-		lastAnimationList: Object.create(null),
-		lastFinishList: Object.create(null)
+		cache: createEmptyObject(),
+		queueList: createEmptyObject(),
+		lastAnimationList: createEmptyObject(),
+		lastFinishList: createEmptyObject()
 	};
 	Object.defineProperty(element, "velocityData", {
 		value: newData

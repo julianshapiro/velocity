@@ -1,9 +1,7 @@
 /*! VelocityJS.org (2.0.1) (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 (function(root, factory) {
 	if (typeof define === 'function' && define.amd) {
-		define('Velocity', [], function() {
-			return (root['Velocity'] = factory());
-		});
+		define('velocity-animate', [], factory);
 	} else if (typeof module === 'object' && module.exports) {
 		module.exports = factory();
 	} else {
@@ -151,6 +149,12 @@ function isEmptyObject(variable) {
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 /**
+ * Creates an empty object without any prototype chain.
+ */ function createEmptyObject() {
+    return Object.create(null);
+}
+
+/**
  * The <strong><code>defineProperty()</code></strong> function provides a
  * shortcut to defining a property that cannot be accidentally iterated across.
  */ function defineProperty(proto, name, value) {
@@ -161,38 +165,6 @@ function isEmptyObject(variable) {
             value: value
         });
     }
-}
-
-/**
- * Perform a deep copy of an object - also copies children so they're not
- * going to be affected by changing original.
- */ function _deepCopyObject(target) {
-    var sources = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        sources[_i - 1] = arguments[_i];
-    }
-    if (target == null) {
-        throw new TypeError("Cannot convert undefined or null to object");
-    }
-    var to = Object(target), hasOwnProperty = Object.prototype.hasOwnProperty;
-    var source;
-    while (source = sources.shift()) {
-        if (source != null) {
-            for (var key in source) {
-                if (hasOwnProperty.call(source, key)) {
-                    var value = source[key];
-                    if (Array.isArray(value)) {
-                        _deepCopyObject(to[key] = [], value);
-                    } else if (isPlainObject(value)) {
-                        _deepCopyObject(to[key] = {}, value);
-                    } else {
-                        to[key] = value;
-                    }
-                }
-            }
-        }
-    }
-    return to;
 }
 
 /**
@@ -279,7 +251,7 @@ function getValue(args) {
      * All external method calls should be using actions rather than sub-calls
      * of Velocity itself.
      */
-    VelocityStatic.Actions = Object.create(null);
+    VelocityStatic.Actions = createEmptyObject();
     /**
      * Used to register an action. This should never be called by users
      * directly, instead it should be called via  an action:<br/>
@@ -1024,7 +996,7 @@ var VelocityStatic;
         /**
          * Cache every camelCase match to avoid repeating lookups.
          */
-        var cache = Object.create(null);
+        var cache = createEmptyObject();
         /**
          * Camelcase a property name into its JavaScript notation (e.g.
          * "background-color" ==> "backgroundColor"). Camelcasing is used to
@@ -1056,7 +1028,7 @@ var VelocityStatic;
          * that the actual name conversion can be in a separate file and not
          * included for custom builds.
          */
-        CSS.ColorNames = Object.create(null);
+        CSS.ColorNames = createEmptyObject();
         /**
          * Convert a hex list to an rgba value. Designed to be used in replace.
          */        function makeRGBA(ignore, r, g, b) {
@@ -1446,7 +1418,7 @@ var VelocityStatic;
 (function(VelocityStatic) {
     var Easing;
     (function(Easing) {
-        Easing.Easings = Object.create(null);
+        Easing.Easings = createEmptyObject();
         /**
          * Used to register a easing. This should never be called by users
          * directly, instead it should be called via an action:<br/>
@@ -1982,6 +1954,12 @@ var VelocityStatic;
      * Unlike "actions", normalizations can always be replaced by users.
      */    VelocityStatic.Normalizations = [];
     /**
+     * Store a cross-reference to units to be added to specific normalization
+     * functions if the user supplies a unit-less number.
+     *
+     * This is pretty much confined to adding "px" to several css properties.
+     */    VelocityStatic.NormalizationUnits = createEmptyObject();
+    /**
      * Any normalisations that should never be cached are listed here.
      * Faster than an array - https://jsperf.com/array-includes-and-find-methods-vs-set-has
      */    VelocityStatic.NoCacheNormalizations = new Set();
@@ -2010,13 +1988,20 @@ var VelocityStatic;
         } else if (!isFunction(callback)) {
             console.warn("VelocityJS: Trying to set 'registerNormalization' callback to an invalid value:", name, callback);
         } else {
-            var index = VelocityStatic.constructors.indexOf(constructor);
+            var index = VelocityStatic.constructors.indexOf(constructor), nextArg = 3;
             if (index < 0) {
                 VelocityStatic.MaxType = index = VelocityStatic.constructors.push(constructor) - 1;
-                VelocityStatic.Normalizations[index] = Object.create(null);
+                VelocityStatic.Normalizations[index] = createEmptyObject();
             }
             VelocityStatic.Normalizations[index][name] = callback;
-            if (args[3] === false) {
+            if (isString(args[nextArg])) {
+                var unit = args[nextArg++], units = VelocityStatic.NormalizationUnits[unit];
+                if (!units) {
+                    units = VelocityStatic.NormalizationUnits[unit] = [];
+                }
+                units.push(callback);
+            }
+            if (args[nextArg] === false) {
                 VelocityStatic.NoCacheNormalizations.add(name);
             }
         }
@@ -2030,7 +2015,22 @@ var VelocityStatic;
         return !!VelocityStatic.Normalizations[index][name];
     }
     VelocityStatic.hasNormalization = hasNormalization;
-    function getNormalization(element, propertyName) {
+    /**
+     * Get the unit to add to a unitless number based on the normalization used.
+     */    function getNormalizationUnit(fn) {
+        for (var unit in VelocityStatic.NormalizationUnits) {
+            if (_inArray(VelocityStatic.NormalizationUnits[unit], fn)) {
+                return unit;
+            }
+        }
+        return "";
+    }
+    VelocityStatic.getNormalizationUnit = getNormalizationUnit;
+    /**
+     * Get the normalization for an element and propertyName combination. This
+     * value should be cached at asking time, as it may change if the user adds
+     * more normalizations.
+     */    function getNormalization(element, propertyName) {
         var data = Data(element);
         var fn;
         for (var index = VelocityStatic.MaxType, types = data.types; !fn && index >= 0; index--) {
@@ -2279,10 +2279,73 @@ var VelocityStatic;
 
 (function(VelocityStatic) {
     /**
+     * An RegExp pattern for the following list of css words using
+     * http://kemio.com.ar/tools/lst-trie-re.php to generate:
+     *
+     * blockSize
+     * borderBottomLeftRadius
+     * borderBottomRightRadius
+     * borderBottomWidth
+     * borderImageOutset
+     * borderImageWidth
+     * borderLeftWidth
+     * borderRadius
+     * borderRightWidth
+     * borderSpacing
+     * borderTopLeftRadius
+     * borderTopRightRadius
+     * borderTopWidth
+     * borderWidth
+     * bottom
+     * columnGap
+     * columnRuleWidth
+     * columnWidth
+     * flexBasis
+     * fontSize
+     * gridColumnGap
+     * gridGap
+     * gridRowGap
+     * height
+     * inlineSize
+     * left
+     * letterSpacing
+     * margin
+     * marginBottom
+     * marginLeft
+     * marginRight
+     * marginTop
+     * maxBlockSize
+     * maxHeight
+     * maxInlineSize
+     * maxWidth
+     * minBlockSize
+     * minHeight
+     * minInlineSize
+     * minWidth
+     * objectPosition
+     * outlineOffset
+     * outlineWidth
+     * padding
+     * paddingBottom
+     * paddingLeft
+     * paddingRight
+     * paddingTop
+     * perspective
+     * right
+     * shapeMargin
+     * strokeDashoffset
+     * strokeWidth
+     * textIndent
+     * top
+     * transformOrigin
+     * width
+     * wordSpacing
+     */
+    var rxAddPx = /^(b(lockSize|o(rder(Bottom(LeftRadius|RightRadius|Width)|Image(Outset|Width)|LeftWidth|R(adius|ightWidth)|Spacing|Top(LeftRadius|RightRadius|Width)|Width)|ttom))|column(Gap|RuleWidth|Width)|f(lexBasis|ontSize)|grid(ColumnGap|Gap|RowGap)|height|inlineSize|le(ft|tterSpacing)|m(a(rgin(Bottom|Left|Right|Top)|x(BlockSize|Height|InlineSize|Width))|in(BlockSize|Height|InlineSize|Width))|o(bjectPosition|utline(Offset|Width))|p(adding(Bottom|Left|Right|Top)|erspective)|right|s(hapeMargin|troke(Dashoffset|Width))|t(extIndent|op|ransformOrigin)|w(idth|ordSpacing))$/;
+    /**
      * Return a Normalisation that can be used to set / get a prefixed style
      * property.
-     */
-    function getSetPrefixed(propertyName, unprefixed) {
+     */    function getSetPrefixed(propertyName, unprefixed) {
         return function(element, propertyValue) {
             if (propertyValue === undefined) {
                 return VelocityStatic.CSS.computePropertyValue(element, propertyName) || VelocityStatic.CSS.computePropertyValue(element, unprefixed);
@@ -2300,17 +2363,21 @@ var VelocityStatic;
             element.style[propertyName] = propertyValue;
         };
     }
-    var rxVendors = /^(webkit|moz|ms|o)[A-Z]/, rxUnit = /^\d+([a-z]+)/, prefixElement = VelocityStatic.State.prefixElement;
+    /**
+     * Vendor prefixes. Chrome / Safari, Firefox, IE / Edge, Opera.
+     */    var rxVendors = /^(webkit|moz|ms|o)[A-Z]/, prefixElement = VelocityStatic.State.prefixElement;
     for (var propertyName in prefixElement.style) {
         if (rxVendors.test(propertyName)) {
             var unprefixed = propertyName.replace(/^[a-z]+([A-Z])/, function($, letter) {
                 return letter.toLowerCase();
             });
             if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
-                VelocityStatic.registerNormalization([ Element, unprefixed, getSetPrefixed(propertyName, unprefixed) ]);
+                var addUnit = rxAddPx.test(unprefixed) ? "px" : undefined;
+                VelocityStatic.registerNormalization([ Element, unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit ]);
             }
         } else if (!VelocityStatic.hasNormalization([ Element, propertyName ])) {
-            VelocityStatic.registerNormalization([ Element, propertyName, getSetStyle(propertyName) ]);
+            var addUnit = rxAddPx.test(propertyName) ? "px" : undefined;
+            VelocityStatic.registerNormalization([ Element, propertyName, getSetStyle(propertyName), addUnit ]);
         }
     }
 })(VelocityStatic || (VelocityStatic = {}));
@@ -2460,10 +2527,10 @@ function Data(element) {
         types: types,
         count: 0,
         computedStyle: null,
-        cache: Object.create(null),
-        queueList: Object.create(null),
-        lastAnimationList: Object.create(null),
-        lastFinishList: Object.create(null)
+        cache: createEmptyObject(),
+        queueList: createEmptyObject(),
+        lastAnimationList: createEmptyObject(),
+        lastFinishList: createEmptyObject()
     };
     Object.defineProperty(element, "velocityData", {
         value: newData
@@ -3132,6 +3199,39 @@ var VelocityStatic;
  *
  * Sequence Running
  */
+/**
+ * Perform a deep copy of an object - also copies children so they're not
+ * going to be affected by changing original.
+ */
+function _deepCopyObject(target) {
+    var sources = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        sources[_i - 1] = arguments[_i];
+    }
+    if (target == null) {
+        throw new TypeError("Cannot convert undefined or null to object");
+    }
+    var to = Object(target), hasOwnProperty = Object.prototype.hasOwnProperty;
+    var source;
+    while (source = sources.shift()) {
+        if (source != null) {
+            for (var key in source) {
+                if (hasOwnProperty.call(source, key)) {
+                    var value = source[key];
+                    if (Array.isArray(value)) {
+                        _deepCopyObject(to[key] = [], value);
+                    } else if (isPlainObject(value)) {
+                        _deepCopyObject(to[key] = {}, value);
+                    } else {
+                        to[key] = value;
+                    }
+                }
+            }
+        }
+    }
+    return to;
+}
+
 var VelocityStatic;
 
 (function(VelocityStatic) {
@@ -3491,7 +3591,7 @@ var VelocityStatic;
         return value.call(element, elementArrayIndex, elements.length);
     });
     commands.set("number", function(value, element, elements, elementArrayIndex, propertyName, tween) {
-        return value + (element instanceof HTMLElement ? getUnitType(propertyName) : "");
+        return value + VelocityStatic.getNormalizationUnit(tween.fn);
     });
     commands.set("string", function(value, element, elements, elementArrayIndex, propertyName, tween) {
         return VelocityStatic.CSS.fixColors(value);
@@ -3500,21 +3600,11 @@ var VelocityStatic;
         return VelocityStatic.CSS.fixColors(VelocityStatic.CSS.getPropertyValue(element, propertyName, tween.fn) || "");
     });
     /**
-     * Properties that take no default numeric suffix.
-     */    var unitless = [ "borderImageSlice", "columnCount", "counterIncrement", "counterReset", "flex", "flexGrow", "flexShrink", "floodOpacity", "fontSizeAdjust", "fontWeight", "lineHeight", "opacity", "order", "orphans", "shapeImageThreshold", "tabSize", "widows", "zIndex" ];
-    /**
-     * Retrieve a property's default unit type. Used for assigning a unit
-     * type when one is not supplied by the user. These are only valid for
-     * HTMLElement style properties.
-     */    function getUnitType(property) {
-        return _inArray(unitless, property) ? "" : "px";
-    }
-    /**
      * Expand a VelocityProperty argument into a valid sparse Tween array. This
      * pre-allocates the array as it is then the correct size and slightly
      * faster to access.
      */    function expandProperties(animation, properties) {
-        var tweens = animation.tweens = Object.create(null), elements = animation.elements, element = animation.element, elementArrayIndex = elements.indexOf(element), data = Data(element), queue = getValue(animation.queue, animation.options.queue), duration = getValue(animation.options.duration, VelocityStatic.defaults.duration);
+        var tweens = animation.tweens = createEmptyObject(), elements = animation.elements, element = animation.element, elementArrayIndex = elements.indexOf(element), data = Data(element), queue = getValue(animation.queue, animation.options.queue), duration = getValue(animation.options.duration, VelocityStatic.defaults.duration);
         for (var property in properties) {
             var propertyName = VelocityStatic.CSS.camelCase(property);
             var valueData = properties[property], fn = VelocityStatic.getNormalization(element, propertyName);
@@ -3530,7 +3620,7 @@ var VelocityStatic;
                 }
                 continue;
             }
-            var tween_4 = tweens[propertyName] = Object.create(null);
+            var tween_4 = tweens[propertyName] = createEmptyObject();
             var endValue = void 0, startValue = void 0;
             tween_4.fn = fn;
             if (isFunction(valueData)) {
@@ -4391,7 +4481,7 @@ function VelocityFn() {
                     }
                     flags |= 64 /* REVERSE */ & ~(lastAnimation._flags & 64 /* REVERSE */);
                 }
-                var tweens = Object.create(null), animation = Object.assign({
+                var tweens = createEmptyObject(), animation = Object.assign({
                     element: element,
                     tweens: tweens
                 }, rootAnimation);
