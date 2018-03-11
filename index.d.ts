@@ -446,7 +446,7 @@ interface ElementData {
 }
 
 type TweenPattern = ReadonlyArray<string | boolean>;
-type TweenValues = ReadonlyArray<string | number>;
+type TweenValues = string | number;
 
 interface TweenStep extends ReadonlyArray<TweenValues> {
 	/**
@@ -463,7 +463,7 @@ interface TweenStep extends ReadonlyArray<TweenValues> {
 	[index: number]: TweenValues;
 }
 
-interface VelocitySequence {
+interface Sequence extends ReadonlyArray<TweenStep> {
 	/**
 	 * Pattern to use for tweening.
 	 */
@@ -476,17 +476,13 @@ interface VelocitySequence {
 
 interface VelocityTween {
 	/**
-	 * Pattern to use for tweening (excludes sequence).
-	 */
-	pattern?: TweenPattern;
-	/**
 	 * Normalization function - cached at animation creation time.
 	 */
 	fn: VelocityNormalizationsFn;
 	/**
 	 * Sequence to use for tweening (excludes pattern).
 	 */
-	sequence?: VelocitySequence;
+	sequence?: Sequence;
 	/**
 	 * Easing function to use for entire tween.
 	 */
@@ -494,11 +490,11 @@ interface VelocityTween {
 	/**
 	 * Start value.
 	 */
-	start?: TweenValues;
+	start?: string;
 	/**
 	 * End value.
 	 */
-	end: TweenValues;
+	end: string;
 }
 
 /**

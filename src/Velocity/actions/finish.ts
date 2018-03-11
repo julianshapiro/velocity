@@ -37,13 +37,16 @@ namespace VelocityStatic {
 			}
 			for (const property in animation.tweens) {
 				const tween = animation.tweens[property],
-					pattern = tween.pattern;
+					sequence = tween.sequence,
+					pattern = sequence.pattern;
 				let currentValue = "",
 					i = 0;
 
 				if (pattern) {
+					const endValues = sequence[sequence.length - 1];
+
 					for (; i < pattern.length; i++) {
-						const endValue = tween.end[i];
+						const endValue = endValues[i];
 
 						currentValue += endValue == null ? pattern[i] : endValue;
 					}

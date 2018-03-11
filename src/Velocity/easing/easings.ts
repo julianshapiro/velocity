@@ -37,10 +37,16 @@ namespace VelocityStatic.Easing {
 
 	registerAction(["registerEasing", registerEasing], true);
 
-	/* Basic (same as jQuery) easings. */
-	registerEasing(["linear", function(percentComplete, startValue, endValue) {
+	/**
+	 * Linear easing, used for sequence parts that don't have an actual easing
+	 * function.
+	 */
+	export function linearEasing(percentComplete, startValue, endValue, property) {
 		return startValue + percentComplete * (endValue - startValue);
-	}]);
+	}
+
+	// Basic easings.
+	registerEasing(["linear", linearEasing]);
 
 	registerEasing(["swing", function(percentComplete, startValue, endValue) {
 		return startValue + (0.5 - Math.cos(percentComplete * Math.PI) / 2) * (endValue - startValue);

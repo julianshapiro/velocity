@@ -75,7 +75,7 @@ namespace VelocityStatic {
 				if ((isString(arr1) && (/^[\d-]/.test(arr1) || rxHex.test(arr1))) || isFunction(arr1) || isNumber(arr1)) {
 					startValue = arr1 as any;
 				} else if ((isString(arr1) && Easing.Easings[arr1]) || Array.isArray(arr1)) {
-					tween.easing = arr1 as any;
+					tween.easing = validateEasing(arr1, duration);
 					startValue = arr2 as any;
 				} else {
 					startValue = arr1 || arr2 as any;
@@ -86,244 +86,253 @@ namespace VelocityStatic {
 			tween.end = commands.get(typeof endValue)(endValue, element, elements, elementArrayIndex, propertyName, tween) as any;
 			if (startValue != null || (queue === false || data.queueList[queue] === undefined)) {
 				tween.start = commands.get(typeof startValue)(startValue, element, elements, elementArrayIndex, propertyName, tween) as any;
+				explodeTween(propertyName, tween, duration);
 			}
-			explodeTween(propertyName, tween, duration, !!startValue);
 		}
+	}
+
+	// TODO: Needs a better match for "translate3d" etc - a number must be preceded by some form of break...
+	const rxToken = /((?:[+\-*/]=)?(?:[+-]?\d*\.\d+|[+-]?\d+)[a-z%]*|(?:.(?!$|[+-]?\d|[+\-*/]=[+-]?\d))+.|.)/g,
+		rxNumber = /^([+\-*/]=)?([+-]?\d*\.\d+|[+-]?\d+)(.*)$/;
+
+	/**
+	 * Find a pattern between multiple strings, return a VelocitySequence with
+	 * the pattern and the tokenised values.
+	 * 
+	 * If number then animate.
+	 * If a string then must match.
+	 * If units then convert between them by wrapping in a calc().
+	 * - If already in a calc then nest another layer.
+	 * If in an rgba() then the first three numbers are rounded.
+	 */
+	export function findPattern(parts: ReadonlyArray<string>, propertyName: string): Sequence {
+		const partsLength = parts.length,
+			tokens: string[][] = [],
+			indexes: number[] = [];
+		let numbers: boolean;
+
+		// First tokenise the strings - these have all values, we will pull
+		// numbers later.
+		for (let part = 0; part < partsLength; part++) {
+			if (isString(parts[part])) {
+				tokens[part] = _objectAssign([], parts[part].match(rxToken));
+				indexes[part] = 0;
+				// If it matches more than one thing then we've got a number.
+				numbers = numbers || tokens[part].length > 1;
+				//console.log("tokens:", parts[part], tokens[part])
+			} else {
+				// We have an incomplete lineup, it will get tried again later...
+				return;
+			}
+		}
+		const sequence: Sequence = [] as any,
+			pattern = (sequence.pattern = []) as (string | boolean)[],
+			addString = function(text: string) {
+				if (isString(pattern[pattern.length - 1])) {
+					pattern[pattern.length - 1] += text;
+				} else {
+					pattern.push(text);
+					for (let part = 0; part < partsLength; part++) {
+						(sequence[part] as any[]).push(null);
+					}
+				}
+			},
+			returnStringType = function() {
+				if (numbers || pattern.length > 1) {
+					//console.error("Velocity: Trying to pattern match mis-matched strings " + propertyName + ":", parts);
+					return;
+				}
+				const isDisplay = propertyName === "display",
+					isVisibility = propertyName === "visibility";
+
+				for (let part = 0; part < partsLength; part++) {
+					const value = parts[part];
+
+					sequence[part][0] = value;
+					// Don't care about duration...
+					sequence[part].easing = validateEasing((isDisplay && value === "none") || (isVisibility && value === "hidden") || (!isDisplay && !isVisibility) ? "at-end" : "at-start", 400);
+				}
+				pattern[0] = false;
+				return sequence;
+			};
+		let more = true;
+
+		for (let part = 0; part < partsLength; part++) {
+			sequence[part] = [];
+		}
+		while (more) {
+			const bits: ([number, string] | [number, string, boolean])[] = [],
+				units: string[] = [];
+			let text: string;
+
+			for (let part = 0; part < partsLength; part++) {
+				const index = indexes[part]++,
+					token = tokens[part][index];
+
+				if (token) {
+					const num = token.match(rxNumber); // [ignore, change, number, unit]
+
+					if (num) {
+						// It's a number, possibly with a += change and unit.
+						if (text) {
+							return returnStringType();
+						}
+						const digits = parseFloat(num[2]),
+							unit = num[3],
+							change = num[1] ? num[1][0] + unit : undefined,
+							changeOrUnit = change || unit;
+
+						if (!_inArray(units, changeOrUnit)) {
+							// Will be an empty string at the least.
+							units.push(changeOrUnit);
+						}
+						bits[part] = change ? [digits, changeOrUnit, true] : [digits, changeOrUnit];
+					} else if (bits.length) {
+						return returnStringType();
+					} else {
+						// It's a string.
+						if (!text) {
+							text = token;
+						} else if (text !== token) {
+							return returnStringType();
+						}
+					}
+				} else if (!part) {
+					for (; part < partsLength; part++) {
+						const index = indexes[part]++,
+							token = tokens[part][index];
+
+						if (token) {
+							return returnStringType();
+						}
+					}
+					// IMPORTANT: This is the exit point.
+					more = false;
+					break;
+				} else {
+					// Different
+					return;
+				}
+			}
+			if (text) {
+				addString(text);
+			} else if (units.length) {
+				if (units.length === 1) {
+					// All the same units, so append number then unit.
+					const unit = units[0],
+						firstLetter = unit[0];
+
+					if (firstLetter === "+" || firstLetter === "-" || firstLetter === "*" || firstLetter === "/") {
+						if (propertyName) {
+							console.error("Velocity: The first property must not contain a relative function " + propertyName + ":", parts);
+						}
+						return;
+					}
+					pattern.push(false, unit);
+					for (let part = 0; part < partsLength; part++) {
+						(sequence[part] as any[]).push(bits[part][0], null);
+					}
+				} else {
+					// Multiple units, so must be inside a calc.
+					addString("calc(");
+					const patternCalc = pattern.length - 1; // Store the beginning of our calc.
+
+					for (let i = 0; i < units.length; i++) {
+						let unit = units[i];
+						const firstLetter = unit[0],
+							isComplex = firstLetter === "*" || firstLetter === "/",
+							isMaths = isComplex || firstLetter === "+" || firstLetter === "-";
+
+						if (isComplex) {
+							// TODO: Not sure this should be done automatically!
+							pattern[patternCalc] += "(";
+							addString(")");
+						}
+						if (i) {
+							addString(" " + (isMaths ? firstLetter : "+") + " ");
+						}
+						pattern.push(false);
+						for (let part = 0; part < partsLength; part++) {
+							const bit = bits[part],
+								value = bit[1] === unit
+									? bit[0]
+									: bit.length === 3
+										? sequence[part - 1][sequence[part - 1].length - 1]
+										: isComplex ? 1 : 0;
+
+							(sequence[part] as any[]).push(value);
+						}
+						addString(isMaths ? unit.substring(1) : unit);
+					}
+					addString(")");
+				}
+			}
+		}
+		// We've got here, so a valid sequence - now check and fix RGB rounding
+		// and calc() nesting...
+		// TODO: Nested calc(a + calc(b + c)) -> calc(a + (b + c))
+		for (let i = 0, inRGB = 0; i < pattern.length; i++) {
+			const text = pattern[i];
+
+			if (isString(text)) {
+				if (inRGB && (text as string).indexOf(",") >= 0) {
+					inRGB++;
+				} else if ((text as string).indexOf("rgb") >= 0) {
+					inRGB = 1;
+				}
+			} else if (inRGB) {
+				if (inRGB < 4) {
+					pattern[i] = true;
+				} else {
+					inRGB = 0;
+				}
+			}
+		}
+		return sequence;
 	}
 
 	/**
 	 * Convert a string-based tween with start and end strings, into a pattern
 	 * based tween with arrays.
 	 */
-	function explodeTween(propertyName: string, tween: VelocityTween, duration: number, isForcefeed?: boolean) {
-		const endValue: string = tween.end as any as string;
-		let startValue: string = tween.start as any as string;
+	function explodeTween(propertyName: string, tween: VelocityTween, duration: number, starting?: boolean) {
+		const startValue: string = tween.start,
+			endValue: string = tween.end;
 
 		if (!isString(endValue) || !isString(startValue)) {
 			return;
 		}
-		let runAgain = false; // Can only be set once if the Start value doesn't match the End value and it's not forcefed
-		do {
-			runAgain = false;
-			const arrayStart: (string | number)[] = tween.start = [null],
-				arrayEnd: (string | number)[] = tween.end = [null],
-				pattern: (string | boolean)[] = tween.pattern = [""];
-			let easing = tween.easing as any,
-				indexStart = 0, // index in startValue
-				indexEnd = 0, // index in endValue
-				inCalc = 0, // Keep track of being inside a "calc()" so we don't duplicate it
-				inRGB = 0, // Keep track of being inside an RGB as we can't use fractional values
-				inRGBA = 0, // Keep track of being inside an RGBA as we must pass fractional for the alpha channel
-				isStringValue: boolean;
+		let sequence: Sequence = findPattern([startValue, endValue], propertyName);
 
-			// TODO: Relative Values
+		if (!sequence && starting) {
+			// This little piece will take a startValue, split out the
+			// various numbers in it, then copy the endValue into the
+			// startValue while replacing the numbers in it to match the
+			// original start numbers as a repeating sequence.
+			// Finally this function will run again with the new
+			// startValue and a now matching pattern.
+			let startNumbers = startValue.match(/\d\.?\d*/g) || ["0"],
+				count = startNumbers.length,
+				index = 0;
 
-			/* Operator logic must be performed last since it requires unit-normalized start and end values. */
-			/* Note: Relative *percent values* do not behave how most people think; while one would expect "+=50%"
-			 to increase the property 1.5x its current value, it in fact increases the percent units in absolute terms:
-			 50 points is added on top of the current % value. */
-			//					switch (operator as any as string) {
-			//						case "+":
-			//							endValue = startValue + endValue;
-			//							break;
-			//
-			//						case "-":
-			//							endValue = startValue - endValue;
-			//							break;
-			//
-			//						case "*":
-			//							endValue = startValue * endValue;
-			//							break;
-			//
-			//						case "/":
-			//							endValue = startValue / endValue;
-			//							break;
-			//					}
-
-			// TODO: Leading from a calc value
-			while (indexStart < startValue.length && indexEnd < endValue.length) {
-				let charStart = startValue[indexStart],
-					charEnd = endValue[indexEnd];
-
-				// If they're both numbers, then parse them as a whole
-				if (TWEEN_NUMBER_REGEX.test(charStart) && TWEEN_NUMBER_REGEX.test(charEnd)) {
-					let tempStart = charStart, // temporary character buffer
-						tempEnd = charEnd, // temporary character buffer
-						dotStart = ".", // Make sure we can only ever match a single dot in a decimal
-						dotEnd = "."; // Make sure we can only ever match a single dot in a decimal
-
-					while (++indexStart < startValue.length) {
-						charStart = startValue[indexStart];
-						if (charStart === dotStart) {
-							dotStart = ".."; // Can never match two characters
-						} else if (!isNumberWhenParsed(charStart)) {
-							break;
-						}
-						tempStart += charStart;
-					}
-					while (++indexEnd < endValue.length) {
-						charEnd = endValue[indexEnd];
-						if (charEnd === dotEnd) {
-							dotEnd = ".."; // Can never match two characters
-						} else if (!isNumberWhenParsed(charEnd)) {
-							break;
-						}
-						tempEnd += charEnd;
-					}
-					let unitStart = CSS.getUnit(startValue, indexStart), // temporary unit type
-						unitEnd = CSS.getUnit(endValue, indexEnd); // temporary unit type
-
-					indexStart += unitStart.length;
-					indexEnd += unitEnd.length;
-					if (unitEnd.length === 0) {
-						// This order as it's most common for the user supplied
-						// value to be a number.
-						unitEnd = unitStart;
-					} else if (unitStart.length === 0) {
-						unitStart = unitEnd;
-					}
-					if (unitStart === unitEnd) {
-						// Same units
-						if (tempStart === tempEnd) {
-							// Same numbers, so just copy over
-							pattern[pattern.length - 1] += tempStart + unitStart;
-						} else {
-							pattern.push(inRGB ? true : false, unitStart);
-							arrayStart.push(parseFloat(tempStart), null);
-							arrayEnd.push(parseFloat(tempEnd), null);
-						}
-					} else {
-						// Different units, so put into a "calc(from + to)" and
-						// animate each side to/from zero. setPropertyValue will
-						// look out for the final "calc(0 + " prefix and remove
-						// it from the value when it finds it.
-						pattern[pattern.length - 1] += inCalc ? "+ (" : "calc(";
-						pattern.push(false, unitStart + " + ", false, unitEnd + ")");
-						arrayStart.push(parseFloat(tempStart) || 0, null, 0, null);
-						arrayEnd.push(0, null, parseFloat(tempEnd) || 0, null);
-					}
-				} else if (charStart === charEnd) {
-					pattern[pattern.length - 1] += charStart;
-					indexStart++;
-					indexEnd++;
-					// Keep track of being inside a calc()
-					if (inCalc === 0 && charStart === "c"
-						|| inCalc === 1 && charStart === "a"
-						|| inCalc === 2 && charStart === "l"
-						|| inCalc === 3 && charStart === "c"
-						|| inCalc >= 4 && charStart === "("
-					) {
-						inCalc++;
-					} else if ((inCalc && inCalc < 5)
-						|| inCalc >= 4 && charStart === ")" && --inCalc < 5) {
-						inCalc = 0;
-					}
-					// Keep track of being inside an rgb() / rgba()
-					// The opacity must not be rounded.
-					if (inRGB === 0 && charStart === "r"
-						|| inRGB === 1 && charStart === "g"
-						|| inRGB === 2 && charStart === "b"
-						|| inRGB === 3 && charStart === "a"
-						|| inRGB >= 3 && charStart === "("
-					) {
-						if (inRGB === 3 && charStart === "a") {
-							inRGBA = 1;
-						}
-						inRGB++;
-					} else if (inRGBA && charStart === ",") {
-						if (++inRGBA > 3) {
-							inRGB = inRGBA = 0;
-						}
-					} else if ((inRGBA && inRGB < (inRGBA ? 5 : 4))
-						|| inRGB >= (inRGBA ? 4 : 3) && charStart === ")" && --inRGB < (inRGBA ? 5 : 4)) {
-						inRGB = inRGBA = 0;
-					}
-				} else if (charStart || charEnd) {
-					// Different letters, so we're going to push them into start
-					// and end until the next word
-					isStringValue = true;
-					if (!isString(arrayStart[arrayStart.length - 1])) {
-						if (pattern.length === 1 && !pattern[0]) {
-							arrayStart[0] = arrayEnd[0] = "";
-						} else {
-							pattern.push("");
-							arrayStart.push("");
-							arrayEnd.push("");
-						}
-					}
-					while (indexStart < startValue.length) {
-						charStart = startValue[indexStart++];
-						if (charStart === " " || TWEEN_NUMBER_REGEX.test(charStart)) {
-							break;
-						} else {
-							arrayStart[arrayStart.length - 1] += charStart;
-						}
-					}
-					while (indexEnd < endValue.length) {
-						charEnd = endValue[indexEnd++];
-						if (charEnd === " " || TWEEN_NUMBER_REGEX.test(charEnd)) {
-							break;
-						} else {
-							arrayEnd[arrayEnd.length - 1] += charEnd;
-						}
-					}
-				}
-				if (!isForcefeed && (indexStart === startValue.length) !== (indexEnd === endValue.length)) {
-					// This little piece will take a startValue, split out the
-					// various numbers in it, then copy the endValue into the
-					// startValue while replacing the numbers in it to match the
-					// original start numbers as a repeating sequence.
-					// Finally this function will run again with the new
-					// startValue and a now matching pattern.
-					let startNumbers = startValue.match(/\d\.?\d*/g) || ["0"],
-						count = startNumbers.length,
-						index = 0;
-
-					startValue = endValue.replace(/\d+\.?\d*/g, function() {
-						return startNumbers[index++ % count];
-					});
-					runAgain = isForcefeed = true;
-					break;
-				}
+			sequence = findPattern([endValue.replace(/\d+\.?\d*/g, function() {
+				return startNumbers[index++ % count];
+			}), endValue], propertyName);
+		}
+		if (sequence) {
+			if (debug) {
+				console.log("Velocity: Sequence found:", sequence);
 			}
-			if (!runAgain) {
-				// TODO: These two would be slightly better to not add the array indices in the first place
-				if (pattern[0] === "" && arrayEnd[0] == null) {
-					pattern.shift();
-					arrayStart.shift();
-					arrayEnd.shift();
-				}
-				if (pattern[pattern.length] === "" && arrayEnd[arrayEnd.length] == null) {
-					pattern.pop();
-					arrayStart.pop();
-					arrayEnd.pop();
-				}
-				if (indexStart < startValue.length || indexEnd < endValue.length) {
-					// NOTE: We should never be able to reach this code unless a
-					// bad forcefed value is supplied.
-					console.error("Velocity: Trying to pattern match mis-matched strings " + propertyName + ":[\"" + endValue + "\", \"" + startValue + "\"]");
-				}
-				if (debug) {
-					console.log("Velocity: Pattern found:", pattern, " -> ", arrayStart, arrayEnd, "[" + startValue + "," + endValue + "]");
-				}
-				if (propertyName === "display") {
-					if (!/^(at-start|at-end|during)$/.test(easing)) {
-						easing = endValue === "none" ? "at-end" : "at-start";
-					}
-				} else if (propertyName === "visibility") {
-					if (!/^(at-start|at-end|during)$/.test(easing)) {
-						easing = endValue === "hidden" ? "at-end" : "at-start";
-					}
-				} else if (isStringValue
-					&& easing !== "at-start" && easing !== "during" && easing !== "at-end"
-					&& easing !== Easing.Easings["at-Start"] && easing !== Easing.Easings["during"] && easing !== Easing.Easings["at-end"]) {
-					console.warn("Velocity: String easings must use one of 'at-start', 'during' or 'at-end': {" + propertyName + ": [\"" + endValue + "\", " + easing + ", \"" + startValue + "\"]}");
-					easing = "at-start";
-				}
-				tween.easing = validateEasing(easing, duration);
+			sequence[0].percent = 0;
+			sequence[1].percent = 1;
+			tween.sequence = sequence;
+			switch (tween.easing) {
+				case Easing.Easings["at-start"]:
+				case Easing.Easings["during"]:
+				case Easing.Easings["at-end"]:
+					sequence[0].easing = sequence[1].easing = tween.easing;
 			}
-			// This can only run a second time once - if going from automatic startValue to "fixed" pattern from endValue with startValue numbers
-		} while (runAgain);
+		}
 	}
 
 	/**
@@ -355,7 +364,7 @@ namespace VelocityStatic {
 
 				if (isString(startValue)) {
 					tween.start = CSS.fixColors(startValue) as any;
-					explodeTween(propertyName, tween, duration);
+					explodeTween(propertyName, tween, duration, true);
 				} else if (!Array.isArray(startValue)) {
 					console.warn("bad type", tween, propertyName, startValue)
 				}

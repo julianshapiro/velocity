@@ -35,7 +35,7 @@ const _now = Date.now ? Date.now : function() {
 };
 
 /**
- * Shim for Object.assign, based on:
+ * Shim for Object.assign on IE, based on:
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
  */
 const _objectAssign = Object.assign || function(target: any, ...sources: any[]) {
@@ -58,6 +58,18 @@ const _objectAssign = Object.assign || function(target: any, ...sources: any[]) 
 	}
 	return to;
 } as typeof Object["assign"];
+
+/**
+ * Shim for "string".startsWith on IE, based on:
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith#Polyfill
+ */
+const _startsWith = String.prototype.startsWith
+	? function(str: string, searchString: string, position?: number): boolean {
+		return str.startsWith(searchString, position);
+	}
+	: function(str: string, searchString: string, position?: number): boolean {
+		return str.substr(!position || position < 0 ? 0 : +position, searchString.length) === searchString;
+	};
 
 /**
  * Check whether a value belongs to an array
