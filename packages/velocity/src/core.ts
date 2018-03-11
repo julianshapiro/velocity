@@ -100,18 +100,18 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	} else if (isWrapped(this)) {
 		// This might be a chain from something else, but if chained from a
 		// previous Velocity() call then grab the animations it's related to.
-		elements = Object.assign([], this as HTMLorSVGElement[]) as VelocityResult;
+		elements = _objectAssign([], this as HTMLorSVGElement[]) as VelocityResult;
 		if (isVelocityResult(this)) {
 			animations = (this as VelocityResult).velocity.animations;
 		}
 	} else if (syntacticSugar) {
-		elements = Object.assign([], args0.elements || args0.e) as VelocityResult;
+		elements = _objectAssign([], args0.elements || args0.e) as VelocityResult;
 		argumentIndex++;
 	} else if (isNode(args0)) {
-		elements = Object.assign([], [args0]) as VelocityResult;
+		elements = _objectAssign([], [args0]) as VelocityResult;
 		argumentIndex++;
 	} else if (isWrapped(args0)) {
-		elements = Object.assign([], args0) as VelocityResult;
+		elements = _objectAssign([], args0) as VelocityResult;
 		argumentIndex++;
 	}
 	// Allow elements to be chained.
@@ -361,7 +361,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 					flags |= AnimationFlags.REVERSE & ~(lastAnimation._flags & AnimationFlags.REVERSE);
 				}
 				const tweens = createEmptyObject(),
-					animation: AnimationCall = Object.assign({
+					animation: AnimationCall = _objectAssign({
 						element: element,
 						tweens: tweens
 					}, rootAnimation);
