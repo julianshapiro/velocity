@@ -35,6 +35,31 @@ const _now = Date.now ? Date.now : function() {
 };
 
 /**
+ * Shim for Object.assign, based on:
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
+ */
+const _objectAssign = Object.assign || function(target: any, ...sources: any[]) {
+	if (target == null) { // TypeError if undefined or null
+		throw new TypeError("Cannot convert undefined or null to object");
+	}
+	const to = Object(target);
+
+	for (let index = 0; index < sources.length; index++) {
+		const nextSource = sources[index];
+
+		if (nextSource != null) { // Skip over if undefined or null
+			for (let nextKey in nextSource) {
+				// Avoid bugs when hasOwnProperty is shadowed
+				if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+					to[nextKey] = nextSource[nextKey];
+				}
+			}
+		}
+	}
+	return to;
+} as typeof Object["assign"];
+
+/**
  * Check whether a value belongs to an array
  * https://jsperf.com/includes-vs-indexof-vs-while-loop/6
  * @param array The given array
