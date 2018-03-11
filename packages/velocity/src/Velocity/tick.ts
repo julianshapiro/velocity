@@ -306,26 +306,47 @@ namespace VelocityStatic {
 					for (const property in tweens) {
 						// For every element, iterate through each property.
 						const tween = tweens[property],
-							easing = tween.easing || activeEasing,
-							pattern = tween.pattern;
+							sequence = tween.sequence,
+							pattern = sequence.pattern;
 						let currentValue = "",
 							i = 0;
 
 						if (pattern) {
+							let easingComplete = (tween.easing || activeEasing)(percentComplete, 0, 1, property),
+								best = 0;
+
+							for (let i = 0; i < sequence.length - 1; i++) {
+								if (sequence[i].percent < easingComplete) {
+									best = i;
+								}
+							}
+							const tweenFrom: TweenStep = sequence[best],
+								tweenTo: TweenStep = sequence[best + 1],
+								tweenPercent = (percentComplete - tweenFrom.percent) / (tweenTo.percent - tweenFrom.percent),
+								easing = tweenTo.easing || Easing.linearEasing;
+
 							for (; i < pattern.length; i++) {
-								const startValue = tween.start[i];
+								const startValue = tweenFrom[i];
 
 								if (startValue == null) {
 									currentValue += pattern[i];
 								} else {
-									// All easings must deal with numbers except for
-									// our internal ones
-									const result = easing(reverse ? 1 - percentComplete : percentComplete, startValue as number, tween.end[i] as number, property)
+									const endValue = tweenTo[i];
 
-									currentValue += pattern[i] === true ? Math.round(result) : result;
+									if (startValue === endValue) {
+										currentValue += startValue;
+									} else {
+										// All easings must deal with numbers except for our internal ones.
+										const result = easing(reverse ? 1 - tweenPercent : tweenPercent, startValue as number, endValue as number, property)
+
+										currentValue += pattern[i] === true ? Math.round(result) : result;
+									}
 								}
 							}
 							if (property !== "tween") {
+								if (percentComplete === 1 && _startsWith(currentValue, "calc(0 + ")) {
+									currentValue = currentValue.replace(/^calc\(0[^\d]* \+ ([^\(\)]+)\)$/, "$1");
+								}
 								// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
 								CSS.setPropertyValue(activeCall.element, property, currentValue, tween.fn);
 							} else {

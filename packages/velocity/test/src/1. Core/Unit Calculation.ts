@@ -38,17 +38,17 @@ QUnit.test("Unit Calculation", function(assert) {
 		done();
 	});
 
-	async(assert, 1, async function(done) {
-		const $target = getTarget();
-
-		Velocity($target, {left: "500px"}, {duration: 10});
-		await sleep(100);
-		Velocity($target, {left: "0"}, {duration: 10});
-		await sleep(100);
-		assert.equal(getPropertyValue($target, "left"), "0px", "Finished animated value without giving px, but only number as a string should be the same.");
-
-		done();
-	});
+	//	async(assert, 1, async function(done) {
+	//		const $target = getTarget();
+	//
+	//		Velocity($target, {left: "500px"}, {duration: 10});
+	//		await sleep(100);
+	//		Velocity($target, {left: "0"}, {duration: 10});
+	//		await sleep(100);
+	//		assert.equal(getPropertyValue($target, "left"), "0px", "Finished animated value without giving px, but only number as a string should be the same.");
+	//
+	//		done();
+	//	});
 
 	async(assert, 1, async function(done) {
 		const $target = getTarget();

@@ -65,8 +65,6 @@ var DEFAULT_SPEED = 1;
 
 var DEFAULT_SYNC = true;
 
-var TWEEN_NUMBER_REGEX = /[\d\.-]/;
-
 var CLASSNAME = "velocity-animating";
 
 var Duration = {
@@ -173,6 +171,41 @@ function isEmptyObject(variable) {
  * create one that gets GC.
  */ var _now = Date.now ? Date.now : function() {
     return new Date().getTime();
+};
+
+/**
+ * Shim for Object.assign on IE, based on:
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
+ */ var _objectAssign = Object.assign || function(target) {
+    var sources = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        sources[_i - 1] = arguments[_i];
+    }
+    if (target == null) {
+        throw new TypeError("Cannot convert undefined or null to object");
+    }
+    var to = Object(target);
+    for (var index = 0; index < sources.length; index++) {
+        var nextSource = sources[index];
+        if (nextSource != null) {
+            for (var nextKey in nextSource) {
+                // Avoid bugs when hasOwnProperty is shadowed
+                if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                    to[nextKey] = nextSource[nextKey];
+                }
+            }
+        }
+    }
+    return to;
+};
+
+/**
+ * Shim for "string".startsWith on IE, based on:
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith#Polyfill
+ */ var _startsWith = String.prototype.startsWith ? function(str, searchString, position) {
+    return str.startsWith(searchString, position);
+} : function(str, searchString, position) {
+    return str.substr(!position || position < 0 ? 0 : +position, searchString.length) === searchString;
 };
 
 /**
@@ -375,11 +408,12 @@ function getValue(args) {
                 animation._flags |= 4 /* STARTED */;
             }
             for (var property in animation.tweens) {
-                var tween_1 = animation.tweens[property], pattern = tween_1.pattern;
+                var tween_1 = animation.tweens[property], sequence = tween_1.sequence, pattern = sequence.pattern;
                 var currentValue = "", i = 0;
                 if (pattern) {
+                    var endValues = sequence[sequence.length - 1];
                     for (;i < pattern.length; i++) {
-                        var endValue = tween_1.end[i];
+                        var endValue = endValues[i];
                         currentValue += endValue == null ? pattern[i] : endValue;
                     }
                 }
@@ -879,17 +913,23 @@ function getValue(args) {
         VelocityStatic.expandProperties(fakeAnimation, properties);
         for (var property in fakeAnimation.tweens) {
             // For every element, iterate through each property.
-            var tween_2 = fakeAnimation.tweens[property], easing_1 = tween_2.easing || activeEasing, pattern = tween_2.pattern;
+            var tween_2 = fakeAnimation.tweens[property], easing_1 = tween_2.easing || activeEasing, sequence = tween_2.sequence, pattern = sequence.pattern;
             var currentValue = "";
             count++;
             if (pattern) {
                 for (var i = 0; i < pattern.length; i++) {
-                    var startValue = tween_2.start[i];
+                    var startValue = sequence[0][i];
                     if (startValue == null) {
                         currentValue += pattern[i];
                     } else {
-                        var result_1 = easing_1(percentComplete, startValue, tween_2.end[i], property);
-                        currentValue += pattern[i] === true ? Math.round(result_1) : result_1;
+                        var endValue = sequence[1][i];
+                        if (startValue === endValue) {
+                            currentValue += startValue;
+                        } else {
+                            // All easings must deal with numbers except for our internal ones.
+                            var result_1 = easing_1(percentComplete, startValue, endValue, property);
+                            currentValue += pattern[i] === true ? Math.round(result_1) : result_1;
+                        }
                     }
                 }
             }
@@ -1387,11 +1427,6 @@ var VelocityStatic;
          */
         function setPropertyValue(element, propertyName, propertyValue, fn) {
             var data = Data(element);
-            if (isString(propertyValue) && propertyValue[0] === "c" && propertyValue[1] === "a" && propertyValue[2] === "l" && propertyValue[3] === "c" && propertyValue[4] === "(" && propertyValue[5] === "0" && propertyValue[5] === " ") {
-                // Make sure we un-calc unit changing values - try not to trigger
-                // this code any more often than we have to since it's expensive
-                propertyValue = propertyValue.replace(/^calc\(0[^\d]* \+ ([^\(\)]+)\)$/, "$1");
-            }
             if (data && data.cache[propertyName] !== propertyValue) {
                 // By setting it to undefined we force a true "get" later
                 data.cache[propertyName] = propertyValue || undefined;
@@ -1439,9 +1474,15 @@ var VelocityStatic;
         }
         Easing.registerEasing = registerEasing;
         VelocityStatic.registerAction([ "registerEasing", registerEasing ], true);
-        /* Basic (same as jQuery) easings. */        registerEasing([ "linear", function(percentComplete, startValue, endValue) {
+        /**
+         * Linear easing, used for sequence parts that don't have an actual easing
+         * function.
+         */        function linearEasing(percentComplete, startValue, endValue, property) {
             return startValue + percentComplete * (endValue - startValue);
-        } ]);
+        }
+        Easing.linearEasing = linearEasing;
+        // Basic easings.
+                registerEasing([ "linear", linearEasing ]);
         registerEasing([ "swing", function(percentComplete, startValue, endValue) {
             return startValue + (.5 - Math.cos(percentComplete * Math.PI) / 2) * (endValue - startValue);
         } ]);
@@ -2405,9 +2446,110 @@ var VelocityStatic;
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */ var VelocityStatic;
+
+(function(VelocityStatic) {
+    var Sequence;
+    (function(Sequence) {
+        Sequence.Sequences = createEmptyObject();
+        var animations = {
+            bounce: {
+                duration: 1e3,
+                "0%,20%,53%,80%,100%": {
+                    transform: [ "translate3d(0,0px,0)", "easeOutCubic" ]
+                },
+                "40%,43%": {
+                    transform: [ "translate3d(0,-30px,0)", "easeInQuint" ]
+                },
+                "70%": {
+                    transform: [ "translate3d(0,-15px,0)", "easeInQuint" ]
+                },
+                "90%": {
+                    transform: "translate3d(0,-4px,0)"
+                }
+            }
+        };
+        var rxPercents = /(\d+)/g;
+        /**
+         * Used to register a sequence. This should never be called by users
+         * directly, instead it should be called via an action:<br/>
+         * <code>Velocity("registerSequence", "name", VelocitySequence);</code>
+         *
+         * @private
+         */        function registerSequence(args) {
+            if (isPlainObject(args[0])) {
+                for (var name_3 in args[0]) {
+                    registerSequence([ name_3, args[0][name_3] ]);
+                }
+            } else if (isString(args[0])) {
+                var name_4 = args[0], sequence = args[1];
+                if (!isString(name_4)) {
+                    console.warn("VelocityJS: Trying to set 'registerSequence' name to an invalid value:", name_4);
+                } else if (!isPlainObject(sequence)) {
+                    console.warn("VelocityJS: Trying to set 'registerSequence' sequence to an invalid value:", name_4, sequence);
+                } else {
+                    var steps = new Array(100), properties = [], sequenceList = Sequence.Sequences[name_4] = createEmptyObject(), duration = validateDuration(sequence.duration);
+                    sequenceList.tweens = createEmptyObject();
+                    if (isNumber(duration)) {
+                        sequenceList.duration = duration;
+                    }
+                    for (var part in sequence) {
+                        var percents = String(part).match(rxPercents);
+                        for (var i = 0; percents && i < percents.length; i++) {
+                            var percent = parseInt(percents[i]);
+                            if (percent < 0 || percent > 100) {
+                                console.warn("VelocityJS: Trying to use an invalid value as a percentage:", name_4, percent);
+                            } else if (String(percent) != percents[i]) {
+                                console.warn("VelocityJS: Trying to use a fraction as a percentage:", name_4, percents[i]);
+                            } else {
+                                steps[percent] = part;
+                                for (var property in sequence[part]) {
+                                    if (!_inArray(properties, property)) {
+                                        properties.push(property);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    for (var p = 0; p < properties.length; p++) {
+                        var property = properties[p], parts = [];
+                        for (var i = 0; i <= 100; i++) {
+                            var key = steps[i];
+                            if (key) {
+                                var properties_1 = sequence[key];
+                                if (properties_1[property]) {
+                                    parts.push(isString(properties_1[property]) ? properties_1[property] : properties_1[property][0]);
+                                }
+                            }
+                        }
+                        if (parts.length) {
+                            var realSequence = VelocityStatic.findPattern(parts, property);
+                            console.log("findPattern", parts, property, name_4);
+                            if (realSequence) {
+                                sequenceList.tweens[property] = realSequence;
+                            }
+                        }
+                    }
+                    //				console.log("sequence", sequenceList)
+                                }
+            }
+        }
+        Sequence.registerSequence = registerSequence;
+        VelocityStatic.registerAction([ "registerSequence", registerSequence ], true);
+        //	setTimeout(() => {
+        //		registerSequence([animations]);
+        //	}, 1000);
+        })(Sequence = VelocityStatic.Sequence || (VelocityStatic.Sequence = {}));
+})(VelocityStatic || (VelocityStatic = {}));
+
+/*
+ * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Call Completion
- */ var VelocityStatic;
+ */
+var VelocityStatic;
 
 (function(VelocityStatic) {
     /**
@@ -3518,23 +3660,37 @@ var VelocityStatic;
                     }
                     for (var property in tweens) {
                         // For every element, iterate through each property.
-                        var tween_3 = tweens[property], easing = tween_3.easing || activeEasing, pattern = tween_3.pattern;
+                        var tween_3 = tweens[property], sequence = tween_3.sequence, pattern = sequence.pattern;
                         var currentValue = "", i = 0;
                         if (pattern) {
+                            var easingComplete = (tween_3.easing || activeEasing)(percentComplete, 0, 1, property), best = 0;
+                            for (var i_1 = 0; i_1 < sequence.length - 1; i_1++) {
+                                if (sequence[i_1].percent < easingComplete) {
+                                    best = i_1;
+                                }
+                            }
+                            var tweenFrom = sequence[best], tweenTo = sequence[best + 1], tweenPercent = (percentComplete - tweenFrom.percent) / (tweenTo.percent - tweenFrom.percent), easing = tweenTo.easing || VelocityStatic.Easing.linearEasing;
                             for (;i < pattern.length; i++) {
-                                var startValue = tween_3.start[i];
+                                var startValue = tweenFrom[i];
                                 if (startValue == null) {
                                     currentValue += pattern[i];
                                 } else {
-                                    // All easings must deal with numbers except for
-                                    // our internal ones
-                                    var result = easing(reverse ? 1 - percentComplete : percentComplete, startValue, tween_3.end[i], property);
-                                    currentValue += pattern[i] === true ? Math.round(result) : result;
+                                    var endValue = tweenTo[i];
+                                    if (startValue === endValue) {
+                                        currentValue += startValue;
+                                    } else {
+                                        // All easings must deal with numbers except for our internal ones.
+                                        var result = easing(reverse ? 1 - tweenPercent : tweenPercent, startValue, endValue, property);
+                                        currentValue += pattern[i] === true ? Math.round(result) : result;
+                                    }
                                 }
                             }
                             if (property !== "tween") {
+                                if (percentComplete === 1 && _startsWith(currentValue, "calc(0 + ")) {
+                                    currentValue = currentValue.replace(/^calc\(0[^\d]* \+ ([^\(\)]+)\)$/, "$1");
+                                }
                                 // TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-                                VelocityStatic.CSS.setPropertyValue(activeCall.element, property, currentValue, tween_3.fn);
+                                                                VelocityStatic.CSS.setPropertyValue(activeCall.element, property, currentValue, tween_3.fn);
                             } else {
                                 // Skip the fake 'tween' property as that is only
                                 // passed into the progress callback.
@@ -3637,7 +3793,7 @@ var VelocityStatic;
                 if (isString(arr1) && (/^[\d-]/.test(arr1) || rxHex.test(arr1)) || isFunction(arr1) || isNumber(arr1)) {
                     startValue = arr1;
                 } else if (isString(arr1) && VelocityStatic.Easing.Easings[arr1] || Array.isArray(arr1)) {
-                    tween_4.easing = arr1;
+                    tween_4.easing = validateEasing(arr1, duration);
                     startValue = arr2;
                 } else {
                     startValue = arr1 || arr2;
@@ -3648,224 +3804,211 @@ var VelocityStatic;
             tween_4.end = commands.get(typeof endValue)(endValue, element, elements, elementArrayIndex, propertyName, tween_4);
             if (startValue != null || (queue === false || data.queueList[queue] === undefined)) {
                 tween_4.start = commands.get(typeof startValue)(startValue, element, elements, elementArrayIndex, propertyName, tween_4);
+                explodeTween(propertyName, tween_4, duration);
             }
-            explodeTween(propertyName, tween_4, duration, !!startValue);
         }
     }
     VelocityStatic.expandProperties = expandProperties;
+    // TODO: Needs a better match for "translate3d" etc - a number must be preceded by some form of break...
+        var rxToken = /((?:[+\-*/]=)?(?:[+-]?\d*\.\d+|[+-]?\d+)[a-z%]*|(?:.(?!$|[+-]?\d|[+\-*/]=[+-]?\d))+.|.)/g, rxNumber = /^([+\-*/]=)?([+-]?\d*\.\d+|[+-]?\d+)(.*)$/;
+    /**
+     * Find a pattern between multiple strings, return a VelocitySequence with
+     * the pattern and the tokenised values.
+     *
+     * If number then animate.
+     * If a string then must match.
+     * If units then convert between them by wrapping in a calc().
+     * - If already in a calc then nest another layer.
+     * If in an rgba() then the first three numbers are rounded.
+     */    function findPattern(parts, propertyName) {
+        var partsLength = parts.length, tokens = [], indexes = [];
+        var numbers;
+        // First tokenise the strings - these have all values, we will pull
+        // numbers later.
+                for (var part = 0; part < partsLength; part++) {
+            if (isString(parts[part])) {
+                tokens[part] = _objectAssign([], parts[part].match(rxToken));
+                indexes[part] = 0;
+                // If it matches more than one thing then we've got a number.
+                                numbers = numbers || tokens[part].length > 1;
+                //console.log("tokens:", parts[part], tokens[part])
+                        } else {
+                // We have an incomplete lineup, it will get tried again later...
+                return;
+            }
+        }
+        var sequence = [], pattern = sequence.pattern = [], addString = function(text) {
+            if (isString(pattern[pattern.length - 1])) {
+                pattern[pattern.length - 1] += text;
+            } else {
+                pattern.push(text);
+                for (var part = 0; part < partsLength; part++) {
+                    sequence[part].push(null);
+                }
+            }
+        }, returnStringType = function() {
+            if (numbers || pattern.length > 1) {
+                //console.error("Velocity: Trying to pattern match mis-matched strings " + propertyName + ":", parts);
+                return;
+            }
+            var isDisplay = propertyName === "display", isVisibility = propertyName === "visibility";
+            for (var part = 0; part < partsLength; part++) {
+                var value = parts[part];
+                sequence[part][0] = value;
+                // Don't care about duration...
+                                sequence[part].easing = validateEasing(isDisplay && value === "none" || isVisibility && value === "hidden" || !isDisplay && !isVisibility ? "at-end" : "at-start", 400);
+            }
+            pattern[0] = false;
+            return sequence;
+        };
+        var more = true;
+        for (var part = 0; part < partsLength; part++) {
+            sequence[part] = [];
+        }
+        while (more) {
+            var bits = [], units = [];
+            var text = void 0;
+            for (var part = 0; part < partsLength; part++) {
+                var index = indexes[part]++, token = tokens[part][index];
+                if (token) {
+                    var num = token.match(rxNumber);
+ // [ignore, change, number, unit]
+                                        if (num) {
+                        // It's a number, possibly with a += change and unit.
+                        if (text) {
+                            return returnStringType();
+                        }
+                        var digits = parseFloat(num[2]), unit = num[3], change = num[1] ? num[1][0] + unit : undefined, changeOrUnit = change || unit;
+                        if (!_inArray(units, changeOrUnit)) {
+                            // Will be an empty string at the least.
+                            units.push(changeOrUnit);
+                        }
+                        bits[part] = change ? [ digits, changeOrUnit, true ] : [ digits, changeOrUnit ];
+                    } else if (bits.length) {
+                        return returnStringType();
+                    } else {
+                        // It's a string.
+                        if (!text) {
+                            text = token;
+                        } else if (text !== token) {
+                            return returnStringType();
+                        }
+                    }
+                } else if (!part) {
+                    for (;part < partsLength; part++) {
+                        var index_1 = indexes[part]++, token_1 = tokens[part][index_1];
+                        if (token_1) {
+                            return returnStringType();
+                        }
+                    }
+                    // IMPORTANT: This is the exit point.
+                                        more = false;
+                    break;
+                } else {
+                    // Different
+                    return;
+                }
+            }
+            if (text) {
+                addString(text);
+            } else if (units.length) {
+                if (units.length === 1) {
+                    // All the same units, so append number then unit.
+                    var unit = units[0], firstLetter = unit[0];
+                    if (firstLetter === "+" || firstLetter === "-" || firstLetter === "*" || firstLetter === "/") {
+                        if (propertyName) {
+                            console.error("Velocity: The first property must not contain a relative function " + propertyName + ":", parts);
+                        }
+                        return;
+                    }
+                    pattern.push(false, unit);
+                    for (var part = 0; part < partsLength; part++) {
+                        sequence[part].push(bits[part][0], null);
+                    }
+                } else {
+                    // Multiple units, so must be inside a calc.
+                    addString("calc(");
+                    var patternCalc = pattern.length - 1;
+ // Store the beginning of our calc.
+                                        for (var i = 0; i < units.length; i++) {
+                        var unit = units[i];
+                        var firstLetter = unit[0], isComplex = firstLetter === "*" || firstLetter === "/", isMaths = isComplex || firstLetter === "+" || firstLetter === "-";
+                        if (isComplex) {
+                            // TODO: Not sure this should be done automatically!
+                            pattern[patternCalc] += "(";
+                            addString(")");
+                        }
+                        if (i) {
+                            addString(" " + (isMaths ? firstLetter : "+") + " ");
+                        }
+                        pattern.push(false);
+                        for (var part = 0; part < partsLength; part++) {
+                            var bit = bits[part], value = bit[1] === unit ? bit[0] : bit.length === 3 ? sequence[part - 1][sequence[part - 1].length - 1] : isComplex ? 1 : 0;
+                            sequence[part].push(value);
+                        }
+                        addString(isMaths ? unit.substring(1) : unit);
+                    }
+                    addString(")");
+                }
+            }
+        }
+        // We've got here, so a valid sequence - now check and fix RGB rounding
+        // and calc() nesting...
+        // TODO: Nested calc(a + calc(b + c)) -> calc(a + (b + c))
+                for (var i = 0, inRGB = 0; i < pattern.length; i++) {
+            var text = pattern[i];
+            if (isString(text)) {
+                if (inRGB && text.indexOf(",") >= 0) {
+                    inRGB++;
+                } else if (text.indexOf("rgb") >= 0) {
+                    inRGB = 1;
+                }
+            } else if (inRGB) {
+                if (inRGB < 4) {
+                    pattern[i] = true;
+                } else {
+                    inRGB = 0;
+                }
+            }
+        }
+        return sequence;
+    }
+    VelocityStatic.findPattern = findPattern;
     /**
      * Convert a string-based tween with start and end strings, into a pattern
      * based tween with arrays.
-     */    function explodeTween(propertyName, tween, duration, isForcefeed) {
-        var endValue = tween.end;
-        var startValue = tween.start;
+     */    function explodeTween(propertyName, tween, duration, starting) {
+        var startValue = tween.start, endValue = tween.end;
         if (!isString(endValue) || !isString(startValue)) {
             return;
         }
-        var runAgain = false;
- // Can only be set once if the Start value doesn't match the End value and it's not forcefed
-                do {
-            runAgain = false;
-            var arrayStart = tween.start = [ null ], arrayEnd = tween.end = [ null ], pattern = tween.pattern = [ "" ];
-            var easing = tween.easing, indexStart = 0, // index in startValue
-            indexEnd = 0, // index in endValue
-            inCalc = 0, // Keep track of being inside a "calc()" so we don't duplicate it
-            inRGB = 0, // Keep track of being inside an RGB as we can't use fractional values
-            inRGBA = 0, // Keep track of being inside an RGBA as we must pass fractional for the alpha channel
-            isStringValue = void 0;
-            var _loop_2 = function() {
-                var charStart = startValue[indexStart], charEnd = endValue[indexEnd];
-                // If they're both numbers, then parse them as a whole
-                                if (TWEEN_NUMBER_REGEX.test(charStart) && TWEEN_NUMBER_REGEX.test(charEnd)) {
-                    var tempStart = charStart, // temporary character buffer
-                    tempEnd = charEnd, // temporary character buffer
-                    dotStart = ".", // Make sure we can only ever match a single dot in a decimal
-                    dotEnd = ".";
- // Make sure we can only ever match a single dot in a decimal
-                                        while (++indexStart < startValue.length) {
-                        charStart = startValue[indexStart];
-                        if (charStart === dotStart) {
-                            dotStart = "..";
- // Can never match two characters
-                                                } else if (!isNumberWhenParsed(charStart)) {
-                            break;
-                        }
-                        tempStart += charStart;
-                    }
-                    while (++indexEnd < endValue.length) {
-                        charEnd = endValue[indexEnd];
-                        if (charEnd === dotEnd) {
-                            dotEnd = "..";
- // Can never match two characters
-                                                } else if (!isNumberWhenParsed(charEnd)) {
-                            break;
-                        }
-                        tempEnd += charEnd;
-                    }
-                    var unitStart = VelocityStatic.CSS.getUnit(startValue, indexStart), // temporary unit type
-                    unitEnd = VelocityStatic.CSS.getUnit(endValue, indexEnd);
- // temporary unit type
-                                        indexStart += unitStart.length;
-                    indexEnd += unitEnd.length;
-                    if (unitEnd.length === 0) {
-                        // This order as it's most common for the user supplied
-                        // value to be a number.
-                        unitEnd = unitStart;
-                    } else if (unitStart.length === 0) {
-                        unitStart = unitEnd;
-                    }
-                    if (unitStart === unitEnd) {
-                        // Same units
-                        if (tempStart === tempEnd) {
-                            // Same numbers, so just copy over
-                            pattern[pattern.length - 1] += tempStart + unitStart;
-                        } else {
-                            pattern.push(inRGB ? true : false, unitStart);
-                            arrayStart.push(parseFloat(tempStart), null);
-                            arrayEnd.push(parseFloat(tempEnd), null);
-                        }
-                    } else {
-                        // Different units, so put into a "calc(from + to)" and
-                        // animate each side to/from zero. setPropertyValue will
-                        // look out for the final "calc(0 + " prefix and remove
-                        // it from the value when it finds it.
-                        pattern[pattern.length - 1] += inCalc ? "+ (" : "calc(";
-                        pattern.push(false, unitStart + " + ", false, unitEnd + ")");
-                        arrayStart.push(parseFloat(tempStart) || 0, null, 0, null);
-                        arrayEnd.push(0, null, parseFloat(tempEnd) || 0, null);
-                    }
-                } else if (charStart === charEnd) {
-                    pattern[pattern.length - 1] += charStart;
-                    indexStart++;
-                    indexEnd++;
-                    // Keep track of being inside a calc()
-                                        if (inCalc === 0 && charStart === "c" || inCalc === 1 && charStart === "a" || inCalc === 2 && charStart === "l" || inCalc === 3 && charStart === "c" || inCalc >= 4 && charStart === "(") {
-                        inCalc++;
-                    } else if (inCalc && inCalc < 5 || inCalc >= 4 && charStart === ")" && --inCalc < 5) {
-                        inCalc = 0;
-                    }
-                    // Keep track of being inside an rgb() / rgba()
-                    // The opacity must not be rounded.
-                                        if (inRGB === 0 && charStart === "r" || inRGB === 1 && charStart === "g" || inRGB === 2 && charStart === "b" || inRGB === 3 && charStart === "a" || inRGB >= 3 && charStart === "(") {
-                        if (inRGB === 3 && charStart === "a") {
-                            inRGBA = 1;
-                        }
-                        inRGB++;
-                    } else if (inRGBA && charStart === ",") {
-                        if (++inRGBA > 3) {
-                            inRGB = inRGBA = 0;
-                        }
-                    } else if (inRGBA && inRGB < (inRGBA ? 5 : 4) || inRGB >= (inRGBA ? 4 : 3) && charStart === ")" && --inRGB < (inRGBA ? 5 : 4)) {
-                        inRGB = inRGBA = 0;
-                    }
-                } else if (charStart || charEnd) {
-                    // Different letters, so we're going to push them into start
-                    // and end until the next word
-                    isStringValue = true;
-                    if (!isString(arrayStart[arrayStart.length - 1])) {
-                        if (pattern.length === 1 && !pattern[0]) {
-                            arrayStart[0] = arrayEnd[0] = "";
-                        } else {
-                            pattern.push("");
-                            arrayStart.push("");
-                            arrayEnd.push("");
-                        }
-                    }
-                    while (indexStart < startValue.length) {
-                        charStart = startValue[indexStart++];
-                        if (charStart === " " || TWEEN_NUMBER_REGEX.test(charStart)) {
-                            break;
-                        } else {
-                            arrayStart[arrayStart.length - 1] += charStart;
-                        }
-                    }
-                    while (indexEnd < endValue.length) {
-                        charEnd = endValue[indexEnd++];
-                        if (charEnd === " " || TWEEN_NUMBER_REGEX.test(charEnd)) {
-                            break;
-                        } else {
-                            arrayEnd[arrayEnd.length - 1] += charEnd;
-                        }
-                    }
-                }
-                if (!isForcefeed && indexStart === startValue.length !== (indexEnd === endValue.length)) {
-                    // This little piece will take a startValue, split out the
-                    // various numbers in it, then copy the endValue into the
-                    // startValue while replacing the numbers in it to match the
-                    // original start numbers as a repeating sequence.
-                    // Finally this function will run again with the new
-                    // startValue and a now matching pattern.
-                    var startNumbers_1 = startValue.match(/\d\.?\d*/g) || [ "0" ], count_1 = startNumbers_1.length, index_1 = 0;
-                    startValue = endValue.replace(/\d+\.?\d*/g, function() {
-                        return startNumbers_1[index_1++ % count_1];
-                    });
-                    runAgain = isForcefeed = true;
-                    return "break";
-                }
-            };
-            // TODO: Relative Values
-            /* Operator logic must be performed last since it requires unit-normalized start and end values. */
-            /* Note: Relative *percent values* do not behave how most people think; while one would expect "+=50%"
-             to increase the property 1.5x its current value, it in fact increases the percent units in absolute terms:
-             50 points is added on top of the current % value. */
-            //					switch (operator as any as string) {
-            //						case "+":
-            //							endValue = startValue + endValue;
-            //							break;
-            //
-            //						case "-":
-            //							endValue = startValue - endValue;
-            //							break;
-            //
-            //						case "*":
-            //							endValue = startValue * endValue;
-            //							break;
-            //
-            //						case "/":
-            //							endValue = startValue / endValue;
-            //							break;
-            //					}
-            // TODO: Leading from a calc value
-                        while (indexStart < startValue.length && indexEnd < endValue.length) {
-                var state_1 = _loop_2();
-                if (state_1 === "break") break;
+        var sequence = findPattern([ startValue, endValue ], propertyName);
+        if (!sequence && starting) {
+            // This little piece will take a startValue, split out the
+            // various numbers in it, then copy the endValue into the
+            // startValue while replacing the numbers in it to match the
+            // original start numbers as a repeating sequence.
+            // Finally this function will run again with the new
+            // startValue and a now matching pattern.
+            var startNumbers_1 = startValue.match(/\d\.?\d*/g) || [ "0" ], count_1 = startNumbers_1.length, index_2 = 0;
+            sequence = findPattern([ endValue.replace(/\d+\.?\d*/g, function() {
+                return startNumbers_1[index_2++ % count_1];
+            }), endValue ], propertyName);
+        }
+        if (sequence) {
+            if (VelocityStatic.debug) {
+                console.log("Velocity: Sequence found:", sequence);
             }
-            if (!runAgain) {
-                // TODO: These two would be slightly better to not add the array indices in the first place
-                if (pattern[0] === "" && arrayEnd[0] == null) {
-                    pattern.shift();
-                    arrayStart.shift();
-                    arrayEnd.shift();
-                }
-                if (pattern[pattern.length] === "" && arrayEnd[arrayEnd.length] == null) {
-                    pattern.pop();
-                    arrayStart.pop();
-                    arrayEnd.pop();
-                }
-                if (indexStart < startValue.length || indexEnd < endValue.length) {
-                    // NOTE: We should never be able to reach this code unless a
-                    // bad forcefed value is supplied.
-                    console.error("Velocity: Trying to pattern match mis-matched strings " + propertyName + ':["' + endValue + '", "' + startValue + '"]');
-                }
-                if (VelocityStatic.debug) {
-                    console.log("Velocity: Pattern found:", pattern, " -> ", arrayStart, arrayEnd, "[" + startValue + "," + endValue + "]");
-                }
-                if (propertyName === "display") {
-                    if (!/^(at-start|at-end|during)$/.test(easing)) {
-                        easing = endValue === "none" ? "at-end" : "at-start";
-                    }
-                } else if (propertyName === "visibility") {
-                    if (!/^(at-start|at-end|during)$/.test(easing)) {
-                        easing = endValue === "hidden" ? "at-end" : "at-start";
-                    }
-                } else if (isStringValue && easing !== "at-start" && easing !== "during" && easing !== "at-end" && easing !== VelocityStatic.Easing.Easings["at-Start"] && easing !== VelocityStatic.Easing.Easings["during"] && easing !== VelocityStatic.Easing.Easings["at-end"]) {
-                    console.warn("Velocity: String easings must use one of 'at-start', 'during' or 'at-end': {" + propertyName + ': ["' + endValue + '", ' + easing + ', "' + startValue + '"]}');
-                    easing = "at-start";
-                }
-                tween.easing = validateEasing(easing, duration);
+            sequence[0].percent = 0;
+            sequence[1].percent = 1;
+            tween.sequence = sequence;
+            switch (tween.easing) {
+              case VelocityStatic.Easing.Easings["at-start"]:
+              case VelocityStatic.Easing.Easings["during"]:
+              case VelocityStatic.Easing.Easings["at-end"]:
+                sequence[0].easing = sequence[1].easing = tween.easing;
             }
-            // This can only run a second time once - if going from automatic startValue to "fixed" pattern from endValue with startValue numbers
-                } while (runAgain);
+        }
     }
     /**
      * Expand all queued animations that haven't gone yet
@@ -3889,7 +4032,7 @@ var VelocityStatic;
                 var startValue = VelocityStatic.CSS.getPropertyValue(activeCall.element, propertyName);
                 if (isString(startValue)) {
                     tween_5.start = VelocityStatic.CSS.fixColors(startValue);
-                    explodeTween(propertyName, tween_5, duration);
+                    explodeTween(propertyName, tween_5, duration, true);
                 } else if (!Array.isArray(startValue)) {
                     console.warn("bad type", tween_5, propertyName, startValue);
                 }
@@ -4248,18 +4391,18 @@ function VelocityFn() {
     } else if (isWrapped(this)) {
         // This might be a chain from something else, but if chained from a
         // previous Velocity() call then grab the animations it's related to.
-        elements = Object.assign([], this);
+        elements = _objectAssign([], this);
         if (isVelocityResult(this)) {
             animations = this.velocity.animations;
         }
     } else if (syntacticSugar) {
-        elements = Object.assign([], args0.elements || args0.e);
+        elements = _objectAssign([], args0.elements || args0.e);
         argumentIndex++;
     } else if (isNode(args0)) {
-        elements = Object.assign([], [ args0 ]);
+        elements = _objectAssign([], [ args0 ]);
         argumentIndex++;
     } else if (isWrapped(args0)) {
-        elements = Object.assign([], args0);
+        elements = _objectAssign([], args0);
         argumentIndex++;
     }
     // Allow elements to be chained.
@@ -4481,7 +4624,7 @@ function VelocityFn() {
                     }
                     flags |= 64 /* REVERSE */ & ~(lastAnimation._flags & 64 /* REVERSE */);
                 }
-                var tweens = createEmptyObject(), animation = Object.assign({
+                var tweens = createEmptyObject(), animation = _objectAssign({
                     element: element,
                     tweens: tweens
                 }, rootAnimation);
@@ -4579,7 +4722,7 @@ if (window === this) {
  ******************/
 /* The CSS spec mandates that the translateX/Y/Z transforms are %-relative to the element itself -- not its parent.
  Velocity, however, doesn't make this distinction. Thus, converting to or from the % unit with these subproperties
- will produce an inaccurate conversion value. The same issue exists with the cx/cy attributes of SVG circles and ellipses. */ var _loop_3 = function(key) {
+ will produce an inaccurate conversion value. The same issue exists with the cx/cy attributes of SVG circles and ellipses. */ var _loop_2 = function(key) {
     var value = VelocityStatic[key];
     if (isString(value) || isNumber(value) || isBoolean(value)) {
         Object.defineProperty(VelocityFn, key, {
@@ -4616,7 +4759,7 @@ if (window === this) {
  * use. This is done as a read-only way. Any attempt to change these values will
  * be allowed.
  */ for (var key in VelocityStatic) {
-    _loop_3(key);
+    _loop_2(key);
 }
 // console.log("Velocity keys", Object.keys(VelocityStatic));
 //# sourceMappingURL=velocity.js.map
