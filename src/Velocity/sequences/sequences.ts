@@ -89,7 +89,7 @@ namespace VelocityStatic.Sequence {
 						} else {
 							steps[percent] = part;
 							for (let property in sequence[part]) {
-								if (!_inArray(properties, property)) {
+								if (property && !_inArray(properties, property)) {
 									properties.push(property);
 								}
 							}
@@ -104,13 +104,13 @@ namespace VelocityStatic.Sequence {
 						const key = steps[i];
 
 						if (key) {
-							const properties = sequence[key];
+							const properties: VelocitySequenceProperties = sequence[key];
 
-							if (properties[property]) {
-								parts.push(isString(properties[property])
-									? properties[property]
-									: properties[property][0]);
-							}
+							const givenProperty: VelocitySequenceProperty = properties[property];
+
+							parts.push(isString(givenProperty)
+								? givenProperty
+								: givenProperty[0]);
 						}
 					}
 					if (parts.length) {
