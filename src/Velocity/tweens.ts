@@ -130,7 +130,7 @@ namespace VelocityStatic {
 			addString = function(text: string) {
 				if (isString(pattern[pattern.length - 1])) {
 					pattern[pattern.length - 1] += text;
-				} else {
+				} else if (text) {
 					pattern.push(text);
 					for (let part = 0; part < partsLength; part++) {
 						(sequence[part] as any[]).push(null);
@@ -163,7 +163,9 @@ namespace VelocityStatic {
 		while (more) {
 			const bits: ([number, string] | [number, string, boolean])[] = [],
 				units: string[] = [];
-			let text: string;
+			let text: string,
+				unitless = false,
+				numbers = false;
 
 			for (let part = 0; part < partsLength; part++) {
 				const index = indexes[part]++,
@@ -185,6 +187,13 @@ namespace VelocityStatic {
 						if (!_inArray(units, changeOrUnit)) {
 							// Will be an empty string at the least.
 							units.push(changeOrUnit);
+						}
+						if (!unit) {
+							if (digits) {
+								numbers = true;
+							} else {
+								unitless = true;
+							}
 						}
 						bits[part] = change ? [digits, changeOrUnit, true] : [digits, changeOrUnit];
 					} else if (bits.length) {
@@ -217,6 +226,10 @@ namespace VelocityStatic {
 			if (text) {
 				addString(text);
 			} else if (units.length) {
+				if (units.length === 2 && unitless && !numbers) {
+					// If we only have two units, and one is empty, and it's only empty on "0", then treat us as having one unit
+					units.splice(units[0] ? 1 : 0, 1);
+				}
 				if (units.length === 1) {
 					// All the same units, so append number then unit.
 					const unit = units[0],
@@ -228,10 +241,11 @@ namespace VelocityStatic {
 						}
 						return;
 					}
-					pattern.push(false, unit);
+					pattern.push(false);
 					for (let part = 0; part < partsLength; part++) {
-						(sequence[part] as any[]).push(bits[part][0], null);
+						(sequence[part] as any[]).push(bits[part][0]);
 					}
+					addString(unit);
 				} else {
 					// Multiple units, so must be inside a calc.
 					addString("calc(");

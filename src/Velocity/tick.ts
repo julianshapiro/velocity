@@ -1,4 +1,5 @@
 ///<reference path="state.ts" />
+///<reference path="easing/easings.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -321,10 +322,11 @@ namespace VelocityStatic {
 								}
 							}
 							const tweenFrom: TweenStep = sequence[best],
-								tweenTo: TweenStep = sequence[best + 1],
+								tweenTo: TweenStep = sequence[best + 1] || tweenFrom,
 								tweenPercent = (percentComplete - tweenFrom.percent) / (tweenTo.percent - tweenFrom.percent),
 								easing = tweenTo.easing || Easing.linearEasing;
 
+							//console.log("tick", percentComplete, tweenPercent, best, tweenFrom, tweenTo, sequence)
 							for (; i < pattern.length; i++) {
 								const startValue = tweenFrom[i];
 
