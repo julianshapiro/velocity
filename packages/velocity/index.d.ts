@@ -445,9 +445,42 @@ interface ElementData {
 	lastFinishList: {[name: string]: number};
 }
 
+/**
+ * Public property value for a Sequence.
+ */
+type VelocitySequenceProperty = string | [string] | [string, VelocityEasingType];
+
+/**
+ * Public list of properties for a sequence.
+ */
+type VelocitySequenceProperties = {
+	[property in keyof CSSStyleDeclaration]?: VelocitySequenceProperty;
+};
+
+/**
+ * Public Sequence definition.
+ */
+type VelocitySequence = {
+	duration?: number;
+	easing?: VelocityEasingType;
+	[percent: number]: VelocitySequenceProperties;
+} | {
+		[percent: string]: VelocitySequenceProperties;
+	}; // Needs to be like this to prevent warnings.
+
+/**
+ * Internal pattern used for a Sequence.
+ */
 type TweenPattern = ReadonlyArray<string | boolean>;
+
+/**
+ * Internal value used for a Sequence data point.
+ */
 type TweenValues = string | number;
 
+/**
+ * Internal list of values for a single Sequence data point.
+ */
 interface TweenStep extends ReadonlyArray<TweenValues> {
 	/**
 	 * Percent of animation.
@@ -463,6 +496,9 @@ interface TweenStep extends ReadonlyArray<TweenValues> {
 	[index: number]: TweenValues;
 }
 
+/**
+ * Internal Sequence property value.
+ */
 interface Sequence extends ReadonlyArray<TweenStep> {
 	/**
 	 * Pattern to use for tweening.
@@ -474,6 +510,9 @@ interface Sequence extends ReadonlyArray<TweenStep> {
 	[index: number]: TweenStep;
 }
 
+/**
+ * Internal Sequence per property.
+ */
 interface VelocityTween {
 	/**
 	 * Normalization function - cached at animation creation time.
@@ -494,7 +533,7 @@ interface VelocityTween {
 	/**
 	 * End value.
 	 */
-	end: string;
+	end?: string;
 }
 
 /**

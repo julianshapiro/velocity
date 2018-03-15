@@ -4,6 +4,7 @@
 ///<reference path="utility.ts" />
 ///<reference path="Velocity/_all.d.ts" />
 ///<reference path="core.ts" />
+///<reference path="ui/_all.d.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *

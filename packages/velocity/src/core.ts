@@ -132,6 +132,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	// options if possible.
 	const isReverse = propertiesMap === "reverse",
 		isAction = !isReverse && isString(propertiesMap),
+		maybeSequence = isAction && VelocityStatic.Sequences[propertiesMap as string],
 		opts = syntacticSugar ? getValue(args0.options, args0.o) : _arguments[argumentIndex];
 
 	if (isPlainObject(opts)) {
@@ -215,7 +216,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		// by being stored on the animation and then expanded when the animation
 		// starts.
 		const action = (propertiesMap as string).replace(/\..*$/, ""),
-			callback = VelocityStatic.Actions[action] || VelocityStatic.Actions["default"];
+			callback = VelocityStatic.Actions[action];
 
 		if (callback) {
 			const result = callback(args, elements, promiseHandler, propertiesMap as string);
@@ -223,10 +224,15 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			if (result !== undefined) {
 				return result;
 			}
-		} else {
-			console.warn("VelocityJS: Unknown action:", propertiesMap);
+			return elements || promise as any;
+		} else if (!maybeSequence) {
+			console.error("VelocityJS: First argument (" + propertiesMap + ") was not a property map, a known action, or a registered redirect. Aborting.");
+			return;
 		}
-	} else if (isPlainObject(propertiesMap) || isReverse) {
+	}
+	let hasValidDuration: boolean;
+
+	if (isPlainObject(propertiesMap) || isReverse || maybeSequence) {
 		/**
 		 * The options for this set of animations.
 		 */
@@ -247,7 +253,10 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 
 		// Now check the optionsMap
 		if (isPlainObject(optionsMap)) {
-			options.duration = getValue(validateDuration(optionsMap.duration), defaults.duration);
+			const validDuration = validateDuration(optionsMap.duration);
+
+			hasValidDuration = validDuration !== undefined;
+			options.duration = getValue(validDuration, defaults.duration);
 			options.delay = getValue(validateDelay(optionsMap.delay), defaults.delay);
 			// Need the extra fallback here in case it supplies an invalid
 			// easing that we need to overrride with the default.
@@ -298,12 +307,13 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 			}
 		} else if (!syntacticSugar) {
 			// Expand any direct options if possible.
-			const duration = validateDuration(_arguments[argumentIndex], true);
+			const validDuration = validateDuration(_arguments[argumentIndex], true);
 			let offset = 0;
 
-			if (duration !== undefined) {
+			hasValidDuration = validDuration !== undefined;
+			if (validDuration !== undefined) {
 				offset++;
-				options.duration = duration;
+				options.duration = validDuration;
 			}
 			if (!isFunction(_arguments[argumentIndex + offset])) {
 				// Despite coming before Complete, we can't pass a fn easing
@@ -325,6 +335,10 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 
 		if (isReverse && options.queue === false) {
 			throw new Error("VelocityJS: Cannot reverse a queue:false animation.");
+		}
+
+		if (maybeSequence && !hasValidDuration && maybeSequence.duration) {
+			options.duration = maybeSequence.duration;
 		}
 
 		/* When a set of elements is targeted by a Velocity call, the set is broken up and each element has the current Velocity call individually queued onto it.
@@ -360,20 +374,21 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 					}
 					flags |= AnimationFlags.REVERSE & ~(lastAnimation._flags & AnimationFlags.REVERSE);
 				}
-				const tweens = createEmptyObject(),
-					animation: AnimationCall = _objectAssign({
-						element: element,
-						tweens: tweens
-					}, rootAnimation);
+				const animation: AnimationCall = _objectAssign({
+					element: element
+				}, rootAnimation);
 
 				options._total++;
 				animation._flags |= flags;
 				animations.push(animation);
-				if (isReverse) {
+				if (maybeSequence) {
+					VelocityStatic.expandSequence(animation, maybeSequence);
+				} else if (isReverse) {
 					// In this case we're using the previous animation, so
 					// it will be expanded correctly when that one runs.
 					animation.tweens = propertiesMap as any;
 				} else {
+					animation.tweens = createEmptyObject();
 					VelocityStatic.expandProperties(animation, propertiesMap);
 				}
 				VelocityStatic.queue(element, animation, options.queue);
