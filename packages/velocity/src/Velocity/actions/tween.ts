@@ -45,20 +45,27 @@ namespace VelocityStatic {
 				options: {
 					duration: 1000
 				},
-				tweens: null as {[property: string]: VelocityTween}
-			},
+				tweens: null as {[property: string]: Sequence}
+			} as any as AnimationCall,
 			result: {[property: string]: string} = {};
-		let properties: VelocityProperties = args[1],
+		let properties: {[property in keyof CSSStyleDeclaration]?: Sequence} = args[1],
 			singleResult: boolean,
+			maybeSequence: SequenceList,
 			easing: VelocityEasingType = args[2],
 			count = 0;
 
 		if (isString(args[1])) {
-			singleResult = true;
-			properties = {
-				[args[1]]: args[2]
-			};
-			easing = args[3];
+			if (Sequences && Sequences[args[1]]) {
+				maybeSequence = Sequences[args[1]];
+				properties = {};
+				easing = args[2];
+			} else {
+				singleResult = true;
+				properties = {
+					[args[1]]: args[2]
+				};
+				easing = args[3];
+			}
 		} else if (Array.isArray(args[1])) {
 			singleResult = true;
 			properties = {
@@ -79,40 +86,60 @@ namespace VelocityStatic {
 				}
 			}
 		}
-		const activeEasing = validateEasing(getValue(easing, defaults.easing), 1000);
+		const activeEasing = validateEasing(getValue(easing, defaults.easing), DEFAULT_DURATION);
 
-		expandProperties(fakeAnimation as AnimationCall, properties);
+		if (maybeSequence) {
+			VelocityStatic.expandSequence(fakeAnimation, maybeSequence);
+		} else {
+			expandProperties(fakeAnimation as AnimationCall, properties);
+		}
+
 		for (const property in fakeAnimation.tweens) {
 			// For every element, iterate through each property.
 			const tween = fakeAnimation.tweens[property],
-				easing = tween.easing || activeEasing,
 				sequence = tween.sequence,
 				pattern = sequence.pattern;
-			let currentValue = "";
+			let currentValue = "",
+				i = 0;
 
 			count++;
 			if (pattern) {
-				for (let i = 0; i < pattern.length; i++) {
-					const startValue = sequence[0][i];
+				let easingComplete = (tween.easing || activeEasing)(percentComplete, 0, 1, property),
+					best = 0;
+
+				for (let i = 0; i < sequence.length - 1; i++) {
+					if (sequence[i].percent < easingComplete) {
+						best = i;
+					}
+				}
+				const tweenFrom: TweenStep = sequence[best],
+					tweenTo: TweenStep = sequence[best + 1] || tweenFrom,
+					tweenPercent = (percentComplete - tweenFrom.percent) / (tweenTo.percent - tweenFrom.percent),
+					easing = tweenTo.easing || Easing.linearEasing;
+
+				//console.log("tick", percentComplete, tweenPercent, best, tweenFrom, tweenTo, sequence)
+				for (; i < pattern.length; i++) {
+					const startValue = tweenFrom[i];
 
 					if (startValue == null) {
 						currentValue += pattern[i];
 					} else {
-						const endValue = sequence[1][i];
+						const endValue = tweenTo[i];
 
 						if (startValue === endValue) {
 							currentValue += startValue;
 						} else {
 							// All easings must deal with numbers except for our internal ones.
-							const result = easing(percentComplete, startValue as number, endValue as number, property)
+							const result = easing(tweenPercent, startValue as number, endValue as number, property)
 
 							currentValue += pattern[i] === true ? Math.round(result) : result;
 						}
 					}
 				}
+				result[property] = currentValue;
 			}
-			result[property] = currentValue;
 		}
+
 		if (singleResult && count === 1) {
 			for (const property in result) {
 				if (result.hasOwnProperty(property)) {

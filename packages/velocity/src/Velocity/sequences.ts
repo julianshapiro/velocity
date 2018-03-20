@@ -8,7 +8,7 @@
 namespace VelocityStatic {
 	export const Sequences: {[name: string]: SequenceList} = createEmptyObject();
 
-	type SequenceList = {
+	export type SequenceList = {
 		duration: number;
 		tweens: {[property in keyof CSSStyleDeclaration]?: Sequence};
 	}
