@@ -821,11 +821,17 @@ function getValue(args) {
             },
             tweens: null
         }, result = {};
-        var properties = args[1], singleResult, easing = args[2], count = 0;
+        var properties = args[1], singleResult, maybeSequence, easing = args[2], count = 0;
         if (isString(args[1])) {
-            singleResult = true;
-            properties = (_a = {}, _a[args[1]] = args[2], _a);
-            easing = args[3];
+            if (VelocityStatic.Sequences && VelocityStatic.Sequences[args[1]]) {
+                maybeSequence = VelocityStatic.Sequences[args[1]];
+                properties = {};
+                easing = args[2];
+            } else {
+                singleResult = true;
+                properties = (_a = {}, _a[args[1]] = args[2], _a);
+                easing = args[3];
+            }
         } else if (Array.isArray(args[1])) {
             singleResult = true;
             properties = {
@@ -846,31 +852,43 @@ function getValue(args) {
                 }
             }
         }
-        var activeEasing = validateEasing(getValue(easing, VelocityStatic.defaults.easing), 1e3);
-        VelocityStatic.expandProperties(fakeAnimation, properties);
+        var activeEasing = validateEasing(getValue(easing, VelocityStatic.defaults.easing), DEFAULT_DURATION);
+        if (maybeSequence) {
+            VelocityStatic.expandSequence(fakeAnimation, maybeSequence);
+        } else {
+            VelocityStatic.expandProperties(fakeAnimation, properties);
+        }
         for (var property in fakeAnimation.tweens) {
             // For every element, iterate through each property.
-            var tween_2 = fakeAnimation.tweens[property], easing_1 = tween_2.easing || activeEasing, sequence = tween_2.sequence, pattern = sequence.pattern;
-            var currentValue = "";
+            var tween_2 = fakeAnimation.tweens[property], sequence = tween_2.sequence, pattern = sequence.pattern;
+            var currentValue = "", i = 0;
             count++;
             if (pattern) {
-                for (var i = 0; i < pattern.length; i++) {
-                    var startValue = sequence[0][i];
+                var easingComplete = (tween_2.easing || activeEasing)(percentComplete, 0, 1, property), best = 0;
+                for (var i_1 = 0; i_1 < sequence.length - 1; i_1++) {
+                    if (sequence[i_1].percent < easingComplete) {
+                        best = i_1;
+                    }
+                }
+                var tweenFrom = sequence[best], tweenTo = sequence[best + 1] || tweenFrom, tweenPercent = (percentComplete - tweenFrom.percent) / (tweenTo.percent - tweenFrom.percent), easing_1 = tweenTo.easing || VelocityStatic.Easing.linearEasing;
+                //console.log("tick", percentComplete, tweenPercent, best, tweenFrom, tweenTo, sequence)
+                                for (;i < pattern.length; i++) {
+                    var startValue = tweenFrom[i];
                     if (startValue == null) {
                         currentValue += pattern[i];
                     } else {
-                        var endValue = sequence[1][i];
+                        var endValue = tweenTo[i];
                         if (startValue === endValue) {
                             currentValue += startValue;
                         } else {
                             // All easings must deal with numbers except for our internal ones.
-                            var result_1 = easing_1(percentComplete, startValue, endValue, property);
+                            var result_1 = easing_1(tweenPercent, startValue, endValue, property);
                             currentValue += pattern[i] === true ? Math.round(result_1) : result_1;
                         }
                     }
                 }
+                result[property] = currentValue;
             }
-            result[property] = currentValue;
         }
         if (singleResult && count === 1) {
             for (var property in result) {
@@ -3878,9 +3896,9 @@ var VelocityStatic;
                         var currentValue = "", i = 0;
                         if (pattern) {
                             var easingComplete = (tween_5.easing || activeEasing)(percentComplete, 0, 1, property), best = 0;
-                            for (var i_1 = 0; i_1 < sequence.length - 1; i_1++) {
-                                if (sequence[i_1].percent < easingComplete) {
-                                    best = i_1;
+                            for (var i_2 = 0; i_2 < sequence.length - 1; i_2++) {
+                                if (sequence[i_2].percent < easingComplete) {
+                                    best = i_2;
                                 }
                             }
                             var tweenFrom = sequence[best], tweenTo = sequence[best + 1] || tweenFrom, tweenPercent = (percentComplete - tweenFrom.percent) / (tweenTo.percent - tweenFrom.percent), easing = tweenTo.easing || VelocityStatic.Easing.linearEasing;
