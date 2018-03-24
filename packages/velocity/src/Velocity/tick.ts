@@ -50,9 +50,6 @@ namespace VelocityStatic {
 		}
 	}
 
-	let firstProgress: AnimationCall,
-		firstComplete: AnimationCall;
-
 	function asyncCallbacks() {
 		let activeCall: AnimationCall,
 			nextCall: AnimationCall;
@@ -93,47 +90,98 @@ namespace VelocityStatic {
 			return perf;
 		})(),
 		/**
-		 * Proxy function for when rAF is not available - try to be as accurate
-		 * as possible with the setTimeout calls, however they are far less
-		 * accurate than rAF can be - so try not to use normally (unless the tab
-		 * is in the background).
+		 * Proxy function for when rAF is not available.
+		 * 
+		 * This should hopefully never be used as the browsers often throttle
+		 * this to less than one frame per second in the background, making it
+		 * completely unusable.
 		 */
 		rAFProxy = function(callback: FrameRequestCallback) {
-			console.log("rAFProxy", Math.max(0, FRAME_TIME - (performance.now() - lastTick)), performance.now(), lastTick, FRAME_TIME)
-			return setTimeout(function() {
-				callback(performance.now());
-			}, Math.max(0, FRAME_TIME - (performance.now() - lastTick)));
+			return setTimeout(callback, Math.max(0, FRAME_TIME - (performance.now() - lastTick)));
 		},
-		/* rAF shim. Gist: https://gist.github.com/julianshapiro/9497513 */
+		/**
+		 * Either requestAnimationFrame, or a shim for it.
+		 */
 		rAFShim = window.requestAnimationFrame || rAFProxy;
+
 	/**
-	 * The ticker function being used, either rAF, or a function that
-	 * emulates it.
+	 * Set if we are currently inside a tick() to prevent double-calling.
 	 */
-	let ticker: (callback: FrameRequestCallback) => number = document.hidden ? rAFProxy : rAFShim;
+	let ticking: boolean,
+		/**
+		 * A background WebWorker that sends us framerate messages when we're in
+		 * the background. Without this we cannot maintain frame accuracy.
+		 */
+		worker: Worker,
+		/**
+		 * The first animation with a Progress callback.
+		 */
+		firstProgress: AnimationCall,
+		/**
+		 * The first animation with a Complete callback.
+		 */
+		firstComplete: AnimationCall;
+
 	/**
 	 * The time that the last animation frame ran at. Set from tick(), and used
 	 * for missing rAF (ie, when not in focus etc).
 	 */
 	export let lastTick: number = 0;
 
-	/* Inactive browser tabs pause rAF, which results in all active animations immediately sprinting to their completion states when the tab refocuses.
-	 To get around this, we dynamically switch rAF to setTimeout (which the browser *doesn't* pause) when the tab loses focus. We skip this for mobile
-	 devices to avoid wasting battery power on inactive tabs. */
-	/* Note: Tab focus detection doesn't work on older versions of IE, but that's okay since they don't support rAF to begin with. */
-	if (!State.isMobile && document.hidden !== undefined) {
-		document.addEventListener("visibilitychange", function updateTicker(event?: Event) {
-			let hidden = document.hidden;
+	/**
+	 * WebWorker background function.
+	 * 
+	 * When we're in the background this will send us a msg every tick, when in
+	 * the foreground it won't.
+	 * 
+	 * When running in the background the browser reduces allowed CPU etc, so
+	 * we raun at 30fps instead of 60fps.
+	 */
+	function workerFn(this: Worker) {
+		let interval: number;
 
-			ticker = hidden ? rAFProxy : rAFShim;
-			if (event) {
-				setTimeout(tick, 2000);
+		this.onmessage = (e) => {
+			if (e.data === true) {
+				if (!interval) {
+					interval = setInterval(() => {
+						this.postMessage(true);
+					}, 1000 / 30);
+				}
+			} else if (e.data === false) {
+				if (interval) {
+					clearInterval(interval);
+					interval = 0;
+				}
+			} else {
+				this.postMessage(e.data);
 			}
-			tick();
-		});
+		}
 	}
 
-	let ticking: boolean;
+	try {
+		// Create the worker - this might not be supported, hence the try/catch.
+		worker = new Worker(URL.createObjectURL(new Blob(["(" + workerFn + ")()"])));
+		// Whenever the worker sends a message we tick()
+		worker.onmessage = (e: MessageEvent) => {
+			if (e.data === true) {
+				tick();
+			} else {
+				asyncCallbacks();
+			}
+		}
+		// And watch for going to the background to start the WebWorker running.
+		if (!State.isMobile && document.hidden !== undefined) {
+			document.addEventListener("visibilitychange", () => {
+				worker.postMessage(State.isTicking && document.hidden);
+			});
+		}
+	} catch (e) {
+		/*
+		 * WebWorkers are not supported in this format. This can happen in IE10
+		 * where it can't create one from a blob this way. We fallback, but make
+		 * no guarantees towards accuracy in this case.
+		 */
+	}
 
 	/**
 	 * Called on every tick, preferably through rAF. This is reponsible for
@@ -155,11 +203,8 @@ namespace VelocityStatic {
 		 calls being animated out of sync with any elements animated immediately thereafter. In short, we ignore
 		 the first RAF tick pass so that elements being immediately consecutively animated -- instead of simultaneously animated
 		 by the same Velocity call -- are properly batched into the same initial RAF tick and consequently remain in sync thereafter. */
-		if (timestamp) {
-			/* We normally use RAF's high resolution timestamp but as it can be significantly offset when the browser is
-			 under high stress we give the option for choppiness over allowing the browser to drop huge chunks of frames.
-			 We use performance.now() and shim it if it doesn't exist for when the tab is hidden. */
-			const timeCurrent = timestamp && timestamp !== true ? timestamp : performance.now(),
+		if (timestamp !== false) {
+			const timeCurrent = performance.now(),
 				deltaTime = lastTick ? timeCurrent - lastTick : FRAME_TIME,
 				defaultSpeed = defaults.speed,
 				defaultEasing = defaults.easing,
@@ -363,16 +408,33 @@ namespace VelocityStatic {
 					}
 				}
 				if (firstProgress || firstComplete) {
-					setTimeout(asyncCallbacks, 1);
+					if (document.hidden) {
+						asyncCallbacks();
+					} else if (worker) {
+						worker.postMessage("");
+					} else {
+						setTimeout(asyncCallbacks, 1);
+					}
 				}
 			}
 		}
 		if (State.first) {
 			State.isTicking = true;
-			ticker(tick);
+			if (!document.hidden) {
+				rAFShim(tick);
+			} else if (!worker) {
+				rAFProxy(tick);
+			} else if (timestamp === false) {
+				// Make sure we turn on the messages.
+				worker.postMessage(true);
+			}
 		} else {
 			State.isTicking = false;
 			lastTick = 0;
+			if (document.hidden && worker) {
+				// Make sure we turn off the messages.
+				worker.postMessage(false);
+			}
 		}
 		ticking = false;
 	}
