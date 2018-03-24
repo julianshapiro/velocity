@@ -397,7 +397,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		if (VelocityStatic.State.isTicking === false) {
 			// If the animation tick isn't running, start it. (Velocity shuts it
 			// off when there are no active calls to process.)
-			VelocityStatic.tick();
+			VelocityStatic.tick(false);
 		}
 		if (animations) {
 			defineProperty(elements.velocity, "animations", animations);
