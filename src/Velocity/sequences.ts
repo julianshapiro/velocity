@@ -6,7 +6,7 @@
  */
 
 namespace VelocityStatic {
-	export const Sequences: {[name: string]: SequenceList} = createEmptyObject();
+	export const Sequences: {[name: string]: SequenceList} = {};
 
 	export type SequenceList = {
 		duration: number;
@@ -16,7 +16,7 @@ namespace VelocityStatic {
 	const rxPercents = /(\d*\.\d+|\d+\.?|from|to)/g;
 
 	export function expandSequence(animation: AnimationCall, sequence: SequenceList) {
-		const tweens = animation.tweens = createEmptyObject(),
+		const tweens = animation.tweens = {},
 			element = animation.element;
 
 		for (const propertyName in sequence.tweens) {
@@ -63,10 +63,10 @@ namespace VelocityStatic {
 					steps: string[] = new Array(100),
 					properties: string[] = [],
 					percentages: string[] = [],
-					sequenceList: SequenceList = Sequences[name] = createEmptyObject(),
+					sequenceList: SequenceList = Sequences[name] = {} as any,
 					duration = validateDuration((sequence as any).duration);
 
-				sequenceList.tweens = createEmptyObject();
+				sequenceList.tweens = {};
 				if (isNumber(duration)) {
 					sequenceList.duration = duration;
 				}

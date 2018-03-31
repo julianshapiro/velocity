@@ -75,13 +75,13 @@ namespace VelocityStatic {
 			const result = [],
 				flag = animationFlags[key];
 
-			for (let i = 0; i < animations.length; i++) {
+			for (const animation of animations) {
 				if (flag === undefined) {
 					// A normal key to get.
-					result.push(getValue(animations[i][key], animations[i].options[key]));
+					result.push(getValue(animation[key], animation.options[key]));
 				} else {
 					// A flag that we're checking against.
-					result.push((animations[i]._flags & flag) === 0);
+					result.push((animation._flags & flag) === 0);
 				}
 			}
 			if (elements.length === 1 && animations.length === 1) {
@@ -146,9 +146,7 @@ namespace VelocityStatic {
 			console.warn("VelocityJS: Trying to set an invalid value:", key, "=", value, "(" + args[1] + ")");
 			return null;
 		}
-		for (let i = 0; i < animations.length; i++) {
-			const animation = animations[i];
-
+		for (const animation of animations) {
 			if (isPercentComplete) {
 				animation.timeStart = lastTick - (getValue(animation.duration, animation.options.duration, defaults.duration) * value);
 			} else {

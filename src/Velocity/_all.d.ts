@@ -11,7 +11,6 @@
 ///<reference path="patch.ts" />
 ///<reference path="queue.ts" />
 ///<reference path="redirects.ts" />
-///<reference path="registereffect.ts" />
 ///<reference path="sequences.ts" />
 ///<reference path="tick.ts" />
 ///<reference path="timestamp.ts" />

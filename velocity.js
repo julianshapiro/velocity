@@ -147,12 +147,6 @@ function isEmptyObject(variable) {
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 /**
- * Creates an empty object without any prototype chain.
- */ function createEmptyObject() {
-    return Object.create(null);
-}
-
-/**
  * The <strong><code>defineProperty()</code></strong> function provides a
  * shortcut to defining a property that cannot be accidentally iterated across.
  */ function defineProperty(proto, name, value) {
@@ -174,30 +168,10 @@ function isEmptyObject(variable) {
 };
 
 /**
- * Shim for Object.assign on IE, based on:
- * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
- */ var _objectAssign = Object.assign || function(target) {
-    var sources = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        sources[_i - 1] = arguments[_i];
-    }
-    if (target == null) {
-        throw new TypeError("Cannot convert undefined or null to object");
-    }
-    var to = Object(target);
-    for (var index = 0; index < sources.length; index++) {
-        var nextSource = sources[index];
-        if (nextSource != null) {
-            for (var nextKey in nextSource) {
-                // Avoid bugs when hasOwnProperty is shadowed
-                if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-                    to[nextKey] = nextSource[nextKey];
-                }
-            }
-        }
-    }
-    return to;
-};
+ * Clone an array, works for array-like too.
+ */ function cloneArray(arrayLike) {
+    return Array.prototype.slice.call(arrayLike, 0);
+}
 
 /**
  * Shim for "string".startsWith on IE, based on:
@@ -284,7 +258,7 @@ function getValue(args) {
      * All external method calls should be using actions rather than sub-calls
      * of Velocity itself.
      */
-    VelocityStatic.Actions = createEmptyObject();
+    VelocityStatic.Actions = {};
     /**
      * Used to register an action. This should never be called by users
      * directly, instead it should be called via  an action:<br/>
@@ -375,8 +349,9 @@ function getValue(args) {
      */    function finish(args, elements, promiseHandler) {
         var queueName = validateQueue(args[0], true), defaultQueue = VelocityStatic.defaults.queue, finishAll = args[queueName === undefined ? 0 : 1] === true;
         if (isVelocityResult(elements) && elements.velocity.animations) {
-            for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-                checkAnimationShouldBeFinished(animations[i], queueName, defaultQueue);
+            for (var _i = 0, _a = elements.velocity.animations; _i < _a.length; _i++) {
+                var animation = _a[_i];
+                checkAnimationShouldBeFinished(animation, queueName, defaultQueue);
             }
         } else {
             var activeCall = VelocityStatic.State.first, nextCall = void 0;
@@ -467,13 +442,14 @@ function getValue(args) {
         // GET
                 if (value === undefined) {
             var result = [], flag = animationFlags[key];
-            for (var i = 0; i < animations.length; i++) {
+            for (var _i = 0, animations_1 = animations; _i < animations_1.length; _i++) {
+                var animation = animations_1[_i];
                 if (flag === undefined) {
                     // A normal key to get.
-                    result.push(getValue(animations[i][key], animations[i].options[key]));
+                    result.push(getValue(animation[key], animation.options[key]));
                 } else {
                     // A flag that we're checking against.
-                    result.push((animations[i]._flags & flag) === 0);
+                    result.push((animation._flags & flag) === 0);
                 }
             }
             if (elements.length === 1 && animations.length === 1) {
@@ -546,8 +522,8 @@ function getValue(args) {
             console.warn("VelocityJS: Trying to set an invalid value:", key, "=", value, "(" + args[1] + ")");
             return null;
         }
-        for (var i = 0; i < animations.length; i++) {
-            var animation = animations[i];
+        for (var _a = 0, animations_2 = animations; _a < animations_2.length; _a++) {
+            var animation = animations_2[_a];
             if (isPercentComplete) {
                 animation.timeStart = VelocityStatic.lastTick - getValue(animation.duration, animation.options.duration, VelocityStatic.defaults.duration) * value;
             } else {
@@ -595,8 +571,9 @@ function getValue(args) {
     function pauseResume(args, elements, promiseHandler, action) {
         var isPaused = action.indexOf("pause") === 0, queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined, queueName = queue === "false" ? false : validateQueue(args[0]), defaultQueue = VelocityStatic.defaults.queue;
         if (isVelocityResult(elements) && elements.velocity.animations) {
-            for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-                checkAnimation(animations[i], queueName, defaultQueue, isPaused);
+            for (var _i = 0, _a = elements.velocity.animations; _i < _a.length; _i++) {
+                var animation = _a[_i];
+                checkAnimation(animation, queueName, defaultQueue, isPaused);
             }
         } else {
             var activeCall = VelocityStatic.State.first;
@@ -676,8 +653,9 @@ function getValue(args) {
      */    function stop(args, elements, promiseHandler, action) {
         var queueName = validateQueue(args[0], true), defaultQueue = VelocityStatic.defaults.queue, finishAll = args[queueName === undefined ? 0 : 1] === true;
         if (isVelocityResult(elements) && elements.velocity.animations) {
-            for (var i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-                checkAnimationShouldBeStopped(animations[i], queueName, defaultQueue);
+            for (var _i = 0, _a = elements.velocity.animations; _i < _a.length; _i++) {
+                var animation = _a[_i];
+                checkAnimationShouldBeStopped(animation, queueName, defaultQueue);
             }
         } else {
             var activeCall = VelocityStatic.State.first, nextCall = void 0;
@@ -743,8 +721,9 @@ function getValue(args) {
                 return VelocityStatic.CSS.fixColors(VelocityStatic.CSS.getPropertyValue(elements[0], property));
             }
             var result = [];
-            for (var i = 0; i < elements.length; i++) {
-                result.push(VelocityStatic.CSS.fixColors(VelocityStatic.CSS.getPropertyValue(elements[i], property)));
+            for (var _i = 0, elements_1 = elements; _i < elements_1.length; _i++) {
+                var element = elements_1[_i];
+                result.push(VelocityStatic.CSS.fixColors(VelocityStatic.CSS.getPropertyValue(element, property)));
             }
             return result;
         }
@@ -752,10 +731,11 @@ function getValue(args) {
                 var error;
         if (isPlainObject(property)) {
             for (var propertyName in property) {
-                for (var i = 0; i < elements.length; i++) {
+                for (var _a = 0, elements_2 = elements; _a < elements_2.length; _a++) {
+                    var element = elements_2[_a];
                     var value_1 = property[propertyName];
                     if (isString(value_1) || isNumber(value_1)) {
-                        VelocityStatic.CSS.setPropertyValue(elements[i], propertyName, property[propertyName]);
+                        VelocityStatic.CSS.setPropertyValue(element, propertyName, property[propertyName]);
                     } else {
                         error = (error ? error + ", " : "") + "Cannot set a property '" + propertyName + "' to an unknown type: " + typeof value_1;
                         console.warn("VelocityJS: Cannot set a property '" + propertyName + "' to an unknown type:", value_1);
@@ -763,8 +743,9 @@ function getValue(args) {
                 }
             }
         } else if (isString(value) || isNumber(value)) {
-            for (var i = 0; i < elements.length; i++) {
-                VelocityStatic.CSS.setPropertyValue(elements[i], property, String(value));
+            for (var _b = 0, elements_3 = elements; _b < elements_3.length; _b++) {
+                var element = elements_3[_b];
+                VelocityStatic.CSS.setPropertyValue(element, property, String(value));
             }
         } else {
             error = "Cannot set a property '" + property + "' to an unknown type: " + typeof value;
@@ -991,7 +972,7 @@ var VelocityStatic;
         /**
          * Cache every camelCase match to avoid repeating lookups.
          */
-        var cache = createEmptyObject();
+        var cache = {};
         /**
          * Camelcase a property name into its JavaScript notation (e.g.
          * "background-color" ==> "backgroundColor"). Camelcasing is used to
@@ -1023,7 +1004,7 @@ var VelocityStatic;
          * that the actual name conversion can be in a separate file and not
          * included for custom builds.
          */
-        CSS.ColorNames = createEmptyObject();
+        CSS.ColorNames = {};
         /**
          * Convert a hex list to an rgba value. Designed to be used in replace.
          */        function makeRGBA(ignore, r, g, b) {
@@ -1348,8 +1329,8 @@ var VelocityStatic;
          */        function getUnit(property, start) {
             start = start || 0;
             if (property[start] && property[start] !== " ") {
-                for (var i = 0, units = Units; i < units.length; i++) {
-                    var unit = units[i];
+                for (var _i = 0, Units_1 = Units; _i < Units_1.length; _i++) {
+                    var unit = Units_1[_i];
                     var j = 0;
                     do {
                         if (j >= unit.length) {
@@ -1408,7 +1389,7 @@ var VelocityStatic;
 (function(VelocityStatic) {
     var Easing;
     (function(Easing) {
-        Easing.Easings = createEmptyObject();
+        Easing.Easings = {};
         /**
          * Used to register a easing. This should never be called by users
          * directly, instead it should be called via an action:<br/>
@@ -1954,7 +1935,7 @@ var VelocityStatic;
      * functions if the user supplies a unit-less number.
      *
      * This is pretty much confined to adding "px" to several css properties.
-     */    VelocityStatic.NormalizationUnits = createEmptyObject();
+     */    VelocityStatic.NormalizationUnits = {};
     /**
      * Any normalisations that should never be cached are listed here.
      * Faster than an array - https://jsperf.com/array-includes-and-find-methods-vs-set-has
@@ -1987,7 +1968,7 @@ var VelocityStatic;
             var index = VelocityStatic.constructors.indexOf(constructor), nextArg = 3;
             if (index < 0) {
                 VelocityStatic.MaxType = index = VelocityStatic.constructors.push(constructor) - 1;
-                VelocityStatic.Normalizations[index] = createEmptyObject();
+                VelocityStatic.Normalizations[index] = {};
             }
             VelocityStatic.Normalizations[index][name] = callback;
             if (isString(args[nextArg])) {
@@ -2132,9 +2113,10 @@ var VelocityStatic;
             // in box-sizing mode, the CSS width / height accessors already
             // give the outerWidth / outerHeight.
             var sides = name === "width" ? [ "Left", "Right" ] : [ "Top", "Bottom" ], fields = [ "padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width" ];
-            var i = void 0, value = void 0, augment = 0;
-            for (i = 0; i < fields.length; i++) {
-                value = parseFloat(VelocityStatic.CSS.getPropertyValue(element, fields[i]));
+            var augment = 0;
+            for (var _i = 0, fields_1 = fields; _i < fields_1.length; _i++) {
+                var field = fields_1[_i];
+                var value = parseFloat(VelocityStatic.CSS.getPropertyValue(element, field));
                 if (!isNaN(value)) {
                     augment += value;
                 }
@@ -2523,10 +2505,10 @@ function Data(element) {
         types: types,
         count: 0,
         computedStyle: null,
-        cache: createEmptyObject(),
-        queueList: createEmptyObject(),
-        lastAnimationList: createEmptyObject(),
-        lastFinishList: createEmptyObject()
+        cache: {},
+        queueList: {},
+        lastAnimationList: {},
+        lastFinishList: {}
     };
     Object.defineProperty(element, "velocityData", {
         value: newData
@@ -3029,170 +3011,6 @@ var VelocityStatic;
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
- * Effect Registration
- */
-var VelocityStatic;
-
-(function(VelocityStatic) {
-    /* Animate the expansion/contraction of the elements' parent's height for In/Out effects. */
-    function animateParentHeight(elements, direction, totalDuration, stagger) {
-        var totalHeightDelta = 0, parentNode;
-        /* Sum the total height (including padding and margin) of all targeted elements. */        
-        /* Sum the total height (including padding and margin) of all targeted elements. */
-        (elements.nodeType ? [ elements ] : elements).forEach(function(element, i) {
-            if (stagger) {
-                /* Increase the totalDuration by the successive delay amounts produced by the stagger option. */
-                totalDuration += i * stagger;
-            }
-            parentNode = element.parentNode;
-            var propertiesToSum = [ "height", "paddingTop", "paddingBottom", "marginTop", "marginBottom" ];
-            /* If box-sizing is border-box, the height already includes padding and margin */            if (VelocityStatic.CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box") {
-                propertiesToSum = [ "height" ];
-            }
-            propertiesToSum.forEach(function(property) {
-                totalHeightDelta += parseFloat(VelocityStatic.CSS.getPropertyValue(element, property));
-            });
-        });
-        /* Animate the parent element's height adjustment (with a varying duration multiplier for aesthetic benefits). */
-        // TODO: Get this typesafe again
-                VelocityFn(parentNode, {
-            height: (direction === "In" ? "+" : "-") + "=" + totalHeightDelta
-        }, {
-            queue: false,
-            easing: "ease-in-out",
-            duration: totalDuration * (direction === "In" ? .6 : 1)
-        });
-    }
-    /* Note: RegisterUI is a legacy name. */    function RegisterEffect(effectName, properties) {
-        /* Register a custom redirect for each effect. */
-        VelocityStatic.Redirects[effectName] = function(element, redirectOptions, elementsIndex, elementsSize, elements, resolver, loop) {
-            var finalElement = elementsIndex === elementsSize - 1, totalDuration = 0;
-            loop = loop || properties.loop;
-            if (typeof properties.defaultDuration === "function") {
-                properties.defaultDuration = properties.defaultDuration.call(elements, elements);
-            } else {
-                properties.defaultDuration = parseFloat(properties.defaultDuration);
-            }
-            /* Get the total duration used, so we can share it out with everything that doesn't have a duration */            for (var callIndex = 0; callIndex < properties.calls.length; callIndex++) {
-                var durationPercentage = properties.calls[callIndex][1];
-                if (typeof durationPercentage === "number") {
-                    totalDuration += durationPercentage;
-                }
-            }
-            var shareDuration = totalDuration >= 1 ? 0 : properties.calls.length ? (1 - totalDuration) / properties.calls.length : 1;
-            var _loop_1 = function(callIndex) {
-                var call = properties.calls[callIndex], propertyMap = call[0], redirectDuration = 1e3, durationPercentage = call[1], callOptions = call[2] || {}, opts = {};
-                if (redirectOptions.duration !== undefined) {
-                    redirectDuration = redirectOptions.duration;
-                } else if (properties.defaultDuration !== undefined) {
-                    redirectDuration = properties.defaultDuration;
-                }
-                /* Assign the whitelisted per-call options. */                opts.duration = redirectDuration * (typeof durationPercentage === "number" ? durationPercentage : shareDuration);
-                opts.queue = redirectOptions.queue || "";
-                opts.easing = callOptions.easing || "ease";
-                opts.delay = parseFloat(callOptions.delay) || 0;
-                opts.loop = !properties.loop && callOptions.loop;
-                opts.cache = callOptions.cache || true;
-                /* Special processing for the first effect call. */                if (callIndex === 0) {
-                    /* If a delay was passed into the redirect, combine it with the first call's delay. */
-                    opts.delay += parseFloat(redirectOptions.delay) || 0;
-                    if (elementsIndex === 0) {
-                        opts.begin = function() {
-                            /* Only trigger a begin callback on the first effect call with the first element in the set. */
-                            if (redirectOptions.begin) {
-                                redirectOptions.begin.call(elements, elements);
-                            }
-                            var direction = effectName.match(/(In|Out)$/);
-                            /* Make "in" transitioning elements invisible immediately so that there's no FOUC between now
-                             and the first RAF tick. */                            if (direction && direction[0] === "In" && propertyMap.opacity !== undefined) {
-                                (elements.nodeType ? [ elements ] : elements).forEach(function(element) {
-                                    VelocityStatic.CSS.setPropertyValue(element, "opacity", 0);
-                                });
-                            }
-                            /* Only trigger animateParentHeight() if we're using an In/Out transition. */                            if (redirectOptions.animateParentHeight && direction) {
-                                animateParentHeight(elements, direction[0], redirectDuration + opts.delay, redirectOptions.stagger);
-                            }
-                        };
-                    }
-                    /* If the user isn't overriding the display option, default to "auto" for "In"-suffixed transitions. */
-                    //					if (redirectOptions.display !== null) {
-                    //						if (redirectOptions.display !== undefined && redirectOptions.display !== "none") {
-                    //							opts.display = redirectOptions.display;
-                    //						} else if (/In$/.test(effectName)) {
-                    //							/* Inline elements cannot be subjected to transforms, so we switch them to inline-block. */
-                    //							let defaultDisplay = CSS.Values.getDisplayType(element);
-                    //							opts.display = (defaultDisplay === "inline") ? "inline-block" : defaultDisplay;
-                    //						}
-                    //					}
-                                        if (redirectOptions.visibility && redirectOptions.visibility !== "hidden") {
-                        opts.visibility = redirectOptions.visibility;
-                    }
-                }
-                /* Special processing for the last effect call. */                if (callIndex === properties.calls.length - 1) {
-                    /* Append promise resolving onto the user's redirect callback. */
-                    var injectFinalCallbacks_1 = function() {
-                        if ((redirectOptions.display === undefined || redirectOptions.display === "none") && /Out$/.test(effectName)) {
-                            (elements.nodeType ? [ elements ] : elements).forEach(function(element) {
-                                VelocityStatic.CSS.setPropertyValue(element, "display", "none");
-                            });
-                        }
-                        if (redirectOptions.complete) {
-                            redirectOptions.complete.call(elements, elements);
-                        }
-                        if (resolver) {
-                            resolver(elements || element);
-                        }
-                    };
-                    opts.complete = function() {
-                        if (loop) {
-                            VelocityStatic.Redirects[effectName](element, redirectOptions, elementsIndex, elementsSize, elements, resolver, loop === true ? true : Math.max(0, loop - 1));
-                        }
-                        if (properties.reset) {
-                            for (var resetProperty in properties.reset) {
-                                if (!properties.reset.hasOwnProperty(resetProperty)) {
-                                    continue;
-                                }
-                                var resetValue = properties.reset[resetProperty];
-                                /* Format each non-array value in the reset property map to [ value, value ] so that changes apply
-                                 immediately and DOM querying is avoided (via forcefeeding). */
-                                /* Note: Don't forcefeed hooks, otherwise their hook roots will be defaulted to their null values. */
-                                // TODO: Fix this
-                                //								if (CSS.Hooks.registered[resetProperty] === undefined && (typeof resetValue === "string" || typeof resetValue === "number")) {
-                                //									properties.reset[resetProperty] = [properties.reset[resetProperty], properties.reset[resetProperty]];
-                                //								}
-                                                        }
-                            /* So that the reset values are applied instantly upon the next rAF tick, use a zero duration and parallel queueing. */                            var resetOptions = {
-                                duration: 0,
-                                queue: false
-                            };
-                            /* Since the reset option uses up the complete callback, we trigger the user's complete callback at the end of ours. */                            if (finalElement) {
-                                resetOptions.complete = injectFinalCallbacks_1;
-                            }
-                            VelocityFn(element, properties.reset, resetOptions);
-                            /* Only trigger the user's complete callback on the last effect call with the last element in the set. */                        } else if (finalElement) {
-                            injectFinalCallbacks_1();
-                        }
-                    };
-                    if (redirectOptions.visibility === "hidden") {
-                        opts.visibility = redirectOptions.visibility;
-                    }
-                }
-                VelocityFn(element, propertyMap, opts);
-            };
-            /* Iterate through each effect's call array. */            for (var callIndex = 0; callIndex < properties.calls.length; callIndex++) {
-                _loop_1(callIndex);
-            }
-        };
-        /* Return the Velocity object so that RegisterUI calls can be chained. */        return VelocityFn;
-    }
-    VelocityStatic.RegisterEffect = RegisterEffect;
-})(VelocityStatic || (VelocityStatic = {}));
-
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- *
  * Tweens
  */
 var VelocityStatic;
@@ -3204,7 +3022,7 @@ var VelocityStatic;
         return value.call(element, elementArrayIndex, elements.length);
     });
     commands.set("number", function(value, element, elements, elementArrayIndex, propertyName, tween) {
-        return value + VelocityStatic.getNormalizationUnit(tween.fn);
+        return String(value) + VelocityStatic.getNormalizationUnit(tween.fn);
     });
     commands.set("string", function(value, element, elements, elementArrayIndex, propertyName, tween) {
         return VelocityStatic.CSS.fixColors(value);
@@ -3217,7 +3035,7 @@ var VelocityStatic;
      * pre-allocates the array as it is then the correct size and slightly
      * faster to access.
      */    function expandProperties(animation, properties) {
-        var tweens = animation.tweens = createEmptyObject(), elements = animation.elements, element = animation.element, elementArrayIndex = elements.indexOf(element), data = Data(element), queue = getValue(animation.queue, animation.options.queue), duration = getValue(animation.options.duration, VelocityStatic.defaults.duration);
+        var tweens = animation.tweens = {}, elements = animation.elements, element = animation.element, elementArrayIndex = elements.indexOf(element), data = Data(element), queue = getValue(animation.queue, animation.options.queue), duration = getValue(animation.options.duration, VelocityStatic.defaults.duration);
         for (var property in properties) {
             var propertyName = VelocityStatic.CSS.camelCase(property);
             var valueData = properties[property], fn = VelocityStatic.getNormalization(element, propertyName);
@@ -3233,7 +3051,7 @@ var VelocityStatic;
                 }
                 continue;
             }
-            var tween_3 = tweens[propertyName] = createEmptyObject();
+            var tween_3 = tweens[propertyName] = {};
             var endValue = void 0, startValue = void 0;
             tween_3.fn = fn;
             if (isFunction(valueData)) {
@@ -3284,7 +3102,7 @@ var VelocityStatic;
         // numbers later.
                 for (var part = 0; part < partsLength; part++) {
             if (isString(parts[part])) {
-                tokens[part] = _objectAssign([], parts[part].match(rxToken));
+                tokens[part] = cloneArray(parts[part].match(rxToken));
                 indexes[part] = 0;
                 // If it matches more than one thing then we've got a number.
                                 numbers = numbers || tokens[part].length > 1;
@@ -3523,10 +3341,10 @@ var VelocityStatic;
  */ var VelocityStatic;
 
 (function(VelocityStatic) {
-    VelocityStatic.Sequences = createEmptyObject();
+    VelocityStatic.Sequences = {};
     var rxPercents = /(\d*\.\d+|\d+\.?|from|to)/g;
     function expandSequence(animation, sequence) {
-        var tweens = animation.tweens = createEmptyObject(), element = animation.element;
+        var tweens = animation.tweens = {}, element = animation.element;
         for (var propertyName in sequence.tweens) {
             var fn = VelocityStatic.getNormalization(element, propertyName);
             if (!fn && propertyName !== "tween") {
@@ -3563,8 +3381,8 @@ var VelocityStatic;
                 if (VelocityStatic.Sequences[name_4]) {
                     console.warn("VelocityJS: Replacing named sequence:", name_4);
                 }
-                var percents_1 = {}, steps_1 = new Array(100), properties = [], percentages = [], sequenceList = VelocityStatic.Sequences[name_4] = createEmptyObject(), duration = validateDuration(sequence.duration);
-                sequenceList.tweens = createEmptyObject();
+                var percents_1 = {}, steps_1 = new Array(100), properties = [], percentages = [], sequenceList = VelocityStatic.Sequences[name_4] = {}, duration = validateDuration(sequence.duration);
+                sequenceList.tweens = {};
                 if (isNumber(duration)) {
                     sequenceList.duration = duration;
                 }
@@ -4372,18 +4190,18 @@ function VelocityFn() {
     } else if (isWrapped(this)) {
         // This might be a chain from something else, but if chained from a
         // previous Velocity() call then grab the animations it's related to.
-        elements = _objectAssign([], this);
+        elements = cloneArray(this);
         if (isVelocityResult(this)) {
             animations = this.velocity.animations;
         }
     } else if (syntacticSugar) {
-        elements = _objectAssign([], args0.elements || args0.e);
+        elements = cloneArray(args0.elements || args0.e);
         argumentIndex++;
     } else if (isNode(args0)) {
-        elements = _objectAssign([], [ args0 ]);
+        elements = cloneArray([ args0 ]);
         argumentIndex++;
     } else if (isWrapped(args0)) {
-        elements = _objectAssign([], args0);
+        elements = cloneArray(args0);
         argumentIndex++;
     }
     // Allow elements to be chained.
@@ -4602,8 +4420,8 @@ function VelocityFn() {
             timeStart: 0
         };
         animations = [];
-        for (var index = 0; index < elements.length; index++) {
-            var element = elements[index];
+        for (var _a = 0, elements_4 = elements; _a < elements_4.length; _a++) {
+            var element = elements_4[_a];
             var flags = 0;
             if (isNode(element)) {
                 if (isReverse) {
@@ -4615,11 +4433,11 @@ function VelocityFn() {
                     }
                     flags |= 64 /* REVERSE */ & ~(lastAnimation._flags & 64 /* REVERSE */);
                 }
-                var animation = _objectAssign({
+                var animation = __assign({}, rootAnimation, {
+                    _flags: rootAnimation._flags | flags,
                     element: element
-                }, rootAnimation);
+                });
                 options._total++;
-                animation._flags |= flags;
                 animations.push(animation);
                 if (maybeSequence) {
                     VelocityStatic.expandSequence(animation, maybeSequence);
@@ -4628,7 +4446,7 @@ function VelocityFn() {
                     // it will be expanded correctly when that one runs.
                     animation.tweens = propertiesMap;
                 } else {
-                    animation.tweens = createEmptyObject();
+                    animation.tweens = {};
                     VelocityStatic.expandProperties(animation, propertiesMap);
                 }
                 VelocityStatic.queue(element, animation, options.queue);
@@ -7011,7 +6829,7 @@ var VelocityStatic;
     })(UI = VelocityStatic.UI || (VelocityStatic.UI = {}));
 })(VelocityStatic || (VelocityStatic = {}));
 
-var _loop_2 = function(key) {
+var _loop_1 = function(key) {
     var value = VelocityStatic[key];
     if (isString(value) || isNumber(value) || isBoolean(value)) {
         Object.defineProperty(VelocityFn, key, {
@@ -7049,7 +6867,7 @@ var _loop_2 = function(key) {
  * use. This is done as a read-only way. Any attempt to change these values will
  * be allowed.
  */ for (var key in VelocityStatic) {
-    _loop_2(key);
+    _loop_1(key);
 }
 // console.log("Velocity keys", Object.keys(VelocityStatic));
 //# sourceMappingURL=velocity.js.map

@@ -11,7 +11,7 @@ interface VelocityEasingsType {
 }
 
 namespace VelocityStatic.Easing {
-	export const Easings: {[name: string]: VelocityEasingFn} = createEmptyObject();
+	export const Easings: {[name: string]: VelocityEasingFn} = {};
 
 	/**
 	 * Used to register a easing. This should never be called by users

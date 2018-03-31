@@ -14,7 +14,7 @@ namespace VelocityStatic {
 		return (value as any as VelocityPropertyValueFn).call(element, elementArrayIndex, elements.length);
 	})
 	commands.set("number", function(value, element, elements, elementArrayIndex, propertyName, tween) {
-		return value + getNormalizationUnit(tween.fn);
+		return String(value) + getNormalizationUnit(tween.fn);
 	});
 	commands.set("string", function(value, element, elements, elementArrayIndex, propertyName, tween) {
 		return CSS.fixColors(value);
@@ -29,7 +29,7 @@ namespace VelocityStatic {
 	 * faster to access.
 	 */
 	export function expandProperties(animation: AnimationCall, properties: VelocityProperties) {
-		const tweens = animation.tweens = createEmptyObject(),
+		const tweens = animation.tweens = {},
 			elements = animation.elements,
 			element = animation.element,
 			elementArrayIndex = elements.indexOf(element),
@@ -54,7 +54,7 @@ namespace VelocityStatic {
 				}
 				continue;
 			}
-			const tween: VelocityTween = tweens[propertyName] = createEmptyObject() as any;
+			const tween: VelocityTween = tweens[propertyName] = {} as any;
 			let endValue: string,
 				startValue: string;
 
@@ -115,7 +115,7 @@ namespace VelocityStatic {
 		// numbers later.
 		for (let part = 0; part < partsLength; part++) {
 			if (isString(parts[part])) {
-				tokens[part] = _objectAssign([], parts[part].match(rxToken));
+				tokens[part] = cloneArray(parts[part].match(rxToken));
 				indexes[part] = 0;
 				// If it matches more than one thing then we've got a number.
 				numbers = numbers || tokens[part].length > 1;

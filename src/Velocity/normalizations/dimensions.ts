@@ -19,12 +19,11 @@ namespace VelocityStatic {
 			// give the outerWidth / outerHeight.
 			const sides = name === "width" ? ["Left", "Right"] : ["Top", "Bottom"],
 				fields = ["padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width"];
-			let i: number,
-				value: number,
-				augment = 0;
+			let augment = 0;
 
-			for (i = 0; i < fields.length; i++) {
-				value = parseFloat(CSS.getPropertyValue(element, fields[i]) as string);
+			for (const field of fields) {
+				const value = parseFloat(CSS.getPropertyValue(element, field) as string);
+
 				if (!isNaN(value)) {
 					augment += value;
 				}

@@ -24,8 +24,7 @@ namespace VelocityStatic.CSS {
 	export function getUnit(property: string, start?: number): string {
 		start = start || 0;
 		if (property[start] && property[start] !== " ") {
-			for (let i = 0, units = Units; i < units.length; i++) {
-				const unit = units[i];
+			for (const unit of Units) {
 				let j = 0;
 
 				do {

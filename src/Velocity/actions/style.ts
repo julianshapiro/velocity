@@ -51,8 +51,8 @@ namespace VelocityStatic {
 			}
 			const result = [];
 
-			for (let i = 0; i < elements.length; i++) {
-				result.push(CSS.fixColors(CSS.getPropertyValue(elements[i], property)));
+			for (const element of elements) {
+				result.push(CSS.fixColors(CSS.getPropertyValue(element, property)));
 			}
 			return result;
 		}
@@ -61,11 +61,11 @@ namespace VelocityStatic {
 
 		if (isPlainObject(property)) {
 			for (const propertyName in property) {
-				for (let i = 0; i < elements.length; i++) {
+				for (const element of elements) {
 					const value = property[propertyName];
 
 					if (isString(value) || isNumber(value)) {
-						CSS.setPropertyValue(elements[i], propertyName, property[propertyName]);
+						CSS.setPropertyValue(element, propertyName, property[propertyName]);
 					} else {
 						error = (error ? error + ", " : "") + "Cannot set a property '" + propertyName + "' to an unknown type: " + (typeof value);
 						console.warn("VelocityJS: Cannot set a property '" + propertyName + "' to an unknown type:", value);
@@ -73,8 +73,8 @@ namespace VelocityStatic {
 				}
 			}
 		} else if (isString(value) || isNumber(value)) {
-			for (let i = 0; i < elements.length; i++) {
-				CSS.setPropertyValue(elements[i], property, String(value));
+			for (const element of elements) {
+				CSS.setPropertyValue(element, property, String(value));
 			}
 		} else {
 			error = "Cannot set a property '" + property + "' to an unknown type: " + (typeof value);

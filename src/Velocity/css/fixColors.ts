@@ -10,7 +10,7 @@ namespace VelocityStatic.CSS {
 	 * that the actual name conversion can be in a separate file and not
 	 * included for custom builds.
 	 */
-	export const ColorNames: {[name: string]: string} = createEmptyObject();
+	export const ColorNames: {[name: string]: string} = {};
 
 	/**
 	 * Convert a hex list to an rgba value. Designed to be used in replace.

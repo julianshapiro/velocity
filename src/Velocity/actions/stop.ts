@@ -45,8 +45,8 @@ namespace VelocityStatic {
 			finishAll = args[queueName === undefined ? 0 : 1] === true;
 
 		if (isVelocityResult(elements) && elements.velocity.animations) {
-			for (let i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-				checkAnimationShouldBeStopped(animations[i], queueName, defaultQueue);
+			for (const animation of elements.velocity.animations) {
+				checkAnimationShouldBeStopped(animation, queueName, defaultQueue);
 			}
 		} else {
 			let activeCall = State.first,

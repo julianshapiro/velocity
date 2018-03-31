@@ -100,18 +100,18 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 	} else if (isWrapped(this)) {
 		// This might be a chain from something else, but if chained from a
 		// previous Velocity() call then grab the animations it's related to.
-		elements = _objectAssign([], this as HTMLorSVGElement[]) as VelocityResult;
+		elements = cloneArray(this as HTMLorSVGElement[]) as VelocityResult;
 		if (isVelocityResult(this)) {
 			animations = (this as VelocityResult).velocity.animations;
 		}
 	} else if (syntacticSugar) {
-		elements = _objectAssign([], args0.elements || args0.e) as VelocityResult;
+		elements = cloneArray(args0.elements || args0.e) as VelocityResult;
 		argumentIndex++;
 	} else if (isNode(args0)) {
-		elements = _objectAssign([], [args0]) as VelocityResult;
+		elements = cloneArray([args0]) as VelocityResult;
 		argumentIndex++;
 	} else if (isWrapped(args0)) {
-		elements = _objectAssign([], args0) as VelocityResult;
+		elements = cloneArray(args0) as VelocityResult;
 		argumentIndex++;
 	}
 	// Allow elements to be chained.
@@ -359,8 +359,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 		};
 
 		animations = [];
-		for (let index = 0; index < elements.length; index++) {
-			const element = elements[index];
+		for (const element of elements) {
 			let flags = 0;
 
 			if (isNode(element)) { // TODO: This needs to check for valid animation targets, not just Elements
@@ -374,12 +373,13 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 					}
 					flags |= AnimationFlags.REVERSE & ~(lastAnimation._flags & AnimationFlags.REVERSE);
 				}
-				const animation: AnimationCall = _objectAssign({
+				const animation: AnimationCall = {
+					...rootAnimation,
+					_flags: rootAnimation._flags | flags,
 					element: element
-				}, rootAnimation);
+				};
 
 				options._total++;
-				animation._flags |= flags;
 				animations.push(animation);
 				if (maybeSequence) {
 					VelocityStatic.expandSequence(animation, maybeSequence);
@@ -388,7 +388,7 @@ function VelocityFn(this: VelocityElements | void, ...__args: any[]): VelocityRe
 					// it will be expanded correctly when that one runs.
 					animation.tweens = propertiesMap as any;
 				} else {
-					animation.tweens = createEmptyObject();
+					animation.tweens = {};
 					VelocityStatic.expandProperties(animation, propertiesMap);
 				}
 				VelocityStatic.queue(element, animation, options.queue);

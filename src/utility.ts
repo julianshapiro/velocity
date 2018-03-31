@@ -5,13 +5,6 @@
  */
 
 /**
- * Creates an empty object without any prototype chain.
- */
-function createEmptyObject() {
-	return Object.create(null);
-}
-
-/**
  * The <strong><code>defineProperty()</code></strong> function provides a
  * shortcut to defining a property that cannot be accidentally iterated across.
  */
@@ -35,29 +28,11 @@ const _now = Date.now ? Date.now : function() {
 };
 
 /**
- * Shim for Object.assign on IE, based on:
- * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
+ * Clone an array, works for array-like too.
  */
-const _objectAssign = Object.assign || function(target: any, ...sources: any[]) {
-	if (target == null) { // TypeError if undefined or null
-		throw new TypeError("Cannot convert undefined or null to object");
-	}
-	const to = Object(target);
-
-	for (let index = 0; index < sources.length; index++) {
-		const nextSource = sources[index];
-
-		if (nextSource != null) { // Skip over if undefined or null
-			for (let nextKey in nextSource) {
-				// Avoid bugs when hasOwnProperty is shadowed
-				if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-					to[nextKey] = nextSource[nextKey];
-				}
-			}
-		}
-	}
-	return to;
-} as typeof Object["assign"];
+function cloneArray<T = any>(arrayLike: T[] | ArrayLike<T>): T[] {
+	return Array.prototype.slice.call(arrayLike, 0);
+}
 
 /**
  * Shim for "string".startsWith on IE, based on:

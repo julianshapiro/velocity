@@ -34,8 +34,8 @@ namespace VelocityStatic {
 			defaultQueue = defaults.queue;
 
 		if (isVelocityResult(elements) && elements.velocity.animations) {
-			for (let i = 0, animations = elements.velocity.animations; i < animations.length; i++) {
-				checkAnimation(animations[i], queueName, defaultQueue, isPaused);
+			for (const animation of elements.velocity.animations) {
+				checkAnimation(animation, queueName, defaultQueue, isPaused);
 			}
 		} else {
 			let activeCall: AnimationCall = State.first;

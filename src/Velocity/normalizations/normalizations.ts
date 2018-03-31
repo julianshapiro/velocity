@@ -29,7 +29,7 @@ namespace VelocityStatic {
 	 * 
 	 * This is pretty much confined to adding "px" to several css properties.
 	 */
-	export const NormalizationUnits: {[unit: string]: VelocityNormalizationsFn[]} = createEmptyObject();
+	export const NormalizationUnits: {[unit: string]: VelocityNormalizationsFn[]} = {};
 
 	/**
 	 * Any normalisations that should never be cached are listed here.
@@ -80,7 +80,7 @@ namespace VelocityStatic {
 
 			if (index < 0) {
 				MaxType = index = constructors.push(constructor) - 1;
-				Normalizations[index] = createEmptyObject();
+				Normalizations[index] = {};
 			}
 			Normalizations[index][name] = callback;
 			if (isString(args[nextArg])) {
