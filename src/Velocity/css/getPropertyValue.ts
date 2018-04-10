@@ -16,11 +16,14 @@ namespace VelocityStatic.CSS {
 		if (data && !data.computedStyle) {
 			data.computedStyle = computedStyle;
 		}
-		if (property === "width" || property === "height") {
-			// Browsers do not return height and width values for elements
-			// that are set to display:"none". Thus, we temporarily toggle
-			// display to the element type's default value.
-			const toggleDisplay: boolean = getPropertyValue(element, "display") === "none";
+
+		// Browsers do not return height and width values for elements
+		// that are set to display:"none". Thus, we temporarily toggle
+		// display to the element type's default value.
+		/*const toggleDisplay: boolean = element.style.display === "none";*/
+		const toggleDisplay = computedStyle["display"] === "none";
+
+		if ((property === "width" || property === "height") && toggleDisplay) {
 
 			// When box-sizing isn't set to border-box, height and width
 			// style values are incorrectly computed when an element's
@@ -31,13 +34,9 @@ namespace VelocityStatic.CSS {
 			// subtract border and padding to get the sum of interior +
 			// scrollbar.
 			// TODO: offsetHeight does not exist on SVGElement
-			if (toggleDisplay) {
-				setPropertyValue(element, "display", "auto");
-			}
+			setPropertyValue(element, "display", "auto");
 			computedValue = augmentDimension(element, property, true);
-			if (toggleDisplay) {
-				setPropertyValue(element, "display", "none");
-			}
+			setPropertyValue(element, "display", "none");
 			return String(computedValue);
 		}
 

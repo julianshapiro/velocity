@@ -141,11 +141,6 @@ function isEmptyObject(variable) {
     return true;
 }
 
-/*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
- *
- * Licensed under the MIT license. See LICENSE file in the project root for details.
- */
 /**
  * Creates an empty object without any prototype chain.
  */ function createEmptyObject() {
@@ -182,12 +177,14 @@ function isEmptyObject(variable) {
         sources[_i - 1] = arguments[_i];
     }
     if (target == null) {
+        // TypeError if undefined or null
         throw new TypeError("Cannot convert undefined or null to object");
     }
     var to = Object(target);
     for (var index = 0; index < sources.length; index++) {
         var nextSource = sources[index];
         if (nextSource != null) {
+            // Skip over if undefined or null
             for (var nextKey in nextSource) {
                 // Avoid bugs when hasOwnProperty is shadowed
                 if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
@@ -1238,11 +1235,11 @@ var VelocityStatic;
             if (data && !data.computedStyle) {
                 data.computedStyle = computedStyle;
             }
-            if (property === "width" || property === "height") {
-                // Browsers do not return height and width values for elements
-                // that are set to display:"none". Thus, we temporarily toggle
-                // display to the element type's default value.
-                var toggleDisplay = getPropertyValue(element, "display") === "none";
+            // Browsers do not return height and width values for elements
+            // that are set to display:"none". Thus, we temporarily toggle
+            // display to the element type's default value.
+            /*const toggleDisplay: boolean = element.style.display === "none";*/            var toggleDisplay = computedStyle["display"] === "none";
+            if ((property === "width" || property === "height") && toggleDisplay) {
                 // When box-sizing isn't set to border-box, height and width
                 // style values are incorrectly computed when an element's
                 // scrollbars are visible (which expands the element's
@@ -1252,13 +1249,9 @@ var VelocityStatic;
                 // subtract border and padding to get the sum of interior +
                 // scrollbar.
                 // TODO: offsetHeight does not exist on SVGElement
-                                if (toggleDisplay) {
-                    CSS.setPropertyValue(element, "display", "auto");
-                }
+                CSS.setPropertyValue(element, "display", "auto");
                 computedValue = VelocityStatic.augmentDimension(element, property, true);
-                if (toggleDisplay) {
-                    CSS.setPropertyValue(element, "display", "none");
-                }
+                CSS.setPropertyValue(element, "display", "none");
                 return String(computedValue);
             }
             /* IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
@@ -2066,6 +2059,7 @@ var VelocityStatic;
         Object.getOwnPropertyNames(window).forEach(function(globals) {
             var subtype = rxSubtype.exec(globals);
             if (subtype && subtype[1] !== "SVG") {
+                // Don't do SVGSVGElement.
                 try {
                     var element = subtype[1] ? document.createElementNS("http://www.w3.org/2000/svg", (subtype[1] || "svg").toLowerCase()) : document.createElement("svg"), constructor = element.constructor;
                     for (var attribute in element) {
@@ -2940,7 +2934,7 @@ var VelocityStatic;
 
 (function(VelocityStatic) {
     /* Container for the user's custom animation redirects that are referenced by name in place of the properties map argument. */
-    VelocityStatic.Redirects = {};
+    VelocityStatic.Redirects = {/* Manually registered by the user. */};
     /***********************
      Packaged Redirects
      ***********************/
@@ -4606,6 +4600,7 @@ function VelocityFn() {
             var element = elements[index];
             var flags = 0;
             if (isNode(element)) {
+                // TODO: This needs to check for valid animation targets, not just Elements
                 if (isReverse) {
                     var lastAnimation = Data(element).lastAnimationList[options.queue];
                     propertiesMap = lastAnimation && lastAnimation.tweens;
