@@ -1,4 +1,3 @@
-///<reference path="easings.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -7,60 +6,72 @@
  * Bounce easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
  */
 
-interface VelocityEasingsType {
-	"easeInBounce": true;
-	"easeOutBounce": true;
-	"easeInOutBounce": true;
+import {Velocity} from "../../../index.d";
+
+import {registerEasing} from "./easings";
+
+export declare namespace Velocity {
+	export interface VelocityEasingsType {
+		"easeInBounce": true;
+		"easeOutBounce": true;
+		"easeInOutBounce": true;
+	}
 }
 
-namespace VelocityStatic.Easing {
-	function easeOutBounce(percentComplete: number): number {
-		if (percentComplete < 1 / 2.75) {
-			return (7.5625 * percentComplete * percentComplete);
-		}
-		if (percentComplete < 2 / 2.75) {
-			return (7.5625 * (percentComplete -= 1.5 / 2.75) * percentComplete + 0.75);
-		}
-		if (percentComplete < 2.5 / 2.75) {
-			return (7.5625 * (percentComplete -= 2.25 / 2.75) * percentComplete + 0.9375);
-		}
-		return (7.5625 * (percentComplete -= 2.625 / 2.75) * percentComplete + 0.984375);
-	};
+function easeOutBouncePercent(percentComplete: number): number {
+	if (percentComplete < 1 / 2.75) {
+		return (7.5625 * percentComplete * percentComplete);
+	}
+	if (percentComplete < 2 / 2.75) {
+		return (7.5625 * (percentComplete -= 1.5 / 2.75) * percentComplete + 0.75);
+	}
+	if (percentComplete < 2.5 / 2.75) {
+		return (7.5625 * (percentComplete -= 2.25 / 2.75) * percentComplete + 0.9375);
+	}
 
-	function easeInBounce(percentComplete: number): number {
-		return 1 - easeOutBounce(1 - percentComplete);
-	};
+	return (7.5625 * (percentComplete -= 2.625 / 2.75) * percentComplete + 0.984375);
+}
 
-	registerEasing(["easeInBounce", function(percentComplete: number, startValue: number, endValue: number): number {
-		if (percentComplete === 0) {
-			return startValue;
-		}
-		if (percentComplete === 1) {
-			return endValue;
-		}
-		return easeInBounce(percentComplete) * (endValue - startValue);
-	}]);
+function easeInBouncePercent(percentComplete: number): number {
+	return 1 - easeOutBouncePercent(1 - percentComplete);
+}
 
-	registerEasing(["easeOutBounce", function(percentComplete: number, startValue: number, endValue: number): number {
-		if (percentComplete === 0) {
-			return startValue;
-		}
-		if (percentComplete === 1) {
-			return endValue;
-		}
-		return easeOutBounce(percentComplete) * (endValue - startValue);
-	}]);
+export function easeInBounce(percentComplete: number, startValue: number, endValue: number): number {
+	if (percentComplete === 0) {
+		return startValue;
+	}
+	if (percentComplete === 1) {
+		return endValue;
+	}
 
-	registerEasing(["easeInOutBounce", function(percentComplete: number, startValue: number, endValue: number): number {
-		if (percentComplete === 0) {
-			return startValue;
-		}
-		if (percentComplete === 1) {
-			return endValue;
-		}
-		return (percentComplete < 0.5
-			? easeInBounce(percentComplete * 2) * .5
-			: easeOutBounce(percentComplete * 2 - 1) * 0.5 + 0.5
-		) * (endValue - startValue);
-	}]);
-};
+	return easeInBouncePercent(percentComplete) * (endValue - startValue);
+}
+
+export function easeOutBounce(percentComplete: number, startValue: number, endValue: number): number {
+	if (percentComplete === 0) {
+		return startValue;
+	}
+	if (percentComplete === 1) {
+		return endValue;
+	}
+
+	return easeOutBouncePercent(percentComplete) * (endValue - startValue);
+}
+
+export function easeInOutBounce(percentComplete: number, startValue: number, endValue: number): number {
+	if (percentComplete === 0) {
+		return startValue;
+	}
+	if (percentComplete === 1) {
+		return endValue;
+	}
+
+	return (percentComplete < 0.5
+		? easeInBouncePercent(percentComplete * 2) * 0.5
+		: easeOutBouncePercent(percentComplete * 2 - 1) * 0.5 + 0.5
+	) * (endValue - startValue);
+}
+
+registerEasing(["easeInBounce", easeInBounce]);
+registerEasing(["easeOutBounce", easeOutBounce]);
+registerEasing(["easeInOutBounce", easeInOutBounce]);

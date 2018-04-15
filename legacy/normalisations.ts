@@ -17,7 +17,7 @@ if (IE <= 8) {
 		}
 	} catch (error) {
 		if (debug) {
-			console.log("Browser does not support [" + propertyValue + "] for [" + propertyName + "]");
+			console.log(`Browser does not support [${propertyValue}] for [${propertyName}]`);
 		}
 	}
 }

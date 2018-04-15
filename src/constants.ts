@@ -7,37 +7,35 @@
  * version bump.
  */
 
-//["completeCall", "CSS", "State", "getEasing", "Easings", "data", "debug", "defaults", "hook", "init", "mock", "pauseAll", "queue", "dequeue", "freeAnimationCall", "Redirects", "RegisterEffect", "resumeAll", "RunSequence", "lastTick", "tick", "timestamp", "expandTween", "version"]
-const PUBLIC_MEMBERS = ["version", "RegisterEffect", "style", "patch", "timestamp"];
 /**
  * Without this it will only un-prefix properties that have a valid "normal"
  * version.
  */
-const ALL_VENDOR_PREFIXES = true;
+export const ALL_VENDOR_PREFIXES = true;
 
-const DURATION_FAST = 200;
-const DURATION_NORMAL = 400;
-const DURATION_SLOW = 600;
+export const DURATION_FAST = 200;
+export const DURATION_NORMAL = 400;
+export const DURATION_SLOW = 600;
 
-const FUZZY_MS_PER_SECOND = 980;
+export const FUZZY_MS_PER_SECOND = 980;
 
-const DEFAULT_CACHE = true;
-const DEFAULT_DELAY = 0;
-const DEFAULT_DURATION = DURATION_NORMAL;
-const DEFAULT_EASING = "swing";
-const DEFAULT_FPSLIMIT = 60;
-const DEFAULT_LOOP = 0;
-const DEFAULT_PROMISE = true;
-const DEFAULT_PROMISE_REJECT_EMPTY = true;
-const DEFAULT_QUEUE = "";
-const DEFAULT_REPEAT = 0;
-const DEFAULT_SPEED = 1;
-const DEFAULT_SYNC = true;
+export const DEFAULT_CACHE = true;
+export const DEFAULT_DELAY = 0;
+export const DEFAULT_DURATION = DURATION_NORMAL;
+export const DEFAULT_EASING = "swing";
+export const DEFAULT_FPSLIMIT = 60;
+export const DEFAULT_LOOP = 0;
+export const DEFAULT_PROMISE = true;
+export const DEFAULT_PROMISE_REJECT_EMPTY = true;
+export const DEFAULT_QUEUE = "";
+export const DEFAULT_REPEAT = 0;
+export const DEFAULT_SPEED = 1;
+export const DEFAULT_SYNC = true;
 
-const CLASSNAME = "velocity-animating";
+export const CLASSNAME = "velocity-animating";
 
-const Duration = {
-	"fast": DURATION_FAST,
-	"normal": DURATION_NORMAL,
-	"slow": DURATION_SLOW,
+export const Duration = {
+	fast: DURATION_FAST,
+	normal: DURATION_NORMAL,
+	slow: DURATION_SLOW,
 };

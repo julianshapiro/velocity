@@ -1,4 +1,3 @@
-///<reference path="actions.ts" />
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
  *
@@ -7,9 +6,15 @@
  * Actions that can be performed by passing a string instead of a propertiesMap.
  */
 
-namespace VelocityStatic {
-	registerAction(["reverse", function(args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) {
-		// TODO: Code needs to split out before here - but this is needed to prevent it being overridden
-		throw new SyntaxError("VelocityJS: The 'reverse' action is private.");
-	}], true)
-}
+import {
+	HTMLorSVGElement,
+	VelocityPromise,
+	VelocityResult,
+} from "../../../index.d";
+
+import {registerAction} from "./actions";
+
+registerAction(["reverse", (args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) => {
+	// NOTE: Code needs to split out before here - but this is needed to prevent it being overridden
+	throw new SyntaxError("VelocityJS: The 'reverse' action is built in and private.");
+}], true);

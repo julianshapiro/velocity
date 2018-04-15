@@ -6,19 +6,22 @@
 		"forceConsistentCasingInFileNames": true,
 		"noEmitOnError": true,
 		"noImplicitAny": false,
-		"outFile": "build/velocity.js",
+		"module": "es2015",
+		"moduleResolution": "node",
+		"outDir": "build/",
 		"preserveConstEnums": true,
 		"removeComments": false,
 		"sourceMap": true,
-		"inlineSources": true,
-		"target": "es5",
+		"target": "es6",
 		"lib" : [
-			"es6",
 			"dom",
+			"es6",
+			"es2016",
 			"scripthost"
 		]
 	},
 	"files": [
-		"src/app.ts"
+		"src/app.ts",
+		"test/src/app.ts"
 	]
 }
