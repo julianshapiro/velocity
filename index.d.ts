@@ -443,6 +443,10 @@ export interface ElementData {
 	 * otherwise it will start as if one frame in already.
 	 */
 	lastFinishList: {[name: string]: number};
+	/**
+	 * The window used for this element.
+	 */
+	window: Window;
 }
 
 /**

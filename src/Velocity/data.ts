@@ -39,6 +39,7 @@ export function Data(element: HTMLorSVGElement): ElementData {
 		queueList: {},
 		lastAnimationList: {},
 		lastFinishList: {},
+		window: element.ownerDocument.defaultView,
 	};
 	Object.defineProperty(element, dataName, {
 		value: newData,

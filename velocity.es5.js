@@ -211,7 +211,8 @@ function Data(element) {
         cache: {},
         queueList: {},
         lastAnimationList: {},
-        lastFinishList: {}
+        lastFinishList: {},
+        window: element.ownerDocument.defaultView
     };
     Object.defineProperty(element, dataName, {
         value: newData
@@ -1615,9 +1616,9 @@ function computePropertyValue(element, property) {
 
     // If computedStyle is cached, use it. If not then get the correct one
     // for the element to support cross-iframe boundaries.
-    computedStyle = data && data.computedStyle ? data.computedStyle : element.ownerDocument.defaultView.getComputedStyle(element, null);
+    computedStyle = data.computedStyle ? data.computedStyle : data.window.getComputedStyle(element, null);
     var computedValue = 0;
-    if (data && !data.computedStyle) {
+    if (!data.computedStyle) {
         data.computedStyle = computedStyle;
     }
     if (computedStyle["display"] === "none") {

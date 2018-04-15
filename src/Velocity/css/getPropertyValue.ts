@@ -21,10 +21,10 @@ export function computePropertyValue(element: HTMLorSVGElement, property: string
 	const data = Data(element),
 		// If computedStyle is cached, use it. If not then get the correct one
 		// for the element to support cross-iframe boundaries.
-		computedStyle = data && data.computedStyle ? data.computedStyle : element.ownerDocument.defaultView.getComputedStyle(element, null);
+		computedStyle = data.computedStyle ? data.computedStyle : data.window.getComputedStyle(element, null);
 	let computedValue: string | number = 0;
 
-	if (data && !data.computedStyle) {
+	if (!data.computedStyle) {
 		data.computedStyle = computedStyle;
 	}
 	if (computedStyle["display"] === "none") {
