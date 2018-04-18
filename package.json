@@ -38,6 +38,7 @@
   "types": "index.d.ts",
   "repository": "julianshapiro/velocity",
   "files": [
+    "index.d.ts",
     "velocity.js",
     "velocity.min.js",
     "velocity.ui.js",
