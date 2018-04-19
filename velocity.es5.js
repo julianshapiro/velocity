@@ -197,13 +197,19 @@ function Data(element) {
     if (data) {
         return data;
     }
+    var window = element.ownerDocument.defaultView;
     var types = 0;
     for (var index = 0; index < constructors.length; index++) {
-        if (element instanceof constructors[index]) {
+        var _constructor = constructors[index];
+        if (isString(_constructor)) {
+            if (element instanceof window[_constructor]) {
+                types |= 1 << index; // tslint:disable-line:no-bitwise
+            }
+        } else if (element instanceof _constructor) {
             types |= 1 << index; // tslint:disable-line:no-bitwise
         }
     }
-    // Do it this way so it errors on incorrect data.
+    // Use an intermediate object so it errors on incorrect data.
     var newData = {
         types: types,
         count: 0,
@@ -212,7 +218,7 @@ function Data(element) {
         queueList: {},
         lastAnimationList: {},
         lastFinishList: {},
-        window: element.ownerDocument.defaultView
+        window: window
     };
     Object.defineProperty(element, dataName, {
         value: newData
@@ -1392,7 +1398,14 @@ if (window) {
 /**
  * Used to register a normalization. This should never be called by users
  * directly, instead it should be called via an action:<br/>
- * <code>Velocity("registerNormalization", Element, "name", VelocityNormalizationsFn[, false]);</code>
+ * <code>Velocity("registerNormalization", "Element", "name", VelocityNormalizationsFn[, false]);</code>
+ *
+ * The second argument is the class of the animatable object. If this is passed
+ * as a class name (ie, `"Element"` -> `window["Element"]`) then this will work
+ * cross-iframe. If passed as an actual class (ie `Element`) then it will
+ * attempt to find the class on the window and use that name instead. If it
+ * can't find it then it will use the class passed, which allows for custom
+ * animation targets, but will not work cross-iframe boundary.
  *
  * The fourth argument can be an explicit <code>false</code>, which prevents
  * the property from being cached. Please note that this can be dangerous
@@ -1402,7 +1415,7 @@ function registerNormalization(args) {
     var constructor = args[0],
         name = args[1],
         callback = args[2];
-    if (isString(constructor) || !(constructor instanceof Object)) {
+    if (isString(constructor) && !(window[constructor] instanceof Object) || !(constructor instanceof Object)) {
         console.warn("VelocityJS: Trying to set 'registerNormalization' constructor to an invalid value:", constructor);
     } else if (!isString(name)) {
         console.warn("VelocityJS: Trying to set 'registerNormalization' name to an invalid value:", name);
@@ -1411,6 +1424,18 @@ function registerNormalization(args) {
     } else {
         var index = constructors.indexOf(constructor),
             nextArg = 3;
+        if (index < 0 && constructor instanceof Object) {
+            for (var property in window) {
+                if (window[property] === constructor) {
+                    index = constructors.indexOf(property);
+                    if (index < 0) {
+                        index = constructors.push(property) - 1;
+                        Normalizations[index] = {};
+                    }
+                    break;
+                }
+            }
+        }
         if (index < 0) {
             index = constructors.push(constructor) - 1;
             Normalizations[index] = {};
@@ -6222,10 +6247,10 @@ function getDimension(name, wantInner) {
         setPropertyValue(element, name, parseFloat(propertyValue) - augmentDimension(element, name, wantInner) + "px");
     };
 }
-registerNormalization([Element, "innerWidth", getDimension("width", true)]);
-registerNormalization([Element, "innerHeight", getDimension("height", true)]);
-registerNormalization([Element, "outerWidth", getDimension("width", false)]);
-registerNormalization([Element, "outerHeight", getDimension("height", false)]);
+registerNormalization(["Element", "innerWidth", getDimension("width", true)]);
+registerNormalization(["Element", "innerHeight", getDimension("height", true)]);
+registerNormalization(["Element", "outerWidth", getDimension("width", false)]);
+registerNormalization(["Element", "outerHeight", getDimension("height", false)]);
 
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -6265,7 +6290,7 @@ function display(element, propertyValue) {
     }
     style.display = propertyValue;
 }
-registerNormalization([Element, "display", display]);
+registerNormalization(["Element", "display", display]);
 
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -6316,13 +6341,13 @@ function scroll(direction, end) {
         }
     };
 }
-registerNormalization([HTMLElement, "scroll", scroll("Height", "Top"), false]);
-registerNormalization([HTMLElement, "scrollTop", scroll("Height", "Top"), false]);
-registerNormalization([HTMLElement, "scrollLeft", scroll("Width", "Left"), false]);
-registerNormalization([HTMLElement, "scrollWidth", scrollWidth]);
-registerNormalization([HTMLElement, "clientWidth", clientWidth]);
-registerNormalization([HTMLElement, "scrollHeight", scrollHeight]);
-registerNormalization([HTMLElement, "clientHeight", clientHeight]);
+registerNormalization(["HTMLElement", "scroll", scroll("Height", "Top"), false]);
+registerNormalization(["HTMLElement", "scrollTop", scroll("Height", "Top"), false]);
+registerNormalization(["HTMLElement", "scrollLeft", scroll("Width", "Left"), false]);
+registerNormalization(["HTMLElement", "scrollWidth", scrollWidth]);
+registerNormalization(["HTMLElement", "clientWidth", clientWidth]);
+registerNormalization(["HTMLElement", "scrollHeight", scrollHeight]);
+registerNormalization(["HTMLElement", "clientHeight", clientHeight]);
 
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -6433,11 +6458,11 @@ for (var propertyName in prefixElement.style) {
         });
         if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
             var addUnit = rxAddPx.test(unprefixed) ? "px" : undefined;
-            registerNormalization([Element, unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit]);
+            registerNormalization(["Element", unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit]);
         }
     } else if (!hasNormalization([Element, propertyName])) {
         var _addUnit = rxAddPx.test(propertyName) ? "px" : undefined;
-        registerNormalization([Element, propertyName, getSetStyle(propertyName), _addUnit]);
+        registerNormalization(["Element", propertyName, getSetStyle(propertyName), _addUnit]);
     }
 }
 
@@ -6460,13 +6485,12 @@ function getAttribute(name) {
 var base = document.createElement("div"),
     rxSubtype = /^SVG(.*)Element$/,
     rxElement = /Element$/;
-Object.getOwnPropertyNames(window).forEach(function (globals) {
-    var subtype = rxSubtype.exec(globals);
+Object.getOwnPropertyNames(window).forEach(function (property) {
+    var subtype = rxSubtype.exec(property);
     if (subtype && subtype[1] !== "SVG") {
         // Don't do SVGSVGElement.
         try {
-            var element = subtype[1] ? document.createElementNS("http://www.w3.org/2000/svg", (subtype[1] || "svg").toLowerCase()) : document.createElement("svg"),
-                _constructor = element.constructor;
+            var element = subtype[1] ? document.createElementNS("http://www.w3.org/2000/svg", (subtype[1] || "svg").toLowerCase()) : document.createElement("svg");
             // tslint:disable-next-line:forin
             for (var attribute in element) {
                 // Although this isn't a tween without prototypes, we do
@@ -6474,11 +6498,11 @@ Object.getOwnPropertyNames(window).forEach(function (globals) {
                 var value = element[attribute];
                 if (isString(attribute) && !(attribute[0] === "o" && attribute[1] === "n") && attribute !== attribute.toUpperCase() && !rxElement.test(attribute) && !(attribute in base) && !isFunction(value)) {
                     // TODO: Should this all be set on the generic SVGElement, it would save space and time, but not as powerful
-                    registerNormalization([_constructor, attribute, getAttribute(attribute)]);
+                    registerNormalization([property, attribute, getAttribute(attribute)]);
                 }
             }
         } catch (e) {
-            console.error("VelocityJS: Error when trying to identify SVG attributes on " + globals + ".", e);
+            console.error("VelocityJS: Error when trying to identify SVG attributes on " + property + ".", e);
         }
     }
 });
@@ -6504,8 +6528,8 @@ function getDimension$1(name) {
         element.setAttribute(name, propertyValue);
     };
 }
-registerNormalization([SVGElement, "width", getDimension$1("width")]);
-registerNormalization([SVGElement, "height", getDimension$1("height")]);
+registerNormalization(["SVGElement", "width", getDimension$1("width")]);
+registerNormalization(["SVGElement", "height", getDimension$1("height")]);
 
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.
@@ -6526,7 +6550,7 @@ function getSetTween(element, propertyValue) {
     return "";
   }
 }
-registerNormalization([Element, "tween", getSetTween]);
+registerNormalization(["Element", "tween", getSetTween]);
 
 /*
  * VelocityJS.org (C) 2014-2017 Julian Shapiro.

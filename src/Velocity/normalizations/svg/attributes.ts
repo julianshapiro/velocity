@@ -28,13 +28,12 @@ const base = document.createElement("div"),
 	rxElement = /Element$/;
 
 Object.getOwnPropertyNames(window)
-	.forEach((globals) => {
-		const subtype = rxSubtype.exec(globals);
+	.forEach((property) => {
+		const subtype = rxSubtype.exec(property);
 
 		if (subtype && subtype[1] !== "SVG") { // Don't do SVGSVGElement.
 			try {
-				const element = subtype[1] ? document.createElementNS("http://www.w3.org/2000/svg", (subtype[1] || "svg").toLowerCase()) : document.createElement("svg"),
-					constructor = element.constructor;
+				const element = subtype[1] ? document.createElementNS("http://www.w3.org/2000/svg", (subtype[1] || "svg").toLowerCase()) : document.createElement("svg");
 
 				// tslint:disable-next-line:forin
 				for (const attribute in element) {
@@ -49,11 +48,11 @@ Object.getOwnPropertyNames(window)
 						&& !(attribute in base)
 						&& !isFunction(value)) {
 						// TODO: Should this all be set on the generic SVGElement, it would save space and time, but not as powerful
-						registerNormalization([constructor as any, attribute, getAttribute(attribute)]);
+						registerNormalization([property, attribute, getAttribute(attribute)]);
 					}
 				}
 			} catch (e) {
-				console.error(`VelocityJS: Error when trying to identify SVG attributes on ${globals}.`, e);
+				console.error(`VelocityJS: Error when trying to identify SVG attributes on ${property}.`, e);
 			}
 		}
 	});

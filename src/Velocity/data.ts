@@ -9,6 +9,7 @@ import {
 	HTMLorSVGElement,
 } from "../../index.d";
 
+import {isString} from "../types";
 import {constructors} from "./normalizations/normalizationsObject";
 
 const dataName = "velocityData";
@@ -23,14 +24,21 @@ export function Data(element: HTMLorSVGElement): ElementData {
 	if (data) {
 		return data;
 	}
+	const window = element.ownerDocument.defaultView;
 	let types = 0;
 
 	for (let index = 0; index < constructors.length; index++) {
-		if (element instanceof constructors[index]) {
+		const constructor = constructors[index];
+
+		if (isString(constructor)) {
+			if (element instanceof window[constructor]) {
+				types |= 1 << index; // tslint:disable-line:no-bitwise
+			}
+		} else if (element instanceof constructor) {
 			types |= 1 << index; // tslint:disable-line:no-bitwise
 		}
 	}
-	// Do it this way so it errors on incorrect data.
+	// Use an intermediate object so it errors on incorrect data.
 	const newData: ElementData = {
 		types,
 		count: 0,
@@ -39,8 +47,9 @@ export function Data(element: HTMLorSVGElement): ElementData {
 		queueList: {},
 		lastAnimationList: {},
 		lastFinishList: {},
-		window: element.ownerDocument.defaultView,
+		window,
 	};
+
 	Object.defineProperty(element, dataName, {
 		value: newData,
 	});

@@ -123,11 +123,11 @@ for (const propertyName in prefixElement.style) {
 		if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
 			const addUnit = rxAddPx.test(unprefixed) ? "px" : undefined;
 
-			registerNormalization([Element, unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit]);
+			registerNormalization(["Element", unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit]);
 		}
 	} else if (!hasNormalization([Element, propertyName])) {
 		const addUnit = rxAddPx.test(propertyName) ? "px" : undefined;
 
-		registerNormalization([Element, propertyName, getSetStyle(propertyName), addUnit]);
+		registerNormalization(["Element", propertyName, getSetStyle(propertyName), addUnit]);
 	}
 }

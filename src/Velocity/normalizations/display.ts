@@ -55,4 +55,4 @@ function display(element: HTMLorSVGElement, propertyValue?: string): string | vo
 	style.display = propertyValue;
 }
 
-registerNormalization([Element, "display", display]);
+registerNormalization(["Element", "display", display]);

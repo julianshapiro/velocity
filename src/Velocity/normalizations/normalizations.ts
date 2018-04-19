@@ -24,22 +24,29 @@ import {ClassConstructor, constructors, NoCacheNormalizations, Normalizations, N
 /**
  * Used to register a normalization. This should never be called by users
  * directly, instead it should be called via an action:<br/>
- * <code>Velocity("registerNormalization", Element, "name", VelocityNormalizationsFn[, false]);</code>
+ * <code>Velocity("registerNormalization", "Element", "name", VelocityNormalizationsFn[, false]);</code>
+ *
+ * The second argument is the class of the animatable object. If this is passed
+ * as a class name (ie, `"Element"` -> `window["Element"]`) then this will work
+ * cross-iframe. If passed as an actual class (ie `Element`) then it will
+ * attempt to find the class on the window and use that name instead. If it
+ * can't find it then it will use the class passed, which allows for custom
+ * animation targets, but will not work cross-iframe boundary.
  *
  * The fourth argument can be an explicit <code>false</code>, which prevents
  * the property from being cached. Please note that this can be dangerous
  * for performance!
  */
 export function registerNormalization(
-	args?: [ClassConstructor, string, VelocityNormalizationsFn]
-		| [ClassConstructor, string, VelocityNormalizationsFn, boolean]
-		| [ClassConstructor, string, VelocityNormalizationsFn, string]
-		| [ClassConstructor, string, VelocityNormalizationsFn, string, boolean]) {
+	args?: [ClassConstructor | string, string, VelocityNormalizationsFn]
+		| [ClassConstructor | string, string, VelocityNormalizationsFn, boolean]
+		| [ClassConstructor | string, string, VelocityNormalizationsFn, string]
+		| [ClassConstructor | string, string, VelocityNormalizationsFn, string, boolean]) {
 	const constructor = args[0],
 		name: string = args[1],
 		callback = args[2];
 
-	if (isString(constructor) || !(constructor instanceof Object)) {
+	if ((isString(constructor) && !(window[constructor] instanceof Object)) || !(constructor instanceof Object)) {
 		console.warn(`VelocityJS: Trying to set 'registerNormalization' constructor to an invalid value:`, constructor);
 	} else if (!isString(name)) {
 		console.warn(`VelocityJS: Trying to set 'registerNormalization' name to an invalid value:`, name);
@@ -49,6 +56,18 @@ export function registerNormalization(
 		let index = constructors.indexOf(constructor),
 			nextArg = 3;
 
+		if (index < 0 && constructor instanceof Object) {
+			for (const property in window) {
+				if (window[property] === constructor) {
+					index = constructors.indexOf(property);
+					if (index < 0) {
+						index = constructors.push(property) - 1;
+						Normalizations[index] = {};
+					}
+					break;
+				}
+			}
+		}
 		if (index < 0) {
 			index = constructors.push(constructor) - 1;
 			Normalizations[index] = {};

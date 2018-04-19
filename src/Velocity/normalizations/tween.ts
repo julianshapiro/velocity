@@ -19,4 +19,4 @@ function getSetTween(element: HTMLorSVGElement, propertyValue?: string) {
 	}
 }
 
-registerNormalization([Element, "tween", getSetTween]);
+registerNormalization(["Element", "tween", getSetTween]);

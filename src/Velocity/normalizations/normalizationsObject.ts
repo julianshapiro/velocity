@@ -11,13 +11,8 @@
  */
 
 import {
-	HTMLorSVGElement,
 	VelocityNormalizationsFn,
 } from "../../../index.d";
-
-import {isFunction, isString} from "../../types";
-import {registerAction} from "../actions/actions";
-import {Data} from "../data";
 
 /**
  * The highest type index for finding the best normalization for a property.
@@ -56,4 +51,4 @@ export interface ClassConstructor {
  * the element doesn't need multiple <code>instanceof</code> calls every
  * frame.
  */
-export const constructors: ClassConstructor[] = [];
+export const constructors: (ClassConstructor | string)[] = [];

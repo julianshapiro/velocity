@@ -90,10 +90,10 @@ function scroll(direction: "Height" | "Width", end: "Top" | "Left"): VelocityNor
 	}) as VelocityNormalizationsFn;
 }
 
-registerNormalization([HTMLElement, "scroll", scroll("Height", "Top"), false]);
-registerNormalization([HTMLElement, "scrollTop", scroll("Height", "Top"), false]);
-registerNormalization([HTMLElement, "scrollLeft", scroll("Width", "Left"), false]);
-registerNormalization([HTMLElement, "scrollWidth", scrollWidth]);
-registerNormalization([HTMLElement, "clientWidth", clientWidth]);
-registerNormalization([HTMLElement, "scrollHeight", scrollHeight]);
-registerNormalization([HTMLElement, "clientHeight", clientHeight]);
+registerNormalization(["HTMLElement", "scroll", scroll("Height", "Top"), false]);
+registerNormalization(["HTMLElement", "scrollTop", scroll("Height", "Top"), false]);
+registerNormalization(["HTMLElement", "scrollLeft", scroll("Width", "Left"), false]);
+registerNormalization(["HTMLElement", "scrollWidth", scrollWidth]);
+registerNormalization(["HTMLElement", "clientWidth", clientWidth]);
+registerNormalization(["HTMLElement", "scrollHeight", scrollHeight]);
+registerNormalization(["HTMLElement", "clientHeight", clientHeight]);

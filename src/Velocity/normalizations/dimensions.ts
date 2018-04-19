@@ -25,7 +25,7 @@ function getDimension(name: "width" | "height", wantInner: boolean) {
 	}) as VelocityNormalizationsFn;
 }
 
-registerNormalization([Element, "innerWidth", getDimension("width", true)]);
-registerNormalization([Element, "innerHeight", getDimension("height", true)]);
-registerNormalization([Element, "outerWidth", getDimension("width", false)]);
-registerNormalization([Element, "outerHeight", getDimension("height", false)]);
+registerNormalization(["Element", "innerWidth", getDimension("width", true)]);
+registerNormalization(["Element", "innerHeight", getDimension("height", true)]);
+registerNormalization(["Element", "outerWidth", getDimension("width", false)]);
+registerNormalization(["Element", "outerHeight", getDimension("height", false)]);

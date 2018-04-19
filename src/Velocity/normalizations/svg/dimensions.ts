@@ -28,5 +28,5 @@ function getDimension(name: string) {
 	}) as VelocityNormalizationsFn;
 }
 
-registerNormalization([SVGElement, "width", getDimension("width")]);
-registerNormalization([SVGElement, "height", getDimension("height")]);
+registerNormalization(["SVGElement", "width", getDimension("width")]);
+registerNormalization(["SVGElement", "height", getDimension("height")]);
