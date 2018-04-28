@@ -1,26 +1,26 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "qunit";
+import "@types/qunit";
 
-import {asyncTests, asyncCheckDuration, defaultProperties, getTarget} from "../app";
-import "./_module";
 import {Velocity} from "../../../index.d";
+import {asyncCheckDuration, asyncTests, defaultProperties, getTarget} from "../utilities";
+import "./_module";
 
-QUnit.test("Begin", function(assert) {
-	asyncTests(assert, 1, function(done) {
+QUnit.test("Begin", (assert) => {
+	asyncTests(assert, 1, (done) => {
 		const $targetSet = [getTarget(), getTarget()];
 
 		Velocity($targetSet, defaultProperties, {
 			duration: asyncCheckDuration,
-			begin: function() {
-				assert.deepEqual(this, $targetSet, "Elements passed into callback.");
+			begin(elements) {
+				assert.deepEqual(elements, $targetSet, "Elements passed into callback.");
 
 				done();
-			}
+			},
 		});
 	});
 

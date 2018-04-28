@@ -1,4 +1,8 @@
-/**
+/*
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ *
  * Interfaces for VelocityJS
  */
 
@@ -21,12 +25,12 @@ export type VelocityActionFn = (args?: any[], elements?: VelocityResult, promise
 
 /**
  * Used for normalization callbacks.
- * 
+ *
  * @param element The element to be called on.
- * 
+ *
  * @param propertyValue The value to set. If <code>undefined</code> then this is
  * a get action and must return a string value for that element.
- * 
+ *
  * @returns When getting a value it must return a string, otherwise the return
  * value is ignored.
  */
@@ -59,14 +63,14 @@ export type VelocityEasingType = VelocityEasingFn
 export type VelocityResult = Promise<HTMLorSVGElement[] & VelocityExtended> & HTMLorSVGElement[] & VelocityExtended;
 
 // TODO: I don't like having two of these - need to merge into a type or similar
-export type VelocityObjectArgs = {
+export interface VelocityObjectArgs {
 	elements?: HTMLorSVGElement[];
 	properties?: VelocityProperties;
 	options?: VelocityOptions;
 	e?: HTMLorSVGElement[];
 	p?: VelocityProperties;
 	o?: VelocityOptions;
-};
+}
 
 /**
  * The various formats of Element argument for Velocity. Some libraries such as
@@ -123,13 +127,13 @@ export interface VelocityOptions {
 	 * Begin handler. Only the first element to check this callback gets to use
 	 * it.
 	 *
-	 * @default: undefined
+	 * default: undefined
 	 */
 	begin?: VelocityCallback;
 	/**
 	 * Complete handler (only the last element in a set gets this).
 	 *
-	 * @default: undefined
+	 * default: undefined
 	 */
 	complete?: VelocityCallback;
 	/**
@@ -142,7 +146,7 @@ export interface VelocityOptions {
 	 * NOTE: If passing a negative number then this will allow you to start with
 	 * the animation partially complete from the start.
 	 *
-	 * @default 0
+	 * default 0
 	 */
 	delay?: "fast" | "normal" | "slow" | number;
 	drag?: boolean;
@@ -153,7 +157,7 @@ export interface VelocityOptions {
 	 * <code>"normal"</code> = 400ms (default)
 	 * <code>"slow"</code> = 600ms
 	 *
-	 * @default 400
+	 * default 400
 	 */
 	duration?: "fast" | "normal" | "slow" | number;
 	/**
@@ -164,13 +168,13 @@ export interface VelocityOptions {
 	 *
 	 * TODO: Copy more of the original description
 	 *
-	 * @default "swing"
+	 * default "swing"
 	 */
 	easing?: VelocityEasingType;
 	/**
 	 * Maximum number of frames to render on each second for all animations
 	 *
-	 * @default 60
+	 * default 60
 	 */
 	fpsLimit?: number;
 	/**
@@ -179,34 +183,34 @@ export interface VelocityOptions {
 	 * loop. Setting <code>loop:4</code> will cause the animation to take the
 	 * same time as <code>4n+1</code> iterations.
 	 *
-	 * @default 0
+	 * default 0
 	 */
 	loop?: boolean | number;
 	/**
 	 * The minimum frame time to achieve, the value is calculated based on fpsLimit
 	 *
-	 * @default 16.33333333 (1000ms / 60fps)
+	 * default 16.33333333 (1000ms / 60fps)
 	 */
 	minFrameTime?: number;
 	mobileHA?: boolean;
 	/**
 	 * Progress handler (only the last element in a set gets this)
 	 *
-	 * @default: undefined
+	 * default: undefined
 	 */
 	progress?: VelocityProgress;
 	/**
 	 * If this should return a Promise with everything else. If promises are not
 	 * required at all, then simply setting it globally will turn them off.
 	 *
-	 * @default true
+	 * default true
 	 */
 	promise?: boolean;
 	/**
 	 * If promises are turned on, then the promise can reject if there are no
 	 * elements supplied (an empty array is still valid).
 	 *
-	 * @default false
+	 * default false
 	 */
 	promiseRejectEmpty?: boolean;
 	/**
@@ -215,7 +219,7 @@ export interface VelocityOptions {
 	 * start playing automatically (unlike jQuery, this doesn't need a queue to
 	 * be manually started).
 	 *
-	 * @default ""
+	 * default ""
 	 */
 	queue?: false | string;
 	/**
@@ -224,14 +228,14 @@ export interface VelocityOptions {
 	 * animations where <code>0deg === 360deg</code>. If you are after a more
 	 * "bounce" effect then look at <code>loop</code>.
 	 *
-	 * @default 0
+	 * default 0
 	 */
 	repeat?: boolean | number;
 	/**
 	 * The speed to play the animation back at. This number can change while
 	 * running, in order to vary the playback rate.
 	 *
-	 * @default 0
+	 * default 0
 	 */
 	speed?: number;
 	stagger?: string | number;
@@ -239,8 +243,8 @@ export interface VelocityOptions {
 	 * When adding animations to elements each element has its own queue of
 	 * pending animations. This ensures that when adding a single animation to
 	 * multiple elements, they all begin at the same time.
-	 * 
-	 * @default true
+	 *
+	 * default true
 	 */
 	sync?: boolean;
 	/**
@@ -266,7 +270,7 @@ export interface VelocityOptions {
 	 * animations.
 	 *
 	 * @private
-	 * @default true
+	 * default true
 	 */
 	cache?: boolean;
 }
@@ -543,43 +547,43 @@ export interface VelocityTween {
 /**
  * AnimationFlags are used internally. These are subject to change as they are
  * only valid for the internal state of the current version of Velocity.
- * 
+ *
  * To get these values use the "option" action with a key of "isReady" etc. All
  * of these are gettable with the same pattern of keyname.
- * 
+ *
  * @private
  */
 export declare const enum AnimationFlags {
 	/**
 	 * When the tweens are expanded this is set to save future processing.
 	 */
-	EXPANDED = 1 << 0,
+	EXPANDED = 1 << 0, // tslint:disable-line:no-bitwise
 	/**
 	 * Set once the animation is ready to start - after any delay (and possible
 	 * pause).
 	 */
-	READY = 1 << 1,
+	READY = 1 << 1, // tslint:disable-line:no-bitwise
 	/**
 	 * Set once the animation has started.
 	 */
-	STARTED = 1 << 2,
+	STARTED = 1 << 2, // tslint:disable-line:no-bitwise
 	/**
 	 * Set when an animation is manually stopped.
 	 */
-	STOPPED = 1 << 3,
+	STOPPED = 1 << 3, // tslint:disable-line:no-bitwise
 	/**
 	 * The pause state of this animation. If true it is paused, if false it was
 	 * paused and needs to be resumed, and if undefined / null then not either.
 	 */
-	PAUSED = 1 << 4,
+	PAUSED = 1 << 4, // tslint:disable-line:no-bitwise
 	/**
 	 * Set when the animation is a sync animation.
 	 */
-	SYNC = 1 << 5,
+	SYNC = 1 << 5, // tslint:disable-line:no-bitwise
 	/**
 	 * When the animation is running in reverse, such as for a loop.
 	 */
-	REVERSE = 1 << 6,
+	REVERSE = 1 << 6, // tslint:disable-line:no-bitwise
 }
 
 export interface AnimationCall extends StrictVelocityOptions {
@@ -750,6 +754,15 @@ export interface State {
  * Direct Velocity access.
  */
 export interface Velocity {
+	/**
+	 * Available to be able to check what version you're running against.
+	 */
+	readonly version: {
+		readonly major: number;
+		readonly minor: number;
+		readonly patch: number;
+	};
+
 	// TODO: Add all variations of the velocity argument formats allowed. Make them TYPE based as they're used in multiple places.
 	(options: VelocityObjectArgs): VelocityResult;
 	(action: string, ...args: any[]): VelocityResult;
@@ -765,31 +778,11 @@ export interface Velocity {
 		 * Provided in order to reset Velocity defaults back to their initial
 		 * state.
 		 */
-		reset: () => void
+		reset: () => void;
 	};
-
-	queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: string | boolean): void;
-	dequeue(element: HTMLorSVGElement, queue?: string | boolean, skip?: boolean): AnimationCall;
-	freeAnimationCall(animation: AnimationCall): void;
-	pauseAll(queueName?: string | false): void;
-	resumeAll(queueName?: string | false): void;
-	RunSequence(originalSequence): void;
-	RegisterEffect(effectName: string, properties): Velocity;
-
-	/**
-	 * Available to be able to check what version you're running against.
-	 */
-	readonly version: {
-		readonly major: number;
-		readonly minor: number;
-		readonly patch: number;
-	}
 
 	CSS: {
 		ColorNames: {[name: string]: string};
-		getPropertyValue(element: HTMLorSVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean): string;
-		getUnit(str: string, start?: number): string;
-		fixColors(str: string): string;
 		Normalizations: {[name: string]: VelocityNormalizationsFn};
 		Names: {
 			camelCase(property: string): string;
@@ -804,11 +797,23 @@ export interface Velocity {
 			addClass(element: HTMLorSVGElement, className: string): void;
 			removeClass(element: HTMLorSVGElement, className: string): void;
 		};
+		getPropertyValue(element: HTMLorSVGElement, property: string, rootPropertyValue?: string, forceStyleLookup?: boolean): string;
+		getUnit(str: string, start?: number): string;
+		fixColors(str: string): string;
 	};
+
 	/**
-	 * Current internal state of Velocity. 
+	 * Current internal state of Velocity.
 	 */
 	readonly State: State;
+
+	queue(element: HTMLorSVGElement, animation: AnimationCall, queue?: string | boolean): void;
+	dequeue(element: HTMLorSVGElement, queue?: string | boolean, skip?: boolean): AnimationCall;
+	freeAnimationCall(animation: AnimationCall): void;
+	pauseAll(queueName?: string | false): void;
+	resumeAll(queueName?: string | false): void;
+	RunSequence(originalSequence): void;
+	RegisterEffect(effectName: string, properties): Velocity;
 }
 
 /**
@@ -820,8 +825,8 @@ export interface VelocityExtended<TNode extends Node = HTMLorSVGElement> {
 		 * TODO: Decide if this should be public
 		 * @private
 		 */
-		animations: AnimationCall[]
-	}
+		animations: AnimationCall[];
+	};
 }
 
 ////////////////////
@@ -968,4 +973,3 @@ declare global {
 }
 
 declare const Velocity: Velocity;
-

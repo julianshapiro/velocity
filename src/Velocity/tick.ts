@@ -1,5 +1,5 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
@@ -154,7 +154,7 @@ export let lastTick: number = 0;
  * we raun at 30fps instead of 60fps.
  */
 function workerFn(this: Worker) {
-	let interval: number;
+	let interval: any;
 
 	this.onmessage = (e) => {
 		switch (e.data) {

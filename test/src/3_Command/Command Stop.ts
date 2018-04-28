@@ -1,24 +1,24 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "qunit";
+import "@types/qunit";
 
-import {asyncTests, defaultOptions, defaultProperties, getPropertyValue, getTarget, sleep} from "../app";
-import "./_module";
 import {Velocity} from "../../../index.d";
+import {asyncTests, defaultOptions, defaultProperties, getPropertyValue, getTarget, sleep} from "../utilities";
+import "./_module";
 
-QUnit.test("Stop", async function(assert) {
-	asyncTests(assert, 1, function(done) {
+QUnit.test("Stop", async (assert) => {
+	asyncTests(assert, 1, (done) => {
 		Velocity(getTarget(), "stop");
 		assert.ok(true, "Calling on an element that isn't animating doesn't cause an error.");
 
 		done();
 	});
 
-	asyncTests(assert, 1, function(done) {
+	asyncTests(assert, 1, (done) => {
 		const $target = getTarget();
 
 		Velocity($target, defaultProperties, defaultOptions);
@@ -30,7 +30,7 @@ QUnit.test("Stop", async function(assert) {
 		done();
 	});
 
-	asyncTests(assert, 1, async function(done) {
+	asyncTests(assert, 1, async (done) => {
 		const $target = getTarget(),
 			startOpacity = getPropertyValue($target, "opacity");
 
@@ -42,13 +42,15 @@ QUnit.test("Stop", async function(assert) {
 		done();
 	});
 
-	asyncTests(assert, 1, async function(done) {
+	asyncTests(assert, 1, async (done) => {
 		const $target = getTarget();
 		let begin = false;
 
 		Velocity($target, {opacity: [0, 1]}, {
 			delay: 1000,
-			begin: () => {begin = true}
+			begin() {
+				begin = true;
+			},
 		});
 		await sleep(500);
 		Velocity($target, "stop");
@@ -57,18 +59,22 @@ QUnit.test("Stop", async function(assert) {
 		done();
 	});
 
-	asyncTests(assert, 2, async function(done) {
+	asyncTests(assert, 2, async (done) => {
 		const $target = getTarget();
 		let complete1 = false,
 			complete2 = false;
 
 		Velocity($target, {opacity: [0, 1]}, {
 			queue: "test1",
-			complete: () => {complete1 = true}
+			complete() {
+				complete1 = true;
+			},
 		});
 		Velocity($target, {opacity: [0, 1]}, {
 			queue: "test2",
-			complete: () => {complete2 = true}
+			complete() {
+				complete2 = true;
+			},
 		});
 		Velocity($target, "stop", "test1");
 		await sleep(defaultOptions.duration as number * 2);
@@ -78,16 +84,20 @@ QUnit.test("Stop", async function(assert) {
 		done();
 	});
 
-	asyncTests(assert, 1, async function(done) {
+	asyncTests(assert, 1, async (done) => {
 		const $target = getTarget();
 		let begin1 = false,
 			begin2 = false;
 
 		Velocity($target, {opacity: [0, 1]}, {
-			begin: () => {begin1 = true}
+			begin() {
+				begin1 = true;
+			},
 		});
 		Velocity($target, {width: "500px"}, {
-			begin: () => {begin2 = true}
+			begin() {
+				begin2 = true;
+			},
 		});
 		Velocity($target, "stop", true);
 		await sleep(defaultOptions.duration as number * 2);
@@ -96,17 +106,21 @@ QUnit.test("Stop", async function(assert) {
 		done();
 	});
 
-	asyncTests(assert, 2, async function(done) {
+	asyncTests(assert, 2, async (done) => {
 		const $target = getTarget(),
 			anim = Velocity($target, {opacity: [0, 1]}, {
 				queue: "test",
-				begin: () => {begin1 = true}
+				begin() {
+					begin1 = true;
+				},
 			});
 		let begin1 = false,
 			begin2 = false;
 
 		Velocity($target, {opacity: [0, 1]}, {
-			begin: () => {begin2 = true}
+			begin() {
+				begin2 = true;
+			},
 		});
 		anim.velocity("stop");
 		await sleep(defaultOptions.duration as number * 2);

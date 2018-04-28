@@ -1,17 +1,17 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "qunit";
+import "@types/qunit";
 
-import {asyncCheckDuration, completeCheckDuration, defaultOptions, getTarget} from "../app";
-import "./_module";
 import {Velocity} from "../../../index.d";
+import {asyncCheckDuration, completeCheckDuration, defaultOptions, getTarget} from "../utilities";
+import "./_module";
 
-QUnit.skip("In/Out", function(assert) {
-	var done = assert.async(2),
+QUnit.skip("In/Out", (assert) => {
+	const done = assert.async(2),
 		$target1 = getTarget(),
 		$target2 = getTarget(),
 		$target3 = getTarget(),
@@ -34,14 +34,14 @@ QUnit.skip("In/Out", function(assert) {
 	Velocity($target6, "transition.bounceOut", {duration: defaultOptions.duration, visibility: "hidden"});
 
 	assert.expect(8);
-	setTimeout(function() {
+	setTimeout(() => {
 		assert.notEqual(Velocity.CSS.getPropertyValue($target3, "display"), 0, "Out: display not prematurely set to none.");
 		assert.notEqual(Velocity.CSS.getPropertyValue($target6, "visibility"), "hidden", "Out: visibility not prematurely set to hidden.");
 
 		done();
 	}, asyncCheckDuration);
 
-	setTimeout(function() {
+	setTimeout(() => {
 		//		assert.equal(Velocity.CSS.getPropertyValue($target1, "display"), Velocity.CSS.Values.getDisplayType($target1), "In: display set to default.");
 		assert.equal(Velocity.CSS.getPropertyValue($target2, "display"), "inline", "In: Custom inline value set.");
 

@@ -1,16 +1,16 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "qunit";
+import "@types/qunit";
 
-import {getTarget} from "../app";
+import {getTarget} from "../utilities";
 import "./_module";
 import {HTMLorSVGElement, Velocity} from "../../../index.d";
 
-QUnit.test("GenericReordering", function(assert) {
+QUnit.test("GenericReordering", (assert) => {
 
 	function genericReordering(element: HTMLorSVGElement, propertyValue?: string): string | void {
 		if (propertyValue === undefined) {

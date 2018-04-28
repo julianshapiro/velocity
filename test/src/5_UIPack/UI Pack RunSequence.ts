@@ -1,16 +1,16 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "qunit";
+import "@types/qunit";
 
-import {defaultProperties, getTarget} from "../app";
+import {defaultProperties, getTarget} from "../utilities";
 import "./_module";
 import {Velocity} from "../../../index.d";
 
-QUnit.skip("RunSequence", function(assert) {
+QUnit.skip("RunSequence", (assert) => {
 
 	var done = assert.async(1),
 		$target1 = getTarget(),

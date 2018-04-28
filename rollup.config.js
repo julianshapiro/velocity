@@ -4,9 +4,9 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-//import resolve from "rollup-plugin-node-resolve";
 import babel from "rollup-plugin-babel";
 import commonjs from "rollup-plugin-commonjs";
+import copy from "rollup-plugin-copy";
 import resolve from "rollup-plugin-node-resolve";
 import sourceMaps from "rollup-plugin-sourcemaps";
 import tslint from "rollup-plugin-tslint";
@@ -24,7 +24,11 @@ function getPlugins() {
 	return [
 		tslint(),
 		resolve(),
-		typescript(),
+		typescript({
+			verbosity: 3,
+			rollupCommonJSResolveHack: true,
+			include: ["*(\.d)?\.tsx?", "**/*(\.d)?\.tsx?"]
+		}),
 		babel({
 			exclude: "node_modules/**"
 		}),
@@ -64,7 +68,15 @@ if (hasTest) {
 		watch: {
 			include: "test/src/**"
 		},
-		plugins: getPlugins()
+		plugins: [
+			copy({
+//				"node_modules/qunit-assert-close/qunit-assert-close.js": "test/qunit-assert-close.js",
+				"node_modules/qunit/qunit/qunit.css": "test/qunit.css",
+				"node_modules/qunit/qunit/qunit.js": "test/qunit.js",
+				verbose: true
+			}),
+			...getPlugins()
+		]
 	});
 }
 

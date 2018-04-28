@@ -4,7 +4,7 @@
 		"allowUnusedLabels": true,
 		"alwaysStrict": false,
 		"forceConsistentCasingInFileNames": true,
-		"noEmitOnError": true,
+		"noEmitOnError": false,
 		"noImplicitAny": false,
 		"module": "es2015",
 		"moduleResolution": "node",

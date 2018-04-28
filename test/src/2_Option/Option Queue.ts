@@ -1,22 +1,22 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "qunit";
+import "@types/qunit";
 
-import {Data, defaultProperties, getTarget} from "../app";
-import "./_module";
 import {Velocity} from "../../../index.d";
+import {Data, defaultProperties, getTarget} from "../utilities";
+import "./_module";
 
-QUnit.test("Queue", function(assert) {
-	var done = assert.async(4),
+QUnit.test("Queue", (assert) => {
+	const done = assert.async(4),
 		testQueue = "custom",
 		$target = getTarget(),
 		ignore = $target.velocity("style", "display"), // Force data creation
-		data = Data($target),
-		anim1: boolean,
+		data = Data($target);
+	let anim1: boolean,
 		anim2: boolean,
 		anim3: boolean;
 
@@ -26,46 +26,50 @@ QUnit.test("Queue", function(assert) {
 
 	$target.velocity(defaultProperties, {
 		queue: testQueue,
-		begin: function() {
+		begin() {
 			anim1 = true;
 		},
-		complete: function() {
+		complete() {
 			anim1 = false;
 			assert.ok(!anim2, "Queued animation isn't started early.");
+
 			done();
-		}
+		},
 	});
 	assert.ok(data.queueList[testQueue] !== undefined, "Custom queue was created."); // Should exist, but be "null"
 
 	$target.velocity(defaultProperties, {
 		queue: testQueue,
-		begin: function() {
+		begin() {
 			anim2 = true;
 			assert.ok(anim1 === false, "Queued animation starts after first.");
+
 			done();
 		},
-		complete: function() {
+		complete() {
 			anim2 = false;
-		}
+		},
 	});
 	assert.ok(data.queueList[testQueue], "Custom queue grows."); // Should exist and point at the next animation
 
 	$target.velocity(defaultProperties, {
-		begin: function() {
+		begin() {
 			anim3 = true;
 			assert.ok(anim1 === true, "Different queue animation starts in parallel.");
+
 			done();
 		},
-		complete: function() {
+		complete() {
 			anim3 = false;
-		}
+		},
 	});
 
 	$target.velocity(defaultProperties, {
 		queue: false,
-		begin: function() {
+		begin() {
 			assert.ok(anim1 === true, "Queue:false animation starts in parallel.");
+
 			done();
-		}
+		},
 	});
 });

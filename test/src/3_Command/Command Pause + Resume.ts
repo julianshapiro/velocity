@@ -1,17 +1,17 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "qunit";
+import "@types/qunit";
 
-import {asyncTests, getPropertyValue, getTarget, sleep} from "../app";
-import "./_module";
 import {Velocity} from "../../../index.d";
+import {asyncTests, getPropertyValue, getTarget, sleep} from "../utilities";
+import "./_module";
 
-QUnit.test("Pause + Resume", async function(assert) {
-	asyncTests(assert, 2, function(done) {
+QUnit.test("Pause + Resume", async (assert) => {
+	asyncTests(assert, 2, (done) => {
 		const $target = getTarget();
 
 		Velocity($target, "pause");
@@ -22,11 +22,16 @@ QUnit.test("Pause + Resume", async function(assert) {
 		done();
 	});
 
-	asyncTests(assert, 4, async function(done) {
+	asyncTests(assert, 4, async (done) => {
 		const $target = getTarget();
 		let progress = false;
 
-		Velocity($target, {opacity: 0}, {duration: 250, progress: () => {progress = true;}});
+		Velocity($target, {opacity: 0}, {
+			duration: 250,
+			progress() {
+				progress = true;
+			},
+		});
 		Velocity($target, "pause");
 		await sleep(50);
 		assert.equal(getPropertyValue($target, "opacity"), "1", "Property value unchanged after pause.");
@@ -39,7 +44,7 @@ QUnit.test("Pause + Resume", async function(assert) {
 		done();
 	});
 
-	asyncTests(assert, 3, async function(done) {
+	asyncTests(assert, 3, async (done) => {
 		const $target = getTarget();
 
 		Velocity($target, {opacity: 0}, {duration: 250, delay: 250});
@@ -55,7 +60,7 @@ QUnit.test("Pause + Resume", async function(assert) {
 		done();
 	});
 
-	asyncTests(assert, 1, async function(done) {
+	asyncTests(assert, 1, async (done) => {
 		const $target = getTarget();
 
 		Velocity($target, {opacity: 0}, {queue: "test", duration: 250});
@@ -66,7 +71,7 @@ QUnit.test("Pause + Resume", async function(assert) {
 		done();
 	});
 
-	asyncTests(assert, 1, async function(done) {
+	asyncTests(assert, 1, async (done) => {
 		const $target = getTarget();
 
 		Velocity($target, {opacity: 0})

@@ -1,16 +1,16 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "qunit";
+import "@types/qunit";
 
-import {asyncTests, getPropertyValue, getTarget, sleep} from "../app";
-import "./_module";
 import {Velocity} from "../../../index.d";
+import {asyncTests, getPropertyValue, getTarget, sleep} from "../utilities";
+import "./_module";
 
-QUnit.test("Unit Calculation", function(assert) {
+QUnit.test("Unit Calculation", (assert) => {
 	// TODO: Add code and tests for operators - probably using calc() internally
 	//	/* Standard properties with operators. */
 	//	var testIncrementWidth = "5px",
@@ -30,7 +30,7 @@ QUnit.test("Unit Calculation", function(assert) {
 	//		done();
 	//	}, asyncCheckDuration);
 
-	asyncTests(assert, 2, async function(done) {
+	asyncTests(assert, 2, async (done) => {
 		const $target = getTarget();
 
 		Velocity($target, {left: "500px"}, {duration: 10});
@@ -43,7 +43,7 @@ QUnit.test("Unit Calculation", function(assert) {
 		done();
 	});
 
-	//	async(assert, 1, async function(done) {
+	//	async(assert, 1, async (done) => {
 	//		const $target = getTarget();
 	//
 	//		Velocity($target, {left: "500px"}, {duration: 10});
@@ -55,7 +55,7 @@ QUnit.test("Unit Calculation", function(assert) {
 	//		done();
 	//	});
 
-	asyncTests(assert, 1, async function(done) {
+	asyncTests(assert, 1, async (done) => {
 		const $target = getTarget();
 
 		Velocity($target, {left: "500px"}, {duration: 10});
@@ -67,7 +67,7 @@ QUnit.test("Unit Calculation", function(assert) {
 		done();
 	});
 
-	asyncTests(assert, 2, async function(done) {
+	asyncTests(assert, 2, async (done) => {
 		const $target = getTarget();
 
 		Velocity($target, {left: 500}, {duration: 10});

@@ -26,7 +26,7 @@
   };
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -67,7 +67,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -154,7 +154,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -189,7 +189,7 @@
   var constructors = [];
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -233,7 +233,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -269,7 +269,7 @@
   };
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -295,7 +295,7 @@
   };
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -415,7 +415,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -437,7 +437,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -467,7 +467,7 @@
   registerAction(["registerAction", registerAction], true);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -515,7 +515,7 @@
   registerEasing(["spring", springEasing]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -679,7 +679,7 @@
   registerEasing(["easeInOutCirc", generateBezier(0.785, 0.135, 0.15, 0.86)]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -763,7 +763,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details
    *
@@ -787,7 +787,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -1023,7 +1023,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -1262,14 +1262,14 @@
   defaults$1.reset();
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
   var SequencesObject = {};
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -1391,7 +1391,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -1421,7 +1421,7 @@
       var constructor = args[0],
           name = args[1],
           callback = args[2];
-      if (isString(constructor) && !(window[constructor] instanceof Object) || !(constructor instanceof Object)) {
+      if (isString(constructor) && !(window[constructor] instanceof Object) || !isString(constructor) && !(constructor instanceof Object)) {
           console.warn("VelocityJS: Trying to set 'registerNormalization' constructor to an invalid value:", constructor);
       } else if (!isString(name)) {
           console.warn("VelocityJS: Trying to set 'registerNormalization' name to an invalid value:", name);
@@ -1500,7 +1500,7 @@
   registerAction(["hasNormalization", hasNormalization]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -1524,7 +1524,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -1563,7 +1563,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -1613,7 +1613,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -1637,7 +1637,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -1736,7 +1736,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -2100,7 +2100,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -2351,7 +2351,7 @@
   registerAction(["registerSequence", registerSequence], true);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -2453,7 +2453,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -2866,7 +2866,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3270,7 +3270,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3296,7 +3296,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3313,7 +3313,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3343,7 +3343,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3381,7 +3381,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3401,7 +3401,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3433,7 +3433,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3453,7 +3453,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3480,7 +3480,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3506,7 +3506,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3538,13 +3538,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3577,7 +3577,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3605,7 +3605,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3633,7 +3633,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3661,7 +3661,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3689,13 +3689,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3721,7 +3721,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3747,7 +3747,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3770,7 +3770,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3793,7 +3793,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3819,13 +3819,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3842,7 +3842,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3861,7 +3861,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3880,7 +3880,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3899,7 +3899,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3918,7 +3918,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3937,7 +3937,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3956,7 +3956,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3975,7 +3975,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -3994,13 +3994,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4017,7 +4017,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4036,7 +4036,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4055,7 +4055,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4074,7 +4074,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4093,7 +4093,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4112,7 +4112,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4131,7 +4131,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4150,7 +4150,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4169,13 +4169,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4204,7 +4204,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4235,7 +4235,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4266,7 +4266,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4291,7 +4291,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4316,13 +4316,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4350,7 +4350,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4370,13 +4370,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4397,7 +4397,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4418,7 +4418,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4439,7 +4439,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4460,7 +4460,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4481,13 +4481,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4508,7 +4508,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4529,7 +4529,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4550,7 +4550,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4571,7 +4571,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4592,13 +4592,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4619,7 +4619,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4640,7 +4640,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4661,7 +4661,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4682,13 +4682,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4709,7 +4709,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4730,7 +4730,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4751,7 +4751,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4772,13 +4772,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4805,7 +4805,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4831,7 +4831,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4850,7 +4850,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4869,13 +4869,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4896,7 +4896,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4918,7 +4918,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4940,7 +4940,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4962,7 +4962,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -4984,13 +4984,13 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5011,7 +5011,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5033,7 +5033,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5058,7 +5058,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5083,7 +5083,7 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5105,19 +5105,19 @@
   }]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5233,7 +5233,7 @@
   registerAction(["finish", finish], true);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5432,7 +5432,7 @@
   registerAction(["option", option], true);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5506,7 +5506,7 @@
   registerAction(["resume", pauseResume], true);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5518,7 +5518,7 @@
   }], true);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5604,7 +5604,7 @@
   registerAction(["stop", stop], true);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5745,7 +5745,7 @@
   registerAction(["style", styleAction], true);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -5870,13 +5870,13 @@
   registerAction(["tween", tweenAction], true);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -6040,19 +6040,19 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -6099,7 +6099,7 @@
   // TODO: Expose these as actions to register custom easings?
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -6152,7 +6152,7 @@
   registerEasing(["easeInOutBounce", easeInOutBounce]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -6200,7 +6200,7 @@
   // TODO: Expose these as actions to register custom easings?
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -6232,13 +6232,13 @@
   registerEasing(["at-end", atEnd]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -6259,7 +6259,7 @@
   registerNormalization(["Element", "outerHeight", getDimension("height", false)]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -6299,7 +6299,7 @@
   registerNormalization(["Element", "display", display]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -6356,7 +6356,7 @@
   registerNormalization(["HTMLElement", "clientHeight", clientHeight]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -6473,7 +6473,7 @@
   }
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -6514,7 +6514,7 @@
   });
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -6538,13 +6538,13 @@
   registerNormalization(["SVGElement", "height", getDimension$1("height")]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
@@ -6559,13 +6559,13 @@
   registerNormalization(["Element", "tween", getSetTween]);
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *
@@ -6573,13 +6573,13 @@
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    */
 
   /*
-   * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
    *
    * Licensed under the MIT license. See LICENSE file in the project root for details.
    *

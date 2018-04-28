@@ -1,16 +1,16 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "qunit";
+import "@types/qunit";
 
-import {getTarget, once} from "../app";
+import {getTarget, once} from "../utilities";
 import "./_module";
 import {Velocity, VelocityResult} from "../../../index.d";
 
-QUnit.test("Display", function(assert) {
+QUnit.test("Display", (assert) => {
 	var done = assert.async(5);
 
 	Velocity(getTarget(), "style", "display", "none")

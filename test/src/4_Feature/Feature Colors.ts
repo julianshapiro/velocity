@@ -1,17 +1,17 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "qunit";
+import "@types/qunit";
 
-import {getTarget} from "../app";
-import "./_module";
 import {Velocity} from "../../../index.d";
+import {getTarget} from "../utilities";
+import "./_module";
 
-QUnit.skip("Colors (Shorthands)", function(assert) {
-	var $target = getTarget();
+QUnit.skip("Colors (Shorthands)", (assert) => {
+	const $target = getTarget();
 
 	Velocity($target, {borderColor: "#7871c2", color: ["#297dad", "spring", "#5ead29"]});
 

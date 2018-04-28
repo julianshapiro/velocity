@@ -1,5 +1,5 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * VelocityJS.org (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
@@ -46,7 +46,8 @@ export function registerNormalization(
 		name: string = args[1],
 		callback = args[2];
 
-	if ((isString(constructor) && !(window[constructor] instanceof Object)) || !(constructor instanceof Object)) {
+	if ((isString(constructor) && !(window[constructor] instanceof Object))
+		|| (!isString(constructor) && !(constructor instanceof Object))) {
 		console.warn(`VelocityJS: Trying to set 'registerNormalization' constructor to an invalid value:`, constructor);
 	} else if (!isString(name)) {
 		console.warn(`VelocityJS: Trying to set 'registerNormalization' name to an invalid value:`, name);
