@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["zoomIn", {
+registerSequence("zoomIn", {
 	"duration": 1000,
 	"0%": {
 		opacity: "0",
@@ -20,4 +20,4 @@ registerSequence(["zoomIn", {
 	"100%": {
 		transform: "scale3d(1,1,1)",
 	},
-}]);
+});

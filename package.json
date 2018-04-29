@@ -33,7 +33,7 @@
     "lint": "./node_modules/.bin/tslint src/**/*.ts src/**/*.tsx src/**/*.d.ts",
     "test": "./node_modules/.bin/rollup -c --environment TEST"
   },
-  "main": "velocity.js",
+  "main": "velocity.min.js",
   "module": "velocity.es5.js",
   "types": "index.d.ts",
   "repository": "julianshapiro/velocity",
@@ -57,8 +57,10 @@
     "rollup-plugin-copy": "^0.2.3",
     "rollup-plugin-node-resolve": "^3.3.0",
     "rollup-plugin-sourcemaps": "^0.4.2",
+    "rollup-plugin-tsc": "^1.1.9",
     "rollup-plugin-tslint": "^0.1.34",
     "rollup-plugin-typescript2": "^0.13.0",
+    "rollup-plugin-uglify": "^3.0.0",
     "tslint": "^5.9.1",
     "typescript": "^2.8.3"
   }

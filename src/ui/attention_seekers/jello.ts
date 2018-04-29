@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["jello", {
+registerSequence("jello", {
 	"duration": 1000,
 	"0%,100%": {
 		transformOrigin: "center",
@@ -37,4 +37,4 @@ registerSequence(["jello", {
 	"88.8%": {
 		transform: "skewX(-0.1953125deg) skewY(-0.1953125deg)",
 	},
-}]);
+});

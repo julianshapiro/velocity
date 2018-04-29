@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["bounceIn", {
+registerSequence("bounceIn", {
 	"duration": 750,
 	"easing": "easeOutCubic",
 	"0%": {
@@ -32,4 +32,4 @@ registerSequence(["bounceIn", {
 		opacity: "1",
 		transform: "scale3d(1,1,1)",
 	},
-}]);
+});

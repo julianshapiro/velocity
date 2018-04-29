@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["hinge", {
+registerSequence("hinge", {
 	"duration": 2000,
 	"0%": {
 		opacity: "1",
@@ -26,4 +26,4 @@ registerSequence(["hinge", {
 		opacity: "0",
 		transform: ["translate3d(0,700px,0) rotate3d(0,0,1,80deg)", "easeInOut"],
 	},
-}]);
+});

@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["slideInLeft", {
+registerSequence("slideInLeft", {
 	"duration": 1000,
 	"0%": {
 		transform: "translate3d(-100%,0,0)",
@@ -20,4 +20,4 @@ registerSequence(["slideInLeft", {
 		visibility: "visible",
 		opacity: "1",
 	},
-}]);
+});

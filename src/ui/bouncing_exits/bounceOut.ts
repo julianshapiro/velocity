@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["bounceOut", {
+registerSequence("bounceOut", {
 	"duration": 750,
 	"0%": {
 		opacity: "1",
@@ -25,4 +25,4 @@ registerSequence(["bounceOut", {
 		opacity: "0",
 		transform: "scale3d(0.3,0.3,0.3)",
 	},
-}]);
+});

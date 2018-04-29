@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["tada", {
+registerSequence("tada", {
 	"duration": 1000,
 	"0%": {
 		transform: "scale3d(1,1,1) rotate3d(0,0,0,0)",
@@ -25,4 +25,4 @@ registerSequence(["tada", {
 	"100%": {
 		transform: "scale3d(1, 1, 1) rotate3d(0,0,0,0)",
 	},
-}]);
+});

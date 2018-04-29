@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["flash", {
+registerSequence("flash", {
 	"duration": 1000,
 	"0%,50%,100%": {
 		opacity: "1",
@@ -16,4 +16,4 @@ registerSequence(["flash", {
 	"25%,75%": {
 		opacity: "0",
 	},
-}]);
+});

@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["rollOut", {
+registerSequence("rollOut", {
 	"duration": 1000,
 	"0%": {
 		opacity: "1",
@@ -18,4 +18,4 @@ registerSequence(["rollOut", {
 		opacity: "0",
 		transform: "translate3d(100%,0,0) rotate3d(0,0,1,120deg)",
 	},
-}]);
+});

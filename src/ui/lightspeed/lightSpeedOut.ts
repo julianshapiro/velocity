@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["lightSpeedOut", {
+registerSequence("lightSpeedOut", {
 	"duration": 1000,
 	"easing": "easeIn",
 	"0%": {
@@ -19,4 +19,4 @@ registerSequence(["lightSpeedOut", {
 		opacity: "0",
 		transform: "translate3d(100%,0,0) skewX(30deg)",
 	},
-}]);
+});

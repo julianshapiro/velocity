@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["rotateOutDownRight", {
+registerSequence("rotateOutDownRight", {
 	"duration": 1000,
 	"0%": {
 		opacity: "1",
@@ -20,4 +20,4 @@ registerSequence(["rotateOutDownRight", {
 		transform: "rotate3d(0,0,1,-45deg)",
 		transformOrigin: "right bottom",
 	},
-}]);
+});

@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["headShake", {
+registerSequence("headShake", {
 	"duration": 1000,
 	"easing": "easeInOut",
 	"0%": {
@@ -29,4 +29,4 @@ registerSequence(["headShake", {
 	"50%": {
 		transform: "translateX(0) rotateY(0)",
 	},
-}]);
+});

@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["swing", {
+registerSequence("swing", {
 	"duration": 1000,
 	"0%,100%": {
 		transform: "rotate3d(0,0,1,0deg)",
@@ -26,4 +26,4 @@ registerSequence(["swing", {
 	"80%": {
 		transform: "rotate3d(0,0,1,-5deg)",
 	},
-}]);
+});

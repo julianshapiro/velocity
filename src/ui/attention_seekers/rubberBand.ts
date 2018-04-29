@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["rubberBand", {
+registerSequence("rubberBand", {
 	"duration": 1000,
 	"0%": {
 		transform: "scale3d(1,1,1)",
@@ -31,4 +31,4 @@ registerSequence(["rubberBand", {
 	"100%": {
 		transform: "scale3d(1,1,1)",
 	},
-}]);
+});

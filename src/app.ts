@@ -10,7 +10,7 @@ import {Velocity} from "./velocityFn";
 
 import {VelocityStatic} from "./velocity";
 
-import "./ui/_all";
+import "./ui/app";
 import {defineProperty} from "./utility";
 import "./Velocity/_all";
 

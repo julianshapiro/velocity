@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["flipInY", {
+registerSequence("flipInY", {
 	"duration": 1000,
 	"0%,100%": {
 		backfaceVisibility: "visible",
@@ -30,4 +30,4 @@ registerSequence(["flipInY", {
 	"100%": {
 		transform: "perspective(400px) rotate3d(0,1,0,0)",
 	},
-}]);
+});

@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["bounceInDown", {
+registerSequence("bounceInDown", {
 	"duration": 1000,
 	"0%": {
 		opacity: "0",
@@ -27,4 +27,4 @@ registerSequence(["bounceInDown", {
 	"100%": {
 		transform: ["translate3d(0,0,0)", "easeOutCubic"],
 	},
-}]);
+});

@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["flipOutX", {
+registerSequence("flipOutX", {
 	"duration": 750,
 	"0%,100%": {
 		backfaceVisibility: "visible",
@@ -24,4 +24,4 @@ registerSequence(["flipOutX", {
 		opacity: "0",
 		transform: "perspective(400px) rotate3d(1,0,0,90deg)",
 	},
-}]);
+});

@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["fadeOutLeftBig", {
+registerSequence("fadeOutLeftBig", {
 	"duration": 1000,
 	"0%": {
 		opacity: "1",
@@ -18,4 +18,4 @@ registerSequence(["fadeOutLeftBig", {
 		opacity: "0",
 		transform: "translate3d(-2000px,0,0)",
 	},
-}]);
+});

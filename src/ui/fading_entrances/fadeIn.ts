@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["fadeIn", {
+registerSequence("fadeIn", {
 	"duration": 1000,
 	"0%": {
 		opacity: "0",
@@ -16,4 +16,4 @@ registerSequence(["fadeIn", {
 	"100%": {
 		opacity: "1",
 	},
-}]);
+});

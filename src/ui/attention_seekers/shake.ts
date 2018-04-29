@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["shake", {
+registerSequence("shake", {
 	"duration": 1000,
 	"0%,100%": {
 		transform: "translate3d(0,0,0)",
@@ -19,4 +19,4 @@ registerSequence(["shake", {
 	"20%,40%,60%,80%": {
 		transform: "translate3d(10px,0,0)",
 	},
-}]);
+});

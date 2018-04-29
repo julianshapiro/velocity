@@ -6,9 +6,9 @@
  * Based on animate.css: https://github.com/daneden/animate.css
  */
 
-import {registerSequence} from "../../Velocity/sequences";
+import {registerSequence} from "../registerSequence";
 
-registerSequence(["jackInTheBox", {
+registerSequence("jackInTheBox", {
 	"duration": 1000,
 	"0%": {
 		opacity: "0",
@@ -25,4 +25,4 @@ registerSequence(["jackInTheBox", {
 		opacity: "1",
 		transform: "scale(1) rotate(0)",
 	},
-}]);
+});
