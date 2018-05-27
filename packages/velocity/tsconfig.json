@@ -4,21 +4,25 @@
 		"allowUnusedLabels": true,
 		"alwaysStrict": false,
 		"forceConsistentCasingInFileNames": true,
-		"noEmitOnError": true,
+		"noEmitOnError": false,
 		"noImplicitAny": false,
-		"outFile": "build/velocity.js",
+		"module": "es2015",
+		"moduleResolution": "node",
+		"outDir": "build/",
 		"preserveConstEnums": true,
 		"removeComments": false,
 		"sourceMap": true,
-		"inlineSources": true,
-		"target": "es5",
+		"target": "es6",
 		"lib" : [
-			"es6",
 			"dom",
+			"es6",
+			"es2016",
 			"scripthost"
 		]
 	},
 	"files": [
-		"src/app.ts"
+		"src/velocity.ts",
+		"src-ui/velocity.ui.ts",
+		"test/src/test.ts"
 	]
 }

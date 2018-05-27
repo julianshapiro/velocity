@@ -1,5 +1,5 @@
 /*
- * VelocityJS.org (C) 2014-2017 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
@@ -17,7 +17,7 @@ if (IE <= 8) {
 		}
 	} catch (error) {
 		if (debug) {
-			console.log("Browser does not support [" + propertyValue + "] for [" + propertyName + "]");
+			console.log(`Browser does not support [${propertyValue}] for [${propertyName}]`);
 		}
 	}
 }

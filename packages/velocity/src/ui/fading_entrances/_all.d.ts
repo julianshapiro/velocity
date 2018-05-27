@@ -1,9 +1,0 @@
-///<reference path="fadeIn.ts" />
-///<reference path="fadeInDown.ts" />
-///<reference path="fadeInDownBig.ts" />
-///<reference path="fadeInLeft.ts" />
-///<reference path="fadeInLeftBig.ts" />
-///<reference path="fadeInRight.ts" />
-///<reference path="fadeInRightBig.ts" />
-///<reference path="fadeInUp.ts" />
-///<reference path="fadeInUpBig.ts" />
