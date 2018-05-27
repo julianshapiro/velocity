@@ -1,13 +1,13 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "@types/qunit";
+import "qunit";
 
-import {Velocity} from "../../../index.d";
-import {getTarget} from "../utilities";
+import Velocity from "velocity-animate";
+import {getPropertyValue, getTarget} from "../utilities";
 import "./_module";
 
 QUnit.skip("Packaged Effect: slideUp/Down", (assert) => {
@@ -30,9 +30,9 @@ QUnit.skip("Packaged Effect: slideUp/Down", (assert) => {
 		},
 		complete(elements) {
 			assert.deepEqual(elements, [$target1], "slideDown: Complete callback returned.");
-			//			assert.equal(Velocity.CSS.getPropertyValue($target1, "display"), Velocity.CSS.Values.getDisplayType($target1), "slideDown: display set to default.");
-			assert.notEqual(Velocity.CSS.getPropertyValue($target1, "height"), 0, "slideDown: height set.");
-			assert.equal(Velocity.CSS.getPropertyValue($target1, "paddingTop"), initialStyles.paddingTop, "slideDown: paddingTop set.");
+			//			assert.equal(getPropertyValue($target1, "display"), Values.getDisplayType($target1), "slideDown: display set to default.");
+			assert.notEqual(getPropertyValue($target1, "height"), 0, "slideDown: height set.");
+			assert.equal(getPropertyValue($target1, "paddingTop"), initialStyles.paddingTop, "slideDown: paddingTop set.");
 
 			done();
 		},
@@ -50,9 +50,9 @@ QUnit.skip("Packaged Effect: slideUp/Down", (assert) => {
 		},
 		complete(elements) {
 			assert.deepEqual(elements, [$target2], "slideUp: Complete callback returned.");
-			assert.equal(Velocity.CSS.getPropertyValue($target2, "display"), 0, "slideUp: display set to none.");
-			assert.notEqual(Velocity.CSS.getPropertyValue($target2, "height"), 0, "slideUp: height reset.");
-			assert.equal(Velocity.CSS.getPropertyValue($target1, "paddingTop"), initialStyles.paddingTop, "slideUp: paddingTop reset.");
+			assert.equal(getPropertyValue($target2, "display"), 0, "slideUp: display set to none.");
+			assert.notEqual(getPropertyValue($target2, "height"), 0, "slideUp: height reset.");
+			assert.equal(getPropertyValue($target1, "paddingTop"), initialStyles.paddingTop, "slideUp: paddingTop reset.");
 
 			done();
 		},

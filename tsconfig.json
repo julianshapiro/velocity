@@ -21,7 +21,8 @@
 		]
 	},
 	"files": [
-		"src/app.ts",
-		"test/src/app.ts"
+		"src/velocity.ts",
+		"src-ui/velocity.ui.ts",
+		"test/src/test.ts"
 	]
 }

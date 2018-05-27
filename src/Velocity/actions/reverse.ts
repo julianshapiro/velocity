@@ -1,17 +1,15 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Actions that can be performed by passing a string instead of a propertiesMap.
  */
 
-import {
-	HTMLorSVGElement,
-	VelocityPromise,
-	VelocityResult,
-} from "../../../index.d";
+// Typedefs
+import {HTMLorSVGElement, VelocityPromise, VelocityResult} from "../../../velocity.d";
 
+// Project
 import {registerAction} from "./actions";
 
 registerAction(["reverse", (args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) => {

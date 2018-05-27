@@ -1,47 +1,16 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License
  */
 
-import {Velocity, VelocityEasingFn} from "../../../index.d";
+// Typedefs
+import {VelocityEasingFn} from "../../../velocity.d";
 
+// Project
 import {registerEasing} from "./easings";
-
-export declare namespace Velocity {
-	export interface VelocityEasingsType {
-		"ease": true;
-		"easeIn": true;
-		"ease-in": true;
-		"easeOut": true;
-		"ease-out": true;
-		"easeInOut": true;
-		"ease-in-out": true;
-		"easeInSine": true;
-		"easeOutSine": true;
-		"easeInOutSine": true;
-		"easeInQuad": true;
-		"easeOutQuad": true;
-		"easeInOutQuad": true;
-		"easeInCubic": true;
-		"easeOutCubic": true;
-		"easeInOutCubic": true;
-		"easeInQuart": true;
-		"easeOutQuart": true;
-		"easeInOutQuart": true;
-		"easeInQuint": true;
-		"easeOutQuint": true;
-		"easeInOutQuint": true;
-		"easeInExpo": true;
-		"easeOutExpo": true;
-		"easeInOutExpo": true;
-		"easeInCirc": true;
-		"easeOutCirc": true;
-		"easeInOutCirc": true;
-	}
-}
 
 /**
  * Fix to a range of <code>0 <= num <= 1</code>.

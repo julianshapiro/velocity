@@ -1,15 +1,14 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import {
-	HTMLorSVGElement,
-	VelocityNormalizationsFn,
-} from "../../../index.d";
+// Typedefs
+import {HTMLorSVGElement, VelocityNormalizationsFn} from "../../../velocity.d";
 
-import {VelocityStatic} from "../../velocity";
+// Project
+import Velocity from "../../velocity";
 import {Data} from "../data";
 import {getNormalization} from "../normalizations/normalizations";
 import {NoCacheNormalizations} from "../normalizations/normalizationsObject";
@@ -112,7 +111,7 @@ export function getPropertyValue(element: HTMLorSVGElement, propertyName: string
 			}
 		}
 	}
-	if (VelocityStatic.debug >= 2) {
+	if (Velocity.debug >= 2) {
 		console.info(`Get "${propertyName}": "${propertyValue}"`, element);
 	}
 

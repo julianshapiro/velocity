@@ -1,12 +1,11 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import {
-	VelocityEasingFn,
-} from "../../../index.d";
+// Typedefs
+import {VelocityEasingFn} from "../../../velocity.d";
 
 interface springState {
 	x: number;

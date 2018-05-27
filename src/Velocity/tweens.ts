@@ -1,35 +1,32 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Tweens
  */
 
+// Typedefs
 import {
-	AnimationCall,
-	AnimationFlags,
-	HTMLorSVGElement,
-	Sequence,
-	VelocityProperties,
-	VelocityPropertyFn,
-	VelocityPropertyValueFn,
-	VelocityTween,
-} from "../../index";
+	AnimationCall, AnimationFlags, HTMLorSVGElement, Properties, Sequence,
+	VelocityProperty, VelocityPropertyFn, VelocityPropertyValueFn, VelocityTween,
+} from "../../velocity.d";
 
+// Project
 import {isFunction, isNumber, isString} from "../types";
 import {cloneArray, getValue} from "../utility";
-import {VelocityStatic} from "../velocity";
-import {camelCase} from "./css/camelCase";
+import Velocity from "../velocity";
+import {camelCase} from "./camelCase";
 import {fixColors} from "./css/fixColors";
 import {getPropertyValue} from "./css/getPropertyValue";
 import {Data} from "./data";
 import {defaults} from "./defaults";
 import {Easings} from "./easing/easings";
 import {getNormalization, getNormalizationUnit} from "./normalizations/normalizations";
+import {validateEasing} from "./options";
 import {State} from "./state";
-import {validateEasing} from "./validate";
 
+// Constants
 const rxHex = /^#([A-f\d]{3}){1,2}$/i,
 	commands: {
 		[type: string]: (
@@ -59,7 +56,7 @@ const rxHex = /^#([A-f\d]{3}){1,2}$/i,
  * pre-allocates the array as it is then the correct size and slightly
  * faster to access.
  */
-export function expandProperties(animation: AnimationCall, properties: VelocityProperties) {
+export function expandProperties(animation: AnimationCall, properties: Properties<VelocityProperty>) {
 	const tweens = animation.tweens = Object.create(null),
 		elements = animation.elements,
 		element = animation.element,
@@ -75,13 +72,13 @@ export function expandProperties(animation: AnimationCall, properties: VelocityP
 			let valueData = properties[property];
 
 			if (!fn && propertyName !== "tween") {
-				if (VelocityStatic.debug) {
+				if (Velocity.debug) {
 					console.log(`Skipping "${property}" due to a lack of browser support.`);
 				}
 				continue;
 			}
 			if (valueData == null) {
-				if (VelocityStatic.debug) {
+				if (Velocity.debug) {
 					console.log(`Skipping "${property}" due to no value supplied.`);
 				}
 				continue;
@@ -373,7 +370,7 @@ function explodeTween(propertyName: string, tween: VelocityTween, duration: numb
 		}), endValue], propertyName);
 	}
 	if (sequence) {
-		if (VelocityStatic.debug) {
+		if (Velocity.debug) {
 			console.log(`Velocity: Sequence found:`, sequence);
 		}
 		sequence[0].percent = 0;
@@ -423,7 +420,7 @@ export function validateTweens(activeCall: AnimationCall) {
 				console.warn(`bad type`, tween, propertyName, startValue);
 			}
 		}
-		if (VelocityStatic.debug) {
+		if (Velocity.debug) {
 			console.log(`tweensContainer "${propertyName}": ${JSON.stringify(tween)}`, element);
 		}
 	}

@@ -1,12 +1,12 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "@types/qunit";
+import "qunit";
 
-import {Velocity} from "../../../index.d";
+import Velocity from "velocity-animate";
 import {$qunitStage, applyStartValues, Data, defaultProperties, defaultStyles, getTarget} from "../utilities";
 import "./_module";
 
@@ -53,8 +53,8 @@ QUnit.todo("Start Value Calculation", (assert) => {
 	const testPropertiesEndConvert = {paddingLeft: "20%", height: "40%", lineHeight: "0.5em", wordSpacing: "2rem", marginLeft: "10vw", marginTop: "5vh", marginBottom: "100px"},
 		parentWidth = $qunitStage.clientWidth,
 		parentHeight = $qunitStage.clientHeight,
-		parentFontSize = Velocity.CSS.getPropertyValue($qunitStage, "fontSize"),
-		remSize = parseFloat(Velocity.CSS.getPropertyValue(document.body, "fontSize") as any),
+		parentFontSize = Velocity($qunitStage, "style", "fontSize"),
+		remSize = parseFloat(Velocity(document.body, "style", "fontSize") as any),
 		$target4 = getTarget();
 
 	applyStartValues($target4, testStartValues);
@@ -97,6 +97,6 @@ QUnit.todo("Start Value Calculation", (assert) => {
 	Velocity($target5, testPropertiesTRBL);
 
 	assert.equal(parseInt(Data($target5).cache.left, 10),
-		Math.round(parseFloat(testPropertiesTRBL.left) + parseFloat(Velocity.CSS.getPropertyValue(document.body, "marginLeft") as any)),
+		Math.round(parseFloat(testPropertiesTRBL.left) + parseFloat(Velocity(document.body, "style", "marginLeft") as any)),
 		"TRBL value was deferred to jQuery.");
 });

@@ -1,13 +1,15 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
+// Project
 import {ColorNames} from "./fixColors";
 
-// Converting from hex as it makes for a smaller file.
-// TODO: When build system changes to webpack, make this one optional.
+/**
+ * Converting from hex as it makes for a smaller file.
+ */
 const colorValues = {
 	aliceblue: 0xF0F8FF,
 	antiquewhite: 0xFAEBD7,

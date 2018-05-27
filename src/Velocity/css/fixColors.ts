@@ -1,8 +1,15 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
+
+// Constants
+const rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi,
+	rxColor3 = /#([a-f\d])([a-f\d])([a-f\d])/gi,
+	rxColorName = /(rgba?\(\s*)?(\b[a-z]+\b)/g,
+	rxRGB = /rgb(a?)\(([^\)]+)\)/gi,
+	rxSpaces = /\s+/g;
 
 /**
  * This is the list of color names -> rgb values. The object is in here so
@@ -17,12 +24,6 @@ export const ColorNames: {[name: string]: string} = {};
 function makeRGBA(ignore: any, r: string, g: string, b: string): string {
 	return `rgba(${parseInt(r, 16)},${parseInt(g, 16)},${parseInt(b, 16)},1)`;
 }
-
-const rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi,
-	rxColor3 = /#([a-f\d])([a-f\d])([a-f\d])/gi,
-	rxColorName = /(rgba?\(\s*)?(\b[a-z]+\b)/g,
-	rxRGB = /rgb(a?)\(([^\)]+)\)/gi,
-	rxSpaces = /\s+/g;
 
 /**
  * Replace any css colour name with its rgba() value. It is possible to use

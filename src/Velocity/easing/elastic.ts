@@ -1,24 +1,16 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Elastic easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
  */
 
-import {Velocity} from "../../../index.d";
-
+// Project
 import {registerEasing} from "./easings";
 
-export declare namespace Velocity {
-	export interface VelocityEasingsType {
-		"easeInElastic": true;
-		"easeOutElastic": true;
-		"easeInOutElastic": true;
-	}
-}
-
-const pi2 = Math.PI * 2;
+// Constants
+const PI2 = Math.PI * 2;
 
 export function registerElasticIn(name: string, amplitude: number, period: number) {
 	registerEasing([name, (percentComplete: number, startValue: number, endValue: number): number => {
@@ -29,7 +21,7 @@ export function registerElasticIn(name: string, amplitude: number, period: numbe
 			return endValue;
 		}
 
-		return -(amplitude * Math.pow(2, 10 * (percentComplete -= 1)) * Math.sin((percentComplete - (period / pi2 * Math.asin(1 / amplitude))) * pi2 / period)) * (endValue - startValue);
+		return -(amplitude * Math.pow(2, 10 * (percentComplete -= 1)) * Math.sin((percentComplete - (period / PI2 * Math.asin(1 / amplitude))) * PI2 / period)) * (endValue - startValue);
 	}]);
 }
 
@@ -42,7 +34,7 @@ export function registerElasticOut(name: string, amplitude: number, period: numb
 			return endValue;
 		}
 
-		return (amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - (period / pi2 * Math.asin(1 / amplitude))) * pi2 / period) + 1) * (endValue - startValue);
+		return (amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - (period / PI2 * Math.asin(1 / amplitude))) * PI2 / period) + 1) * (endValue - startValue);
 	}]);
 }
 
@@ -54,13 +46,13 @@ export function registerElasticInOut(name: string, amplitude: number, period: nu
 		if (percentComplete === 1) {
 			return endValue;
 		}
-		const s = period / pi2 * Math.asin(1 / amplitude);
+		const s = period / PI2 * Math.asin(1 / amplitude);
 
 		percentComplete = percentComplete * 2 - 1;
 
 		return (percentComplete < 0
-			? -0.5 * (amplitude * Math.pow(2, 10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period))
-			: amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period) * 0.5 + 1
+			? -0.5 * (amplitude * Math.pow(2, 10 * percentComplete) * Math.sin((percentComplete - s) * PI2 / period))
+			: amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - s) * PI2 / period) * 0.5 + 1
 		) * (endValue - startValue);
 	}]);
 }

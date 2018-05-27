@@ -1,24 +1,22 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Get or set a value from one or more running animations.
  */
 
-import {
-	AnimationCall,
-	AnimationFlags,
-	VelocityPromise,
-	VelocityResult,
-} from "../../../index.d";
+import {AnimationCall, AnimationFlags, VelocityPromise, VelocityResult} from "../../../velocity.d";
 
 import {isVelocityResult} from "../../types";
 import {getValue} from "../../utility";
 import {defaults} from "../defaults";
+import {
+	validateBegin, validateCache, validateComplete, validateDelay, validateDuration,
+	validateFpsLimit, validateLoop, validateQueue, validateRepeat,
+} from "../options";
 import {State} from "../state";
 import {lastTick} from "../tick";
-import {validateBegin, validateCache, validateComplete, validateDelay, validateDuration, validateFpsLimit, validateLoop, validateQueue, validateRepeat} from "../validate";
 import {registerAction} from "./actions";
 
 /**

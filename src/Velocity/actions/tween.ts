@@ -1,38 +1,36 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Get or set a property from one or more elements.
  */
 
+// Typedefs
 import {
-	AnimationCall,
-	HTMLorSVGElement,
-	Sequence,
-	TweenStep,
-	VelocityEasingType,
-	VelocityPromise,
-	VelocityProperties,
-	VelocityProperty,
-} from "../../../index.d";
+	AnimationCall, HTMLorSVGElement, Properties, Sequence, SequenceList,
+	TweenStep, VelocityEasingType, VelocityPromise, VelocityProperty,
+} from "../../../velocity.d";
 
-import {DEFAULT_DURATION} from "../../constants";
+// Project
 import {isNumber, isPlainObject, isString} from "../../types";
 import {getValue} from "../../utility";
 import {defaults} from "../defaults";
 import {linearEasing} from "../easing/easings";
+import {validateEasing} from "../options";
 import {expandSequence} from "../sequences";
-import {SequenceList, SequencesObject} from "../sequencesObject";
+import {SequencesObject} from "../sequencesObject";
 import {expandProperties} from "../tweens";
-import {validateEasing} from "../validate";
 import {registerAction} from "./actions";
+
+// Constants
+import {DEFAULT_DURATION} from "../../constants";
 
 /**
  * Expose a style shortcut - can't be used with chaining, but might be of
  * use to people.
  */
-export function tween(elements: HTMLorSVGElement[], percentComplete: number, properties: VelocityProperties, easing?: VelocityEasingType);
+export function tween(elements: HTMLorSVGElement[], percentComplete: number, properties: Properties<VelocityProperty>, easing?: VelocityEasingType);
 export function tween(elements: HTMLorSVGElement[], percentComplete: number, propertyName: string, property: VelocityProperty, easing?: VelocityEasingType);
 export function tween(elements: HTMLorSVGElement[], ...args: any[]) {
 	return tweenAction(arguments as any, elements);
@@ -68,7 +66,7 @@ Velocity(<element>, \"tween\", percentComplete, {property: end | [end, <easing>,
 			tweens: null as {[property: string]: Sequence},
 		} as any as AnimationCall,
 		result: {[property: string]: string} = {};
-	let properties: {[property in keyof CSSStyleDeclaration]?: Sequence} = args[1],
+	let properties: Properties<string> = args[1],
 		singleResult: boolean,
 		maybeSequence: SequenceList,
 		easing: VelocityEasingType = args[2],

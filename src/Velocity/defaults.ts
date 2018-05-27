@@ -1,49 +1,32 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Velocity option defaults, which can be overriden by the user.
  */
 
-import {
-	StrictVelocityOptions,
-	VelocityCallback,
-	VelocityEasingType,
-} from "../../index.d";
+// Typedefs
+import {StrictVelocityOptions, VelocityCallback, VelocityEasingType} from "../../velocity.d";
 
-import {
-	DEFAULT_CACHE,
-	DEFAULT_DELAY,
-	DEFAULT_DURATION,
-	DEFAULT_EASING,
-	DEFAULT_FPSLIMIT,
-	DEFAULT_LOOP,
-	DEFAULT_PROMISE,
-	DEFAULT_PROMISE_REJECT_EMPTY,
-	DEFAULT_QUEUE,
-	DEFAULT_REPEAT,
-	DEFAULT_SPEED,
-	DEFAULT_SYNC,
-	FUZZY_MS_PER_SECOND,
-} from "../constants";
+// Project
 import {isBoolean} from "../types";
 import {
-	validateBegin,
-	validateCache,
-	validateComplete,
-	validateDelay,
-	validateDuration,
-	validateEasing,
-	validateFpsLimit,
-	validateLoop,
-	validatePromise,
-	validatePromiseRejectEmpty,
-	validateQueue,
-	validateRepeat,
-	validateSpeed,
-	validateSync,
-} from "./validate";
+	validateBegin, validateCache, validateComplete, validateDelay, validateDuration,
+	validateEasing, validateFpsLimit, validateLoop, validatePromise, validatePromiseRejectEmpty,
+	validateQueue, validateRepeat, validateSpeed, validateSync,
+} from "./options";
+
+// Constants
+import {
+	DEFAULT_CACHE, DEFAULT_DELAY, DEFAULT_DURATION, DEFAULT_EASING, DEFAULT_FPSLIMIT,
+	DEFAULT_LOOP, DEFAULT_PROMISE, DEFAULT_PROMISE_REJECT_EMPTY, DEFAULT_QUEUE, DEFAULT_REPEAT,
+	DEFAULT_SPEED, DEFAULT_SYNC, FUZZY_MS_PER_SECOND,
+} from "../constants";
+
+export const defaults: StrictVelocityOptions & {reset?: () => void} = {
+	mobileHA: true,
+};
 
 // NOTE: Add the variable here, then add the default state in "reset" below.
 let cache: boolean,
@@ -62,10 +45,6 @@ let cache: boolean,
 	repeat: number | true,
 	speed: number,
 	sync: boolean;
-
-export const defaults: StrictVelocityOptions & {reset?: () => void} = {
-	mobileHA: true,
-};
 
 // IMPORTANT: Make sure any new defaults get added to the actions/set.ts list
 Object.defineProperties(defaults, {

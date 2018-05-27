@@ -1,21 +1,24 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import {AnimationCall, VelocitySequence, VelocityTween} from "../../index.d";
+// Typedefs
+import {AnimationCall, SequenceList, VelocitySequence, VelocityTween} from "../../velocity.d";
 
-import {DEFAULT_DURATION} from "../constants";
+// Project
 import {isNumber, isPlainObject, isString} from "../types";
-import {VelocityStatic} from "../velocity";
+import Velocity from "../velocity";
 import {registerAction} from "./actions/actions";
+import {camelCase} from "./camelCase";
 import {getNormalization} from "./normalizations/normalizations";
-import {SequenceList, SequencesObject} from "./sequencesObject";
+import {validateDuration, validateEasing} from "./options";
+import {SequencesObject} from "./sequencesObject";
 import {findPattern} from "./tweens";
-import {validateDuration, validateEasing} from "./validate";
 
-import {camelCase} from "./css/camelCase";
+// Constants
+import {DEFAULT_DURATION} from "../constants";
 
 const rxPercents = /(\d*\.\d+|\d+\.?|from|to)/g;
 
@@ -28,7 +31,7 @@ export function expandSequence(animation: AnimationCall, sequence: SequenceList)
 			const fn = getNormalization(element, propertyName);
 
 			if (!fn && propertyName !== "tween") {
-				if (VelocityStatic.debug) {
+				if (Velocity.debug) {
 					console.log(`Skipping [${propertyName}] due to a lack of browser support.`);
 				}
 				continue;
@@ -44,7 +47,7 @@ export function expandSequence(animation: AnimationCall, sequence: SequenceList)
 /**
  * Used to register a sequence. This should never be called by users
  * directly, instead it should be called via an action:<br/>
- * <code>Velocity("registerSequence", "name", VelocitySequence);</code>
+ * <code>Velocity("registerSequence", ""name", VelocitySequence);</code>
  */
 export function registerSequence(args?: [string, VelocitySequence] | [{[name: string]: VelocitySequence}]) {
 	if (isPlainObject(args[0])) {

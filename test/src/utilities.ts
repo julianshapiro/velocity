@@ -1,13 +1,29 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import "@types/qunit";
-import "./utilities.d";
+import "qunit";
 
-import {ElementData, Velocity, VelocityOptions, VelocityProperties} from "../../index.d";
+import Velocity, {ElementData, VelocityOptions, VelocityProperties} from "velocity-animate";
+
+declare global {
+	interface QUnit {
+		todo(name: string, callback: (assert: Assert) => void): void;
+	}
+
+	interface Assert {
+		close: {
+			(actual: number, expected: number, maxDifference: number, message: string): void;
+			percent(actual: number, expected: number, maxPercentDifference: number, message: string): void;
+		};
+		notClose: {
+			(actual: number, expected: number, minDifference: number, message: string): void;
+			percent(actual: number, expected: number, minPercentDifference: number, message: string): void;
+		};
+	}
+}
 
 export const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
 	isAndroid = /Android/i.test(navigator.userAgent),
@@ -79,7 +95,7 @@ export function getNow(): number {
 }
 
 export function getPropertyValue(element: HTMLElement, property: string): string {
-	return Velocity.CSS.getPropertyValue(element, property);
+	return Velocity(element, "style", property);
 }
 
 export function getTarget(startValues?: {[name: string]: string}): HTMLDivElement {

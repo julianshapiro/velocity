@@ -1,5 +1,5 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
@@ -7,17 +7,8 @@
  * need.
  */
 
-import {Velocity} from "../../../index.d";
-
+// Project
 import {registerEasing} from "./easings";
-
-export declare namespace Velocity {
-	export interface VelocityEasingsType {
-		"at-start": true;
-		"during": true;
-		"at-end": true;
-	}
-}
 
 /**
  * Easing function that sets to the specified value immediately after the

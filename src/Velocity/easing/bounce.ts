@@ -1,22 +1,13 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Bounce easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
  */
 
-import {Velocity} from "../../../index.d";
-
+// Project
 import {registerEasing} from "./easings";
-
-export declare namespace Velocity {
-	export interface VelocityEasingsType {
-		"easeInBounce": true;
-		"easeOutBounce": true;
-		"easeInOutBounce": true;
-	}
-}
 
 function easeOutBouncePercent(percentComplete: number): number {
 	if (percentComplete < 1 / 2.75) {

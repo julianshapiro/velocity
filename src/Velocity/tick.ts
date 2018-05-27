@@ -1,21 +1,17 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Tick
  */
 
-import {
-	AnimationCall,
-	AnimationFlags,
-	TweenStep,
-	VelocityCallback,
-	VelocityProgress,
-} from "../../index.d";
+// Typedefs
+import {AnimationCall, AnimationFlags, TweenStep, VelocityCallback, VelocityProgress} from "../../velocity.d";
 
+// Project
 import {now} from "../utility";
-import {VelocityStatic} from "../velocity";
+import Velocity from "../velocity";
 import {completeCall} from "./complete";
 import {setPropertyValue} from "./css/setPropertyValue";
 import {Data} from "./data";
@@ -358,7 +354,7 @@ export function tick(timestamp?: number | boolean) {
 				const activeEasing = activeCall.easing != null ? activeCall.easing : options.easing != null ? options.easing : defaultEasing,
 					millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart,
 					duration = activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaultDuration,
-					percentComplete = activeCall.percentComplete = VelocityStatic.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1),
+					percentComplete = activeCall.percentComplete = Velocity.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1),
 					tweens = activeCall.tweens,
 					reverse = flags & AnimationFlags.REVERSE; // tslint:disable-line:no-bitwise
 

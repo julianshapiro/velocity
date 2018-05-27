@@ -1,20 +1,22 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Stop animation.
  */
 
-import {AnimationCall, AnimationFlags, VelocityPromise, VelocityResult} from "../../../index.d";
+// Typedefs
+import {AnimationCall, AnimationFlags, VelocityPromise, VelocityResult} from "../../../velocity.d";
 
+// Project
 import {isVelocityResult} from "../../types";
 import {getValue} from "../../utility";
 import {completeCall} from "../complete";
 import {defaults} from "../defaults";
+import {validateQueue} from "../options";
 import {State} from "../state";
 import {validateTweens} from "../tweens";
-import {validateQueue} from "../validate";
 import {registerAction} from "./actions";
 
 /**

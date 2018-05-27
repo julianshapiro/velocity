@@ -1,8 +1,14 @@
+/**
+ * velocity-animate (C) 2014-2017 Julian Shapiro.
+ *
+ * Licensed under the MIT license. See LICENSE file in the project root for details.
+ */
+
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-  typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (factory((global['velocity-animate'] = {})));
-}(this, (function (exports) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (global.Velocity = factory());
+}(this, (function () { 'use strict';
 
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
@@ -25,39 +31,33 @@
     return obj;
   };
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Runtime type checking methods.
+  /**
+   * Check if a variable is a boolean.
    */
   function isBoolean(variable) {
       return variable === true || variable === false;
   }
-  function isNumber(variable) {
-      return typeof variable === "number";
-  }
-  function isString(variable) {
-      return typeof variable === "string";
-  }
+  /**
+   * Check if a variable is a function.
+   */
   function isFunction(variable) {
       return Object.prototype.toString.call(variable) === "[object Function]";
   }
+  /**
+   * Check if a variable is an HTMLElement or SVGElement.
+   */
   function isNode(variable) {
       return !!(variable && variable.nodeType);
   }
-  function isVelocityResult(variable) {
-      return variable && isNumber(variable.length) && isFunction(variable.velocity);
+  /**
+   * Check if a variable is a number.
+   */
+  function isNumber(variable) {
+      return typeof variable === "number";
   }
-  function propertyIsEnumerable(obj, property) {
-      return Object.prototype.propertyIsEnumerable.call(obj, property);
-  }
-  /* Determine if variable is an array-like wrapped jQuery, Zepto or similar element, or even a NodeList etc. */
-  /* NOTE: HTMLFormElements also have a length. */
-  function isWrapped(variable) {
-      return variable && variable !== window && isNumber(variable.length) && !isString(variable) && !isFunction(variable) && !isNode(variable) && (variable.length === 0 || isNode(variable[0]));
-  }
+  /**
+   * Check if a variable is a plain object (and not an instance).
+   */
   function isPlainObject(variable) {
       if (!variable || (typeof variable === "undefined" ? "undefined" : _typeof(variable)) !== "object" || variable.nodeType || Object.prototype.toString.call(variable) !== "[object Object]") {
           return false;
@@ -65,12 +65,52 @@
       var proto = Object.getPrototypeOf(variable);
       return !proto || proto.hasOwnProperty("constructor") && proto.constructor === Object;
   }
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
+  /**
+   * Check if a variable is a string.
    */
+  function isString(variable) {
+      return typeof variable === "string";
+  }
+  /**
+   * Check if a variable is the result of calling Velocity.
+   */
+  function isVelocityResult(variable) {
+      return variable && isNumber(variable.length) && isFunction(variable.velocity);
+  }
+  /**
+   * Check if a variable is an array-like wrapped jQuery, Zepto or similar, where
+   * each indexed value is a Node.
+   */
+  function isWrapped(variable) {
+      return variable && variable !== window && isNumber(variable.length) && !isString(variable) && !isFunction(variable) && !isNode(variable) && (variable.length === 0 || isNode(variable[0]));
+  }
+  /**
+   * Check is a property is an enumerable member of an object.
+   */
+  function propertyIsEnumerable(obj, property) {
+      return Object.prototype.propertyIsEnumerable.call(obj, property);
+  }
+
+  // Project
+  /**
+   * Add a single className to an Element.
+   */
+  function addClass(element, className) {
+      if (element instanceof Element) {
+          if (element.classList) {
+              element.classList.add(className);
+          } else {
+              removeClass(element, className);
+              element.className += (element.className.length ? " " : "") + className;
+          }
+      }
+  }
+  /**
+   * Clone an array, works for array-like too.
+   */
+  function cloneArray(arrayLike) {
+      return Array.prototype.slice.call(arrayLike, 0);
+  }
   /**
    * The <strong><code>defineProperty()</code></strong> function provides a
    * shortcut to defining a property that cannot be accidentally iterated across.
@@ -85,20 +125,14 @@
       }
   }
   /**
-   * Shim to get the current milliseconds - on anything except old IE it'll use
-   * Date.now() and save creating an object. If that doesn't exist then it'll
-   * create one that gets GC.
+   * When there are multiple locations for a value pass them all in, then get the
+   * first value that is valid.
    */
-  var now = Date.now ? Date.now : function () {
-      return new Date().getTime();
-  };
-  /**
-   * Clone an array, works for array-like too.
-   */
-  function cloneArray(arrayLike) {
-      return Array.prototype.slice.call(arrayLike, 0);
-  }
-  function getValue(args) {
+  function getValue() {
+      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+          args[_key] = arguments[_key];
+      }
+
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
@@ -127,18 +161,13 @@
       }
   }
   /**
-   * Add a single className to an Element.
+   * Shim to get the current milliseconds - on anything except old IE it'll use
+   * Date.now() and save creating an object. If that doesn't exist then it'll
+   * create one that gets GC.
    */
-  function addClass(element, className) {
-      if (element instanceof Element) {
-          if (element.classList) {
-              element.classList.add(className);
-          } else {
-              removeClass(element, className);
-              element.className += (element.className.length ? " " : "") + className;
-          }
-      }
-  }
+  var now = Date.now ? Date.now : function () {
+      return new Date().getTime();
+  };
   /**
    * Remove a single className from an Element.
    */
@@ -153,296 +182,8 @@
       }
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Normalisations are used when getting or setting a (normally css compound
-   * properties) value that can have a different order in different browsers.
-   *
-   * It can also be used to extend and create specific properties that otherwise
-   * don't exist (such as for scrolling, or inner/outer dimensions).
-   */
-  /**
-   * Unlike "actions", normalizations can always be replaced by users.
-   */
-  var Normalizations = [];
-  /**
-   * Store a cross-reference to units to be added to specific normalization
-   * functions if the user supplies a unit-less number.
-   *
-   * This is pretty much confined to adding "px" to several css properties.
-   */
-  var NormalizationUnits = {};
-  /**
-   * Any normalisations that should never be cached are listed here.
-   * Faster than an array - https://jsperf.com/array-includes-and-find-methods-vs-set-has
-   */
-  var NoCacheNormalizations = new Set();
-  /**
-   * An array of classes used for the per-class normalizations. This
-   * translates into a bitwise enum for quick cross-reference, and so that
-   * the element doesn't need multiple <code>instanceof</code> calls every
-   * frame.
-   */
-  var constructors = [];
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-  var dataName = "velocityData";
-  /**
-   * Get (and create) the internal data store for an element.
-   */
-  function Data(element) {
-      // Use a string member so Uglify doesn't mangle it.
-      var data = element[dataName];
-      if (data) {
-          return data;
-      }
-      var window = element.ownerDocument.defaultView;
-      var types = 0;
-      for (var index = 0; index < constructors.length; index++) {
-          var _constructor = constructors[index];
-          if (isString(_constructor)) {
-              if (element instanceof window[_constructor]) {
-                  types |= 1 << index; // tslint:disable-line:no-bitwise
-              }
-          } else if (element instanceof _constructor) {
-              types |= 1 << index; // tslint:disable-line:no-bitwise
-          }
-      }
-      // Use an intermediate object so it errors on incorrect data.
-      var newData = {
-          types: types,
-          count: 0,
-          computedStyle: null,
-          cache: {},
-          queueList: {},
-          lastAnimationList: {},
-          lastFinishList: {},
-          window: window
-      };
-      Object.defineProperty(element, dataName, {
-          value: newData
-      });
-      return newData;
-  }
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Constants and defaults. These values should never change without a MINOR
-   * version bump.
-   */
-  /**
-   * Without this it will only un-prefix properties that have a valid "normal"
-   * version.
-   */
-  var ALL_VENDOR_PREFIXES = true;
-  var DURATION_FAST = 200;
-  var DURATION_NORMAL = 400;
-  var DURATION_SLOW = 600;
-  var FUZZY_MS_PER_SECOND = 980;
-  var DEFAULT_CACHE = true;
-  var DEFAULT_DELAY = 0;
-  var DEFAULT_DURATION = DURATION_NORMAL;
-  var DEFAULT_EASING = "swing";
-  var DEFAULT_FPSLIMIT = 60;
-  var DEFAULT_LOOP = 0;
-  var DEFAULT_PROMISE = true;
-  var DEFAULT_PROMISE_REJECT_EMPTY = true;
-  var DEFAULT_QUEUE = "";
-  var DEFAULT_REPEAT = 0;
-  var DEFAULT_SPEED = 1;
-  var DEFAULT_SYNC = true;
-  var CLASSNAME = "velocity-animating";
-  var Duration = {
-    fast: DURATION_FAST,
-    normal: DURATION_NORMAL,
-    slow: DURATION_SLOW
-  };
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-  var isClient = window && window === window.window,
-      windowScrollAnchor = isClient && window.pageYOffset !== undefined;
-  var State = {
-      isClient: isClient,
-      isMobile: isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-      isAndroid: isClient && /Android/i.test(navigator.userAgent),
-      isGingerbread: isClient && /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
-      isChrome: isClient && window.chrome,
-      isFirefox: isClient && /Firefox/i.test(navigator.userAgent),
-      prefixElement: isClient && document.createElement("div"),
-      windowScrollAnchor: windowScrollAnchor,
-      scrollAnchor: windowScrollAnchor ? window : !isClient || document.documentElement || document.body.parentNode || document.body,
-      scrollPropertyLeft: windowScrollAnchor ? "pageXOffset" : "scrollLeft",
-      scrollPropertyTop: windowScrollAnchor ? "pageYOffset" : "scrollTop",
-      className: CLASSNAME,
-      isTicking: false,
-      first: undefined,
-      last: undefined,
-      firstNew: undefined
-  };
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * AnimationCall queue
-   */
-  /**
-   * Simple queue management. Un-named queue is directly within the element data,
-   * named queue is within an object within it.
-   */
-  function animate(animation) {
-      var prev = State.last;
-      animation._prev = prev;
-      animation._next = undefined;
-      if (prev) {
-          prev._next = animation;
-      } else {
-          State.first = animation;
-      }
-      State.last = animation;
-      if (!State.firstNew) {
-          State.firstNew = animation;
-      }
-      var element = animation.element,
-          data = Data(element);
-      if (!data.count++) {
-          ////////////////////////
-          // Feature: Classname //
-          ////////////////////////
-          addClass(element, State.className);
-      }
-  }
-  /**
-   * Add an item to an animation queue.
-   */
-  function queue(element, animation, queueName) {
-      var data = Data(element);
-      if (queueName !== false) {
-          // Store the last animation added so we can use it for the
-          // beginning of the next one.
-          data.lastAnimationList[queueName] = animation;
-      }
-      if (queueName === false) {
-          animate(animation);
-      } else {
-          if (!isString(queueName)) {
-              queueName = "";
-          }
-          var last = data.queueList[queueName];
-          if (!last) {
-              if (last === null) {
-                  data.queueList[queueName] = animation;
-              } else {
-                  data.queueList[queueName] = null;
-                  animate(animation);
-              }
-          } else {
-              while (last._next) {
-                  last = last._next;
-              }
-              last._next = animation;
-              animation._prev = last;
-          }
-      }
-  }
-  /**
-   * Start the next animation on this element's queue (named or default).
-   *
-   * @returns the next animation that is starting.
-   */
-  function dequeue(element, queueName, skip) {
-      if (queueName !== false) {
-          if (!isString(queueName)) {
-              queueName = "";
-          }
-          var data = Data(element),
-              animation = data.queueList[queueName];
-          if (animation) {
-              data.queueList[queueName] = animation._next || null;
-              if (!skip) {
-                  animate(animation);
-              }
-          } else if (animation === null) {
-              delete data.queueList[queueName];
-          }
-          return animation;
-      }
-  }
-  /**
-   * Remove an animation from the active animation list. If it has a queue set
-   * then remember it as the last animation for that queue, and free the one
-   * that was previously there. If the animation list is completely empty then
-   * mark us as finished.
-   */
-  function freeAnimationCall(animation) {
-      var next = animation._next,
-          prev = animation._prev,
-          queueName = animation.queue == null ? animation.options.queue : animation.queue;
-      if (State.firstNew === animation) {
-          State.firstNew = next;
-      }
-      if (State.first === animation) {
-          State.first = next;
-      } else if (prev) {
-          prev._next = next;
-      }
-      if (State.last === animation) {
-          State.last = prev;
-      } else if (next) {
-          next._prev = prev;
-      }
-      if (queueName) {
-          var data = Data(animation.element);
-          if (data) {
-              animation._next = animation._prev = undefined;
-          }
-      }
-  }
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-  /**
-   * Used to patch any object to allow Velocity chaining. In order to chain an
-   * object must either be treatable as an array - with a <code>.length</code>
-   * property, and each member a Node, or a Node directly.
-   *
-   * By default Velocity will try to patch <code>window</code>,
-   * <code>jQuery</code>, <code>Zepto</code>, and several classes that return
-   * Nodes or lists of Nodes.
-   */
-  function patch(proto, global) {
-      try {
-          defineProperty$1(proto, (global ? "V" : "v") + "elocity", Velocity);
-      } catch (e) {
-          console.warn("VelocityJS: Error when trying to add prototype.", e);
-      }
-  }
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Actions that can be performed by passing a string instead of a propertiesMap.
-   */
+  // Project
+  // Constants
   var Actions = {};
   /**
    * Used to register an action. This should never be called by users
@@ -466,11 +207,35 @@
   }
   registerAction(["registerAction", registerAction], true);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
+  /**
+   * Without this it will only un-prefix properties that have a valid "normal"
+   * version.
    */
+  var DURATION_FAST = 200;
+  var DURATION_NORMAL = 400;
+  var DURATION_SLOW = 600;
+  var FUZZY_MS_PER_SECOND = 980;
+  var DEFAULT_CACHE = true;
+  var DEFAULT_DELAY = 0;
+  var DEFAULT_DURATION = DURATION_NORMAL;
+  var DEFAULT_EASING = "swing";
+  var DEFAULT_FPSLIMIT = 60;
+  var DEFAULT_LOOP = 0;
+  var DEFAULT_PROMISE = true;
+  var DEFAULT_PROMISE_REJECT_EMPTY = true;
+  var DEFAULT_QUEUE = "";
+  var DEFAULT_REPEAT = 0;
+  var DEFAULT_SPEED = 1;
+  var DEFAULT_SYNC = true;
+  var CLASSNAME = "velocity-animating";
+  var Duration = {
+    fast: DURATION_FAST,
+    normal: DURATION_NORMAL,
+    slow: DURATION_SLOW
+  };
+
+  // Project
+  // Constants
   var Easings = {};
   /**
    * Used to register a easing. This should never be called by users
@@ -514,13 +279,7 @@
   registerEasing(["swing", swingEasing]);
   registerEasing(["spring", springEasing]);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Bezier curve function generator. Copyright Gaetan Renaudeau. MIT License: http://en.wikipedia.org/wiki/MIT_License
-   */
+  // Project
   /**
    * Fix to a range of <code>0 <= num <= 1</code>.
    */
@@ -678,11 +437,6 @@
   registerEasing(["easeOutCirc", generateBezier(0.075, 0.82, 0.165, 1)]);
   registerEasing(["easeInOutCirc", generateBezier(0.785, 0.135, 0.15, 0.86)]);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
   /* Runge-Kutta spring physics function generator. Adapted from Framer.js, copyright Koen Bok. MIT License: http://en.wikipedia.org/wiki/MIT_License */
   /* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
    then adjusts the time delta -- using the relation between actual time and duration -- to calculate the path for the duration-constrained animation. */
@@ -762,13 +516,7 @@
       };
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details
-   *
-   * Step easing generator.
-   */
+  // Constants
   var cache = {};
   function generateStep(steps) {
       var fn = cache[steps];
@@ -786,15 +534,7 @@
       };
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Validation functions used for various types of data that can be supplied.
-   * All errors are reported in the non-minified version for development. If a
-   * validation fails then it should return <code>undefined</code>.
-   */
+  // Project
   /**
    * Parse a duration value and return an ms number. Optionally return a
    * default value if the number is not valid.
@@ -1022,13 +762,10 @@
       }
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Velocity option defaults, which can be overriden by the user.
-   */
+  // Project
+  var defaults$1 = {
+      mobileHA: true
+  };
   // NOTE: Add the variable here, then add the default state in "reset" below.
   var cache$1 = void 0,
       begin = void 0,
@@ -1042,13 +779,10 @@
       minFrameTime = void 0,
       promise = void 0,
       promiseRejectEmpty = void 0,
-      queue$1 = void 0,
+      queue = void 0,
       repeat = void 0,
       speed = void 0,
       sync = void 0;
-  var defaults$1 = {
-      mobileHA: true
-  };
   // IMPORTANT: Make sure any new defaults get added to the actions/set.ts list
   Object.defineProperties(defaults$1, {
       reset: {
@@ -1065,7 +799,7 @@
               minFrameTime = FUZZY_MS_PER_SECOND / DEFAULT_FPSLIMIT;
               promise = DEFAULT_PROMISE;
               promiseRejectEmpty = DEFAULT_PROMISE_REJECT_EMPTY;
-              queue$1 = DEFAULT_QUEUE;
+              queue = DEFAULT_QUEUE;
               repeat = DEFAULT_REPEAT;
               speed = DEFAULT_SPEED;
               sync = DEFAULT_SYNC;
@@ -1212,12 +946,12 @@
       queue: {
           enumerable: true,
           get: function get() {
-              return queue$1;
+              return queue;
           },
           set: function set(value) {
               value = validateQueue(value);
               if (value !== undefined) {
-                  queue$1 = value;
+                  queue = value;
               }
           }
       },
@@ -1261,146 +995,309 @@
   // Reset to our default values, currently everything is undefined.
   defaults$1.reset();
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-  var SequencesObject = {};
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Core "Velocity" function.
+  /**
+   * The highest type index for finding the best normalization for a property.
    */
   /**
-   * These parts of Velocity absolutely must be included, even if they're unused!
+   * Unlike "actions", normalizations can always be replaced by users.
    */
-  var VelocityStatic;
-  (function (VelocityStatic) {
-    /**
-     * Actions cannot be replaced if they are internal (hasOwnProperty is false
-     * but they still exist). Otherwise they can be replaced by users.
-     *
-     * All external method calls should be using actions rather than sub-calls
-     * of Velocity itself.
-     */
-    VelocityStatic.Actions = Actions;
-    /**
-     * Our known easing functions.
-     */
-    VelocityStatic.Easings = Easings;
-    /**
-     * The currently registered sequences.
-     */
-    VelocityStatic.Sequences = SequencesObject;
-    /**
-     * Current internal state of Velocity.
-     */
-    VelocityStatic.State = State; // tslint:disable-line:no-shadowed-variable
-    /**
-     * Velocity option defaults, which can be overriden by the user.
-     */
-    VelocityStatic.defaults = defaults$1;
-    /**
-     * Used to patch any object to allow Velocity chaining. In order to chain an
-     * object must either be treatable as an array - with a <code>.length</code>
-     * property, and each member a Node, or a Node directly.
-     *
-     * By default Velocity will try to patch <code>window</code>,
-     * <code>jQuery</code>, <code>Zepto</code>, and several classes that return
-     * Nodes or lists of Nodes.
-     */
-    VelocityStatic.patch = patch;
-    /**
-     * Set to true, 1 or 2 (most verbose) to output debug info to console.
-     */
-    VelocityStatic.debug = false;
-    /**
-     * In mock mode, all animations are forced to complete immediately upon the
-     * next rAF tick. If there are further animations queued then they will each
-     * take one single frame in turn. Loops and repeats will be disabled while
-     * <code>mock = true</code>.
-     */
-    VelocityStatic.mock = false;
-  })(VelocityStatic || (VelocityStatic = {}));
-  /***************
-   Summary
-   ***************/
-  /*
-   - CSS: CSS stack that works independently from the rest of Velocity.
-   - animate(): Core animation method that iterates over the targeted elements and queues the incoming call onto each element individually.
-   - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options.
-   - Queueing: The logic that runs once the call has reached its point of execution in the element's queue stack.
-   Most logic is placed here to avoid risking it becoming stale (if the element's properties have changed).
-   - Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
-   - tick(): The single requestAnimationFrame loop responsible for tweening all in-progress calls.
-   - completeCall(): Handles the cleanup process for each Velocity call.
+  var Normalizations = [];
+  /**
+   * Store a cross-reference to units to be added to specific normalization
+   * functions if the user supplies a unit-less number.
+   *
+   * This is pretty much confined to adding "px" to several css properties.
    */
-  /*********************
-   Helper Functions
-   *********************/
-  /* IE detection. Gist: https://gist.github.com/julianshapiro/9098609 */
-  var IE = function () {
-    if (document.documentMode) {
-      return document.documentMode;
-    } else {
-      for (var i = 7; i > 4; i--) {
-        var div = document.createElement("div");
-        div.innerHTML = "<!" + "--" + "[if IE " + i + "]><span></span><![endif]-->";
-        if (div.getElementsByTagName("span").length) {
-          div = null;
-          return i;
-        }
+  var NormalizationUnits = {};
+  /**
+   * Any normalisations that should never be cached are listed here.
+   * Faster than an array - https://jsperf.com/array-includes-and-find-methods-vs-set-has
+   */
+  var NoCacheNormalizations = new Set();
+  /**
+   * An array of classes used for the per-class normalizations. This
+   * translates into a bitwise enum for quick cross-reference, and so that
+   * the element doesn't need multiple <code>instanceof</code> calls every
+   * frame.
+   */
+  var constructors = [];
+
+  // Project
+  // Constants
+  var dataName = "velocityData";
+  /**
+   * Get (and create) the internal data store for an element.
+   */
+  function Data(element) {
+      // Use a string member so Uglify doesn't mangle it.
+      var data = element[dataName];
+      if (data) {
+          return data;
       }
-    }
-    return undefined;
-  }();
-  /******************
-   Unsupported
-   ******************/
-  if (IE <= 8) {
-    throw new Error("VelocityJS cannot run on Internet Explorer 8 or earlier");
-  }
-  /******************
-   Frameworks
-   ******************/
-  if (window) {
-    /*
-     * Both jQuery and Zepto allow their $.fn object to be extended to allow
-     * wrapped elements to be subjected to plugin calls. If either framework is
-     * loaded, register a "velocity" extension pointing to Velocity's core
-     * animate() method. Velocity also registers itself onto a global container
-     * (window.jQuery || window.Zepto || window) so that certain features are
-     * accessible beyond just a per-element scope. Accordingly, Velocity can
-     * both act on wrapped DOM elements and stand alone for targeting raw DOM
-     * elements.
-     */
-    var jQuery = window.jQuery,
-        Zepto = window.Zepto;
-    patch(window, true);
-    patch(Element && Element.prototype);
-    patch(NodeList && NodeList.prototype);
-    patch(HTMLCollection && HTMLCollection.prototype);
-    patch(jQuery, true);
-    patch(jQuery && jQuery.fn);
-    patch(Zepto, true);
-    patch(Zepto && Zepto.fn);
+      var window = element.ownerDocument.defaultView;
+      var types = 0;
+      for (var index = 0; index < constructors.length; index++) {
+          var _constructor = constructors[index];
+          if (isString(_constructor)) {
+              if (element instanceof window[_constructor]) {
+                  types |= 1 << index; // tslint:disable-line:no-bitwise
+              }
+          } else if (element instanceof _constructor) {
+              types |= 1 << index; // tslint:disable-line:no-bitwise
+          }
+      }
+      // Use an intermediate object so it errors on incorrect data.
+      var newData = {
+          types: types,
+          count: 0,
+          computedStyle: null,
+          cache: {},
+          queueList: {},
+          lastAnimationList: {},
+          lastFinishList: {},
+          window: window
+      };
+      Object.defineProperty(element, dataName, {
+          value: newData
+      });
+      return newData;
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Normalisations are used when getting or setting a (normally css compound
-   * properties) value that can have a different order in different browsers.
-   *
-   * It can also be used to extend and create specific properties that otherwise
-   * don't exist (such as for scrolling, or inner/outer dimensions).
+  // Constants
+  var isClient = window && window === window.window,
+      windowScrollAnchor = isClient && window.pageYOffset !== undefined;
+  var State = {
+      isClient: isClient,
+      isMobile: isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+      isAndroid: isClient && /Android/i.test(navigator.userAgent),
+      isGingerbread: isClient && /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
+      isChrome: isClient && window.chrome,
+      isFirefox: isClient && /Firefox/i.test(navigator.userAgent),
+      prefixElement: isClient && document.createElement("div"),
+      windowScrollAnchor: windowScrollAnchor,
+      scrollAnchor: windowScrollAnchor ? window : !isClient || document.documentElement || document.body.parentNode || document.body,
+      scrollPropertyLeft: windowScrollAnchor ? "pageXOffset" : "scrollLeft",
+      scrollPropertyTop: windowScrollAnchor ? "pageYOffset" : "scrollTop",
+      className: CLASSNAME,
+      isTicking: false,
+      first: undefined,
+      last: undefined,
+      firstNew: undefined
+  };
+
+  // Project
+  /**
+   * Simple queue management. Un-named queue is directly within the element data,
+   * named queue is within an object within it.
    */
+  function animate(animation) {
+      var prev = State.last;
+      animation._prev = prev;
+      animation._next = undefined;
+      if (prev) {
+          prev._next = animation;
+      } else {
+          State.first = animation;
+      }
+      State.last = animation;
+      if (!State.firstNew) {
+          State.firstNew = animation;
+      }
+      var element = animation.element,
+          data = Data(element);
+      if (!data.count++) {
+          ////////////////////////
+          // Feature: Classname //
+          ////////////////////////
+          addClass(element, State.className);
+      }
+  }
+  /**
+   * Add an item to an animation queue.
+   */
+  function queue$1(element, animation, queueName) {
+      var data = Data(element);
+      if (queueName !== false) {
+          // Store the last animation added so we can use it for the
+          // beginning of the next one.
+          data.lastAnimationList[queueName] = animation;
+      }
+      if (queueName === false) {
+          animate(animation);
+      } else {
+          if (!isString(queueName)) {
+              queueName = "";
+          }
+          var last = data.queueList[queueName];
+          if (!last) {
+              if (last === null) {
+                  data.queueList[queueName] = animation;
+              } else {
+                  data.queueList[queueName] = null;
+                  animate(animation);
+              }
+          } else {
+              while (last._next) {
+                  last = last._next;
+              }
+              last._next = animation;
+              animation._prev = last;
+          }
+      }
+  }
+  /**
+   * Start the next animation on this element's queue (named or default).
+   *
+   * @returns the next animation that is starting.
+   */
+  function dequeue(element, queueName, skip) {
+      if (queueName !== false) {
+          if (!isString(queueName)) {
+              queueName = "";
+          }
+          var data = Data(element),
+              animation = data.queueList[queueName];
+          if (animation) {
+              data.queueList[queueName] = animation._next || null;
+              if (!skip) {
+                  animate(animation);
+              }
+          } else if (animation === null) {
+              delete data.queueList[queueName];
+          }
+          return animation;
+      }
+  }
+  /**
+   * Remove an animation from the active animation list. If it has a queue set
+   * then remember it as the last animation for that queue, and free the one
+   * that was previously there. If the animation list is completely empty then
+   * mark us as finished.
+   */
+  function freeAnimationCall(animation) {
+      var next = animation._next,
+          prev = animation._prev,
+          queueName = animation.queue == null ? animation.options.queue : animation.queue;
+      if (State.firstNew === animation) {
+          State.firstNew = next;
+      }
+      if (State.first === animation) {
+          State.first = next;
+      } else if (prev) {
+          prev._next = next;
+      }
+      if (State.last === animation) {
+          State.last = prev;
+      } else if (next) {
+          next._prev = prev;
+      }
+      if (queueName) {
+          var data = Data(animation.element);
+          if (data) {
+              animation._next = animation._prev = undefined;
+          }
+      }
+  }
+
+  var SequencesObject = {};
+
+  // Project
+  /**
+   * Call the complete method of an animation in a separate function so it can
+   * benefit from JIT compiling while still having a try/catch block.
+   */
+  function callComplete(activeCall) {
+      try {
+          var elements = activeCall.elements;
+          activeCall.options.complete.call(elements, elements, activeCall);
+      } catch (error) {
+          setTimeout(function () {
+              throw error;
+          }, 1);
+      }
+  }
+  /**
+   * Complete an animation. This might involve restarting (for loop or repeat
+   * options). Once it is finished we also check for any callbacks or Promises
+   * that need updating.
+   */
+  function completeCall(activeCall) {
+      // TODO: Check if it's not been completed already
+      var options = activeCall.options,
+          queue = getValue(activeCall.queue, options.queue),
+          isLoop = getValue(activeCall.loop, options.loop, defaults$1.loop),
+          isRepeat = getValue(activeCall.repeat, options.repeat, defaults$1.repeat),
+          isStopped = activeCall._flags & 8 /* STOPPED */; // tslint:disable-line:no-bitwise
+      if (!isStopped && (isLoop || isRepeat)) {
+          ////////////////////
+          // Option: Loop   //
+          // Option: Repeat //
+          ////////////////////
+          if (isRepeat && isRepeat !== true) {
+              activeCall.repeat = isRepeat - 1;
+          } else if (isLoop && isLoop !== true) {
+              activeCall.loop = isLoop - 1;
+              activeCall.repeat = getValue(activeCall.repeatAgain, options.repeatAgain, defaults$1.repeatAgain);
+          }
+          if (isLoop) {
+              activeCall._flags ^= 64 /* REVERSE */; // tslint:disable-line:no-bitwise
+          }
+          if (queue !== false) {
+              // Can't be called when stopped so no need for an extra check.
+              Data(activeCall.element).lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, defaults$1.duration);
+          }
+          activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
+          activeCall._flags &= ~4 /* STARTED */; // tslint:disable-line:no-bitwise
+      } else {
+          var element = activeCall.element,
+              data = Data(element);
+          if (! --data.count && !isStopped) {
+              ////////////////////////
+              // Feature: Classname //
+              ////////////////////////
+              removeClass(element, State.className);
+          }
+          //////////////////////
+          // Option: Complete //
+          //////////////////////
+          // If this is the last animation in this list then we can check for
+          // and complete calls or Promises.
+          // TODO: When deleting an element we need to adjust these values.
+          if (options && ++options._completed === options._total) {
+              if (!isStopped && options.complete) {
+                  // We don't call the complete if the animation is stopped,
+                  // and we clear the key to prevent it being called again.
+                  callComplete(activeCall);
+                  options.complete = null;
+              }
+              var resolver = options._resolver;
+              if (resolver) {
+                  // Fulfil the Promise
+                  resolver(activeCall.elements);
+                  delete options._resolver;
+              }
+          }
+          ///////////////////
+          // Option: Queue //
+          ///////////////////
+          if (queue !== false) {
+              // We only do clever things with queues...
+              if (!isStopped) {
+                  // If we're not stopping an animation, we need to remember
+                  // what time it finished so that the next animation in
+                  // sequence gets the correct start time.
+                  data.lastFinishList[queue] = activeCall.timeStart + getValue(activeCall.duration, options.duration, defaults$1.duration);
+              }
+              // Start the next animation in sequence, or delete the queue if
+              // this was the last one.
+              dequeue(element, queue);
+          }
+          // Cleanup any pointers, and remember the last animation etc.
+          freeAnimationCall(activeCall);
+      }
+  }
+
+  // Project
   /**
    * Used to register a normalization. This should never be called by users
    * directly, instead it should be called via an action:<br/>
@@ -1467,7 +1364,7 @@
       var constructor = args[0],
           name = args[1],
           index = constructors.indexOf(constructor);
-      return !!Normalizations[index][name];
+      return !!Normalizations[index] && !!Normalizations[index][name];
   }
   /**
    * Get the unit to add to a unitless number based on the normalization used.
@@ -1499,11 +1396,26 @@
   registerAction(["registerNormalization", registerNormalization]);
   registerAction(["hasNormalization", hasNormalization]);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
+  // Project
+  /**
+   * The singular setPropertyValue, which routes the logic for all
+   * normalizations.
    */
+  function setPropertyValue(element, propertyName, propertyValue, fn) {
+      var data = Data(element);
+      if (data && data.cache[propertyName] !== propertyValue) {
+          // By setting it to undefined we force a true "get" later
+          data.cache[propertyName] = propertyValue || undefined;
+          fn = fn || getNormalization(element, propertyName);
+          if (fn) {
+              fn(element, propertyValue);
+          }
+          if (Velocity$$1.debug >= 2) {
+              console.info("Set \"" + propertyName + "\": \"" + propertyValue + "\"", element);
+          }
+      }
+  }
+
   /**
    * Cache every camelCase match to avoid repeating lookups.
    */
@@ -1523,11 +1435,12 @@
     });
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
+  // Constants
+  var rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi,
+      rxColor3 = /#([a-f\d])([a-f\d])([a-f\d])/gi,
+      rxColorName = /(rgba?\(\s*)?(\b[a-z]+\b)/g,
+      rxRGB = /rgb(a?)\(([^\)]+)\)/gi,
+      rxSpaces = /\s+/g;
   /**
    * This is the list of color names -> rgb values. The object is in here so
    * that the actual name conversion can be in a separate file and not
@@ -1540,11 +1453,6 @@
   function makeRGBA(ignore, r, g, b) {
       return "rgba(" + parseInt(r, 16) + "," + parseInt(g, 16) + "," + parseInt(b, 16) + ",1)";
   }
-  var rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi,
-      rxColor3 = /#([a-f\d])([a-f\d])([a-f\d])/gi,
-      rxColorName = /(rgba?\(\s*)?(\b[a-z]+\b)/g,
-      rxRGB = /rgb(a?)\(([^\)]+)\)/gi,
-      rxSpaces = /\s+/g;
   /**
    * Replace any css colour name with its rgba() value. It is possible to use
    * the name within an "rgba(blue, 0.4)" string this way.
@@ -1562,11 +1470,7 @@
       });
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
+  // Project
   /**
    * Figure out the dimensions for this width / height based on the
    * potential borders and whether we care about them.
@@ -1612,35 +1516,7 @@
       return 0;
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-  /**
-   * The singular setPropertyValue, which routes the logic for all
-   * normalizations.
-   */
-  function setPropertyValue(element, propertyName, propertyValue, fn) {
-      var data = Data(element);
-      if (data && data.cache[propertyName] !== propertyValue) {
-          // By setting it to undefined we force a true "get" later
-          data.cache[propertyName] = propertyValue || undefined;
-          fn = fn || getNormalization(element, propertyName);
-          if (fn) {
-              fn(element, propertyValue);
-          }
-          if (VelocityStatic.debug >= 2) {
-              console.info("Set \"" + propertyName + "\": \"" + propertyValue + "\"", element);
-          }
-      }
-  }
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
+  // Project
   // TODO: This is still a complete mess
   function computePropertyValue(element, property) {
       var data = Data(element),
@@ -1689,11 +1565,11 @@
                   break;
               case "top":
               case "left":
-                  var topLeft = true;
+
               case "right":
               case "bottom":
                   var position = getPropertyValue(element, "position");
-                  if (position === "fixed" || topLeft && position === "absolute") {
+                  if (position === "fixed" || position === "absolute") {
                       // Note: this has no pixel unit on its returned values,
                       // we re-add it here to conform with
                       // computePropertyValue's behavior.
@@ -1729,19 +1605,14 @@
               }
           }
       }
-      if (VelocityStatic.debug >= 2) {
+      if (Velocity$$1.debug >= 2) {
           console.info("Get \"" + propertyName + "\": \"" + propertyValue + "\"", element);
       }
       return propertyValue;
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Tweens
-   */
+  // Project
+  // Constants
   var rxHex = /^#([A-f\d]{3}){1,2}$/i,
       commands = {
       function: function _function(value, element, elements, elementArrayIndex, propertyName, tween) {
@@ -1776,13 +1647,13 @@
                   fn = getNormalization(element, propertyName);
               var valueData = properties[property];
               if (!fn && propertyName !== "tween") {
-                  if (VelocityStatic.debug) {
+                  if (Velocity$$1.debug) {
                       console.log("Skipping \"" + property + "\" due to a lack of browser support.");
                   }
                   continue;
               }
               if (valueData == null) {
-                  if (VelocityStatic.debug) {
+                  if (Velocity$$1.debug) {
                       console.log("Skipping \"" + property + "\" due to no value supplied.");
                   }
                   continue;
@@ -2045,7 +1916,7 @@
           }), endValue], propertyName);
       }
       if (sequence) {
-          if (VelocityStatic.debug) {
+          if (Velocity$$1.debug) {
               console.log("Velocity: Sequence found:", sequence);
           }
           sequence[0].percent = 0;
@@ -2092,373 +1963,14 @@
                   console.warn("bad type", tween, propertyName, startValue);
               }
           }
-          if (VelocityStatic.debug) {
+          if (Velocity$$1.debug) {
               console.log("tweensContainer \"" + propertyName + "\": " + JSON.stringify(tween), element);
           }
       }
       activeCall._flags |= 1 /* EXPANDED */; // tslint:disable-line:no-bitwise
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-  var rxPercents = /(\d*\.\d+|\d+\.?|from|to)/g;
-  function expandSequence(animation, sequence) {
-      var tweens = animation.tweens = Object.create(null),
-          element = animation.element;
-      for (var propertyName in sequence.tweens) {
-          if (sequence.tweens.hasOwnProperty(propertyName)) {
-              var fn = getNormalization(element, propertyName);
-              if (!fn && propertyName !== "tween") {
-                  if (VelocityStatic.debug) {
-                      console.log("Skipping [" + propertyName + "] due to a lack of browser support.");
-                  }
-                  continue;
-              }
-              tweens[propertyName] = {
-                  fn: fn,
-                  sequence: sequence.tweens[propertyName]
-              };
-          }
-      }
-  }
-  /**
-   * Used to register a sequence. This should never be called by users
-   * directly, instead it should be called via an action:<br/>
-   * <code>Velocity("registerSequence", "name", VelocitySequence);</code>
-   */
-  function registerSequence(args) {
-      if (isPlainObject(args[0])) {
-          for (var name in args[0]) {
-              if (args[0].hasOwnProperty(name)) {
-                  registerSequence([name, args[0][name]]);
-              }
-          }
-      } else if (isString(args[0])) {
-          var _name = args[0],
-              sequence = args[1];
-          if (!isString(_name)) {
-              console.warn("VelocityJS: Trying to set 'registerSequence' name to an invalid value:", _name);
-          } else if (!isPlainObject(sequence)) {
-              console.warn("VelocityJS: Trying to set 'registerSequence' sequence to an invalid value:", _name, sequence);
-          } else {
-              if (SequencesObject[_name]) {
-                  console.warn("VelocityJS: Replacing named sequence:", _name);
-              }
-              var percents = {},
-                  steps = new Array(100),
-                  properties = [],
-                  sequenceList = SequencesObject[_name] = {},
-                  duration = validateDuration(sequence.duration);
-              sequenceList.tweens = {};
-              if (isNumber(duration)) {
-                  sequenceList.duration = duration;
-              }
-              for (var part in sequence) {
-                  if (sequence.hasOwnProperty(part)) {
-                      var keys = String(part).match(rxPercents);
-                      if (keys) {
-                          var _iteratorNormalCompletion = true;
-                          var _didIteratorError = false;
-                          var _iteratorError = undefined;
-
-                          try {
-                              for (var _iterator = keys[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                                  var key = _step.value;
-
-                                  var percent = key === "from" ? 0 : key === "to" ? 100 : parseFloat(key);
-                                  if (percent < 0 || percent > 100) {
-                                      console.warn("VelocityJS: Trying to use an invalid value as a percentage (0 <= n <= 100):", _name, percent);
-                                  } else if (isNaN(percent)) {
-                                      console.warn("VelocityJS: Trying to use an invalid number as a percentage:", _name, part, key);
-                                  } else {
-                                      if (!percents[String(percent)]) {
-                                          percents[String(percent)] = [];
-                                      }
-                                      percents[String(percent)].push(part);
-                                      for (var property in sequence[part]) {
-                                          if (!properties.includes(property)) {
-                                              properties.push(property);
-                                          }
-                                      }
-                                  }
-                              }
-                          } catch (err) {
-                              _didIteratorError = true;
-                              _iteratorError = err;
-                          } finally {
-                              try {
-                                  if (!_iteratorNormalCompletion && _iterator.return) {
-                                      _iterator.return();
-                                  }
-                              } finally {
-                                  if (_didIteratorError) {
-                                      throw _iteratorError;
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-              var orderedPercents = Object.keys(percents).sort(function (a, b) {
-                  var a1 = parseFloat(a),
-                      b1 = parseFloat(b);
-                  return a1 > b1 ? 1 : a1 < b1 ? -1 : 0;
-              });
-              orderedPercents.forEach(function (key) {
-                  steps.push.apply(percents[key]);
-              });
-              var _iteratorNormalCompletion2 = true;
-              var _didIteratorError2 = false;
-              var _iteratorError2 = undefined;
-
-              try {
-                  for (var _iterator2 = properties[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                      var _property = _step2.value;
-
-                      var parts = [],
-                          propertyName = camelCase(_property);
-                      var _iteratorNormalCompletion3 = true;
-                      var _didIteratorError3 = false;
-                      var _iteratorError3 = undefined;
-
-                      try {
-                          for (var _iterator3 = orderedPercents[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-                              var _key = _step3.value;
-                              var _iteratorNormalCompletion6 = true;
-                              var _didIteratorError6 = false;
-                              var _iteratorError6 = undefined;
-
-                              try {
-                                  for (var _iterator6 = percents[_key][Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-                                      var _value = _step6.value;
-
-                                      var stepProperties = sequence[_value];
-                                      if (stepProperties[propertyName]) {
-                                          parts.push(isString(stepProperties[propertyName]) ? stepProperties[propertyName] : stepProperties[propertyName][0]);
-                                      }
-                                  }
-                              } catch (err) {
-                                  _didIteratorError6 = true;
-                                  _iteratorError6 = err;
-                              } finally {
-                                  try {
-                                      if (!_iteratorNormalCompletion6 && _iterator6.return) {
-                                          _iterator6.return();
-                                      }
-                                  } finally {
-                                      if (_didIteratorError6) {
-                                          throw _iteratorError6;
-                                      }
-                                  }
-                              }
-                          }
-                      } catch (err) {
-                          _didIteratorError3 = true;
-                          _iteratorError3 = err;
-                      } finally {
-                          try {
-                              if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                                  _iterator3.return();
-                              }
-                          } finally {
-                              if (_didIteratorError3) {
-                                  throw _iteratorError3;
-                              }
-                          }
-                      }
-
-                      if (parts.length) {
-                          var realSequence = findPattern(parts, propertyName);
-                          var index = 0;
-                          if (realSequence) {
-                              var _iteratorNormalCompletion4 = true;
-                              var _didIteratorError4 = false;
-                              var _iteratorError4 = undefined;
-
-                              try {
-                                  for (var _iterator4 = orderedPercents[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-                                      var _key2 = _step4.value;
-                                      var _iteratorNormalCompletion5 = true;
-                                      var _didIteratorError5 = false;
-                                      var _iteratorError5 = undefined;
-
-                                      try {
-                                          for (var _iterator5 = percents[_key2][Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                                              var value = _step5.value;
-
-                                              var originalProperty = sequence[value][propertyName];
-                                              if (originalProperty) {
-                                                  if (Array.isArray(originalProperty) && originalProperty.length > 1 && (isString(originalProperty[1]) || Array.isArray(originalProperty[1]))) {
-                                                      realSequence[index].easing = validateEasing(originalProperty[1], sequenceList.duration || DEFAULT_DURATION);
-                                                  }
-                                                  realSequence[index++].percent = parseFloat(_key2) / 100;
-                                              }
-                                          }
-                                      } catch (err) {
-                                          _didIteratorError5 = true;
-                                          _iteratorError5 = err;
-                                      } finally {
-                                          try {
-                                              if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                                                  _iterator5.return();
-                                              }
-                                          } finally {
-                                              if (_didIteratorError5) {
-                                                  throw _iteratorError5;
-                                              }
-                                          }
-                                      }
-                                  }
-                              } catch (err) {
-                                  _didIteratorError4 = true;
-                                  _iteratorError4 = err;
-                              } finally {
-                                  try {
-                                      if (!_iteratorNormalCompletion4 && _iterator4.return) {
-                                          _iterator4.return();
-                                      }
-                                  } finally {
-                                      if (_didIteratorError4) {
-                                          throw _iteratorError4;
-                                      }
-                                  }
-                              }
-
-                              sequenceList.tweens[propertyName] = realSequence;
-                          }
-                      }
-                  }
-              } catch (err) {
-                  _didIteratorError2 = true;
-                  _iteratorError2 = err;
-              } finally {
-                  try {
-                      if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                          _iterator2.return();
-                      }
-                  } finally {
-                      if (_didIteratorError2) {
-                          throw _iteratorError2;
-                      }
-                  }
-              }
-          }
-      }
-  }
-  registerAction(["registerSequence", registerSequence], true);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Call Completion
-   */
-  /**
-   * Call the complete method of an animation in a separate function so it can
-   * benefit from JIT compiling while still having a try/catch block.
-   */
-  function callComplete(activeCall) {
-      try {
-          var elements = activeCall.elements;
-          activeCall.options.complete.call(elements, elements, activeCall);
-      } catch (error) {
-          setTimeout(function () {
-              throw error;
-          }, 1);
-      }
-  }
-  /**
-   * Complete an animation. This might involve restarting (for loop or repeat
-   * options). Once it is finished we also check for any callbacks or Promises
-   * that need updating.
-   */
-  function completeCall(activeCall) {
-      // TODO: Check if it's not been completed already
-      var options = activeCall.options,
-          queue$$1 = getValue(activeCall.queue, options.queue),
-          isLoop = getValue(activeCall.loop, options.loop, defaults$1.loop),
-          isRepeat = getValue(activeCall.repeat, options.repeat, defaults$1.repeat),
-          isStopped = activeCall._flags & 8 /* STOPPED */; // tslint:disable-line:no-bitwise
-      if (!isStopped && (isLoop || isRepeat)) {
-          ////////////////////
-          // Option: Loop   //
-          // Option: Repeat //
-          ////////////////////
-          if (isRepeat && isRepeat !== true) {
-              activeCall.repeat = isRepeat - 1;
-          } else if (isLoop && isLoop !== true) {
-              activeCall.loop = isLoop - 1;
-              activeCall.repeat = getValue(activeCall.repeatAgain, options.repeatAgain, defaults$1.repeatAgain);
-          }
-          if (isLoop) {
-              activeCall._flags ^= 64 /* REVERSE */; // tslint:disable-line:no-bitwise
-          }
-          if (queue$$1 !== false) {
-              // Can't be called when stopped so no need for an extra check.
-              Data(activeCall.element).lastFinishList[queue$$1] = activeCall.timeStart + getValue(activeCall.duration, options.duration, defaults$1.duration);
-          }
-          activeCall.timeStart = activeCall.ellapsedTime = activeCall.percentComplete = 0;
-          activeCall._flags &= ~4 /* STARTED */; // tslint:disable-line:no-bitwise
-      } else {
-          var element = activeCall.element,
-              data = Data(element);
-          if (! --data.count && !isStopped) {
-              ////////////////////////
-              // Feature: Classname //
-              ////////////////////////
-              removeClass(element, State.className);
-          }
-          //////////////////////
-          // Option: Complete //
-          //////////////////////
-          // If this is the last animation in this list then we can check for
-          // and complete calls or Promises.
-          // TODO: When deleting an element we need to adjust these values.
-          if (options && ++options._completed === options._total) {
-              if (!isStopped && options.complete) {
-                  // We don't call the complete if the animation is stopped,
-                  // and we clear the key to prevent it being called again.
-                  callComplete(activeCall);
-                  options.complete = null;
-              }
-              var resolver = options._resolver;
-              if (resolver) {
-                  // Fulfil the Promise
-                  resolver(activeCall.elements);
-                  delete options._resolver;
-              }
-          }
-          ///////////////////
-          // Option: Queue //
-          ///////////////////
-          if (queue$$1 !== false) {
-              // We only do clever things with queues...
-              if (!isStopped) {
-                  // If we're not stopping an animation, we need to remember
-                  // what time it finished so that the next animation in
-                  // sequence gets the correct start time.
-                  data.lastFinishList[queue$$1] = activeCall.timeStart + getValue(activeCall.duration, options.duration, defaults$1.duration);
-              }
-              // Start the next animation in sequence, or delete the queue if
-              // this was the last one.
-              dequeue(element, queue$$1);
-          }
-          // Cleanup any pointers, and remember the last animation etc.
-          freeAnimationCall(activeCall);
-      }
-  }
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Tick
-   */
+  // Project
   /**
    * Call the begin method of an animation in a separate function so it can
    * benefit from JIT compiling while still having a try/catch block.
@@ -2686,10 +2198,10 @@
                   // it's value is as close to the real animation start time
                   // as possible.
                   if (!timeStart) {
-                      var queue$$1 = activeCall.queue != null ? activeCall.queue : options.queue;
+                      var queue = activeCall.queue != null ? activeCall.queue : options.queue;
                       timeStart = timeCurrent - deltaTime;
-                      if (queue$$1 !== false) {
-                          timeStart = Math.max(timeStart, data.lastFinishList[queue$$1] || 0);
+                      if (queue !== false) {
+                          timeStart = Math.max(timeStart, data.lastFinishList[queue] || 0);
                       }
                       activeCall.timeStart = timeStart;
                   }
@@ -2770,7 +2282,7 @@
                   var activeEasing = activeCall.easing != null ? activeCall.easing : _options.easing != null ? _options.easing : defaultEasing,
                       millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - _timeStart,
                       duration = activeCall.duration != null ? activeCall.duration : _options.duration != null ? _options.duration : defaultDuration,
-                      percentComplete = activeCall.percentComplete = VelocityStatic.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1),
+                      percentComplete = activeCall.percentComplete = Velocity$$1.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1),
                       tweens = activeCall.tweens,
                       reverse = _flags & 64 /* REVERSE */; // tslint:disable-line:no-bitwise
                   if (percentComplete === 1) {
@@ -2865,2264 +2377,7 @@
       ticking = false;
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Core "Velocity" function.
-   */
-  /* tslint:enable:max-line-length */
-  function Velocity() {
-      for (var _len = arguments.length, argsList = Array(_len), _key = 0; _key < _len; _key++) {
-          argsList[_key] = arguments[_key];
-      }
-
-      var
-      /**
-       * A shortcut to the default options.
-       */
-      defaults$$1 = defaults$1,
-
-      /**
-       * Shortcut to arguments for file size.
-       */
-      args = arguments,
-
-      /**
-       * Cache of the first argument - this is used often enough to be saved.
-       */
-      args0 = args[0],
-
-      /**
-       * To allow for expressive CoffeeScript code, Velocity supports an
-       * alternative syntax in which "elements" (or "e"), "properties" (or
-       * "p"), and "options" (or "o") objects are defined on a container
-       * object that's passed in as Velocity's sole argument.
-       *
-       * Note: Some browsers automatically populate arguments with a
-       * "properties" object. We detect it by checking for its default
-       * "names" property.
-       */
-      // TODO: Confirm which browsers - if <=IE8 the we can drop completely
-      syntacticSugar = isPlainObject(args0) && (args0.p || isPlainObject(args0.properties) && !args0.properties.names || isString(args0.properties));
-      var
-      /**
-       *  When Velocity is called via the utility function (Velocity()),
-       * elements are explicitly passed in as the first parameter. Thus,
-       * argument positioning varies.
-       */
-      argumentIndex = 0,
-
-      /**
-       * The list of elements, extended with Promise and Velocity.
-       */
-      elements = void 0,
-
-      /**
-       * The properties being animated. This can be a string, in which case it
-       * is either a function for these elements, or it is a "named" animation
-       * sequence to use instead. Named sequences start with either "callout."
-       * or "transition.". When used as a callout the values will be reset
-       * after finishing. When used as a transtition then there is no special
-       * handling after finishing.
-       */
-      propertiesMap = void 0,
-
-      /**
-       * Options supplied, this will be mapped and validated into
-       * <code>options</code>.
-       */
-      optionsMap = void 0,
-
-      /**
-       * If called via a chain then this contains the <b>last</b> calls
-       * animations. If this does not have a value then any access to the
-       * element's animations needs to be to the currently-running ones.
-       */
-      animations = void 0,
-
-      /**
-       * The promise that is returned.
-       */
-      promise = void 0,
-
-      // Used when the animation is finished
-      resolver = void 0,
-
-      // Used when there was an issue with one or more of the Velocity arguments
-      rejecter = void 0;
-      //console.log(`Velocity`, _arguments)
-      // First get the elements, and the animations connected to the last call if
-      // this is chained.
-      // TODO: Clean this up a bit
-      // TODO: Throw error if the chain is called with elements as the first argument. isVelocityResult(this) && ( (isNode(arg0) || isWrapped(arg0)) && arg0 == this)
-      if (isNode(this)) {
-          // This is from a chain such as document.getElementById("").velocity(...)
-          elements = [this];
-      } else if (isWrapped(this)) {
-          // This might be a chain from something else, but if chained from a
-          // previous Velocity() call then grab the animations it's related to.
-          elements = cloneArray(this);
-          if (isVelocityResult(this)) {
-              animations = this.velocity.animations;
-          }
-      } else if (syntacticSugar) {
-          elements = cloneArray(args0.elements || args0.e);
-          argumentIndex++;
-      } else if (isNode(args0)) {
-          elements = cloneArray([args0]);
-          argumentIndex++;
-      } else if (isWrapped(args0)) {
-          elements = cloneArray(args0);
-          argumentIndex++;
-      }
-      // Allow elements to be chained.
-      if (elements) {
-          defineProperty$1(elements, "velocity", Velocity.bind(elements));
-          if (animations) {
-              defineProperty$1(elements.velocity, "animations", animations);
-          }
-      }
-      // Next get the propertiesMap and options.
-      if (syntacticSugar) {
-          propertiesMap = getValue(args0.properties, args0.p);
-      } else {
-          // TODO: Should be possible to call Velocity("pauseAll") - currently not possible
-          propertiesMap = args[argumentIndex++];
-      }
-      // Get any options map passed in as arguments first, expand any direct
-      // options if possible.
-      var isReverse = propertiesMap === "reverse",
-          isAction = !isReverse && isString(propertiesMap),
-          maybeSequence = isAction && SequencesObject[propertiesMap],
-          opts = syntacticSugar ? getValue(args0.options, args0.o) : args[argumentIndex];
-      if (isPlainObject(opts)) {
-          optionsMap = opts;
-      }
-      // Create the promise if supported and wanted.
-      if (Promise && getValue(optionsMap && optionsMap.promise, defaults$$1.promise)) {
-          promise = new Promise(function (resolve, reject) {
-              rejecter = reject;
-              // IMPORTANT:
-              // If a resolver tries to run on a Promise then it will wait until
-              // that Promise resolves - but in this case we're running on our own
-              // Promise, so need to make sure it's not seen as one. Setting these
-              // values to <code>undefined</code> for the duration of the resolve.
-              // Due to being an async call, they should be back to "normal"
-              // before the <code>.then()</code> function gets called.
-              resolver = function resolver(result) {
-                  if (isVelocityResult(result)) {
-                      var then = result && result.then;
-                      if (then) {
-                          result.then = undefined; // Preserving enumeration etc
-                      }
-                      resolve(result);
-                      if (then) {
-                          result.then = then;
-                      }
-                  } else {
-                      resolve(result);
-                  }
-              };
-          });
-          if (elements) {
-              defineProperty$1(elements, "then", promise.then.bind(promise));
-              defineProperty$1(elements, "catch", promise.catch.bind(promise));
-              if (promise.finally) {
-                  // Semi-standard
-                  defineProperty$1(elements, "finally", promise.finally.bind(promise));
-              }
-          }
-      }
-      var promiseRejectEmpty = getValue(optionsMap && optionsMap.promiseRejectEmpty, defaults$$1.promiseRejectEmpty);
-      if (promise) {
-          if (!elements && !isAction) {
-              if (promiseRejectEmpty) {
-                  rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
-              } else {
-                  resolver();
-              }
-          } else if (!propertiesMap) {
-              if (promiseRejectEmpty) {
-                  rejecter("Velocity: No properties supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
-              } else {
-                  resolver();
-              }
-          }
-      }
-      if (!elements && !isAction || !propertiesMap) {
-          return promise;
-      }
-      // NOTE: Can't use isAction here due to type inference - there are callbacks
-      // between so the type isn't considered safe.
-      if (isAction) {
-          var actionArgs = [],
-              promiseHandler = promise && {
-              _promise: promise,
-              _resolver: resolver,
-              _rejecter: rejecter
-          };
-          while (argumentIndex < actionArgs.length) {
-              actionArgs.push(actionArgs[argumentIndex++]);
-          }
-          // Velocity's behavior is categorized into "actions". If a string is
-          // passed in instead of a propertiesMap then that will call a function
-          // to do something special to the animation linked.
-          // There is one special case - "reverse" - which is handled differently,
-          // by being stored on the animation and then expanded when the animation
-          // starts.
-          var action = propertiesMap.replace(/\..*$/, ""),
-              callback = Actions[action];
-          if (callback) {
-              var result = callback(actionArgs, elements, promiseHandler, propertiesMap);
-              if (result !== undefined) {
-                  return result;
-              }
-              return elements || promise;
-          } else if (!maybeSequence) {
-              console.error("VelocityJS: First argument (" + propertiesMap + ") was not a property map, a known action, or a registered redirect. Aborting.");
-              return;
-          }
-      }
-      var hasValidDuration = void 0;
-      if (isPlainObject(propertiesMap) || isReverse || maybeSequence) {
-          /**
-           * The options for this set of animations.
-           */
-          var options = {};
-          var isSync = defaults$$1.sync;
-          // Private options first - set as non-enumerable, and starting with an
-          // underscore so we can filter them out.
-          if (promise) {
-              defineProperty$1(options, "_promise", promise);
-              defineProperty$1(options, "_rejecter", rejecter);
-              defineProperty$1(options, "_resolver", resolver);
-          }
-          defineProperty$1(options, "_ready", 0);
-          defineProperty$1(options, "_started", 0);
-          defineProperty$1(options, "_completed", 0);
-          defineProperty$1(options, "_total", 0);
-          // Now check the optionsMap
-          if (isPlainObject(optionsMap)) {
-              var validDuration = validateDuration(optionsMap.duration);
-              hasValidDuration = validDuration !== undefined;
-              options.duration = getValue(validDuration, defaults$$1.duration);
-              options.delay = getValue(validateDelay(optionsMap.delay), defaults$$1.delay);
-              // Need the extra fallback here in case it supplies an invalid
-              // easing that we need to overrride with the default.
-              options.easing = validateEasing(getValue(optionsMap.easing, defaults$$1.easing), options.duration) || validateEasing(defaults$$1.easing, options.duration);
-              options.loop = getValue(validateLoop(optionsMap.loop), defaults$$1.loop);
-              options.repeat = options.repeatAgain = getValue(validateRepeat(optionsMap.repeat), defaults$$1.repeat);
-              if (optionsMap.speed != null) {
-                  options.speed = getValue(validateSpeed(optionsMap.speed), 1);
-              }
-              if (isBoolean(optionsMap.promise)) {
-                  options.promise = optionsMap.promise;
-              }
-              options.queue = getValue(validateQueue(optionsMap.queue), defaults$$1.queue);
-              if (optionsMap.mobileHA && !State.isGingerbread) {
-                  /* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack)
-                   on animating elements. HA is removed from the element at the completion of its animation. */
-                  /* Note: Android Gingerbread doesn't support HA. If a null transform hack (mobileHA) is in fact set, it will prevent other tranform subproperties from taking effect. */
-                  /* Note: You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
-                  options.mobileHA = true;
-              }
-              if (!isReverse) {
-                  if (optionsMap.display != null) {
-                      propertiesMap.display = optionsMap.display;
-                      console.error("Deprecated \"options.display\" used, this is now a property:", optionsMap.display);
-                  }
-                  if (optionsMap.visibility != null) {
-                      propertiesMap.visibility = optionsMap.visibility;
-                      console.error("Deprecated \"options.visibility\" used, this is now a property:", optionsMap.visibility);
-                  }
-              }
-              // TODO: Allow functional options for different options per element
-              var optionsBegin = validateBegin(optionsMap.begin),
-                  optionsComplete = validateComplete(optionsMap.complete),
-                  optionsProgress = validateProgress(optionsMap.progress),
-                  optionsSync = validateSync(optionsMap.sync);
-              if (optionsBegin != null) {
-                  options.begin = optionsBegin;
-              }
-              if (optionsComplete != null) {
-                  options.complete = optionsComplete;
-              }
-              if (optionsProgress != null) {
-                  options.progress = optionsProgress;
-              }
-              if (optionsSync != null) {
-                  isSync = optionsSync;
-              }
-          } else if (!syntacticSugar) {
-              // Expand any direct options if possible.
-              var _validDuration = validateDuration(args[argumentIndex], true);
-              var offset = 0;
-              hasValidDuration = _validDuration !== undefined;
-              if (_validDuration !== undefined) {
-                  offset++;
-                  options.duration = _validDuration;
-              }
-              if (!isFunction(args[argumentIndex + offset])) {
-                  // Despite coming before Complete, we can't pass a fn easing
-                  var easing = validateEasing(args[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults$$1.duration), true);
-                  if (easing !== undefined) {
-                      offset++;
-                      options.easing = easing;
-                  }
-              }
-              var complete = validateComplete(args[argumentIndex + offset], true);
-              if (complete !== undefined) {
-                  options.complete = complete;
-              }
-              options.loop = defaults$$1.loop;
-              options.repeat = options.repeatAgain = defaults$$1.repeat;
-          }
-          if (isReverse && options.queue === false) {
-              throw new Error("VelocityJS: Cannot reverse a queue:false animation.");
-          }
-          if (maybeSequence && !hasValidDuration && maybeSequence.duration) {
-              options.duration = maybeSequence.duration;
-          }
-          // When a set of elements is targeted by a Velocity call, the set is
-          // broken up and each element has the current Velocity call individually
-          // queued onto it. In this way, each element's existing queue is
-          // respected; some elements may already be animating and accordingly
-          // should not have this current Velocity call triggered immediately
-          // unless the sync:true option is used.
-          var rootAnimation = {
-              options: options,
-              elements: elements,
-              _prev: undefined,
-              _next: undefined,
-              _flags: isSync ? 32 /* SYNC */ : 0,
-              percentComplete: 0,
-              ellapsedTime: 0,
-              timeStart: 0
-          };
-          animations = [];
-          var _iteratorNormalCompletion = true;
-          var _didIteratorError = false;
-          var _iteratorError = undefined;
-
-          try {
-              for (var _iterator = elements[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                  var element = _step.value;
-
-                  var flags = 0;
-                  if (isNode(element)) {
-                      // TODO: This needs to check for valid animation targets, not just Elements
-                      if (isReverse) {
-                          var lastAnimation = Data(element).lastAnimationList[options.queue];
-                          propertiesMap = lastAnimation && lastAnimation.tweens;
-                          if (!propertiesMap) {
-                              console.error("VelocityJS: Attempting to reverse an animation on an element with no previous animation:", element);
-                              continue;
-                          }
-                          flags |= 64 /* REVERSE */ & ~(lastAnimation._flags & 64 /* REVERSE */); // tslint:disable-line:no-bitwise
-                      }
-                      var animation = Object.assign({}, rootAnimation, { element: element, _flags: rootAnimation._flags | flags });
-                      options._total++;
-                      animations.push(animation);
-                      if (maybeSequence) {
-                          expandSequence(animation, maybeSequence);
-                      } else if (isReverse) {
-                          // In this case we're using the previous animation, so
-                          // it will be expanded correctly when that one runs.
-                          animation.tweens = propertiesMap;
-                      } else {
-                          animation.tweens = Object.create(null);
-                          expandProperties(animation, propertiesMap);
-                      }
-                      queue(element, animation, options.queue);
-                  }
-              }
-          } catch (err) {
-              _didIteratorError = true;
-              _iteratorError = err;
-          } finally {
-              try {
-                  if (!_iteratorNormalCompletion && _iterator.return) {
-                      _iterator.return();
-                  }
-              } finally {
-                  if (_didIteratorError) {
-                      throw _iteratorError;
-                  }
-              }
-          }
-
-          if (State.isTicking === false) {
-              // If the animation tick isn't running, start it. (Velocity shuts it
-              // off when there are no active calls to process.)
-              tick(false);
-          }
-          if (animations) {
-              defineProperty$1(elements.velocity, "animations", animations);
-          }
-      }
-      /***************
-       Chaining
-       ***************/
-      /* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
-      return elements || promise;
-  }
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["bounce", {
-      "duration": 1000,
-      "0,100%": {
-          transformOrigin: "center bottom"
-      },
-      "0%,20%,53%,80%,100%": {
-          transform: ["translate3d(0,0px,0)", "easeOutCubic"]
-      },
-      "40%,43%": {
-          transform: ["translate3d(0,-30px,0)", "easeInQuint"]
-      },
-      "70%": {
-          transform: ["translate3d(0,-15px,0)", "easeInQuint"]
-      },
-      "90%": {
-          transform: "translate3d(0,-4px,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["flash", {
-      "duration": 1000,
-      "0%,50%,100%": {
-          opacity: "1"
-      },
-      "25%,75%": {
-          opacity: "0"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["headShake", {
-      "duration": 1000,
-      "easing": "easeInOut",
-      "0%": {
-          transform: "translateX(0) rotateY(0)"
-      },
-      "6.5%": {
-          transform: "translateX(-6px) rotateY(-9deg)"
-      },
-      "18.5%": {
-          transform: "translateX(5px) rotateY(7deg)"
-      },
-      "31.5%": {
-          transform: "translateX(-3px) rotateY(-5deg)"
-      },
-      "43.5%": {
-          transform: "translateX(2px) rotateY(3deg)"
-      },
-      "50%": {
-          transform: "translateX(0) rotateY(0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["jello", {
-      "duration": 1000,
-      "0%,100%": {
-          transformOrigin: "center"
-      },
-      "0%,11.1%,100%": {
-          transform: "skewX(0) skewY(0)"
-      },
-      "22.2%": {
-          transform: "skewX(-12.5deg) skewY(-12.5deg)"
-      },
-      "33.3%": {
-          transform: "skewX(6.25deg) skewY(6.25deg)"
-      },
-      "44.4%": {
-          transform: "skewX(-3.125deg) skewY(-3.125deg)"
-      },
-      "55.5%": {
-          transform: "skewX(1.5625deg) skewY(1.5625deg)"
-      },
-      "66.6%": {
-          transform: "skewX(-0.78125deg) skewY(-0.78125deg)"
-      },
-      "77.7%": {
-          transform: "skewX(0.390625deg) skewY(0.390625deg)"
-      },
-      "88.8%": {
-          transform: "skewX(-0.1953125deg) skewY(-0.1953125deg)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["pulse", {
-      "duration": 1000,
-      "0%": {
-          transform: "scale3d(1,1,1)"
-      },
-      "50%": {
-          transform: "scale3d(1.05,1.05,1.05)"
-      },
-      "100%": {
-          transform: "scale3d(1,1,1)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rubberBand", {
-      "duration": 1000,
-      "0%": {
-          transform: "scale3d(1,1,1)"
-      },
-      "30%": {
-          transform: "scale3d(1.25,0.75,1)"
-      },
-      "40%": {
-          transform: "scale3d(0.75,1.25,1)"
-      },
-      "50%": {
-          transform: "scale3d(1.15,0.85,1)"
-      },
-      "65%": {
-          transform: "scale3d(0.95,1.05,1)"
-      },
-      "75%": {
-          transform: "scale3d(1.05,0.95,1)"
-      },
-      "100%": {
-          transform: "scale3d(1,1,1)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["shake", {
-      "duration": 1000,
-      "0%,100%": {
-          transform: "translate3d(0,0,0)"
-      },
-      "10%,30%,50%,70%,90%": {
-          transform: "translate3d(-10px,0,0)"
-      },
-      "20%,40%,60%,80%": {
-          transform: "translate3d(10px,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["swing", {
-      "duration": 1000,
-      "0%,100%": {
-          transform: "rotate3d(0,0,1,0deg)",
-          transformOrigin: "center"
-      },
-      "20%": {
-          transform: "rotate3d(0,0,1,15deg)"
-      },
-      "40%": {
-          transform: "rotate3d(0,0,1,-10deg)"
-      },
-      "60%": {
-          transform: "rotate3d(0,0,1,5deg)"
-      },
-      "80%": {
-          transform: "rotate3d(0,0,1,-5deg)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["tada", {
-      "duration": 1000,
-      "0%": {
-          transform: "scale3d(1,1,1) rotate3d(0,0,0,0)"
-      },
-      "10%,20%": {
-          transform: "scale3d(0.9,0.9,0.9) rotate3d(0,0,1,-3deg)"
-      },
-      "30%,50%,70%,90%": {
-          transform: "scale3d(1.1,1.1,1.1) rotate3d(0,0,1,3deg)"
-      },
-      "40%,60%,80%": {
-          transform: "scale3d(1.1,1.1,1.1) rotate3d(0,0,1,-3deg)"
-      },
-      "100%": {
-          transform: "scale3d(1, 1, 1) rotate3d(0,0,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["wobble", {
-      "duration": 1000,
-      "0%": {
-          transform: "translate3d(0,0,0) rotate3d(0,0,0,0)"
-      },
-      "15%": {
-          transform: "translate3d(-25%,0,0) rotate3d(0,0,1,-5deg)"
-      },
-      "30%": {
-          transform: "translate3d(20%,0,0) rotate3d(0,0,1,3deg)"
-      },
-      "45%": {
-          transform: "translate3d(-15%,0,0) rotate3d(0,0,1,-3deg)"
-      },
-      "60%": {
-          transform: "translate3d(10%,0,0) rotate3d(0,0,1,2deg)"
-      },
-      "75%": {
-          transform: "translate3d(-5%,0,0) rotate3d(0,0,1,-1deg)"
-      },
-      "100%": {
-          transform: "translate3d(0,0,0) rotate3d(0,0,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["bounceIn", {
-      "duration": 750,
-      "easing": "easeOutCubic",
-      "0%": {
-          opacity: "0",
-          transform: "scale3d(0.3,0.3,0.3)"
-      },
-      "20%": {
-          transform: "scale3d(1.1,1.1,1.1)"
-      },
-      "40%": {
-          transform: "scale3d(0.9,0.9,0.9)"
-      },
-      "60%": {
-          opacity: "1",
-          transform: "scale3d(1.03,1.03,1.03)"
-      },
-      "80%": {
-          transform: "scale3d(0.97,0.97,0.97)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "scale3d(1,1,1)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["bounceInDown", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(0,-3000px,0)"
-      },
-      "60%": {
-          opacity: "1",
-          transform: ["translate3d(0,25px,0)", "easeOutCubic"]
-      },
-      "75%": {
-          transform: ["translate3d(0,-10px,0)", "easeOutCubic"]
-      },
-      "90%": {
-          transform: ["translate3d(0,5px,0)", "easeOutCubic"]
-      },
-      "100%": {
-          transform: ["translate3d(0,0,0)", "easeOutCubic"]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["bounceInLeft", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(-3000px,0,0)"
-      },
-      "60%": {
-          opacity: "1",
-          transform: ["translate3d(25px,0,0)", "easeOutCubic"]
-      },
-      "75%": {
-          transform: ["translate3d(-10px,0,0)", "easeOutCubic"]
-      },
-      "90%": {
-          transform: ["translate3d(5px,0,0)", "easeOutCubic"]
-      },
-      "100%": {
-          transform: ["translate3d(0,0,0)", "easeOutCubic"]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["bounceInRight", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(3000px,0,0)"
-      },
-      "60%": {
-          opacity: "1",
-          transform: ["translate3d(-25px,0,0)", "easeOutCubic"]
-      },
-      "75%": {
-          transform: ["translate3d(10px,0,0)", "easeOutCubic"]
-      },
-      "90%": {
-          transform: ["translate3d(-5px,0,0)", "easeOutCubic"]
-      },
-      "100%": {
-          transform: ["translate3d(0,0,0)", "easeOutCubic"]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["bounceInUp", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(0,3000px,0)"
-      },
-      "60%": {
-          opacity: "1",
-          transform: ["translate3d(0,-25px,0)", "easeOutCubic"]
-      },
-      "75%": {
-          transform: ["translate3d(0,10px,0)", "easeOutCubic"]
-      },
-      "90%": {
-          transform: ["translate3d(0,-5px,0)", "easeOutCubic"]
-      },
-      "100%": {
-          transform: ["translate3d(0,0,0)", "easeOutCubic"]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["bounceOut", {
-      "duration": 750,
-      "0%": {
-          opacity: "1",
-          transform: "scale3d(1,1,1)"
-      },
-      "20%": {
-          transform: "scale3d(0.9,0.9,0.9)"
-      },
-      "50%,55%": {
-          opacity: "1",
-          transform: "scale3d(1.1,1.1,1.1)"
-      },
-      "to": {
-          opacity: "0",
-          transform: "scale3d(0.3,0.3,0.3)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["bounceOutDown", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "20%": {
-          transform: "translate3d(0,10px,0)"
-      },
-      "40%,45%": {
-          opacity: "1",
-          transform: "translate3d(0,-20px,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(0,2000px,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["bounceOutLeft", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "20%": {
-          opacity: "1",
-          transform: "translate3d(20px,0,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(-2000px,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["bounceOutRight", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "20%": {
-          opacity: "1",
-          transform: "translate3d(-20px,0,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(2000px,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["bounceOutUp", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "20%": {
-          transform: "translate3d(0,-10px,0)"
-      },
-      "40%,45%": {
-          opacity: "1",
-          transform: "translate3d(0,20px,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(0,-2000px,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeIn", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0"
-      },
-      "100%": {
-          opacity: "1"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeInDown", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(0,-100%,0)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeInDownBig", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(0,-2000px,0)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeInLeft", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(-100%,0,0)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeInLeftBig", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(-2000px,0,0)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeInRight", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(100%,0,0)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeInRightBig", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(2000px,0,0)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeInUp", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(0,100%,0)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeInUpBig", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(0,2000px,0)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeOut", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1"
-      },
-      "100%": {
-          opacity: "0"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeOutDown", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(0,100%,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeOutDownBig", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(0,2000px,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeOutLeft", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(-100%,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeOutLeftBig", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(-2000px,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeOutRight", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(100%,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeOutRightBig", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(2000px,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeOutUp", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(0,-100%,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["fadeOutUpBig", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(0,-2000px,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["flip", {
-      "duration": 1000,
-      "0%,100%": {
-          backfaceVisibility: "visible"
-      },
-      "0%": {
-          transform: ["perspective(400px) translate3d(0,0,0) rotate3d(0,1,0,-360deg) scale3d(1,1,1)", "easeOut"]
-      },
-      "40%": {
-          transform: ["perspective(400px) translate3d(0,0,150px) rotate3d(0,1,0,-190deg) scale3d(1,1,1)", "easeOut"]
-      },
-      "50%": {
-          transform: ["perspective(400px) translate3d(0,0,150px) rotate3d(0,1,0,-170deg) scale3d(1,1,1)", "easeIn"]
-      },
-      "80%": {
-          transform: ["perspective(400px) translate3d(0,0,0) rotate3d(0,1,0,0) scale3d(0.95,0.95,0.95)", "easeIn"]
-      },
-      "100%": {
-          transform: ["perspective(400px) translate3d(0,0,0) rotate3d(0,0,0,0) scale3d(1,1,1)", "ease-in"]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["flipInX", {
-      "duration": 1000,
-      "0%,100%": {
-          backfaceVisibility: "visible"
-      },
-      "0%": {
-          opacity: "0",
-          transform: "perspective(400px) rotate3d(1,0,0,90deg)"
-      },
-      "40%": {
-          transform: ["perspective(400px) rotate3d(1,0,0,-20deg)", "easeIn"]
-      },
-      "60%": {
-          opacity: "1",
-          transform: "perspective(400px) rotate3d(1,0,0,10deg)"
-      },
-      "80%": {
-          transform: "perspective(400px) rotate3d(1,0,0,-5deg)"
-      },
-      "100%": {
-          transform: "perspective(400px) rotate3d(1,0,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["flipInY", {
-      "duration": 1000,
-      "0%,100%": {
-          backfaceVisibility: "visible"
-      },
-      "0%": {
-          opacity: "0",
-          transform: "perspective(400px) rotate3d(0,1,0,90deg)"
-      },
-      "40%": {
-          transform: ["perspective(400px) rotate3d(0,1,0,-20deg)", "easeIn"]
-      },
-      "60%": {
-          opacity: "1",
-          transform: "perspective(400px) rotate3d(0,1,0,10deg)"
-      },
-      "80%": {
-          transform: "perspective(400px) rotate3d(0,1,0,-5deg)"
-      },
-      "100%": {
-          transform: "perspective(400px) rotate3d(0,1,0,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["flipOutX", {
-      "duration": 750,
-      "0%,100%": {
-          backfaceVisibility: "visible"
-      },
-      "0%": {
-          transform: "perspective(400px) rotate3d(1,0,0,0)"
-      },
-      "30%": {
-          opacity: "1",
-          transform: "perspective(400px) rotate3d(1,0,0,-20deg)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "perspective(400px) rotate3d(1,0,0,90deg)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["flipOutY", {
-      "duration": 750,
-      "0%,100%": {
-          backfaceVisibility: "visible"
-      },
-      "0%": {
-          transform: "perspective(400px) rotate3d(0,1,0,0)"
-      },
-      "30%": {
-          opacity: "1",
-          transform: "perspective(400px) rotate3d(0,1,0,-20deg)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "perspective(400px) rotate3d(0,1,0,90deg)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["lightSpeedIn", {
-      "duration": 1000,
-      "easing": "easeOut",
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(100%,0,0) skewX(-30deg)"
-      },
-      "60%": {
-          opacity: "1",
-          transform: "translate3d(40%,0,0) skewX(20deg)"
-      },
-      "80%": {
-          opacity: "1",
-          transform: "translate3d(20%,0,0) skewX(-5deg)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0) skew(0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["lightSpeedOut", {
-      "duration": 1000,
-      "easing": "easeIn",
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0) skewX(0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(100%,0,0) skewX(30deg)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rotateIn", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "rotate3d(0,0,1,-200deg)",
-          transformOrigin: "center"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)",
-          transformOrigin: "center"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rotateInDownLeft", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "rotate3d(0,0,1,-45deg)",
-          transformOrigin: "left bottom"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)",
-          transformOrigin: "left bottom"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rotateInDownRight", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "rotate3d(0,0,1,45deg)",
-          transformOrigin: "right bottom"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)",
-          transformOrigin: "right bottom"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rotateInUpLeft", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "rotate3d(0,0,1,45deg)",
-          transformOrigin: "left bottom"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)",
-          transformOrigin: "left bottom"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rotateInUpRight", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "rotate3d(0,0,1,-90deg)",
-          transformOrigin: "right bottom"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)",
-          transformOrigin: "right bottom"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rotateOut", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)",
-          transformOrigin: "center"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "rotate3d(0,0,1,200deg)",
-          transformOrigin: "center"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rotateOutDownLeft", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)",
-          transformOrigin: "left bottom"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "rotate3d(0,0,1,45deg)",
-          transformOrigin: "left bottom"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rotateOutDownRight", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)",
-          transformOrigin: "right bottom"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "rotate3d(0,0,1,-45deg)",
-          transformOrigin: "right bottom"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rotateOutUpLeft", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)",
-          transformOrigin: "left bottom"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "rotate3d(0,0,1,-45deg)",
-          transformOrigin: "left bottom"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rotateOutUpRight", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0)",
-          transformOrigin: "right bottom"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "rotate3d(0,0,1,90deg)",
-          transformOrigin: "right bottom"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["slideInDown", {
-      "duration": 1000,
-      "0%": {
-          transform: "translate3d(0,-100%,0)",
-          visibility: "hidden",
-          opacity: "0"
-      },
-      "100%": {
-          transform: "translate3d(0,0,0)",
-          visibility: "visible",
-          opacity: "1"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["slideInLeft", {
-      "duration": 1000,
-      "0%": {
-          transform: "translate3d(-100%,0,0)",
-          visibility: "hidden",
-          opacity: "0"
-      },
-      "100%": {
-          transform: "translate3d(0,0,0)",
-          visibility: "visible",
-          opacity: "1"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["slideInRight", {
-      "duration": 1000,
-      "0%": {
-          transform: "translate3d(100%,0,0)",
-          visibility: "hidden",
-          opacity: "0"
-      },
-      "100%": {
-          transform: "translate3d(0,0,0)",
-          visibility: "visible",
-          opacity: "1"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["slideInUp", {
-      "duration": 1000,
-      "0%": {
-          transform: "translate3d(0,100%,0)",
-          visibility: "hidden",
-          opacity: "0"
-      },
-      "100%": {
-          transform: "translate3d(0,0,0)",
-          visibility: "visible",
-          opacity: "1"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["slideOutDown", {
-      "duration": 1000,
-      "0%": {
-          transform: "translate3d(0,0,0)",
-          visibility: "visible",
-          opacity: "1"
-      },
-      "100%": {
-          transform: "translate3d(0,-100%,0)",
-          visibility: "hidden",
-          opacity: "0"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["slideOutLeft", {
-      "duration": 1000,
-      "0%": {
-          transform: "translate3d(0,0,0)",
-          visibility: "visible",
-          opacity: "1"
-      },
-      "100%": {
-          transform: "translate3d(-100%,0,0)",
-          visibility: "hidden",
-          opacity: "0"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["slideOutRight", {
-      "duration": 1000,
-      "0%": {
-          transform: "translate3d(0,0,0)",
-          visibility: "visible",
-          opacity: "1"
-      },
-      "100%": {
-          transform: "translate3d(100%,0,0)",
-          visibility: "hidden",
-          opacity: "0"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["slideOutUp", {
-      "duration": 1000,
-      "0%": {
-          transform: "translate3d(0,0,0)",
-          visibility: "visible",
-          opacity: "1"
-      },
-      "100%": {
-          transform: "translate3d(0,100%,0)",
-          visibility: "hidden",
-          opacity: "0"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["hinge", {
-      "duration": 2000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0) rotate3d(0,0,1,0)",
-          transformOrigin: "top left"
-      },
-      "20%,60%": {
-          transform: ["translate3d(0,0,0) rotate3d(0,0,1,80deg)", "easeInOut"]
-      },
-      "40%,80%": {
-          opacity: "1",
-          transform: ["translate3d(0,0,0) rotate3d(0,0,1,60deg)", "easeInOut"]
-      },
-      "100%": {
-          opacity: "0",
-          transform: ["translate3d(0,700px,0) rotate3d(0,0,1,80deg)", "easeInOut"]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["jackInTheBox", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "scale(0.1) rotate(30deg)",
-          transformOrigin: "center bottom"
-      },
-      "50%": {
-          transform: "scale(0.5) rotate(-10deg)"
-      },
-      "70%": {
-          transform: "scale(0.7) rotate(3deg)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "scale(1) rotate(0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rollIn", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "translate3d(-100%,0,0) rotate3d(0,0,1,-120deg)"
-      },
-      "100%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0) rotate3d(0,0,1,0)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["rollOut", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "translate3d(0,0,0) rotate3d(0,0,1,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "translate3d(100%,0,0) rotate3d(0,0,1,120deg)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["zoomIn", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "scale3d(0.3,0.3,0.3)"
-      },
-      "50%": {
-          opacity: "1"
-      },
-      "100%": {
-          transform: "scale3d(1,1,1)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["zoomInDown", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "scale3d(0.1,0.1,0.1) translate3d(0,-1000px,0)"
-      },
-      "60%": {
-          opacity: "1",
-          transform: ["scale3d(0.475,0.475,0.475) translate3d(0,60px,0)", "easeInCubic"]
-      },
-      "100%": {
-          transform: ["scale3d(1,1,1) translate3d(0,0,0)", [0.175, 0.885, 0.32, 1]]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["zoomInLeft", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "scale3d(0.1,0.1,0.1) translate3d(-1000px,0,0)"
-      },
-      "60%": {
-          opacity: "1",
-          transform: ["scale3d(0.475,0.475,0.475) translate3d(10px,0,0)", "easeInCubic"]
-      },
-      "100%": {
-          transform: ["scale3d(1,1,1) translate3d(0,0,0)", [0.175, 0.885, 0.32, 1]]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["zoomInRight", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "scale3d(0.1,0.1,0.1) translate3d(1000px,0,0)"
-      },
-      "60%": {
-          opacity: "1",
-          transform: ["scale3d(0.475,0.475,0.475) translate3d(-10px,0,0)", "easeInCubic"]
-      },
-      "100%": {
-          transform: ["scale3d(1,1,1) translate3d(0,0,0)", [0.175, 0.885, 0.32, 1]]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["zoomInUp", {
-      "duration": 1000,
-      "0%": {
-          opacity: "0",
-          transform: "scale3d(0.1,0.1,0.1) translate3d(0,1000px,0)"
-      },
-      "60%": {
-          opacity: "1",
-          transform: ["scale3d(0.475,0.475,0.475) translate3d(0,-60px,0)", "easeInCubic"]
-      },
-      "100%": {
-          transform: ["scale3d(1,1,1) translate3d(0,0,0)", [0.175, 0.885, 0.32, 1]]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["zoomOut", {
-      "duration": 1000,
-      "0%": {
-          transform: "scale3d(1,1,1)"
-      },
-      "50%": {
-          opacity: "1"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "scale3d(0.3,0.3,0.3)"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["zoomOutDown", {
-      "duration": 1000,
-      "0%": {
-          transform: "scale3d(1,1,1) translate3d(0,0,0)"
-      },
-      "40%": {
-          opacity: "1",
-          transform: ["scale3d(0.475,0.475,0.475) translate3d(0,60px,0)", [0.55, 0.055, 0.675, 0.19]]
-      },
-      "100%": {
-          opacity: "0",
-          transform: ["scale3d(0.1,0.1,0.1) translate3d(0,-1000px,0)", [0.175, 0.885, 0.32, 1]]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["zoomOutLeft", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "scale(1) translate3d(0,0,0)",
-          transformOrigin: "left center"
-      },
-      "40%": {
-          opacity: "1",
-          transform: "scale(0.475) translate3d(42px,0,0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "scale(0.1) translate3d(-2000px,0,0)",
-          transformOrigin: "left center"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["zoomOutRight", {
-      "duration": 1000,
-      "0%": {
-          opacity: "1",
-          transform: "scale(1) translate3d(0,0,0)",
-          transformOrigin: "right center"
-      },
-      "40%": {
-          opacity: "1",
-          transform: "scale(0.475) translate3d(-42px, 0, 0)"
-      },
-      "100%": {
-          opacity: "0",
-          transform: "scale(0.1) translate3d(2000px, 0, 0)",
-          transformOrigin: "right center"
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Based on animate.css: https://github.com/daneden/animate.css
-   */
-  registerSequence(["zoomOutUp", {
-      "duration": 1000,
-      "0%": {
-          transform: "scale3d(1,1,1) translate3d(0,0,0)"
-      },
-      "40%": {
-          opacity: "1",
-          transform: ["scale3d(0.475,0.475,0.475) translate3d(0,-60px,0)", [0.55, 0.055, 0.675, 0.19]]
-      },
-      "100%": {
-          opacity: "0",
-          transform: ["scale3d(0.1,0.1,0.1) translate3d(0,1000px,0)", [0.175, 0.885, 0.32, 1]]
-      }
-  }]);
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Finish all animation.
-   */
+  // Project
   /**
    * Check if an animation should be finished, and if so we set the tweens to
    * the final value for it, then call complete.
@@ -5232,13 +2487,6 @@
   }
   registerAction(["finish", finish], true);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Get or set a value from one or more running animations.
-   */
   /**
    * Used to map getters for the various AnimationFlags.
    */
@@ -5431,13 +2679,7 @@
   }
   registerAction(["option", option], true);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Pause and resume animation.
-   */
+  // Project
   /**
    * Check if an animation should be paused / resumed.
    */
@@ -5505,25 +2747,13 @@
   registerAction(["pause", pauseResume], true);
   registerAction(["resume", pauseResume], true);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Actions that can be performed by passing a string instead of a propertiesMap.
-   */
+  // Project
   registerAction(["reverse", function (args, elements, promiseHandler, action) {
-    // NOTE: Code needs to split out before here - but this is needed to prevent it being overridden
-    throw new SyntaxError("VelocityJS: The 'reverse' action is built in and private.");
+          // NOTE: Code needs to split out before here - but this is needed to prevent it being overridden
+          throw new SyntaxError("VelocityJS: The 'reverse' action is built in and private.");
   }], true);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Stop animation.
-   */
+  // Project
   /**
    * Check if an animation should be stopped, and if so then set the STOPPED
    * flag on it, then call complete.
@@ -5603,13 +2833,7 @@
   }
   registerAction(["stop", stop], true);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Get or set a property from one or more elements.
-   */
+  // Project
   /**
    * Get or set a style of Nomralised property value on one or more elements.
    * If there is no value passed then it will get, otherwise we will set.
@@ -5744,13 +2968,7 @@
   }
   registerAction(["style", styleAction], true);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Get or set a property from one or more elements.
-   */
+  // Project
   /**
    *
    */
@@ -5869,19 +3087,10 @@
   }
   registerAction(["tween", tweenAction], true);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
+  // Project
+  /**
+   * Converting from hex as it makes for a smaller file.
    */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-  // Converting from hex as it makes for a smaller file.
-  // TODO: When build system changes to webpack, make this one optional.
   var colorValues = {
       aliceblue: 0xF0F8FF,
       antiquewhite: 0xFAEBD7,
@@ -6039,25 +3248,7 @@
       }
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Back easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
-   */
+  // Project
   function registerBackIn(name, amount) {
       registerEasing([name, function (percentComplete, startValue, endValue) {
           if (percentComplete === 0) {
@@ -6098,13 +3289,7 @@
   registerBackInOut("easeInOutBack", 1.7);
   // TODO: Expose these as actions to register custom easings?
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Bounce easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
-   */
+  // Project
   function easeOutBouncePercent(percentComplete) {
       if (percentComplete < 1 / 2.75) {
           return 7.5625 * percentComplete * percentComplete;
@@ -6151,14 +3336,9 @@
   registerEasing(["easeOutBounce", easeOutBounce]);
   registerEasing(["easeInOutBounce", easeInOutBounce]);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Elastic easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
-   */
-  var pi2 = Math.PI * 2;
+  // Project
+  // Constants
+  var PI2 = Math.PI * 2;
   function registerElasticIn(name, amplitude, period) {
       registerEasing([name, function (percentComplete, startValue, endValue) {
           if (percentComplete === 0) {
@@ -6167,7 +3347,7 @@
           if (percentComplete === 1) {
               return endValue;
           }
-          return -(amplitude * Math.pow(2, 10 * (percentComplete -= 1)) * Math.sin((percentComplete - period / pi2 * Math.asin(1 / amplitude)) * pi2 / period)) * (endValue - startValue);
+          return -(amplitude * Math.pow(2, 10 * (percentComplete -= 1)) * Math.sin((percentComplete - period / PI2 * Math.asin(1 / amplitude)) * PI2 / period)) * (endValue - startValue);
       }]);
   }
   function registerElasticOut(name, amplitude, period) {
@@ -6178,7 +3358,7 @@
           if (percentComplete === 1) {
               return endValue;
           }
-          return (amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - period / pi2 * Math.asin(1 / amplitude)) * pi2 / period) + 1) * (endValue - startValue);
+          return (amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - period / PI2 * Math.asin(1 / amplitude)) * PI2 / period) + 1) * (endValue - startValue);
       }]);
   }
   function registerElasticInOut(name, amplitude, period) {
@@ -6189,9 +3369,9 @@
           if (percentComplete === 1) {
               return endValue;
           }
-          var s = period / pi2 * Math.asin(1 / amplitude);
+          var s = period / PI2 * Math.asin(1 / amplitude);
           percentComplete = percentComplete * 2 - 1;
-          return (percentComplete < 0 ? -0.5 * (amplitude * Math.pow(2, 10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period)) : amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - s) * pi2 / period) * 0.5 + 1) * (endValue - startValue);
+          return (percentComplete < 0 ? -0.5 * (amplitude * Math.pow(2, 10 * percentComplete) * Math.sin((percentComplete - s) * PI2 / period)) : amplitude * Math.pow(2, -10 * percentComplete) * Math.sin((percentComplete - s) * PI2 / period) * 0.5 + 1) * (endValue - startValue);
       }]);
   }
   registerElasticIn("easeInElastic", 1, 0.3);
@@ -6199,14 +3379,7 @@
   registerElasticInOut("easeInOutElastic", 1, 0.3 * 1.5);
   // TODO: Expose these as actions to register custom easings?
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Easings to act on strings, either set at the start or at the end depending on
-   * need.
-   */
+  // Project
   /**
    * Easing function that sets to the specified value immediately after the
    * animation starts.
@@ -6231,17 +3404,7 @@
   registerEasing(["during", during]);
   registerEasing(["at-end", atEnd]);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
+  // Project
   /**
    * Get/set the inner/outer dimension.
    */
@@ -6258,11 +3421,8 @@
   registerNormalization(["Element", "outerWidth", getDimension("width", false)]);
   registerNormalization(["Element", "outerHeight", getDimension("height", false)]);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
+  // Project
+  // Constants
   var inlineRx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
       listItemRx = /^(li)$/i,
       tableRowRx = /^(tr)$/i,
@@ -6298,11 +3458,7 @@
   }
   registerNormalization(["Element", "display", display]);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
+  // Project
   function clientWidth(element, propertyValue) {
       if (propertyValue == null) {
           return element.clientWidth + "px";
@@ -6355,15 +3511,7 @@
   registerNormalization(["HTMLElement", "scrollHeight", scrollHeight]);
   registerNormalization(["HTMLElement", "clientHeight", clientHeight]);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * This handles all CSS style properties. With browser prefixed properties it
-   * will register a version that handles setting (and getting) both the prefixed
-   * and non-prefixed version.
-   */
+  // Project
   /**
    * An RegExp pattern for the following list of css words using
    * http://kemio.com.ar/tools/lst-trie-re.php to generate:
@@ -6462,7 +3610,7 @@
           var unprefixed = propertyName.replace(/^[a-z]+([A-Z])/, function ($, letter) {
               return letter.toLowerCase();
           });
-          if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
+          {
               var addUnit = rxAddPx.test(unprefixed) ? "px" : undefined;
               registerNormalization(["Element", unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit]);
           }
@@ -6472,11 +3620,7 @@
       }
   }
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
+  // Project
   /**
    * Get/set an attribute.
    */
@@ -6513,11 +3657,7 @@
       }
   });
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
+  // Project
   /**
    * Get/set the width or height.
    */
@@ -6537,54 +3677,128 @@
   registerNormalization(["SVGElement", "width", getDimension$1("width")]);
   registerNormalization(["SVGElement", "height", getDimension$1("height")]);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
+  // Project
   /**
    * A fake normalization used to allow the "tween" property easy access.
    */
   function getSetTween(element, propertyValue) {
-    if (propertyValue === undefined) {
-      return "";
-    }
+      if (propertyValue === undefined) {
+          return "";
+      }
   }
   registerNormalization(["Element", "tween", getSetTween]);
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
+  // Automatically generated
+  var VERSION = "2.0.2";
 
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Velocity version (should grab from package.json during build).
+  // Project
+  var Velocity$$1 = Velocity$1;
+  /**
+   * These parts of Velocity absolutely must be included, even if they're unused!
    */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   */
-
-  /*
-   * VelocityJS.org (C) 2014-2018 Julian Shapiro.
-   *
-   * Licensed under the MIT license. See LICENSE file in the project root for details.
-   *
-   * Make sure that the values within Velocity are read-only and upatchable.
-   */
+  var VelocityStatic;
+  (function (VelocityStatic) {
+      /**
+       * Actions cannot be replaced if they are internal (hasOwnProperty is false
+       * but they still exist). Otherwise they can be replaced by users.
+       *
+       * All external method calls should be using actions rather than sub-calls
+       * of Velocity itself.
+       */
+      VelocityStatic.Actions = Actions;
+      /**
+       * Our known easing functions.
+       */
+      VelocityStatic.Easings = Easings;
+      /**
+       * The currently registered sequences.
+       */
+      VelocityStatic.Sequences = SequencesObject;
+      /**
+       * Current internal state of Velocity.
+       */
+      VelocityStatic.State = State; // tslint:disable-line:no-shadowed-variable
+      /**
+       * Velocity option defaults, which can be overriden by the user.
+       */
+      VelocityStatic.defaults = defaults$1;
+      /**
+       * Used to patch any object to allow Velocity chaining. In order to chain an
+       * object must either be treatable as an array - with a <code>.length</code>
+       * property, and each member a Node, or a Node directly.
+       *
+       * By default Velocity will try to patch <code>window</code>,
+       * <code>jQuery</code>, <code>Zepto</code>, and several classes that return
+       * Nodes or lists of Nodes.
+       */
+      VelocityStatic.patch = patch;
+      /**
+       * Set to true, 1 or 2 (most verbose) to output debug info to console.
+       */
+      VelocityStatic.debug = false;
+      /**
+       * In mock mode, all animations are forced to complete immediately upon the
+       * next rAF tick. If there are further animations queued then they will each
+       * take one single frame in turn. Loops and repeats will be disabled while
+       * <code>mock = true</code>.
+       */
+      VelocityStatic.mock = false;
+      /**
+       * Save our version number somewhere visible.
+       */
+      VelocityStatic.version = VERSION;
+      /**
+       * Added as a fallback for "import {Velocity} from 'velocity-animate';".
+       */
+      VelocityStatic.Velocity = Velocity$1; // tslint:disable-line:no-shadowed-variable
+  })(VelocityStatic || (VelocityStatic = {}));
+  /* IE detection. Gist: https://gist.github.com/julianshapiro/9098609 */
+  var IE = function () {
+      if (document.documentMode) {
+          return document.documentMode;
+      } else {
+          for (var i = 7; i > 4; i--) {
+              var div = document.createElement("div");
+              div.innerHTML = "<!" + "--" + "[if IE " + i + "]><span></span><![endif]-->";
+              if (div.getElementsByTagName("span").length) {
+                  div = null;
+                  return i;
+              }
+          }
+      }
+      return undefined;
+  }();
+  /******************
+   Unsupported
+   ******************/
+  if (IE <= 8) {
+      throw new Error("VelocityJS cannot run on Internet Explorer 8 or earlier");
+  }
+  /******************
+   Frameworks
+   ******************/
+  if (window) {
+      /*
+       * Both jQuery and Zepto allow their $.fn object to be extended to allow
+       * wrapped elements to be subjected to plugin calls. If either framework is
+       * loaded, register a "velocity" extension pointing to Velocity's core
+       * animate() method. Velocity also registers itself onto a global container
+       * (window.jQuery || window.Zepto || window) so that certain features are
+       * accessible beyond just a per-element scope. Accordingly, Velocity can
+       * both act on wrapped DOM elements and stand alone for targeting raw DOM
+       * elements.
+       */
+      var jQuery = window.jQuery,
+          Zepto = window.Zepto;
+      patch(window, true);
+      patch(Element && Element.prototype);
+      patch(NodeList && NodeList.prototype);
+      patch(HTMLCollection && HTMLCollection.prototype);
+      patch(jQuery, true);
+      patch(jQuery && jQuery.fn);
+      patch(Zepto, true);
+      patch(Zepto && Zepto.fn);
+  }
   // Make sure that the values within Velocity are read-only and upatchable.
 
   var _loop = function _loop(property) {
@@ -6592,7 +3806,7 @@
           switch (typeof property === "undefined" ? "undefined" : _typeof(property)) {
               case "number":
               case "boolean":
-                  defineProperty$1(Velocity, property, {
+                  defineProperty$1(Velocity$$1, property, {
                       get: function get$$1() {
                           return VelocityStatic[property];
                       },
@@ -6602,7 +3816,7 @@
                   }, true);
                   break;
               default:
-                  defineProperty$1(Velocity, property, VelocityStatic[property], true);
+                  defineProperty$1(Velocity$$1, property, VelocityStatic[property], true);
                   break;
           }
       }
@@ -6612,9 +3826,805 @@
       _loop(property);
   }
 
-  exports.Velocity = Velocity;
+  // Project
+  var rxPercents = /(\d*\.\d+|\d+\.?|from|to)/g;
+  function expandSequence(animation, sequence) {
+      var tweens = animation.tweens = Object.create(null),
+          element = animation.element;
+      for (var propertyName in sequence.tweens) {
+          if (sequence.tweens.hasOwnProperty(propertyName)) {
+              var fn = getNormalization(element, propertyName);
+              if (!fn && propertyName !== "tween") {
+                  if (Velocity$$1.debug) {
+                      console.log("Skipping [" + propertyName + "] due to a lack of browser support.");
+                  }
+                  continue;
+              }
+              tweens[propertyName] = {
+                  fn: fn,
+                  sequence: sequence.tweens[propertyName]
+              };
+          }
+      }
+  }
+  /**
+   * Used to register a sequence. This should never be called by users
+   * directly, instead it should be called via an action:<br/>
+   * <code>Velocity("registerSequence", ""name", VelocitySequence);</code>
+   */
+  function registerSequence(args) {
+      if (isPlainObject(args[0])) {
+          for (var name in args[0]) {
+              if (args[0].hasOwnProperty(name)) {
+                  registerSequence([name, args[0][name]]);
+              }
+          }
+      } else if (isString(args[0])) {
+          var _name = args[0],
+              sequence = args[1];
+          if (!isString(_name)) {
+              console.warn("VelocityJS: Trying to set 'registerSequence' name to an invalid value:", _name);
+          } else if (!isPlainObject(sequence)) {
+              console.warn("VelocityJS: Trying to set 'registerSequence' sequence to an invalid value:", _name, sequence);
+          } else {
+              if (SequencesObject[_name]) {
+                  console.warn("VelocityJS: Replacing named sequence:", _name);
+              }
+              var percents = {},
+                  steps = new Array(100),
+                  properties = [],
+                  sequenceList = SequencesObject[_name] = {},
+                  duration = validateDuration(sequence.duration);
+              sequenceList.tweens = {};
+              if (isNumber(duration)) {
+                  sequenceList.duration = duration;
+              }
+              for (var part in sequence) {
+                  if (sequence.hasOwnProperty(part)) {
+                      var keys = String(part).match(rxPercents);
+                      if (keys) {
+                          var _iteratorNormalCompletion = true;
+                          var _didIteratorError = false;
+                          var _iteratorError = undefined;
 
-  Object.defineProperty(exports, '__esModule', { value: true });
+                          try {
+                              for (var _iterator = keys[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                                  var key = _step.value;
+
+                                  var percent = key === "from" ? 0 : key === "to" ? 100 : parseFloat(key);
+                                  if (percent < 0 || percent > 100) {
+                                      console.warn("VelocityJS: Trying to use an invalid value as a percentage (0 <= n <= 100):", _name, percent);
+                                  } else if (isNaN(percent)) {
+                                      console.warn("VelocityJS: Trying to use an invalid number as a percentage:", _name, part, key);
+                                  } else {
+                                      if (!percents[String(percent)]) {
+                                          percents[String(percent)] = [];
+                                      }
+                                      percents[String(percent)].push(part);
+                                      for (var property in sequence[part]) {
+                                          if (!properties.includes(property)) {
+                                              properties.push(property);
+                                          }
+                                      }
+                                  }
+                              }
+                          } catch (err) {
+                              _didIteratorError = true;
+                              _iteratorError = err;
+                          } finally {
+                              try {
+                                  if (!_iteratorNormalCompletion && _iterator.return) {
+                                      _iterator.return();
+                                  }
+                              } finally {
+                                  if (_didIteratorError) {
+                                      throw _iteratorError;
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+              var orderedPercents = Object.keys(percents).sort(function (a, b) {
+                  var a1 = parseFloat(a),
+                      b1 = parseFloat(b);
+                  return a1 > b1 ? 1 : a1 < b1 ? -1 : 0;
+              });
+              orderedPercents.forEach(function (key) {
+                  steps.push.apply(percents[key]);
+              });
+              var _iteratorNormalCompletion2 = true;
+              var _didIteratorError2 = false;
+              var _iteratorError2 = undefined;
+
+              try {
+                  for (var _iterator2 = properties[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                      var _property = _step2.value;
+
+                      var parts = [],
+                          propertyName = camelCase(_property);
+                      var _iteratorNormalCompletion3 = true;
+                      var _didIteratorError3 = false;
+                      var _iteratorError3 = undefined;
+
+                      try {
+                          for (var _iterator3 = orderedPercents[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                              var _key = _step3.value;
+                              var _iteratorNormalCompletion6 = true;
+                              var _didIteratorError6 = false;
+                              var _iteratorError6 = undefined;
+
+                              try {
+                                  for (var _iterator6 = percents[_key][Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                                      var _value = _step6.value;
+
+                                      var stepProperties = sequence[_value];
+                                      if (stepProperties[propertyName]) {
+                                          parts.push(isString(stepProperties[propertyName]) ? stepProperties[propertyName] : stepProperties[propertyName][0]);
+                                      }
+                                  }
+                              } catch (err) {
+                                  _didIteratorError6 = true;
+                                  _iteratorError6 = err;
+                              } finally {
+                                  try {
+                                      if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                                          _iterator6.return();
+                                      }
+                                  } finally {
+                                      if (_didIteratorError6) {
+                                          throw _iteratorError6;
+                                      }
+                                  }
+                              }
+                          }
+                      } catch (err) {
+                          _didIteratorError3 = true;
+                          _iteratorError3 = err;
+                      } finally {
+                          try {
+                              if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                                  _iterator3.return();
+                              }
+                          } finally {
+                              if (_didIteratorError3) {
+                                  throw _iteratorError3;
+                              }
+                          }
+                      }
+
+                      if (parts.length) {
+                          var realSequence = findPattern(parts, propertyName);
+                          var index = 0;
+                          if (realSequence) {
+                              var _iteratorNormalCompletion4 = true;
+                              var _didIteratorError4 = false;
+                              var _iteratorError4 = undefined;
+
+                              try {
+                                  for (var _iterator4 = orderedPercents[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+                                      var _key2 = _step4.value;
+                                      var _iteratorNormalCompletion5 = true;
+                                      var _didIteratorError5 = false;
+                                      var _iteratorError5 = undefined;
+
+                                      try {
+                                          for (var _iterator5 = percents[_key2][Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                                              var value = _step5.value;
+
+                                              var originalProperty = sequence[value][propertyName];
+                                              if (originalProperty) {
+                                                  if (Array.isArray(originalProperty) && originalProperty.length > 1 && (isString(originalProperty[1]) || Array.isArray(originalProperty[1]))) {
+                                                      realSequence[index].easing = validateEasing(originalProperty[1], sequenceList.duration || DEFAULT_DURATION);
+                                                  }
+                                                  realSequence[index++].percent = parseFloat(_key2) / 100;
+                                              }
+                                          }
+                                      } catch (err) {
+                                          _didIteratorError5 = true;
+                                          _iteratorError5 = err;
+                                      } finally {
+                                          try {
+                                              if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                                                  _iterator5.return();
+                                              }
+                                          } finally {
+                                              if (_didIteratorError5) {
+                                                  throw _iteratorError5;
+                                              }
+                                          }
+                                      }
+                                  }
+                              } catch (err) {
+                                  _didIteratorError4 = true;
+                                  _iteratorError4 = err;
+                              } finally {
+                                  try {
+                                      if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                                          _iterator4.return();
+                                      }
+                                  } finally {
+                                      if (_didIteratorError4) {
+                                          throw _iteratorError4;
+                                      }
+                                  }
+                              }
+
+                              sequenceList.tweens[propertyName] = realSequence;
+                          }
+                      }
+                  }
+              } catch (err) {
+                  _didIteratorError2 = true;
+                  _iteratorError2 = err;
+              } finally {
+                  try {
+                      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                          _iterator2.return();
+                      }
+                  } finally {
+                      if (_didIteratorError2) {
+                          throw _iteratorError2;
+                      }
+                  }
+              }
+          }
+      }
+  }
+  registerAction(["registerSequence", registerSequence], true);
+
+  // Project
+  /* tslint:enable:max-line-length */
+  function Velocity$1() {
+      for (var _len = arguments.length, argsList = Array(_len), _key = 0; _key < _len; _key++) {
+          argsList[_key] = arguments[_key];
+      }
+
+      var
+      /**
+       * A shortcut to the default options.
+       */
+      defaults$$1 = defaults$1,
+
+      /**
+       * Shortcut to arguments for file size.
+       */
+      args = arguments,
+
+      /**
+       * Cache of the first argument - this is used often enough to be saved.
+       */
+      args0 = args[0],
+
+      /**
+       * To allow for expressive CoffeeScript code, Velocity supports an
+       * alternative syntax in which "elements" (or "e"), "properties" (or
+       * "p"), and "options" (or "o") objects are defined on a container
+       * object that's passed in as Velocity's sole argument.
+       *
+       * Note: Some browsers automatically populate arguments with a
+       * "properties" object. We detect it by checking for its default
+       * "names" property.
+       */
+      // TODO: Confirm which browsers - if <=IE8 the we can drop completely
+      syntacticSugar = isPlainObject(args0) && (args0.p || isPlainObject(args0.properties) && !args0.properties.names || isString(args0.properties));
+      var
+      /**
+       *  When Velocity is called via the utility function (Velocity()),
+       * elements are explicitly passed in as the first parameter. Thus,
+       * argument positioning varies.
+       */
+      argumentIndex = 0,
+
+      /**
+       * The list of elements, extended with Promise and Velocity.
+       */
+      elements = void 0,
+
+      /**
+       * The properties being animated. This can be a string, in which case it
+       * is either a function for these elements, or it is a "named" animation
+       * sequence to use instead. Named sequences start with either "callout."
+       * or "transition.". When used as a callout the values will be reset
+       * after finishing. When used as a transtition then there is no special
+       * handling after finishing.
+       */
+      propertiesMap = void 0,
+
+      /**
+       * Options supplied, this will be mapped and validated into
+       * <code>options</code>.
+       */
+      optionsMap = void 0,
+
+      /**
+       * If called via a chain then this contains the <b>last</b> calls
+       * animations. If this does not have a value then any access to the
+       * element's animations needs to be to the currently-running ones.
+       */
+      animations = void 0,
+
+      /**
+       * The promise that is returned.
+       */
+      promise = void 0,
+
+      // Used when the animation is finished
+      resolver = void 0,
+
+      // Used when there was an issue with one or more of the Velocity arguments
+      rejecter = void 0;
+      //console.log(`Velocity`, _arguments)
+      // First get the elements, and the animations connected to the last call if
+      // this is chained.
+      // TODO: Clean this up a bit
+      // TODO: Throw error if the chain is called with elements as the first argument. isVelocityResult(this) && ( (isNode(arg0) || isWrapped(arg0)) && arg0 == this)
+      if (isNode(this)) {
+          // This is from a chain such as document.getElementById("").velocity(...)
+          elements = [this];
+      } else if (isWrapped(this)) {
+          // This might be a chain from something else, but if chained from a
+          // previous Velocity() call then grab the animations it's related to.
+          elements = cloneArray(this);
+          if (isVelocityResult(this)) {
+              animations = this.velocity.animations;
+          }
+      } else if (syntacticSugar) {
+          elements = cloneArray(args0.elements || args0.e);
+          argumentIndex++;
+      } else if (isNode(args0)) {
+          elements = cloneArray([args0]);
+          argumentIndex++;
+      } else if (isWrapped(args0)) {
+          elements = cloneArray(args0);
+          argumentIndex++;
+      }
+      // Allow elements to be chained.
+      if (elements) {
+          defineProperty$1(elements, "velocity", Velocity$1.bind(elements));
+          if (animations) {
+              defineProperty$1(elements.velocity, "animations", animations);
+          }
+      }
+      // Next get the propertiesMap and options.
+      if (syntacticSugar) {
+          propertiesMap = getValue(args0.properties, args0.p);
+      } else {
+          // TODO: Should be possible to call Velocity("pauseAll") - currently not possible
+          propertiesMap = args[argumentIndex++];
+      }
+      // Get any options map passed in as arguments first, expand any direct
+      // options if possible.
+      var isReverse = propertiesMap === "reverse",
+          isAction = !isReverse && isString(propertiesMap),
+          maybeSequence = isAction && SequencesObject[propertiesMap],
+          opts = syntacticSugar ? getValue(args0.options, args0.o) : args[argumentIndex];
+      if (isPlainObject(opts)) {
+          optionsMap = opts;
+      }
+      // Create the promise if supported and wanted.
+      if (Promise && getValue(optionsMap && optionsMap.promise, defaults$$1.promise)) {
+          promise = new Promise(function (resolve, reject) {
+              rejecter = reject;
+              // IMPORTANT:
+              // If a resolver tries to run on a Promise then it will wait until
+              // that Promise resolves - but in this case we're running on our own
+              // Promise, so need to make sure it's not seen as one. Setting these
+              // values to <code>undefined</code> for the duration of the resolve.
+              // Due to being an async call, they should be back to "normal"
+              // before the <code>.then()</code> function gets called.
+              resolver = function resolver(result) {
+                  if (isVelocityResult(result)) {
+                      var then = result && result.then;
+                      if (then) {
+                          result.then = undefined; // Preserving enumeration etc
+                      }
+                      resolve(result);
+                      if (then) {
+                          result.then = then;
+                      }
+                  } else {
+                      resolve(result);
+                  }
+              };
+          });
+          if (elements) {
+              defineProperty$1(elements, "then", promise.then.bind(promise));
+              defineProperty$1(elements, "catch", promise.catch.bind(promise));
+              if (promise.finally) {
+                  // Semi-standard
+                  defineProperty$1(elements, "finally", promise.finally.bind(promise));
+              }
+          }
+      }
+      var promiseRejectEmpty = getValue(optionsMap && optionsMap.promiseRejectEmpty, defaults$$1.promiseRejectEmpty);
+      if (promise) {
+          if (!elements && !isAction) {
+              if (promiseRejectEmpty) {
+                  rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+              } else {
+                  resolver();
+              }
+          } else if (!propertiesMap) {
+              if (promiseRejectEmpty) {
+                  rejecter("Velocity: No properties supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+              } else {
+                  resolver();
+              }
+          }
+      }
+      if (!elements && !isAction || !propertiesMap) {
+          return promise;
+      }
+      // NOTE: Can't use isAction here due to type inference - there are callbacks
+      // between so the type isn't considered safe.
+      if (isAction) {
+          var actionArgs = [],
+              promiseHandler = promise && {
+              _promise: promise,
+              _resolver: resolver,
+              _rejecter: rejecter
+          };
+          while (argumentIndex < args.length) {
+              actionArgs.push(args[argumentIndex++]);
+          }
+          // Velocity's behavior is categorized into "actions". If a string is
+          // passed in instead of a propertiesMap then that will call a function
+          // to do something special to the animation linked.
+          // There is one special case - "reverse" - which is handled differently,
+          // by being stored on the animation and then expanded when the animation
+          // starts.
+          var action = propertiesMap.replace(/\..*$/, ""),
+              callback = Actions[action];
+          if (callback) {
+              var result = callback(actionArgs, elements, promiseHandler, propertiesMap);
+              if (result !== undefined) {
+                  return result;
+              }
+              return elements || promise;
+          } else if (!maybeSequence) {
+              console.error("VelocityJS: First argument (" + propertiesMap + ") was not a property map, a known action, or a registered redirect. Aborting.");
+              return;
+          }
+      }
+      var hasValidDuration = void 0;
+      if (isPlainObject(propertiesMap) || isReverse || maybeSequence) {
+          /**
+           * The options for this set of animations.
+           */
+          var options = {};
+          var isSync = defaults$$1.sync;
+          // Private options first - set as non-enumerable, and starting with an
+          // underscore so we can filter them out.
+          if (promise) {
+              defineProperty$1(options, "_promise", promise);
+              defineProperty$1(options, "_rejecter", rejecter);
+              defineProperty$1(options, "_resolver", resolver);
+          }
+          defineProperty$1(options, "_ready", 0);
+          defineProperty$1(options, "_started", 0);
+          defineProperty$1(options, "_completed", 0);
+          defineProperty$1(options, "_total", 0);
+          // Now check the optionsMap
+          if (isPlainObject(optionsMap)) {
+              var validDuration = validateDuration(optionsMap.duration);
+              hasValidDuration = validDuration !== undefined;
+              options.duration = getValue(validDuration, defaults$$1.duration);
+              options.delay = getValue(validateDelay(optionsMap.delay), defaults$$1.delay);
+              // Need the extra fallback here in case it supplies an invalid
+              // easing that we need to overrride with the default.
+              options.easing = validateEasing(getValue(optionsMap.easing, defaults$$1.easing), options.duration) || validateEasing(defaults$$1.easing, options.duration);
+              options.loop = getValue(validateLoop(optionsMap.loop), defaults$$1.loop);
+              options.repeat = options.repeatAgain = getValue(validateRepeat(optionsMap.repeat), defaults$$1.repeat);
+              if (optionsMap.speed != null) {
+                  options.speed = getValue(validateSpeed(optionsMap.speed), 1);
+              }
+              if (isBoolean(optionsMap.promise)) {
+                  options.promise = optionsMap.promise;
+              }
+              options.queue = getValue(validateQueue(optionsMap.queue), defaults$$1.queue);
+              if (optionsMap.mobileHA && !State.isGingerbread) {
+                  /* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack)
+                   on animating elements. HA is removed from the element at the completion of its animation. */
+                  /* Note: Android Gingerbread doesn't support HA. If a null transform hack (mobileHA) is in fact set, it will prevent other tranform subproperties from taking effect. */
+                  /* Note: You can read more about the use of mobileHA in Velocity's documentation: velocity-animate/#mobileHA. */
+                  options.mobileHA = true;
+              }
+              if (!isReverse) {
+                  if (optionsMap.display != null) {
+                      propertiesMap.display = optionsMap.display;
+                      console.error("Deprecated \"options.display\" used, this is now a property:", optionsMap.display);
+                  }
+                  if (optionsMap.visibility != null) {
+                      propertiesMap.visibility = optionsMap.visibility;
+                      console.error("Deprecated \"options.visibility\" used, this is now a property:", optionsMap.visibility);
+                  }
+              }
+              // TODO: Allow functional options for different options per element
+              var optionsBegin = validateBegin(optionsMap.begin),
+                  optionsComplete = validateComplete(optionsMap.complete),
+                  optionsProgress = validateProgress(optionsMap.progress),
+                  optionsSync = validateSync(optionsMap.sync);
+              if (optionsBegin != null) {
+                  options.begin = optionsBegin;
+              }
+              if (optionsComplete != null) {
+                  options.complete = optionsComplete;
+              }
+              if (optionsProgress != null) {
+                  options.progress = optionsProgress;
+              }
+              if (optionsSync != null) {
+                  isSync = optionsSync;
+              }
+          } else if (!syntacticSugar) {
+              // Expand any direct options if possible.
+              var _validDuration = validateDuration(args[argumentIndex], true);
+              var offset = 0;
+              hasValidDuration = _validDuration !== undefined;
+              if (_validDuration !== undefined) {
+                  offset++;
+                  options.duration = _validDuration;
+              }
+              if (!isFunction(args[argumentIndex + offset])) {
+                  // Despite coming before Complete, we can't pass a fn easing
+                  var easing = validateEasing(args[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults$$1.duration), true);
+                  if (easing !== undefined) {
+                      offset++;
+                      options.easing = easing;
+                  }
+              }
+              var complete = validateComplete(args[argumentIndex + offset], true);
+              if (complete !== undefined) {
+                  options.complete = complete;
+              }
+              options.loop = defaults$$1.loop;
+              options.repeat = options.repeatAgain = defaults$$1.repeat;
+          }
+          if (isReverse && options.queue === false) {
+              throw new Error("VelocityJS: Cannot reverse a queue:false animation.");
+          }
+          if (maybeSequence && !hasValidDuration && maybeSequence.duration) {
+              options.duration = maybeSequence.duration;
+          }
+          // When a set of elements is targeted by a Velocity call, the set is
+          // broken up and each element has the current Velocity call individually
+          // queued onto it. In this way, each element's existing queue is
+          // respected; some elements may already be animating and accordingly
+          // should not have this current Velocity call triggered immediately
+          // unless the sync:true option is used.
+          var rootAnimation = {
+              options: options,
+              elements: elements,
+              _prev: undefined,
+              _next: undefined,
+              _flags: isSync ? 32 /* SYNC */ : 0,
+              percentComplete: 0,
+              ellapsedTime: 0,
+              timeStart: 0
+          };
+          animations = [];
+          var _iteratorNormalCompletion = true;
+          var _didIteratorError = false;
+          var _iteratorError = undefined;
+
+          try {
+              for (var _iterator = elements[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                  var element = _step.value;
+
+                  var flags = 0;
+                  if (isNode(element)) {
+                      // TODO: This needs to check for valid animation targets, not just Elements
+                      if (isReverse) {
+                          var lastAnimation = Data(element).lastAnimationList[options.queue];
+                          propertiesMap = lastAnimation && lastAnimation.tweens;
+                          if (!propertiesMap) {
+                              console.error("VelocityJS: Attempting to reverse an animation on an element with no previous animation:", element);
+                              continue;
+                          }
+                          flags |= 64 /* REVERSE */ & ~(lastAnimation._flags & 64 /* REVERSE */); // tslint:disable-line:no-bitwise
+                      }
+                      var animation = Object.assign({}, rootAnimation, { element: element, _flags: rootAnimation._flags | flags });
+                      options._total++;
+                      animations.push(animation);
+                      if (maybeSequence) {
+                          expandSequence(animation, maybeSequence);
+                      } else if (isReverse) {
+                          // In this case we're using the previous animation, so
+                          // it will be expanded correctly when that one runs.
+                          animation.tweens = propertiesMap;
+                      } else {
+                          animation.tweens = Object.create(null);
+                          expandProperties(animation, propertiesMap);
+                      }
+                      queue$1(element, animation, options.queue);
+                  }
+              }
+          } catch (err) {
+              _didIteratorError = true;
+              _iteratorError = err;
+          } finally {
+              try {
+                  if (!_iteratorNormalCompletion && _iterator.return) {
+                      _iterator.return();
+                  }
+              } finally {
+                  if (_didIteratorError) {
+                      throw _iteratorError;
+                  }
+              }
+          }
+
+          if (State.isTicking === false) {
+              // If the animation tick isn't running, start it. (Velocity shuts it
+              // off when there are no active calls to process.)
+              tick(false);
+          }
+          if (animations) {
+              defineProperty$1(elements.velocity, "animations", animations);
+          }
+      }
+      /***************
+       Chaining
+       ***************/
+      /* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
+      return elements || promise;
+  }
+
+  // Project
+  /**
+   * Used to patch any object to allow Velocity chaining. In order to chain an
+   * object must either be treatable as an array - with a <code>.length</code>
+   * property, and each member a Node, or a Node directly.
+   *
+   * By default Velocity will try to patch <code>window</code>,
+   * <code>jQuery</code>, <code>Zepto</code>, and several classes that return
+   * Nodes or lists of Nodes.
+   */
+  function patch(proto, global) {
+      try {
+          defineProperty$1(proto, (global ? "V" : "v") + "elocity", Velocity$1);
+      } catch (e) {
+          console.warn("VelocityJS: Error when trying to add prototype.", e);
+      }
+  }
+
+  // Project
+  var Velocity$2 = Velocity$1;
+  /**
+   * These parts of Velocity absolutely must be included, even if they're unused!
+   */
+  var VelocityStatic$1;
+  (function (VelocityStatic) {
+      /**
+       * Actions cannot be replaced if they are internal (hasOwnProperty is false
+       * but they still exist). Otherwise they can be replaced by users.
+       *
+       * All external method calls should be using actions rather than sub-calls
+       * of Velocity itself.
+       */
+      VelocityStatic.Actions = Actions;
+      /**
+       * Our known easing functions.
+       */
+      VelocityStatic.Easings = Easings;
+      /**
+       * The currently registered sequences.
+       */
+      VelocityStatic.Sequences = SequencesObject;
+      /**
+       * Current internal state of Velocity.
+       */
+      VelocityStatic.State = State; // tslint:disable-line:no-shadowed-variable
+      /**
+       * Velocity option defaults, which can be overriden by the user.
+       */
+      VelocityStatic.defaults = defaults$1;
+      /**
+       * Used to patch any object to allow Velocity chaining. In order to chain an
+       * object must either be treatable as an array - with a <code>.length</code>
+       * property, and each member a Node, or a Node directly.
+       *
+       * By default Velocity will try to patch <code>window</code>,
+       * <code>jQuery</code>, <code>Zepto</code>, and several classes that return
+       * Nodes or lists of Nodes.
+       */
+      VelocityStatic.patch = patch;
+      /**
+       * Set to true, 1 or 2 (most verbose) to output debug info to console.
+       */
+      VelocityStatic.debug = false;
+      /**
+       * In mock mode, all animations are forced to complete immediately upon the
+       * next rAF tick. If there are further animations queued then they will each
+       * take one single frame in turn. Loops and repeats will be disabled while
+       * <code>mock = true</code>.
+       */
+      VelocityStatic.mock = false;
+      /**
+       * Save our version number somewhere visible.
+       */
+      VelocityStatic.version = VERSION;
+      /**
+       * Added as a fallback for "import {Velocity} from 'velocity-animate';".
+       */
+      VelocityStatic.Velocity = Velocity$1; // tslint:disable-line:no-shadowed-variable
+  })(VelocityStatic$1 || (VelocityStatic$1 = {}));
+  /* IE detection. Gist: https://gist.github.com/julianshapiro/9098609 */
+  var IE$1 = function () {
+      if (document.documentMode) {
+          return document.documentMode;
+      } else {
+          for (var i = 7; i > 4; i--) {
+              var div = document.createElement("div");
+              div.innerHTML = "<!" + "--" + "[if IE " + i + "]><span></span><![endif]-->";
+              if (div.getElementsByTagName("span").length) {
+                  div = null;
+                  return i;
+              }
+          }
+      }
+      return undefined;
+  }();
+  /******************
+   Unsupported
+   ******************/
+  if (IE$1 <= 8) {
+      throw new Error("VelocityJS cannot run on Internet Explorer 8 or earlier");
+  }
+  /******************
+   Frameworks
+   ******************/
+  if (window) {
+      /*
+       * Both jQuery and Zepto allow their $.fn object to be extended to allow
+       * wrapped elements to be subjected to plugin calls. If either framework is
+       * loaded, register a "velocity" extension pointing to Velocity's core
+       * animate() method. Velocity also registers itself onto a global container
+       * (window.jQuery || window.Zepto || window) so that certain features are
+       * accessible beyond just a per-element scope. Accordingly, Velocity can
+       * both act on wrapped DOM elements and stand alone for targeting raw DOM
+       * elements.
+       */
+      var jQuery$1 = window.jQuery,
+          Zepto$1 = window.Zepto;
+      patch(window, true);
+      patch(Element && Element.prototype);
+      patch(NodeList && NodeList.prototype);
+      patch(HTMLCollection && HTMLCollection.prototype);
+      patch(jQuery$1, true);
+      patch(jQuery$1 && jQuery$1.fn);
+      patch(Zepto$1, true);
+      patch(Zepto$1 && Zepto$1.fn);
+  }
+  // Make sure that the values within Velocity are read-only and upatchable.
+
+  var _loop$1 = function _loop(property) {
+      if (VelocityStatic$1.hasOwnProperty(property)) {
+          switch (typeof property === "undefined" ? "undefined" : _typeof(property)) {
+              case "number":
+              case "boolean":
+                  defineProperty$1(Velocity$2, property, {
+                      get: function get$$1() {
+                          return VelocityStatic$1[property];
+                      },
+                      set: function set$$1(value) {
+                          VelocityStatic$1[property] = value;
+                      }
+                  }, true);
+                  break;
+              default:
+                  defineProperty$1(Velocity$2, property, VelocityStatic$1[property], true);
+                  break;
+          }
+      }
+  };
+
+  for (var property$1 in VelocityStatic$1) {
+      _loop$1(property$1);
+  }
+
+  return Velocity$2;
 
 })));
 //# sourceMappingURL=velocity.js.map

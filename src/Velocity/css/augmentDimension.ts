@@ -1,14 +1,14 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import {
-	HTMLorSVGElement,
-} from "../../../index";
+// Typedefs
+import {HTMLorSVGElement} from "../../../velocity.d";
 
-import {getPropertyValue} from "../css/getPropertyValue";
+// Project
+import {getPropertyValue} from "./getPropertyValue";
 
 /**
  * Figure out the dimensions for this width / height based on the

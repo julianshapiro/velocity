@@ -1,16 +1,19 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Actions that can be performed by passing a string instead of a propertiesMap.
  */
 
-import {VelocityActionFn} from "../../../index.d";
+// Typedefs
+import {VelocityActionFn} from "../../../velocity.d";
 
+// Project
 import {isFunction, isString, propertyIsEnumerable} from "../../types";
 import {defineProperty} from "../../utility";
 
+// Constants
 export const Actions: {[name: string]: VelocityActionFn} = {};
 
 /**

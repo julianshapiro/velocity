@@ -29,7 +29,7 @@
 		"curly": true,
 		"cyclomatic-complexity": false,
 		"eofline": true,
-		"file-header": [true, "VelocityJS.org \\(C\\) 2014"],
+		"file-header": [true, "velocity-animate \\(C\\) 2014"],
 		"forin": true,
 		"import-spacing": true,
 		"indent": {
@@ -73,7 +73,7 @@
 		"no-misused-new": true,
 		"no-namespace": false,
 		"no-parameter-properties": false,
-		"no-redundant-jsdoc": true,
+		"no-redundant-jsdoc": false,
 		"no-reference": true,
 		"no-reference-import": true,
 		"no-require-imports": true,

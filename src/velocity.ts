@@ -1,30 +1,38 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
- * Core "Velocity" function.
+ * Extended Velocity members.
  */
 
+// Typedefs
 import {
-	State,
-	StrictVelocityOptions,
-	VelocityActionFn,
-	VelocityEasingFn,
-} from "../index.d";
+	SequenceList, StrictVelocityOptions, Velocity as VelocityPublic,
+	VelocityActionFn, VelocityEasingFn, VelocityState,
+} from "./../velocity.d";
 
-import {patch as patchFn} from "./Velocity/patch";
-
+// Project
+import {defineProperty} from "./utility";
 import {Actions as ActionsObject} from "./Velocity/actions/actions";
 import {defaults as DefaultObject} from "./Velocity/defaults";
 import {Easings as EasingsObject} from "./Velocity/easing/easings";
-import {SequenceList, SequencesObject} from "./Velocity/sequencesObject";
+import {patch as patchFn} from "./Velocity/patch";
+import {SequencesObject} from "./Velocity/sequencesObject";
 import {State as StateObject} from "./Velocity/state";
+import {Velocity as VelocityFn} from "./velocityFn";
+
+// Build the entire library, even optional bits.
+import "./Velocity/_all";
+
+// Constants
+import {VERSION} from "../version";
+const Velocity: VelocityPublic = VelocityFn as any;
 
 /**
  * These parts of Velocity absolutely must be included, even if they're unused!
  */
-export namespace VelocityStatic {
+namespace VelocityStatic {
 	/**
 	 * Actions cannot be replaced if they are internal (hasOwnProperty is false
 	 * but they still exist). Otherwise they can be replaced by users.
@@ -47,7 +55,7 @@ export namespace VelocityStatic {
 	/**
 	 * Current internal state of Velocity.
 	 */
-	export const State: State = StateObject; // tslint:disable-line:no-shadowed-variable
+	export const State: VelocityState = StateObject; // tslint:disable-line:no-shadowed-variable
 
 	/**
 	 * Velocity option defaults, which can be overriden by the user.
@@ -77,26 +85,17 @@ export namespace VelocityStatic {
 	 * <code>mock = true</code>.
 	 */
 	export let mock: boolean = false;
+
+	/**
+	 * Save our version number somewhere visible.
+	 */
+	export const version = VERSION;
+
+	/**
+	 * Added as a fallback for "import {Velocity} from 'velocity-animate';".
+	 */
+	export const Velocity: VelocityPublic = VelocityFn as any; // tslint:disable-line:no-shadowed-variable
 }
-
-/***************
- Summary
- ***************/
-
-/*
- - CSS: CSS stack that works independently from the rest of Velocity.
- - animate(): Core animation method that iterates over the targeted elements and queues the incoming call onto each element individually.
- - Pre-Queueing: Prepare the element for animation by instantiating its data cache and processing the call's options.
- - Queueing: The logic that runs once the call has reached its point of execution in the element's queue stack.
- Most logic is placed here to avoid risking it becoming stale (if the element's properties have changed).
- - Pushing: Consolidation of the tween data followed by its push onto the global in-progress calls container.
- - tick(): The single requestAnimationFrame loop responsible for tweening all in-progress calls.
- - completeCall(): Handles the cleanup process for each Velocity call.
- */
-
-/*********************
- Helper Functions
- *********************/
 
 /* IE detection. Gist: https://gist.github.com/julianshapiro/9098609 */
 const IE = (() => {
@@ -159,3 +158,28 @@ if (window) {
 	patchFn(Zepto, true);
 	patchFn(Zepto && Zepto.fn);
 }
+
+// Make sure that the values within Velocity are read-only and upatchable.
+for (const property in VelocityStatic) {
+	if (VelocityStatic.hasOwnProperty(property)) {
+		switch (typeof property) {
+			case "number":
+			case "boolean":
+				defineProperty(Velocity, property, {
+					get() {
+						return VelocityStatic[property];
+					},
+					set(value) {
+						VelocityStatic[property] = value;
+					},
+				}, true);
+				break;
+
+			default:
+				defineProperty(Velocity, property, VelocityStatic[property], true);
+				break;
+		}
+	}
+}
+
+export default Velocity; // tslint:disable-line:no-default-export

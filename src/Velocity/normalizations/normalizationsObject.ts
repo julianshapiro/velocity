@@ -1,5 +1,5 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
@@ -10,9 +10,8 @@
  * don't exist (such as for scrolling, or inner/outer dimensions).
  */
 
-import {
-	VelocityNormalizationsFn,
-} from "../../../index.d";
+// Typedefs
+import {VelocityNormalizationsFn} from "../../../velocity.d";
 
 /**
  * The highest type index for finding the best normalization for a property.

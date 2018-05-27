@@ -1,22 +1,13 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Back easings, based on code from https://github.com/yuichiroharai/easeplus-velocity
  */
 
-import {Velocity} from "../../../index.d";
-
+// Project
 import {registerEasing} from "./easings";
-
-export declare namespace Velocity {
-	export interface VelocityEasingsType {
-		"easeInBack": true;
-		"easeOutBack": true;
-		"easeInOutBack": true;
-	}
-}
 
 export function registerBackIn(name: string, amount: number) {
 	registerEasing([name, (percentComplete: number, startValue: number, endValue: number): number => {

@@ -1,53 +1,31 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
  * Core "Velocity" function.
  */
 
+// Typedefs
 import {
-	AnimationCall,
-	AnimationFlags,
-	HTMLorSVGElement,
-	StrictVelocityOptions,
-	VelocityElements,
-	VelocityObjectArgs,
-	VelocityOptions,
-	VelocityPromise,
-	VelocityProperties,
+	AnimationCall, AnimationFlags, HTMLorSVGElement, Properties, StrictVelocityOptions,
+	VelocityElements, VelocityObjectArgs, VelocityOptions, VelocityPromise, VelocityProperty,
 	VelocityResult,
-} from "../index.d";
+} from "./../velocity.d";
 
-import {
-	isBoolean,
-	isFunction,
-	isNode,
-	isPlainObject,
-	isString,
-	isVelocityResult,
-	isWrapped,
-} from "./types";
+// Project
+import {isBoolean, isFunction, isNode, isPlainObject, isString, isVelocityResult, isWrapped} from "./types";
 import {cloneArray, defineProperty, getValue} from "./utility";
 import {Data} from "./Velocity/data";
+import {
+	validateBegin, validateComplete, validateDelay, validateDuration, validateEasing,
+	validateLoop, validateProgress, validateQueue, validateRepeat, validateSpeed, validateSync,
+} from "./Velocity/options";
 import {patch as patchFn} from "./Velocity/patch";
 import {queue} from "./Velocity/queue";
 import {expandSequence} from "./Velocity/sequences";
 import {tick} from "./Velocity/tick";
 import {expandProperties} from "./Velocity/tweens";
-import {
-	validateBegin,
-	validateComplete,
-	validateDelay,
-	validateDuration,
-	validateEasing,
-	validateLoop,
-	validateProgress,
-	validateQueue,
-	validateRepeat,
-	validateSpeed,
-	validateSync,
-} from "./Velocity/validate";
 
 import {Actions as ActionsObject} from "./Velocity/actions/actions";
 import {defaults as DefaultObject} from "./Velocity/defaults";
@@ -59,15 +37,15 @@ import {State as StateObject} from "./Velocity/state";
  * The main Velocity function. Acts as a gateway to everything else.
  */
 export function Velocity(options: VelocityObjectArgs): VelocityResult;
-export function Velocity(elements: VelocityElements, propertyMap: string | VelocityProperties, options?: VelocityOptions): VelocityResult;
-export function Velocity(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-export function Velocity(elements: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-export function Velocity(elements: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
-export function Velocity(elements: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
-export function Velocity(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-export function Velocity(this: VelocityElements, propertyMap: string | VelocityProperties, complete?: () => void): VelocityResult;
-export function Velocity(this: VelocityElements, propertyMap: string | VelocityProperties, easing?: string | number[], complete?: () => void): VelocityResult;
-export function Velocity(this: VelocityElements, propertyMap: string | VelocityProperties, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
+export function Velocity(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, options?: VelocityOptions): VelocityResult;
+export function Velocity(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+export function Velocity(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, complete?: () => void): VelocityResult;
+export function Velocity(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, easing?: string | number[], complete?: () => void): VelocityResult;
+export function Velocity(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
+export function Velocity(this: VelocityElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+export function Velocity(this: VelocityElements, propertyMap: string | Properties<VelocityProperty>, complete?: () => void): VelocityResult;
+export function Velocity(this: VelocityElements, propertyMap: string | Properties<VelocityProperty>, easing?: string | number[], complete?: () => void): VelocityResult;
+export function Velocity(this: VelocityElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
 /* tslint:enable:max-line-length */
 export function Velocity(this: VelocityElements | void, ...argsList: any[]): VelocityResult {
 	const
@@ -114,7 +92,7 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 		 * after finishing. When used as a transtition then there is no special
 		 * handling after finishing.
 		 */
-		propertiesMap: string | VelocityProperties,
+		propertiesMap: string | Properties<VelocityProperty>,
 		/**
 		 * Options supplied, this will be mapped and validated into
 		 * <code>options</code>.
@@ -172,7 +150,7 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 		propertiesMap = getValue(args0.properties, args0.p);
 	} else {
 		// TODO: Should be possible to call Velocity("pauseAll") - currently not possible
-		propertiesMap = args[argumentIndex++] as string | VelocityProperties;
+		propertiesMap = args[argumentIndex++] as string | Properties<VelocityProperty>;
 	}
 	// Get any options map passed in as arguments first, expand any direct
 	// options if possible.
@@ -251,8 +229,8 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 				_rejecter: rejecter,
 			};
 
-		while (argumentIndex < actionArgs.length) {
-			actionArgs.push(actionArgs[argumentIndex++]);
+		while (argumentIndex < args.length) {
+			actionArgs.push(args[argumentIndex++]);
 		}
 
 		// Velocity's behavior is categorized into "actions". If a string is
@@ -322,16 +300,16 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 				/* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack)
 				 on animating elements. HA is removed from the element at the completion of its animation. */
 				/* Note: Android Gingerbread doesn't support HA. If a null transform hack (mobileHA) is in fact set, it will prevent other tranform subproperties from taking effect. */
-				/* Note: You can read more about the use of mobileHA in Velocity's documentation: VelocityJS.org/#mobileHA. */
+				/* Note: You can read more about the use of mobileHA in Velocity's documentation: velocity-animate/#mobileHA. */
 				options.mobileHA = true;
 			}
 			if (!isReverse) {
 				if (optionsMap.display != null) {
-					(propertiesMap as VelocityProperties).display = optionsMap.display as string;
+					(propertiesMap as Properties<VelocityProperty>).display = optionsMap.display as string;
 					console.error(`Deprecated "options.display" used, this is now a property:`, optionsMap.display);
 				}
 				if (optionsMap.visibility != null) {
-					(propertiesMap as VelocityProperties).visibility = optionsMap.visibility as string;
+					(propertiesMap as Properties<VelocityProperty>).visibility = optionsMap.visibility as string;
 					console.error(`Deprecated "options.visibility" used, this is now a property:`, optionsMap.visibility);
 				}
 			}

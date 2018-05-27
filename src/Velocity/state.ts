@@ -1,16 +1,19 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import {State as IState} from "../../index.d";
+// Typedefs
+import {VelocityState} from "../../velocity.d";
+
+// Constants
 import {CLASSNAME} from "../constants";
 
 const isClient = window && window === window.window,
 	windowScrollAnchor = isClient && window.pageYOffset !== undefined;
 
-export const State: IState = {
+export const State: VelocityState = {
 	isClient,
 	isMobile: isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
 	isAndroid: isClient && /Android/i.test(navigator.userAgent),

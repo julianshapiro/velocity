@@ -1,14 +1,13 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-import {
-	HTMLorSVGElement,
-	VelocityNormalizationsFn,
-} from "../../../index";
+// Typedefs
+import {HTMLorSVGElement, VelocityNormalizationsFn} from "../../../velocity.d";
 
+// Project
 import {getPropertyValue} from "../css/getPropertyValue";
 import {registerNormalization} from "./normalizations";
 

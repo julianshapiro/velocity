@@ -1,5 +1,5 @@
 /*
- * VelocityJS.org (C) 2014-2018 Julian Shapiro.
+ * velocity-animate (C) 2014-2018 Julian Shapiro.
  *
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  *
@@ -10,15 +10,13 @@
  * don't exist (such as for scrolling, or inner/outer dimensions).
  */
 
-import {
-	HTMLorSVGElement,
-	VelocityNormalizationsFn,
-} from "../../../index.d";
+// Typedefs
+import {HTMLorSVGElement, VelocityNormalizationsFn} from "../../../velocity.d";
 
+// Project
 import {isFunction, isString} from "../../types";
 import {registerAction} from "../actions/actions";
 import {Data} from "../data";
-
 import {ClassConstructor, constructors, NoCacheNormalizations, Normalizations, NormalizationUnits} from "./normalizationsObject";
 
 /**
@@ -97,7 +95,7 @@ export function hasNormalization(args?: [ClassConstructor, string]) {
 		name: string = args[1],
 		index = constructors.indexOf(constructor);
 
-	return !!Normalizations[index][name];
+	return !!Normalizations[index] && !!Normalizations[index][name];
 }
 
 /**
