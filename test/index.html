@@ -2,13 +2,14 @@
 <html>
 	<head>
 		<title>Velocity.js Tests</title>
-		<link rel="stylesheet" href="qunit-2.5.0.css" type="text/css" media="screen" />
-		<script type="text/javascript" src="qunit-2.5.0.js" defer></script>
-		<script type="text/javascript" src="qunit-assert-close.js" defer></script>
-		<script type="text/javascript" src="zepto-1.2.0.min.js" defer></script>
-		<script type="text/javascript" src="jquery-3.2.1.min.js" defer></script>
-		<script type="text/javascript" src="../velocity.js" defer></script>
-		<script type="text/javascript" src="../velocity.ui.js" defer></script>
+		<link rel="stylesheet" href="../node_modules/qunit/qunit/qunit.css" type="text/css" media="screen" />
+		<script type="text/javascript" src="../node_modules/babel-polyfill/dist/polyfill.min.js"></script>
+		<script type="text/javascript" src="../node_modules/qunit/qunit/qunit.js"></script>
+		<script type="text/javascript" src="../node_modules/qunit-assert-close/qunit-assert-close.js"></script>
+		<script type="text/javascript" src="zepto-1.2.0.min.js"></script>
+		<script type="text/javascript" src="jquery-3.2.1.min.js"></script>
+		<script type="text/javascript" src="../velocity.js"></script>
+		<script type="text/javascript" src="../velocity.ui.js"></script>
 		<style>
 			#qunit-stage {
 				position: absolute;
@@ -33,6 +34,6 @@
 	<body>
 		<div id="qunit"></div>
 		<div id="qunit-stage"></div>
-		<script type="text/javascript" src="test.js" defer></script>
+		<script type="text/javascript" src="test.js"></script>
 	</body>
 </html>

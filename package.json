@@ -27,24 +27,42 @@
       "url": "https://github.com/Rycochet"
     }
   ],
-  "main": "velocity.js",
-  "types": "index.d.ts",
+  "scripts": {
+    "start": "rollup -w -c --environment BUILD",
+    "build": "rollup -c --environment BUILD,MINIFY,TEST",
+    "lint": "tslint src/**/*.ts src-ui/**/*.ts test/src/**/*.ts",
+    "test": "rollup -c --environment TEST"
+  },
+  "main": "velocity.min.js",
+  "module": "velocity.es5.js",
+  "types": "velocity.d.ts",
   "repository": "julianshapiro/velocity",
   "files": [
+    "velocity.d.ts",
     "velocity.js",
     "velocity.min.js",
     "velocity.ui.js",
     "velocity.ui.min.js"
   ],
   "devDependencies": {
-    "@types/qunit": "^2.0.31",
-    "grunt": "^1.0.2",
-    "grunt-contrib-jshint": "~1.1.0",
-    "grunt-contrib-uglify": "~3.3.0",
-    "grunt-contrib-watch": "^1.0.0",
-    "grunt-load-options": "^1.0.0",
-    "grunt-ts": "^6.0.0-beta.17",
-    "load-grunt-tasks": "^3.5.2",
-    "typescript": "^2.7.1"
+    "@types/qunit": "^2.5.1",
+    "babel-core": "^6.26.3",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "qunit": "^2.6.1",
+    "qunit-assert-close": "^2.1.2",
+    "rollup": "^0.59.3",
+    "rollup-plugin-babel": "^3.0.4",
+    "rollup-plugin-license": "^0.6.0",
+    "rollup-plugin-sourcemaps": "^0.4.2",
+    "rollup-plugin-strip-banner": "^0.2.0",
+    "rollup-plugin-terser": "^1.0.1",
+    "rollup-plugin-tslint": "^0.1.34",
+    "rollup-plugin-typescript2": "^0.14.0",
+    "rollup-plugin-uglify": "^4.0.0",
+    "tslint": "^5.10.0",
+    "typescript": "^2.8.3",
+    "velocity-animate": "file:./"
   }
 }
