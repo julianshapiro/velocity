@@ -5,4 +5,4 @@
  */
 
 // Automatically generated
-export const VERSION = "2.0.2";
+export const VERSION = "2.0.3";
