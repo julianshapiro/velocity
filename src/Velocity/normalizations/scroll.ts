@@ -66,7 +66,6 @@ function scroll(direction: "Height" | "Width", end: "Top" | "Left"): VelocityNor
 			// Make sure we have these values cached.
 			getPropertyValue(element, "client" + direction, null, true);
 			getPropertyValue(element, "scroll" + direction, null, true);
-			getPropertyValue(element, "scroll" + end, null, true);
 
 			return element["scroll" + end] + "px";
 		}
