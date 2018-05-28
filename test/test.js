@@ -156,10 +156,8 @@
 	// $div2.velocity({paddingRight: 40});
 	// $div2.velocity({marginTop: 0})
 	// $div2.dequeue("test")
-	//# sourceMappingURL=utilities.js.map
 
 	QUnit.module("Core");
-	//# sourceMappingURL=_module.js.map
 
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
 	  return typeof obj;
@@ -266,7 +264,6 @@
 	        done();
 	    });
 	});
-	//# sourceMappingURL=End Value Caching.js.map
 
 	QUnit.test("End Value Setting", function (assert) {
 	    var done = assert.async(1);
@@ -277,7 +274,6 @@
 	        done();
 	    });
 	});
-	//# sourceMappingURL=End Value Setting.js.map
 
 	QUnit.todo("Start Value Calculation", function (assert) {
 	    var testStartValues = {
@@ -350,7 +346,6 @@
 	    Velocity($target5, testPropertiesTRBL);
 	    assert.equal(parseInt(Data($target5).cache.left, 10), Math.round(parseFloat(testPropertiesTRBL.left) + parseFloat(Velocity(document.body, "style", "marginLeft"))), "TRBL value was deferred to jQuery.");
 	});
-	//# sourceMappingURL=Start Value Calculation.js.map
 
 	/*! *****************************************************************************
 	Copyright (c) Microsoft Corporation. All rights reserved.
@@ -500,10 +495,8 @@
 	        }));
 	    });
 	});
-	//# sourceMappingURL=Unit Calculation.js.map
 
 	QUnit.module("Option");
-	//# sourceMappingURL=_module.js.map
 
 	QUnit.test("Begin", function (assert) {
 	    asyncTests(assert, 1, function (done) {
@@ -518,7 +511,6 @@
 	    });
 	    assert.expect(asyncTests());
 	});
-	//# sourceMappingURL=Option Begin.js.map
 
 	QUnit.test("Complete", function (assert) {
 	    asyncTests(assert, 1, function (done) {
@@ -533,7 +525,6 @@
 	    });
 	    assert.expect(asyncTests());
 	});
-	//# sourceMappingURL=Option Complete.js.map
 
 	QUnit.test("Delay", function (assert) {
 	    var testDelay = 250;
@@ -564,7 +555,6 @@
 	    });
 	    assert.expect(asyncTests());
 	});
-	//# sourceMappingURL=Option Delay.js.map
 
 	QUnit.test("Easing", function (assert) {
 	    asyncTests(assert, 1, function (done) {
@@ -691,7 +681,6 @@
 	    });
 	    assert.expect(asyncTests());
 	});
-	//# sourceMappingURL=Option Easing.js.map
 
 	var _this$1 = window;
 	QUnit.test("FPS Limit", function (assert) {
@@ -792,7 +781,6 @@
 	        }, _callee, this, [[6, 23, 27, 35], [28,, 30, 34]]);
 	    }));
 	});
-	//# sourceMappingURL=Option Fps Limit.js.map
 
 	QUnit.test("Loop", function (assert) {
 	    asyncTests(assert, 4, function (done) {
@@ -828,7 +816,6 @@
 	    });
 	    assert.expect(asyncTests());
 	});
-	//# sourceMappingURL=Option Loop.js.map
 
 	QUnit.test("Progress", function (assert) {
 	    asyncTests(assert, 4, function (done) {
@@ -846,7 +833,6 @@
 	    });
 	    assert.expect(asyncTests());
 	});
-	//# sourceMappingURL=Option Progress.js.map
 
 	QUnit.test("Queue", function (assert) {
 	    var done = assert.async(4),
@@ -899,7 +885,6 @@
 	        }
 	    });
 	});
-	//# sourceMappingURL=Option Queue.js.map
 
 	QUnit.test("Repeat", function (assert) {
 	    asyncTests(assert, 4, function (done) {
@@ -932,7 +917,6 @@
 	    });
 	    assert.expect(asyncTests());
 	});
-	//# sourceMappingURL=Option Repeat.js.map
 
 	QUnit.test("Speed", function (assert) {
 	    var delay = 200,
@@ -1044,7 +1028,6 @@
 	    });
 	    assert.expect(asyncTests());
 	});
-	//# sourceMappingURL=Option Speed.js.map
 
 	var _this$2 = window;
 	QUnit.test("Sync", function (assert) {
@@ -1120,10 +1103,8 @@
 	    });
 	    assert.expect(asyncTests());
 	});
-	//# sourceMappingURL=Option Sync.js.map
 
 	QUnit.module("Command");
-	//# sourceMappingURL=_module.js.map
 
 	var _this$3 = window;
 	QUnit.test("Finish", function (assert) {
@@ -1298,7 +1279,6 @@
 	        }, _callee5, this);
 	    }));
 	});
-	//# sourceMappingURL=Command Finish.js.map
 
 	var _this$4 = window;
 	QUnit.test("Pause + Resume", function (assert) {
@@ -1487,7 +1467,6 @@
 	        }, _callee5, this);
 	    }));
 	});
-	//# sourceMappingURL=Command Pause + Resume.js.map
 
 	QUnit.test("Reverse", function (assert) {
 	    var $target = getTarget(),
@@ -1524,7 +1503,6 @@
 	    });
 	    assert.expect(asyncTests());
 	});
-	//# sourceMappingURL=Command Reverse.js.map
 
 	/* Window scrolling. */
 	QUnit.skip("Scroll (Window)", function (assert) {
@@ -1701,7 +1679,6 @@
 	    //		}
 	    //	});
 	});
-	//# sourceMappingURL=Command Scroll.js.map
 
 	var _this$5 = window;
 	QUnit.test("Stop", function (assert) {
@@ -1907,7 +1884,6 @@
 	        }, _callee6, this);
 	    }));
 	});
-	//# sourceMappingURL=Command Stop.js.map
 
 	QUnit.test("Tween", function (assert) {
 	    var $target1 = getTarget(),
@@ -1935,7 +1911,6 @@
 	});
 
 	QUnit.module("Feature");
-	//# sourceMappingURL=_module.js.map
 
 	QUnit.test("'velocity-animating' Classname", function (assert) {
 	    var done = assert.async(1);
@@ -1948,7 +1923,6 @@
 	        }
 	    }).then(done);
 	});
-	//# sourceMappingURL=Feature Classname.js.map
 
 	QUnit.skip("Colors (Shorthands)", function (assert) {
 	    var $target = getTarget();
@@ -1964,7 +1938,6 @@
 	    //	assert.equal(Data($target).style.colorGreen.endValue, 125, "Hex #3b component.");
 	    //	assert.equal(Data($target).style.colorBlue.endValue, 173, "Hex #3c component.");
 	});
-	//# sourceMappingURL=Feature Colors.js.map
 
 	QUnit.todo("Forcefeeding", function (assert) {
 	    /* Note: Start values are always converted into pixels. W test the conversion ratio we already know to avoid additional work. */
@@ -1981,7 +1954,6 @@
 	    assert.equal(Data($target).cache.height, parseFloat(testStartHeight), "Forcefed value #2 passed to tween.");
 	    assert.equal(Data($target).cache.opacity, defaultStyles.opacity, "Easing was misinterpreted as forcefed value.");
 	});
-	//# sourceMappingURL=Feature Forcefeeding.js.map
 
 	QUnit.test("Promises", function (assert) {
 	    var done = assert.async(10),
@@ -2072,7 +2044,6 @@
 	    //
 	    //	Velocity([$target1, $target2], "test", redirectOptions);
 	});
-	//# sourceMappingURL=Feature Sequences.js.map
 
 	QUnit.todo("Value Functions", function (assert) {
 	    var testWidth = 10,
@@ -2086,10 +2057,8 @@
 	    assert.equal(Data($target1).cache.width, parseFloat(testWidth) / 2, "Function value #1 passed to tween.");
 	    assert.equal(Data($target2).cache.width, parseFloat(testWidth), "Function value #2 passed to tween.");
 	});
-	//# sourceMappingURL=Feature Value Functions.js.map
 
 	QUnit.module("UI Pack");
-	//# sourceMappingURL=_module.js.map
 
 	QUnit.skip("Packaged Effect: slideUp/Down", function (assert) {
 	    var done = assert.async(4),
@@ -2128,7 +2097,6 @@
 	        }
 	    });
 	});
-	//# sourceMappingURL=Packaged Effect slideUp+Down.js.map
 
 	QUnit.skip("Call Options", function (assert) {
 	    var done = assert.async(2),
@@ -2161,7 +2129,6 @@
 	        done();
 	    }, completeCheckDuration);
 	});
-	//# sourceMappingURL=UI Pack Call Options.js.map
 
 	QUnit.skip("Callbacks", function (assert) {
 	    var done = assert.async(2),
@@ -2178,7 +2145,6 @@
 	        }
 	    });
 	});
-	//# sourceMappingURL=UI Pack Callbacks.js.map
 
 	QUnit.skip("In/Out", function (assert) {
 	    var done = assert.async(2),
@@ -2212,7 +2178,6 @@
 	        done();
 	    }, completeCheckDuration);
 	});
-	//# sourceMappingURL=UI Pack In+Out.js.map
 
 	QUnit.skip("RegisterEffect", function (assert) {
 	    //	const done = assert.async(1),
@@ -2238,7 +2203,6 @@
 	    //		done();
 	    //	}, effectDefaultDuration * 1.5);
 	});
-	//# sourceMappingURL=UI Pack RegisterEffect.js.map
 
 	QUnit.skip("RunSequence", function (assert) {
 	    //
@@ -2267,10 +2231,8 @@
 	    //	assert.expect(3);
 	    //	Velocity.RunSequence(mySequence);
 	});
-	//# sourceMappingURL=UI Pack RunSequence.js.map
 
 	QUnit.module("Properties");
-	//# sourceMappingURL=_module.js.map
 
 	QUnit.skip("GenericReordering", function (assert) {
 	    //	function genericReordering(element: HTMLorSVGElement, propertyValue?: string): string | void {
@@ -2338,7 +2300,6 @@
 	    //		assert.equal(element.velocity("style", "genericReordering"), test.result, test.test);
 	    //	}
 	});
-	//# sourceMappingURL=Normalization property value reordering.js.map
 
 	QUnit.test("Display", function (assert) {
 	    var done = assert.async(5);
@@ -2367,7 +2328,6 @@
 	        done();
 	    });
 	});
-	//# sourceMappingURL=Property Display.js.map
 
 	QUnit.test("Visibility", function (assert) {
 	    var done = assert.async(4);
@@ -2393,9 +2353,6 @@
 	        done();
 	    });
 	});
-	//# sourceMappingURL=Property Visibility.js.map
-
-	//# sourceMappingURL=test.js.map
 
 })));
 //# sourceMappingURL=test.js.map

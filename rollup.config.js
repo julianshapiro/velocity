@@ -90,6 +90,7 @@ if (hasBuild || hasMinify) {
 
 	tasks.push({
 		input: "src/velocity.ts",
+		context: "window",
 		output: [{
 				file: pkg.main.replace(".min", ""),
 				name: "Velocity",
@@ -132,6 +133,7 @@ if (hasBuild || hasMinify) {
 	if (hasMinify) {
 		tasks.push({
 			input: "src/velocity.ts",
+			context: "window",
 			output: [{
 					file: pkg.main,
 					name: "Velocity",
