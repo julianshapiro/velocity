@@ -31,7 +31,8 @@
     "start": "rollup -w -c --environment BUILD,TEST",
     "build": "rollup -c --environment BUILD,MINIFY,TEST",
     "lint": "tslint src/**/*.ts src-ui/**/*.ts test/src/**/*.ts",
-    "test": "rollup -c --environment TEST"
+    "test": "rollup -c --environment TEST",
+    "version": "npm run build && auto-changelog && git add ."
   },
   "main": "velocity.min.js",
   "module": "velocity.es5.js",
@@ -50,6 +51,7 @@
   ],
   "devDependencies": {
     "@types/qunit": "^2.5.1",
+    "auto-changelog": "^1.7.0",
     "babel-core": "^6.26.3",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-polyfill": "^6.26.0",
