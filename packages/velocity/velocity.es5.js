@@ -175,7 +175,6 @@ function removeClass(element, className) {
         }
     }
 }
-//# sourceMappingURL=utility.js.map
 
 // Project
 // Constants
@@ -201,7 +200,6 @@ function registerAction(args, internal) {
     }
 }
 registerAction(["registerAction", registerAction], true);
-//# sourceMappingURL=actions.js.map
 
 /**
  * Without this it will only un-prefix properties that have a valid "normal"
@@ -229,7 +227,6 @@ var Duration = {
   normal: DURATION_NORMAL,
   slow: DURATION_SLOW
 };
-//# sourceMappingURL=constants.js.map
 
 // Project
 // Constants
@@ -275,7 +272,6 @@ function springEasing(percentComplete, startValue, endValue) {
 registerEasing(["linear", linearEasing]);
 registerEasing(["swing", swingEasing]);
 registerEasing(["spring", springEasing]);
-//# sourceMappingURL=easings.js.map
 
 // Project
 /**
@@ -434,7 +430,6 @@ registerEasing(["easeInOutExpo", generateBezier(1, 0, 0, 1)]);
 registerEasing(["easeInCirc", generateBezier(0.6, 0.04, 0.98, 0.335)]);
 registerEasing(["easeOutCirc", generateBezier(0.075, 0.82, 0.165, 1)]);
 registerEasing(["easeInOutCirc", generateBezier(0.785, 0.135, 0.15, 0.86)]);
-//# sourceMappingURL=bezier.js.map
 
 /* Runge-Kutta spring physics function generator. Adapted from Framer.js, copyright Koen Bok. MIT License: http://en.wikipedia.org/wiki/MIT_License */
 /* Given a tension, friction, and duration, a simulation at 60FPS will first run without a defined duration in order to calculate the full path. A second pass
@@ -514,7 +509,6 @@ function generateSpringRK4(tension, friction, duration) {
         return startValue + path[Math.floor(percentComplete * (path.length - 1))] * (endValue - startValue);
     };
 }
-//# sourceMappingURL=spring_rk4.js.map
 
 // Constants
 var cache = {};
@@ -533,7 +527,6 @@ function generateStep(steps) {
         return startValue + Math.round(percentComplete * steps) * (1 / steps) * (endValue - startValue);
     };
 }
-//# sourceMappingURL=step.js.map
 
 // Project
 /**
@@ -762,7 +755,6 @@ function validateSync(value) {
         console.error("VelocityJS: Trying to set 'sync' to an invalid value:", value);
     }
 }
-//# sourceMappingURL=options.js.map
 
 // Project
 var defaults$1 = {
@@ -996,7 +988,6 @@ Object.defineProperties(defaults$1, {
 });
 // Reset to our default values, currently everything is undefined.
 defaults$1.reset();
-//# sourceMappingURL=defaults.js.map
 
 /**
  * The highest type index for finding the best normalization for a property.
@@ -1029,7 +1020,6 @@ var constructors = [];
  * name - saves expensive lookups.
  */
 var constructorCache = new Map();
-//# sourceMappingURL=normalizationsObject.js.map
 
 // Project
 // Constants
@@ -1071,7 +1061,6 @@ function Data(element) {
     });
     return newData;
 }
-//# sourceMappingURL=data.js.map
 
 // Constants
 var isClient = window && window === window.window,
@@ -1094,7 +1083,6 @@ var State = {
     last: undefined,
     firstNew: undefined
 };
-//# sourceMappingURL=state.js.map
 
 // Project
 /**
@@ -1209,10 +1197,8 @@ function freeAnimationCall(animation) {
         }
     }
 }
-//# sourceMappingURL=queue.js.map
 
 var SequencesObject = {};
-//# sourceMappingURL=sequencesObject.js.map
 
 // Project
 /**
@@ -1309,7 +1295,6 @@ function completeCall(activeCall) {
         freeAnimationCall(activeCall);
     }
 }
-//# sourceMappingURL=complete.js.map
 
 // Project
 /**
@@ -1426,7 +1411,6 @@ function getNormalization(element, propertyName) {
 }
 registerAction(["registerNormalization", registerNormalization]);
 registerAction(["hasNormalization", hasNormalization]);
-//# sourceMappingURL=normalizations.js.map
 
 // Project
 /**
@@ -1450,7 +1434,6 @@ function setPropertyValue(element, propertyName, propertyValue, fn) {
         }
     }
 }
-//# sourceMappingURL=setPropertyValue.js.map
 
 /**
  * Cache every camelCase match to avoid repeating lookups.
@@ -1470,7 +1453,6 @@ function camelCase(property) {
     return letter.toUpperCase();
   });
 }
-//# sourceMappingURL=camelCase.js.map
 
 // Constants
 var rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi,
@@ -1506,7 +1488,6 @@ function fixColors(str) {
         return "rgba(" + ($2.replace(rxSpaces, "") + ($1 ? "" : ",1")) + ")";
     });
 }
-//# sourceMappingURL=fixColors.js.map
 
 // Project
 /**
@@ -1553,7 +1534,6 @@ function augmentDimension(element, name, wantInner) {
     }
     return 0;
 }
-//# sourceMappingURL=augmentDimension.js.map
 
 // Project
 /**
@@ -1656,7 +1636,6 @@ function getPropertyValue(element, propertyName, fn, skipCache) {
     }
     return propertyValue;
 }
-//# sourceMappingURL=getPropertyValue.js.map
 
 // Project
 // Constants
@@ -2427,7 +2406,6 @@ function tick(timestamp) {
     }
     ticking = false;
 }
-//# sourceMappingURL=tick.js.map
 
 // Project
 /**
@@ -2538,7 +2516,6 @@ function finish(args, elements, promiseHandler) {
     }
 }
 registerAction(["finish", finish], true);
-//# sourceMappingURL=finish.js.map
 
 /**
  * Used to map getters for the various AnimationFlags.
@@ -2731,7 +2708,6 @@ function option(args, elements, promiseHandler, action) {
     }
 }
 registerAction(["option", option], true);
-//# sourceMappingURL=option.js.map
 
 // Project
 /**
@@ -2800,14 +2776,12 @@ function pauseResume(args, elements, promiseHandler, action) {
 }
 registerAction(["pause", pauseResume], true);
 registerAction(["resume", pauseResume], true);
-//# sourceMappingURL=pauseResume.js.map
 
 // Project
 registerAction(["reverse", function (args, elements, promiseHandler, action) {
         // NOTE: Code needs to split out before here - but this is needed to prevent it being overridden
         throw new SyntaxError("VelocityJS: The 'reverse' action is built in and private.");
 }], true);
-//# sourceMappingURL=reverse.js.map
 
 // Project
 /**
@@ -2888,7 +2862,6 @@ function stop(args, elements, promiseHandler, action) {
     }
 }
 registerAction(["stop", stop], true);
-//# sourceMappingURL=stop.js.map
 
 // Project
 /**
@@ -3144,8 +3117,6 @@ function tweenAction(args, elements, promiseHandler, action) {
 }
 registerAction(["tween", tweenAction], true);
 
-//# sourceMappingURL=_all.js.map
-
 // Project
 /**
  * Converting from hex as it makes for a smaller file.
@@ -3306,9 +3277,6 @@ for (var name in colorValues) {
         ColorNames[name] = Math.floor(color / 65536) + "," + Math.floor(color / 256 % 256) + "," + color % 256;
     }
 }
-//# sourceMappingURL=colors.js.map
-
-//# sourceMappingURL=_all.js.map
 
 // Project
 function registerBackIn(name, amount) {
@@ -3350,7 +3318,6 @@ registerBackIn("easeInBack", 1.7);
 registerBackOut("easeOutBack", 1.7);
 registerBackInOut("easeInOutBack", 1.7);
 // TODO: Expose these as actions to register custom easings?
-//# sourceMappingURL=back.js.map
 
 // Project
 function easeOutBouncePercent(percentComplete) {
@@ -3398,7 +3365,6 @@ function easeInOutBounce(percentComplete, startValue, endValue) {
 registerEasing(["easeInBounce", easeInBounce]);
 registerEasing(["easeOutBounce", easeOutBounce]);
 registerEasing(["easeInOutBounce", easeInOutBounce]);
-//# sourceMappingURL=bounce.js.map
 
 // Project
 // Constants
@@ -3442,7 +3408,6 @@ registerElasticIn("easeInElastic", 1, 0.3);
 registerElasticOut("easeOutElastic", 1, 0.3);
 registerElasticInOut("easeInOutElastic", 1, 0.3 * 1.5);
 // TODO: Expose these as actions to register custom easings?
-//# sourceMappingURL=elastic.js.map
 
 // Project
 /**
@@ -3468,9 +3433,6 @@ function atEnd(percentComplete, startValue, endValue) {
 registerEasing(["at-start", atStart]);
 registerEasing(["during", during]);
 registerEasing(["at-end", atEnd]);
-//# sourceMappingURL=string.js.map
-
-//# sourceMappingURL=_all.js.map
 
 // Project
 /**
@@ -3488,7 +3450,6 @@ registerNormalization(["Element", "innerWidth", getDimension("width", true)]);
 registerNormalization(["Element", "innerHeight", getDimension("height", true)]);
 registerNormalization(["Element", "outerWidth", getDimension("width", false)]);
 registerNormalization(["Element", "outerHeight", getDimension("height", false)]);
-//# sourceMappingURL=dimensions.js.map
 
 // Project
 // Constants
@@ -3526,7 +3487,6 @@ function display(element, propertyValue) {
     style.display = propertyValue;
 }
 registerNormalization(["Element", "display", display]);
-//# sourceMappingURL=display.js.map
 
 // Project
 function clientWidth(element, propertyValue) {
@@ -3555,7 +3515,6 @@ function scroll(direction, end) {
             // Make sure we have these values cached.
             getPropertyValue(element, "client" + direction, null, true);
             getPropertyValue(element, "scroll" + direction, null, true);
-            getPropertyValue(element, "scroll" + end, null, true);
             return element["scroll" + end] + "px";
         }
         var value = parseFloat(propertyValue),
@@ -3580,7 +3539,6 @@ registerNormalization(["HTMLElement", "scrollWidth", scrollWidth]);
 registerNormalization(["HTMLElement", "clientWidth", clientWidth]);
 registerNormalization(["HTMLElement", "scrollHeight", scrollHeight]);
 registerNormalization(["HTMLElement", "clientHeight", clientHeight]);
-//# sourceMappingURL=scroll.js.map
 
 // Project
 /**
@@ -3690,7 +3648,6 @@ for (var propertyName in prefixElement.style) {
         registerNormalization(["Element", propertyName, getSetStyle(propertyName), _addUnit]);
     }
 }
-//# sourceMappingURL=style.js.map
 
 // Project
 /**
@@ -3728,7 +3685,6 @@ Object.getOwnPropertyNames(window).forEach(function (property) {
         }
     }
 });
-//# sourceMappingURL=attributes.js.map
 
 // Project
 /**
@@ -3749,9 +3705,6 @@ function getDimension$1(name) {
 }
 registerNormalization(["SVGElement", "width", getDimension$1("width")]);
 registerNormalization(["SVGElement", "height", getDimension$1("height")]);
-//# sourceMappingURL=dimensions.js.map
-
-//# sourceMappingURL=_all.js.map
 
 // Project
 /**
@@ -3763,15 +3716,9 @@ function getSetTween(element, propertyValue) {
     }
 }
 registerNormalization(["Element", "tween", getSetTween]);
-//# sourceMappingURL=tween.js.map
-
-//# sourceMappingURL=_all.js.map
-
-//# sourceMappingURL=_all.js.map
 
 // Automatically generated
 var VERSION = "2.0.3";
-//# sourceMappingURL=version.js.map
 
 // Project
 var Velocity$$1 = Velocity$1;
@@ -4154,7 +4101,6 @@ function registerSequence(args) {
     }
 }
 registerAction(["registerSequence", registerSequence], true);
-//# sourceMappingURL=sequences.js.map
 
 // Project
 /* tslint:enable:max-line-length */
@@ -4550,7 +4496,6 @@ function Velocity$1() {
     /* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
     return elements || promise;
 }
-//# sourceMappingURL=velocityFn.js.map
 
 // Project
 /**
@@ -4569,7 +4514,6 @@ function patch(proto, global) {
         console.warn("VelocityJS: Error when trying to add prototype.", e);
     }
 }
-//# sourceMappingURL=patch.js.map
 
 // Project
 var Velocity$2 = Velocity$1;
