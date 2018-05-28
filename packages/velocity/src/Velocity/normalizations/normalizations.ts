@@ -17,7 +17,7 @@ import {HTMLorSVGElement, VelocityNormalizationsFn} from "../../../velocity.d";
 import {isFunction, isString} from "../../types";
 import {registerAction} from "../actions/actions";
 import {Data} from "../data";
-import {ClassConstructor, constructors, NoCacheNormalizations, Normalizations, NormalizationUnits} from "./normalizationsObject";
+import {ClassConstructor, constructorCache, constructors, NoCacheNormalizations, Normalizations, NormalizationUnits} from "./normalizationsObject";
 
 /**
  * Used to register a normalization. This should never be called by users
@@ -55,15 +55,20 @@ export function registerNormalization(
 		let index = constructors.indexOf(constructor),
 			nextArg = 3;
 
-		if (index < 0 && constructor instanceof Object) {
-			for (const property in window) {
-				if (window[property] === constructor) {
-					index = constructors.indexOf(property);
-					if (index < 0) {
-						index = constructors.push(property) - 1;
-						Normalizations[index] = {};
+		if (index < 0 && !isString(constructor)) {
+			if (constructorCache.has(constructor)) {
+				index = constructors.indexOf(constructorCache.get(constructor));
+			} else {
+				for (const property in window) {
+					if (window[property] === constructor) {
+						index = constructors.indexOf(property);
+						if (index < 0) {
+							index = constructors.push(property) - 1;
+							Normalizations[index] = {};
+							constructorCache.set(constructor, property);
+						}
+						break;
 					}
-					break;
 				}
 			}
 		}
@@ -90,12 +95,25 @@ export function registerNormalization(
 /**
  * Used to check if a normalisation exists on a specific class.
  */
-export function hasNormalization(args?: [ClassConstructor, string]) {
+export function hasNormalization(args?: [ClassConstructor | string, string]): boolean {
 	const constructor = args[0],
-		name: string = args[1],
-		index = constructors.indexOf(constructor);
+		name: string = args[1];
+	let index = constructors.indexOf(constructor);
 
-	return !!Normalizations[index] && !!Normalizations[index][name];
+	if (index < 0 && !isString(constructor)) {
+		if (constructorCache.has(constructor)) {
+			index = constructors.indexOf(constructorCache.get(constructor));
+		} else {
+			for (const property in window) {
+				if (window[property] === constructor) {
+					index = constructors.indexOf(property);
+					break;
+				}
+			}
+		}
+	}
+
+	return index >= 0 && Normalizations[index].hasOwnProperty(name);
 }
 
 /**
