@@ -11,11 +11,11 @@ import {defaultOptions, defaultProperties, getNow, getTarget} from "../utilities
 import "./_module";
 
 QUnit.test("Promises", (assert) => {
-	const done = assert.async(9),
+	const done = assert.async(10),
 		start = getNow();
 	let result: VelocityResult;
 
-	assert.expect(9);
+	assert.expect(10);
 
 	/**********************
 	 Invalid Arguments
@@ -97,4 +97,14 @@ QUnit.test("Promises", (assert) => {
 		})
 		.then(done);
 	anim.velocity("stop");
+
+	Promise
+		.all([
+			Velocity(getTarget(), defaultProperties, defaultOptions).promise,
+			Velocity(getTarget(), defaultProperties, defaultOptions).promise,
+		])
+		.then(() => {
+			assert.ok(true, "Promise.all fulfilled when all animations have finished.");
+		})
+		.then(done);
 });

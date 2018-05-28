@@ -9,8 +9,8 @@
 // Typedefs
 import {
 	AnimationCall, AnimationFlags, HTMLorSVGElement, Properties, StrictVelocityOptions,
-	VelocityElements, VelocityObjectArgs, VelocityOptions, VelocityPromise, VelocityProperty,
-	VelocityResult,
+	VelocityElements, VelocityExtended, VelocityObjectArgs, VelocityOptions, VelocityPromise,
+	VelocityProperty, VelocityResult,
 } from "./../velocity.d";
 
 // Project
@@ -174,22 +174,19 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 			// Due to being an async call, they should be back to "normal"
 			// before the <code>.then()</code> function gets called.
 			resolver = (result: VelocityResult) => {
-				if (isVelocityResult(result)) {
-					const then = result && result.then;
+				if (isVelocityResult(result) && result.then) {
+					const then = result.then;
 
-					if (then) {
-						result.then = undefined; // Preserving enumeration etc
-					}
+					result.then = undefined; // Preserving enumeration etc
 					resolve(result);
-					if (then) {
-						result.then = then;
-					}
+					result.then = then;
 				} else {
 					resolve(result);
 				}
 			};
 		});
 		if (elements) {
+			defineProperty(elements, "promise", promise);
 			defineProperty(elements, "then", promise.then.bind(promise));
 			defineProperty(elements, "catch", promise.catch.bind(promise));
 			if ((promise as any).finally) {
