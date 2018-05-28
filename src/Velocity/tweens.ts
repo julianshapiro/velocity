@@ -144,8 +144,12 @@ export function findPattern(parts: ReadonlyArray<string>, propertyName: string):
 	// First tokenise the strings - these have all values, we will pull
 	// numbers later.
 	for (let part = 0; part < partsLength; part++) {
-		if (isString(parts[part]) && rxToken.test(parts[part])) {
-			tokens[part] = cloneArray(parts[part].match(rxToken));
+		if (isString(parts[part])) {
+			if (parts[part] === "") {
+				tokens[part] = [""];
+			} else {
+				tokens[part] = cloneArray(parts[part].match(rxToken));
+			}
 			indexes[part] = 0;
 			// If it matches more than one thing then we've got a number.
 			numbers = numbers || tokens[part].length > 1;
