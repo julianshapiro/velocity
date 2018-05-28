@@ -1456,6 +1456,7 @@
           }
       }
   }
+  //# sourceMappingURL=setPropertyValue.js.map
 
   /**
    * Cache every camelCase match to avoid repeating lookups.
@@ -4298,21 +4299,18 @@
               // Due to being an async call, they should be back to "normal"
               // before the <code>.then()</code> function gets called.
               resolver = function resolver(result) {
-                  if (isVelocityResult(result)) {
-                      var then = result && result.then;
-                      if (then) {
-                          result.then = undefined; // Preserving enumeration etc
-                      }
+                  if (isVelocityResult(result) && result.then) {
+                      var then = result.then;
+                      result.then = undefined; // Preserving enumeration etc
                       resolve(result);
-                      if (then) {
-                          result.then = then;
-                      }
+                      result.then = then;
                   } else {
                       resolve(result);
                   }
               };
           });
           if (elements) {
+              defineProperty$1(elements, "promise", promise);
               defineProperty$1(elements, "then", promise.then.bind(promise));
               defineProperty$1(elements, "catch", promise.catch.bind(promise));
               if (promise.finally) {
@@ -4554,7 +4552,6 @@
       /* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
       return elements || promise;
   }
-  //# sourceMappingURL=velocityFn.js.map
 
   // Project
   /**

@@ -646,12 +646,28 @@ export type VelocityElements = HTMLorSVGElement | HTMLorSVGElement[] | VelocityR
  * Chaining Velocity calls from various sources.
  */
 export interface VelocityExtended<TNode extends Node = HTMLorSVGElement> {
-	velocity: Velocity & VelocityChain & {
+	/**
+	 * This is the actual Promise used by Velocity. If using Promise.all() or
+	 * similar methods then you may need to use this instead of the Velocity
+	 * result itself.
+	 */
+	readonly promise: Promise<HTMLorSVGElement[] & VelocityExtended>;
+	/**
+	 * This is the Velocity chaining method. It is functionally equivalent to
+	 * the normal Velocity call, but allows chaining on the elements it is
+	 * attached to.
+	 */
+	readonly velocity: Velocity & {
 		/**
+		 * These are the animation objects attached to this specific chain. This
+		 * is used in some actions to allow the call to only touch the specific
+		 * animations called rather than just the animations on the linked
+		 * elements.
+		 * 
 		 * TODO: Decide if this should be public
 		 * @private
 		 */
-		animations: AnimationCall[];
+		readonly animations: AnimationCall[];
 	};
 }
 
@@ -816,7 +832,7 @@ export interface ElementData {
 /**
  * Direct Velocity access.
  */
-export interface Velocity {
+export interface Velocity extends VelocityChain {
 	/**
 	 * Available to be able to check what version you're running against.
 	 */
