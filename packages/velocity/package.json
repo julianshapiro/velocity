@@ -28,7 +28,7 @@
     }
   ],
   "scripts": {
-    "start": "rollup -w -c --environment BUILD",
+    "start": "rollup -w -c --environment BUILD,TEST",
     "build": "rollup -c --environment BUILD,MINIFY,TEST",
     "lint": "tslint src/**/*.ts src-ui/**/*.ts test/src/**/*.ts",
     "test": "rollup -c --environment TEST"
@@ -38,10 +38,14 @@
   "types": "velocity.d.ts",
   "repository": "julianshapiro/velocity",
   "files": [
-    "velocity.d.ts",
     "velocity.js",
+    "velocity.d.ts",
+    "velocity.es5.js",
+    "velocity.es5.js.map",
+    "velocity.js.map",
     "velocity.min.js",
     "velocity.ui.js",
+    "velocity.ui.js.map",
     "velocity.ui.min.js"
   ],
   "devDependencies": {
