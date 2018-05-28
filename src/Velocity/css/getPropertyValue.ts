@@ -15,6 +15,14 @@ import {NoCacheNormalizations} from "../normalizations/normalizationsObject";
 import {augmentDimension} from "./augmentDimension";
 import {setPropertyValue} from "./setPropertyValue";
 
+/**
+ * Get the width or height of an element, pulled out as it can be used when the
+ * in two locations so don't want to repeat it.
+ */
+function getWidthHeight(element: HTMLorSVGElement, property: "width" | "height"): string {
+	return (element.getBoundingClientRect()[property] + augmentDimension(element, property, true)) + "px";
+}
+
 // TODO: This is still a complete mess
 export function computePropertyValue(element: HTMLorSVGElement, property: string): string {
 	const data = Data(element),
@@ -34,7 +42,7 @@ export function computePropertyValue(element: HTMLorSVGElement, property: string
 				// that are set to display:"none". Thus, we temporarily toggle
 				// display to the element type's default value.
 				setPropertyValue(element, "display", "auto");
-				computedValue = augmentDimension(element, property, true);
+				computedValue = getWidthHeight(element, property);
 				setPropertyValue(element, "display", "none");
 
 				return String(computedValue);
@@ -62,7 +70,7 @@ export function computePropertyValue(element: HTMLorSVGElement, property: string
 		switch (property) {
 			case "width":
 			case "height":
-				computedValue = element.getBoundingClientRect[property] + "px";
+				computedValue = getWidthHeight(element, property);
 				break;
 
 			case "top":

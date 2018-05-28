@@ -124,7 +124,7 @@ for (const propertyName in prefixElement.style) {
 
 			registerNormalization(["Element", unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit]);
 		}
-	} else if (!hasNormalization([Element, propertyName])) {
+	} else if (!hasNormalization(["Element", propertyName])) {
 		const addUnit = rxAddPx.test(propertyName) ? "px" : undefined;
 
 		registerNormalization(["Element", propertyName, getSetStyle(propertyName), addUnit]);

@@ -51,3 +51,9 @@ export interface ClassConstructor {
  * frame.
  */
 export const constructors: (ClassConstructor | string)[] = [];
+
+/**
+ * A cache of the various constructors we've found and mapping to their real
+ * name - saves expensive lookups.
+ */
+export const constructorCache = new Map<ClassConstructor, ClassConstructor | string>();

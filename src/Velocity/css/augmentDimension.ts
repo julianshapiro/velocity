@@ -27,7 +27,7 @@ export function augmentDimension(element: HTMLorSVGElement, name: "width" | "hei
 		let augment = 0;
 
 		for (const field of fields) {
-			const value = parseFloat(getPropertyValue(element, field) as string);
+			const value = parseFloat(getPropertyValue(element, field));
 
 			if (!isNaN(value)) {
 				augment += value;

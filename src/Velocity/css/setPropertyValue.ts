@@ -11,17 +11,21 @@ import {HTMLorSVGElement, VelocityNormalizationsFn} from "../../../velocity.d";
 import Velocity from "../../velocity";
 import {Data} from "../data";
 import {getNormalization} from "../normalizations/normalizations";
+import {NoCacheNormalizations} from "../normalizations/normalizationsObject";
 
 /**
  * The singular setPropertyValue, which routes the logic for all
  * normalizations.
  */
 export function setPropertyValue(element: HTMLorSVGElement, propertyName: string, propertyValue: any, fn?: VelocityNormalizationsFn) {
-	const data = Data(element);
+	const noCache = NoCacheNormalizations.has(propertyName),
+		data = !noCache && Data(element);
 
-	if (data && data.cache[propertyName] !== propertyValue) {
+	if (noCache || (data && data.cache[propertyName] !== propertyValue)) {
 		// By setting it to undefined we force a true "get" later
-		data.cache[propertyName] = propertyValue || undefined;
+		if (!noCache) {
+			data.cache[propertyName] = propertyValue || undefined;
+		}
 		fn = fn || getNormalization(element, propertyName);
 		if (fn) {
 			fn(element, propertyValue);
