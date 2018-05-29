@@ -66,7 +66,7 @@ const pkg = require("./package.json"),
 		},
 		terserOptions = {
 			output: {
-				comments: "all"
+				comments: /velocity-animate \(C\)/
 			}
 		};
 
