@@ -4103,6 +4103,10 @@ function registerSequence(args) {
 registerAction(["registerSequence", registerSequence], true);
 
 // Project
+var globalPromise = void 0;
+try {
+    globalPromise = Promise;
+} catch ( /**/_a) {} /**/
 /* tslint:enable:max-line-length */
 function Velocity$1() {
     for (var _len = arguments.length, argsList = Array(_len), _key = 0; _key < _len; _key++) {
@@ -4232,8 +4236,8 @@ function Velocity$1() {
         optionsMap = opts;
     }
     // Create the promise if supported and wanted.
-    if (Promise && getValue(optionsMap && optionsMap.promise, defaults$$1.promise)) {
-        promise = new Promise(function (resolve, reject) {
+    if (globalPromise && getValue(optionsMap && optionsMap.promise, defaults$$1.promise)) {
+        promise = new globalPromise(function (resolve, reject) {
             rejecter = reject;
             // IMPORTANT:
             // If a resolver tries to run on a Promise then it will wait until
