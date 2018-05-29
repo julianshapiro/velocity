@@ -4107,6 +4107,18 @@ var globalPromise = void 0;
 try {
     globalPromise = Promise;
 } catch ( /**/_a) {} /**/
+/**
+ * Patch a VelocityResult with a Promise.
+ */
+function patchPromise(promiseObject, result) {
+    defineProperty$1(result, "promise", promiseObject);
+    defineProperty$1(result, "then", promiseObject.then.bind(promiseObject));
+    defineProperty$1(result, "catch", promiseObject.catch.bind(promiseObject));
+    if (promiseObject.finally) {
+        // Semi-standard
+        defineProperty$1(result, "finally", promiseObject.finally.bind(promiseObject));
+    }
+}
 /* tslint:enable:max-line-length */
 function Velocity$1() {
     for (var _len = arguments.length, argsList = Array(_len), _key = 0; _key < _len; _key++) {
@@ -4242,29 +4254,26 @@ function Velocity$1() {
             // IMPORTANT:
             // If a resolver tries to run on a Promise then it will wait until
             // that Promise resolves - but in this case we're running on our own
-            // Promise, so need to make sure it's not seen as one. Setting these
-            // values to <code>undefined</code> for the duration of the resolve.
+            // Promise, so need to make sure it's not seen as one. Removing
+            // these values for the duration of the resolve.
             // Due to being an async call, they should be back to "normal"
             // before the <code>.then()</code> function gets called.
             resolver = function resolver(result) {
-                if (isVelocityResult(result) && result.then) {
-                    var then = result.then;
-                    result.then = undefined; // Preserving enumeration etc
+                if (isVelocityResult(result) && result.promise) {
+                    delete result.then;
+                    delete result.catch;
+                    delete result.finally;
                     resolve(result);
-                    result.then = then;
                 } else {
                     resolve(result);
                 }
             };
         });
         if (elements) {
-            defineProperty$1(elements, "promise", promise);
-            defineProperty$1(elements, "then", promise.then.bind(promise));
-            defineProperty$1(elements, "catch", promise.catch.bind(promise));
-            if (promise.finally) {
-                // Semi-standard
-                defineProperty$1(elements, "finally", promise.finally.bind(promise));
-            }
+            patchPromise(promise, elements);
+            promise.then(function (result) {
+                patchPromise(result.promise, result);
+            });
         }
     }
     var promiseRejectEmpty = getValue(optionsMap && optionsMap.promiseRejectEmpty, defaults$$1.promiseRejectEmpty);

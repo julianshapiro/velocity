@@ -38,6 +38,19 @@ try {
 	globalPromise = Promise;
 } catch {/**/}
 
+/**
+ * Patch a VelocityResult with a Promise.
+ */
+function patchPromise(promiseObject: Promise<any>, result: VelocityResult) {
+	defineProperty(result, "promise", promiseObject);
+	defineProperty(result, "then", promiseObject.then.bind(promiseObject));
+	defineProperty(result, "catch", promiseObject.catch.bind(promiseObject));
+	if ((promiseObject as any).finally) {
+		// Semi-standard
+		defineProperty(result, "finally", (promiseObject as any).finally.bind(promiseObject));
+	}
+}
+
 /* tslint:disable:max-line-length */
 /**
  * The main Velocity function. Acts as a gateway to everything else.
@@ -175,30 +188,26 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 			// IMPORTANT:
 			// If a resolver tries to run on a Promise then it will wait until
 			// that Promise resolves - but in this case we're running on our own
-			// Promise, so need to make sure it's not seen as one. Setting these
-			// values to <code>undefined</code> for the duration of the resolve.
+			// Promise, so need to make sure it's not seen as one. Removing
+			// these values for the duration of the resolve.
 			// Due to being an async call, they should be back to "normal"
 			// before the <code>.then()</code> function gets called.
 			resolver = (result: VelocityResult) => {
-				if (isVelocityResult(result) && result.then) {
-					const then = result.then;
-
-					result.then = undefined; // Preserving enumeration etc
+				if (isVelocityResult(result) && result.promise) {
+					delete result.then;
+					delete result.catch;
+					delete (result as any).finally;
 					resolve(result);
-					result.then = then;
 				} else {
 					resolve(result);
 				}
 			};
 		});
 		if (elements) {
-			defineProperty(elements, "promise", promise);
-			defineProperty(elements, "then", promise.then.bind(promise));
-			defineProperty(elements, "catch", promise.catch.bind(promise));
-			if ((promise as any).finally) {
-				// Semi-standard
-				defineProperty(elements, "finally", (promise as any).finally.bind(promise));
-			}
+			patchPromise(promise, elements);
+			promise.then((result) => {
+				patchPromise(result.promise, result);
+			});
 		}
 	}
 	const promiseRejectEmpty: boolean = getValue(optionsMap && optionsMap.promiseRejectEmpty, defaults.promiseRejectEmpty);
