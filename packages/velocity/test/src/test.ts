@@ -18,6 +18,7 @@ import "./2_Option/_module";
 import "./2_Option/Option Begin";
 import "./2_Option/Option Complete";
 import "./2_Option/Option Delay";
+import "./2_Option/Option Duration";
 import "./2_Option/Option Easing";
 import "./2_Option/Option Fps Limit";
 import "./2_Option/Option Loop";

@@ -548,9 +548,46 @@
 	            duration: defaultOptions.duration,
 	            delay: testDelay,
 	            begin: function begin(elements, activeCall) {
-	                assert.close(getNow() - start, testDelay * 2 + defaultOptions.duration, 32, "Queued delays start after the correct delay.");
+	                assert.close(getNow() - start, testDelay * 2 + defaultOptions.duration, 32, "Chained delays start after the correct delay.");
 	                done();
 	            }
+	        });
+	    });
+	    assert.expect(asyncTests());
+	});
+
+	QUnit.test("Duration", function (assert) {
+	    var testDuration = Velocity.defaults.duration;
+	    asyncTests(assert, 1, function (done) {
+	        var start = getNow();
+	        Velocity(getTarget(), defaultProperties, {
+	            duration: testDuration,
+	            complete: function complete(elements, activeCall) {
+	                var time = getNow() - start;
+	                assert.close(time, testDuration, 32, "Calls run for the correct duration (~" + Math.floor(time) + "ms / " + testDuration + "ms).");
+	                done();
+	            }
+	        });
+	    });
+	    asyncTests(assert, 1, function (done) {
+	        var start = getNow();
+	        Velocity(getTarget(), { width: ["200px", "500px"] }, {
+	            duration: testDuration
+	        }).velocity({ width: ["500px", "200px"] }, {
+	            duration: testDuration,
+	            complete: function complete(elements, activeCall) {
+	                var time = getNow() - start;
+	                assert.close(getNow() - start, testDuration * 2, 32, "Chained durations run for the correct duration (~" + Math.floor(time) + "ms / " + testDuration * 2 + "ms).");
+	                done();
+	            }
+	        });
+	    });
+	    asyncTests(assert, 1, function (done) {
+	        var start = getNow();
+	        Velocity(getTarget(), { width: ["200px", "500px"] }).velocity({ width: ["500px", "200px"] }).then(function () {
+	            var time = getNow() - start;
+	            assert.close(getNow() - start, testDuration * 2, 32, "Chained durations with defaults run for the correct duration (~" + Math.floor(time) + "ms / " + testDuration * 2 + "ms).");
+	            done();
 	        });
 	    });
 	    assert.expect(asyncTests());

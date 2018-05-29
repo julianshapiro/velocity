@@ -4391,12 +4391,13 @@
               }
           } else if (!syntacticSugar) {
               // Expand any direct options if possible.
-              var _validDuration = validateDuration(args[argumentIndex], true);
               var offset = 0;
-              hasValidDuration = _validDuration !== undefined;
-              if (_validDuration !== undefined) {
+              options.duration = validateDuration(args[argumentIndex], true);
+              if (options.duration === undefined) {
+                  options.duration = defaults$$1.duration;
+              } else {
+                  hasValidDuration = true;
                   offset++;
-                  options.duration = _validDuration;
               }
               if (!isFunction(args[argumentIndex + offset])) {
                   // Despite coming before Complete, we can't pass a fn easing
@@ -4416,7 +4417,7 @@
           if (isReverse && options.queue === false) {
               throw new Error("VelocityJS: Cannot reverse a queue:false animation.");
           }
-          if (maybeSequence && !hasValidDuration && maybeSequence.duration) {
+          if (!hasValidDuration && maybeSequence && maybeSequence.duration) {
               options.duration = maybeSequence.duration;
           }
           // When a set of elements is targeted by a Velocity call, the set is
