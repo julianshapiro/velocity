@@ -330,13 +330,14 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 			}
 		} else if (!syntacticSugar) {
 			// Expand any direct options if possible.
-			const validDuration = validateDuration(args[argumentIndex], true);
 			let offset = 0;
 
-			hasValidDuration = validDuration !== undefined;
-			if (validDuration !== undefined) {
+			options.duration = validateDuration(args[argumentIndex], true);
+			if (options.duration === undefined) {
+				options.duration = defaults.duration;
+			} else {
+				hasValidDuration = true;
 				offset++;
-				options.duration = validDuration;
 			}
 			if (!isFunction(args[argumentIndex + offset])) {
 				// Despite coming before Complete, we can't pass a fn easing
@@ -360,7 +361,7 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 			throw new Error("VelocityJS: Cannot reverse a queue:false animation.");
 		}
 
-		if (maybeSequence && !hasValidDuration && maybeSequence.duration) {
+		if (!hasValidDuration && maybeSequence && maybeSequence.duration) {
 			options.duration = maybeSequence.duration;
 		}
 

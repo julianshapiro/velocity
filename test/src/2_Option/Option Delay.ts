@@ -38,7 +38,7 @@ QUnit.test("Delay", (assert) => {
 				duration: defaultOptions.duration,
 				delay: testDelay,
 				begin(elements, activeCall) {
-					assert.close(getNow() - start, (testDelay * 2) + (defaultOptions.duration as number), 32, "Queued delays start after the correct delay.");
+					assert.close(getNow() - start, (testDelay * 2) + (defaultOptions.duration as number), 32, "Chained delays start after the correct delay.");
 
 					done();
 				},
