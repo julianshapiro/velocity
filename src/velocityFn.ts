@@ -9,8 +9,8 @@
 // Typedefs
 import {
 	AnimationCall, AnimationFlags, HTMLorSVGElement, Properties, StrictVelocityOptions,
-	VelocityElements, VelocityExtended, VelocityObjectArgs, VelocityOptions, VelocityPromise,
-	VelocityProperty, VelocityResult,
+	VelocityElements, VelocityObjectArgs, VelocityOptions, VelocityPromise, VelocityProperty,
+	VelocityResult,
 } from "./../velocity.d";
 
 // Project
@@ -31,6 +31,12 @@ import {Actions as ActionsObject} from "./Velocity/actions/actions";
 import {defaults as DefaultObject} from "./Velocity/defaults";
 import {SequencesObject} from "./Velocity/sequencesObject";
 import {State as StateObject} from "./Velocity/state";
+
+let globalPromise: PromiseConstructor;
+
+try {
+	globalPromise = Promise;
+} catch {/**/}
 
 /* tslint:disable:max-line-length */
 /**
@@ -163,8 +169,8 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 		optionsMap = opts;
 	}
 	// Create the promise if supported and wanted.
-	if (Promise && getValue(optionsMap && optionsMap.promise, defaults.promise)) {
-		promise = new Promise((resolve, reject) => {
+	if (globalPromise && getValue(optionsMap && optionsMap.promise, defaults.promise)) {
+		promise = new globalPromise((resolve, reject) => {
 			rejecter = reject;
 			// IMPORTANT:
 			// If a resolver tries to run on a Promise then it will wait until
