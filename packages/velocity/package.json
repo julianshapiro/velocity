@@ -51,14 +51,14 @@
   ],
   "devDependencies": {
     "@types/qunit": "^2.5.1",
-    "auto-changelog": "^1.7.0",
+    "auto-changelog": "^1.7.1",
     "babel-core": "^6.26.3",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "qunit": "^2.6.1",
     "qunit-assert-close": "^2.1.2",
-    "rollup": "^0.59.3",
+    "rollup": "^0.59.4",
     "rollup-plugin-babel": "^3.0.4",
     "rollup-plugin-license": "^0.6.0",
     "rollup-plugin-sourcemaps": "^0.4.2",
@@ -68,7 +68,7 @@
     "rollup-plugin-typescript2": "^0.14.0",
     "rollup-plugin-uglify": "^4.0.0",
     "tslint": "^5.10.0",
-    "typescript": "^2.8.3",
+    "typescript": "^2.9.1",
     "velocity-animate": "file:./"
   }
 }
