@@ -17,7 +17,7 @@ import {setPropertyValue} from "../css/setPropertyValue";
 import {defaults} from "../defaults";
 import {validateQueue} from "../options";
 import {State} from "../state";
-import {callBegin} from "../tick";
+import {beginCall} from "../tick";
 import {validateTweens} from "../tweens";
 import {registerAction} from "./actions";
 
@@ -40,7 +40,7 @@ function checkAnimationShouldBeFinished(animation: AnimationCall, queueName: fal
 				options._first = animation;
 				if (options.begin) {
 					// Pass to an external fn with a try/catch block for optimisation
-					callBegin(animation);
+					beginCall(animation);
 					// Only called once, even if reversed or repeated
 					options.begin = undefined;
 				}

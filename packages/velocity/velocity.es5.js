@@ -1206,13 +1206,16 @@ var SequencesObject = {};
  * benefit from JIT compiling while still having a try/catch block.
  */
 function callComplete(activeCall) {
-    try {
-        var elements = activeCall.elements;
-        activeCall.options.complete.call(elements, elements, activeCall);
-    } catch (error) {
-        setTimeout(function () {
-            throw error;
-        }, 1);
+    var callback = activeCall.complete || activeCall.options.complete;
+    if (callback) {
+        try {
+            var elements = activeCall.elements;
+            callback.call(elements, elements, activeCall);
+        } catch (error) {
+            setTimeout(function () {
+                throw error;
+            }, 1);
+        }
     }
 }
 /**
@@ -2005,54 +2008,107 @@ function validateTweens(activeCall) {
  * Call the begin method of an animation in a separate function so it can
  * benefit from JIT compiling while still having a try/catch block.
  */
-function callBegin(activeCall) {
-    try {
-        var elements = activeCall.elements;
-        activeCall.options.begin.call(elements, elements, activeCall);
-    } catch (error) {
-        setTimeout(function () {
-            throw error;
-        }, 1);
+function beginCall(activeCall) {
+    var callback = activeCall.begin || activeCall.options.begin;
+    if (callback) {
+        try {
+            var elements = activeCall.elements;
+            callback.call(elements, elements, activeCall);
+        } catch (error) {
+            setTimeout(function () {
+                throw error;
+            }, 1);
+        }
     }
 }
 /**
  * Call the progress method of an animation in a separate function so it can
  * benefit from JIT compiling while still having a try/catch block.
  */
-function callProgress(activeCall, timeCurrent) {
-    try {
-        var elements = activeCall.elements,
-            percentComplete = activeCall.percentComplete,
-            options = activeCall.options,
-            tweenValue = activeCall.tween;
-        activeCall.options.progress.call(elements, elements, percentComplete, Math.max(0, activeCall.timeStart + (activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaults$1.duration) - timeCurrent), tweenValue !== undefined ? tweenValue : String(percentComplete * 100), activeCall);
-    } catch (error) {
-        setTimeout(function () {
-            throw error;
-        }, 1);
+function progressCall(activeCall) {
+    var callback = activeCall.progress || activeCall.options.progress;
+    if (callback) {
+        try {
+            var elements = activeCall.elements,
+                percentComplete = activeCall.percentComplete,
+                options = activeCall.options,
+                tweenValue = activeCall.tween;
+            callback.call(elements, elements, percentComplete, Math.max(0, activeCall.timeStart + (activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaults$1.duration) - lastTick), tweenValue !== undefined ? tweenValue : String(percentComplete * 100), activeCall);
+        } catch (error) {
+            setTimeout(function () {
+                throw error;
+            }, 1);
+        }
     }
 }
 function asyncCallbacks() {
-    var activeCall = void 0,
-        nextCall = void 0;
-    // Callbacks and complete that might read the DOM again.
-    // Progress callback
-    for (activeCall = firstProgress; activeCall; activeCall = nextCall) {
-        nextCall = activeCall._nextProgress;
-        // Pass to an external fn with a try/catch block for optimisation
-        callProgress(activeCall, lastTick);
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+        for (var _iterator = progressed[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var activeCall = _step.value;
+
+            progressCall(activeCall);
+        }
+    } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+            }
+        } finally {
+            if (_didIteratorError) {
+                throw _iteratorError;
+            }
+        }
     }
-    // Complete animations, including complete callback or looping
-    for (activeCall = firstComplete; activeCall; activeCall = nextCall) {
-        nextCall = activeCall._nextComplete;
-        /* If this call has finished tweening, pass it to complete() to handle call cleanup. */
-        completeCall(activeCall);
+
+    progressed.clear();
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+        for (var _iterator2 = completed[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var _activeCall = _step2.value;
+
+            completeCall(_activeCall);
+        }
+    } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
+            }
+        } finally {
+            if (_didIteratorError2) {
+                throw _iteratorError2;
+            }
+        }
     }
+
+    completed.clear();
 }
 /**************
  Timing
  **************/
 var FRAME_TIME = 1000 / 60,
+
+/**
+ * Animations with a Complete callback.
+ */
+completed = new Set(),
+
+/**
+ * Animations with a Progress callback.
+ */
+progressed = new Set(),
 
 /**
  * Shim for window.performance in case it doesn't exist
@@ -2092,17 +2148,7 @@ var ticking = void 0,
  * A background WebWorker that sends us framerate messages when we're in
  * the background. Without this we cannot maintain frame accuracy.
  */
-worker = void 0,
-
-/**
- * The first animation with a Progress callback.
- */
-firstProgress = void 0,
-
-/**
- * The first animation with a Complete callback.
- */
-firstComplete = void 0;
+worker = void 0;
 /**
  * The time that the last animation frame ran at. Set from tick(), and used
  * for missing rAF (ie, when not in focus etc).
@@ -2193,11 +2239,7 @@ function tick(timestamp) {
             defaultEasing = defaults$1.easing,
             defaultDuration = defaults$1.duration;
         var activeCall = void 0,
-            nextCall = void 0,
-            lastProgress = void 0,
-            lastComplete = void 0;
-        firstProgress = null;
-        firstComplete = null;
+            nextCall = void 0;
         if (deltaTime >= defaults$1.minFrameTime || !lastTick) {
             lastTick = timeCurrent;
             /********************
@@ -2290,7 +2332,7 @@ function tick(timestamp) {
                         _options._first = activeCall;
                         if (_options.begin) {
                             // Pass to an external fn with a try/catch block for optimisation
-                            callBegin(activeCall);
+                            beginCall(activeCall);
                             // Only called once, even if reversed or repeated
                             _options.begin = undefined;
                         }
@@ -2298,16 +2340,8 @@ function tick(timestamp) {
                 }
                 if (speed !== 1) {
                     // On the first frame we may have a shorter delta
-                    var delta = Math.min(deltaTime, timeCurrent - _timeStart);
-                    activeCall.timeStart = _timeStart += delta * (1 - speed);
-                }
-                if (_options._first === activeCall && _options.progress) {
-                    activeCall._nextProgress = undefined;
-                    if (lastProgress) {
-                        lastProgress._nextProgress = lastProgress = activeCall;
-                    } else {
-                        firstProgress = lastProgress = activeCall;
-                    }
+                    // const delta = Math.min(deltaTime, timeCurrent - timeStart);
+                    activeCall.timeStart = _timeStart += Math.min(deltaTime, timeCurrent - _timeStart) * (1 - speed);
                 }
                 var activeEasing = activeCall.easing != null ? activeCall.easing : _options.easing != null ? _options.easing : defaultEasing,
                     millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - _timeStart,
@@ -2315,13 +2349,11 @@ function tick(timestamp) {
                     percentComplete = activeCall.percentComplete = Velocity$$1.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1),
                     tweens = activeCall.tweens,
                     reverse = _flags & 64 /* REVERSE */; // tslint:disable-line:no-bitwise
+                if (activeCall.progress || _options._first === activeCall && _options.progress) {
+                    progressed.add(activeCall);
+                }
                 if (percentComplete === 1) {
-                    activeCall._nextComplete = undefined;
-                    if (lastComplete) {
-                        lastComplete._nextComplete = lastComplete = activeCall;
-                    } else {
-                        firstComplete = lastComplete = activeCall;
-                    }
+                    completed.add(activeCall);
                 }
                 // tslint:disable-next-line:forin
                 for (var property in tweens) {
@@ -2375,8 +2407,8 @@ function tick(timestamp) {
                     }
                 }
             }
-            if (firstProgress || firstComplete) {
-                if (document.hidden) {
+            if (progressed.size || completed.size) {
+                if (!document.hidden) {
                     asyncCallbacks();
                 } else if (worker) {
                     worker.postMessage("");
@@ -2427,7 +2459,7 @@ function checkAnimationShouldBeFinished(animation, queueName, defaultQueue) {
                 options._first = animation;
                 if (options.begin) {
                     // Pass to an external fn with a try/catch block for optimisation
-                    callBegin(animation);
+                    beginCall(animation);
                     // Only called once, even if reversed or repeated
                     options.begin = undefined;
                 }
@@ -2996,7 +3028,7 @@ function propertyAction(args, elements, promiseHandler, action) {
         }
     }
 }
-registerAction(["style", propertyAction], true);
+registerAction(["property", propertyAction], true);
 
 // Project
 registerAction(["reverse", function (args, elements, promiseHandler, action) {

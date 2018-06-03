@@ -21,14 +21,18 @@ import {State} from "./state";
  * benefit from JIT compiling while still having a try/catch block.
  */
 function callComplete(activeCall: AnimationCall) {
-	try {
-		const elements = activeCall.elements;
+	const callback = activeCall.complete || activeCall.options.complete;
 
-		(activeCall.options.complete as VelocityCallback).call(elements, elements, activeCall);
-	} catch (error) {
-		setTimeout(() => {
-			throw error;
-		}, 1);
+	if (callback) {
+		try {
+			const elements = activeCall.elements;
+
+			callback.call(elements, elements, activeCall);
+		} catch (error) {
+			setTimeout(() => {
+				throw error;
+			}, 1);
+		}
 	}
 }
 

@@ -116,6 +116,11 @@ export interface VelocityTween {
 	end?: string;
 }
 
+/**
+ * A single animation for a single element. This extends the strict options (ie,
+ * after processing) to allow per-element options. Anything that is shared
+ * between all elements in an animation will be under the `options` member.
+ */
 export interface AnimationCall extends StrictVelocityOptions {
 	/**
 	 * Used to store the next AnimationCell in this list.
@@ -130,18 +135,6 @@ export interface AnimationCall extends StrictVelocityOptions {
 	 * @private
 	 */
 	_prev?: AnimationCall;
-	/**
-	 * Used to store the next call with a Progress callback.
-	 *
-	 * @private
-	 */
-	_nextProgress?: AnimationCall;
-	/**
-	 * Used to store the next call with a Complete callback.
-	 *
-	 * @private
-	 */
-	_nextComplete?: AnimationCall;
 	/**
 	 * A number of flags for use in tracking an animation.
 	 */
