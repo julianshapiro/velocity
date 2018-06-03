@@ -11,13 +11,11 @@
 * RequireJS - The namespace is now "velocity-animate" for consistency with the NPMjs project name.
 * Reverse - Now reverses the last animation at time of adding, not when playing.
 * Scroll - It is now a property, though it's preferred to use scrollTop and scrollLeft. (Working, but not happy with internal code - the API will not change again.)
+* Sequences - rewritten and completely incompatible with previous versions.
 * Speed - You can control the speed of the animation playback.
 * Styles - Use `element.velocity("style", "propertyName"[, value])`, the old .Hook has gone.
 * SVG - All SVG attributes are supported internally, though they must be placed on the correct type of element.
 * Sync - You can now de-sync animations so they start immediately per-element, rather than waiting for all to be ready.
 * Transforms - Use these directly within CSS, don't try the old shortcuts as they don't exist.
+* UI-Pack - Now only contains animations, all code is in the core Velocity now.
 * Visibility - This is a property, no longer an option.
-
-# Currently disabled / not updated:
-
-* UI-Pack
