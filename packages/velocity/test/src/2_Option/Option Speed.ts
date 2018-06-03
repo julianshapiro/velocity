@@ -6,11 +6,11 @@
 
 import "qunit";
 
-import Velocity, {VelocityExtended} from "velocity-animate";
+import Velocity, {VelocityResult} from "velocity-animate";
 import {asyncTests, defaultProperties, getNow, getTarget} from "../utilities";
 import "./_module";
 
-interface ExtendedVelocityExtended extends VelocityExtended {
+interface ExtendedVelocityExtended extends VelocityResult {
 	__count?: number;
 	__start?: number;
 }

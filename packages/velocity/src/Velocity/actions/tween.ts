@@ -9,7 +9,7 @@
 // Typedefs
 import {
 	AnimationCall, HTMLorSVGElement, Properties, Sequence, SequenceList,
-	TweenStep, VelocityEasingType, VelocityPromise, VelocityProperty,
+	TweenStep, VelocityEasingType, VelocityPromise, VelocityProperty, VelocityResult,
 } from "../../../velocity.d";
 
 // Project
@@ -27,19 +27,9 @@ import {registerAction} from "./actions";
 import {DEFAULT_DURATION} from "../../constants";
 
 /**
- * Expose a style shortcut - can't be used with chaining, but might be of
- * use to people.
- */
-export function tween(elements: HTMLorSVGElement[], percentComplete: number, properties: Properties<VelocityProperty>, easing?: VelocityEasingType);
-export function tween(elements: HTMLorSVGElement[], percentComplete: number, propertyName: string, property: VelocityProperty, easing?: VelocityEasingType);
-export function tween(elements: HTMLorSVGElement[], ...args: any[]) {
-	return tweenAction(arguments as any, elements);
-}
-
-/**
  *
  */
-function tweenAction(args?: any[], elements?: HTMLorSVGElement[], promiseHandler?: VelocityPromise, action?: string): any {
+function tweenAction(args?: any[], elements?: VelocityResult, promiseHandler?: VelocityPromise, action?: string): any {
 	let requireForcefeeding: boolean;
 
 	if (!elements) {

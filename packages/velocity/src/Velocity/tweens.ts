@@ -9,7 +9,7 @@
 // Typedefs
 import {
 	AnimationCall, AnimationFlags, HTMLorSVGElement, Properties, Sequence,
-	VelocityProperty, VelocityPropertyFn, VelocityPropertyValueFn, VelocityTween,
+	VelocityProperty, VelocityPropertyFn, VelocityPropertyValueFn, VelocityResult, VelocityTween,
 } from "../../velocity.d";
 
 // Project
@@ -32,7 +32,7 @@ const rxHex = /^#([A-f\d]{3}){1,2}$/i,
 		[type: string]: (
 			value: any,
 			element: HTMLorSVGElement,
-			elements: HTMLorSVGElement[],
+			elements: VelocityResult,
 			elementArrayIndex: number,
 			propertyName: string,
 			tween: VelocityTween) => string;
@@ -60,7 +60,7 @@ export function expandProperties(animation: AnimationCall, properties: Propertie
 	const tweens = animation.tweens = Object.create(null),
 		elements = animation.elements,
 		element = animation.element,
-		elementArrayIndex = elements.indexOf(element),
+		elementArrayIndex = elements.indexOf(element as any),
 		data = Data(element),
 		queue = getValue(animation.queue, animation.options.queue),
 		duration = getValue(animation.options.duration, defaults.duration);

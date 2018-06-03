@@ -21,17 +21,17 @@ QUnit.skip("In/Out", (assert) => {
 
 	Velocity($target1, "transition.bounceIn", defaultOptions.duration);
 
-	Velocity($target2, "transition.bounceIn", {duration: defaultOptions.duration, display: "inline"});
-
-	Velocity($target3, "transition.bounceOut", defaultOptions.duration);
-
-	Velocity($target4, "transition.bounceOut", {duration: defaultOptions.duration, display: null});
-
-	$target5.style.visibility = "hidden";
-	Velocity($target5, "transition.bounceIn", {duration: defaultOptions.duration, visibility: "visible"});
-
-	$target6.style.visibility = "visible";
-	Velocity($target6, "transition.bounceOut", {duration: defaultOptions.duration, visibility: "hidden"});
+//	Velocity($target2, "transition.bounceIn", {duration: defaultOptions.duration, display: "inline"});
+//
+//	Velocity($target3, "transition.bounceOut", defaultOptions.duration);
+//
+//	Velocity($target4, "transition.bounceOut", {duration: defaultOptions.duration, display: null});
+//
+//	$target5.style.visibility = "hidden";
+//	Velocity($target5, "transition.bounceIn", {duration: defaultOptions.duration, visibility: "visible"});
+//
+//	$target6.style.visibility = "visible";
+//	Velocity($target6, "transition.bounceOut", {duration: defaultOptions.duration, visibility: "hidden"});
 
 	assert.expect(8);
 	setTimeout(() => {
