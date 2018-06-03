@@ -897,15 +897,6 @@ export interface Velocity extends VelocityChain {
 	 */
 	mock: boolean;
 
-	(options: VelocityObjectArgs): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, options?: VelocityOptions): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, complete?: () => void): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, easing?: string | number[], complete?: () => void): VelocityResult;
-	(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
-
-	(element: HTMLorSVGElement, action: "style", property: string): string;
-
 	(action: "finish", queue?: string | false, stopAll?: true): VelocityResult;
 	(elements: VelocityElements, action: "finish", queue?: string | false, stopAll?: true): VelocityResult;
 
@@ -942,17 +933,27 @@ export interface Velocity extends VelocityChain {
 	(action: "stop", stopAll?: true): VelocityResult;
 	(elements: VelocityElements, action: "stop", stopAll?: true): VelocityResult;
 
-	(action: "style", property: string): string | string[];
-	(elements: VelocityElements, action: "style", property: string): string | string[];
-	(action: "style", property: string, value: string): VelocityResult;
-	(elements: VelocityElements, action: "style", property: string, value: string): VelocityResult;
-	(action: "style", property: {[property: string]: string}): VelocityResult;
-	(elements: VelocityElements, action: "style", property: {[property: string]: string}): VelocityResult;
+	(action: "style" | "property", property: string): string | string[];
+	(elements: HTMLorSVGElement, action: "style" | "property", property: string): string;
+	(elements: VelocityElements, action: "style" | "property", property: string): string[];
+	(elements: HTMLorSVGElement, action: "style" | "property", property: string[]): {[property: string]: string} | {[property: string]: string};
+	(elements: VelocityElements, action: "style" | "property", property: string[]): {[property: string]: string} | {[property: string]: string}[];
+	(action: "style" | "property", property: string, value: string): VelocityResult;
+	(elements: VelocityElements, action: "style" | "property", property: string, value: string): VelocityResult;
+	(action: "style" | "property", property: {[property: string]: string}): VelocityResult;
+	(elements: VelocityElements, action: "style" | "property", property: {[property: string]: string}): VelocityResult;
 
 	(action: "tween", percentComplete: number, property: string, value: VelocityPropertyValue, easing?: VelocityEasingType): string;
 	(elements: VelocityElements, action: "tween", percentComplete: number, property: string, value: VelocityPropertyValue, easing?: VelocityEasingType): string;
 	(action: "tween", percentComplete: number, propertyMap: Properties<VelocityProperty>, easing?: VelocityEasingType): Properties<string>;
 	(elements: VelocityElements, action: "tween", percentComplete: number, propertyMap: Properties<VelocityProperty>, easing?: VelocityEasingType): Properties<string>;
+
+	(options: VelocityObjectArgs): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, options?: VelocityOptions): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", complete?: () => void): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, complete?: () => void): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, easing?: string | number[], complete?: () => void): VelocityResult;
+	(elements: VelocityElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
 }
 
 /**
