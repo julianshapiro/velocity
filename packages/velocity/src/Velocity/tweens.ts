@@ -37,19 +37,19 @@ const rxHex = /^#([A-f\d]{3}){1,2}$/i,
 			propertyName: string,
 			tween: VelocityTween) => string;
 	} = {
-			function: (value, element, elements, elementArrayIndex, propertyName, tween) => {
-				return (value as any as VelocityPropertyValueFn).call(element, elementArrayIndex, elements.length);
-			},
-			number: (value, element, elements, elementArrayIndex, propertyName, tween) => {
-				return String(value) + getNormalizationUnit(tween.fn);
-			},
-			string: (value, element, elements, elementArrayIndex, propertyName, tween) => {
-				return fixColors(value);
-			},
-			undefined: (value, element, elements, elementArrayIndex, propertyName, tween) => {
-				return fixColors(getPropertyValue(element, propertyName, tween.fn) || "");
-			},
-		};
+		function: (value, element, elements, elementArrayIndex, propertyName, tween) => {
+			return (value as any as VelocityPropertyValueFn).call(element, elementArrayIndex, elements.length, propertyName);
+		},
+		number: (value, element, elements, elementArrayIndex, propertyName, tween) => {
+			return String(value) + getNormalizationUnit(tween.fn);
+		},
+		string: (value, element, elements, elementArrayIndex, propertyName, tween) => {
+			return fixColors(value);
+		},
+		undefined: (value, element, elements, elementArrayIndex, propertyName, tween) => {
+			return fixColors(getPropertyValue(element, propertyName, tween.fn) || "");
+		},
+	};
 
 /**
  * Expand a VelocityProperty argument into a valid sparse Tween array. This

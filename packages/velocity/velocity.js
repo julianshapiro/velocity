@@ -1648,7 +1648,7 @@
   var rxHex = /^#([A-f\d]{3}){1,2}$/i,
       commands = {
       function: function _function(value, element, elements, elementArrayIndex, propertyName, tween) {
-          return value.call(element, elementArrayIndex, elements.length);
+          return value.call(element, elementArrayIndex, elements.length, propertyName);
       },
       number: function number(value, element, elements, elementArrayIndex, propertyName, tween) {
           return String(value) + getNormalizationUnit(tween.fn);
@@ -4112,7 +4112,8 @@
   var globalPromise = void 0;
   try {
       globalPromise = Promise;
-  } catch ( /**/_a) {} /**/
+  } catch ( /**/_a) {/**/}
+  var noPromiseOption = ", if that is deliberate then pass `promiseRejectEmpty:false` as an option";
   /**
    * Patch a VelocityResult with a Promise.
    */
@@ -4270,6 +4271,7 @@
                       delete result.catch;
                       delete result.finally;
                       resolve(result);
+                      patchPromise(result.promise, result);
                   } else {
                       resolve(result);
                   }
@@ -4277,22 +4279,20 @@
           });
           if (elements) {
               patchPromise(promise, elements);
-              promise.then(function (result) {
-                  patchPromise(result.promise, result);
-              });
           }
       }
-      var promiseRejectEmpty = getValue(optionsMap && optionsMap.promiseRejectEmpty, defaults$$1.promiseRejectEmpty);
       if (promise) {
+          var optionPromiseRejectEmpty = optionsMap && optionsMap.promiseRejectEmpty,
+              promiseRejectEmpty = getValue(optionPromiseRejectEmpty, defaults$$1.promiseRejectEmpty);
           if (!elements && !isAction) {
               if (promiseRejectEmpty) {
-                  rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+                  rejecter("Velocity: No elements supplied" + (isBoolean(optionPromiseRejectEmpty) ? "" : noPromiseOption) + ". Aborting.");
               } else {
                   resolver();
               }
           } else if (!propertiesMap) {
               if (promiseRejectEmpty) {
-                  rejecter("Velocity: No properties supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+                  rejecter("Velocity: No properties supplied" + (isBoolean(optionPromiseRejectEmpty) ? "" : noPromiseOption) + ". Aborting.");
               } else {
                   resolver();
               }
