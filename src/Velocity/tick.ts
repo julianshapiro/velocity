@@ -25,15 +25,19 @@ import {validateTweens} from "./tweens";
  * Call the begin method of an animation in a separate function so it can
  * benefit from JIT compiling while still having a try/catch block.
  */
-export function callBegin(activeCall: AnimationCall) {
-	try {
-		const elements = activeCall.elements;
+export function beginCall(activeCall: AnimationCall) {
+	const callback = activeCall.begin || activeCall.options.begin;
 
-		(activeCall.options.begin as VelocityCallback).call(elements, elements, activeCall);
-	} catch (error) {
-		setTimeout(() => {
-			throw error;
-		}, 1);
+	if (callback) {
+		try {
+			const elements = activeCall.elements;
+
+			callback.call(elements, elements, activeCall);
+		} catch (error) {
+			setTimeout(() => {
+				throw error;
+			}, 1);
+		}
 	}
 }
 
@@ -41,43 +45,39 @@ export function callBegin(activeCall: AnimationCall) {
  * Call the progress method of an animation in a separate function so it can
  * benefit from JIT compiling while still having a try/catch block.
  */
-function callProgress(activeCall: AnimationCall, timeCurrent: number) {
-	try {
-		const elements = activeCall.elements,
-			percentComplete = activeCall.percentComplete,
-			options = activeCall.options,
-			tweenValue = activeCall.tween;
+function progressCall(activeCall: AnimationCall) {
+	const callback = activeCall.progress || activeCall.options.progress;
 
-		(activeCall.options.progress as VelocityProgress).call(elements,
-			elements,
-			percentComplete,
-			Math.max(0, activeCall.timeStart + (activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaults.duration) - timeCurrent),
-			tweenValue !== undefined ? tweenValue : String(percentComplete * 100),
-			activeCall);
-	} catch (error) {
-		setTimeout(() => {
-			throw error;
-		}, 1);
+	if (callback) {
+		try {
+			const elements = activeCall.elements,
+				percentComplete = activeCall.percentComplete,
+				options = activeCall.options,
+				tweenValue = activeCall.tween;
+
+			callback.call(elements,
+				elements,
+				percentComplete,
+				Math.max(0, activeCall.timeStart + (activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaults.duration) - lastTick),
+				tweenValue !== undefined ? tweenValue : String(percentComplete * 100),
+				activeCall);
+		} catch (error) {
+			setTimeout(() => {
+				throw error;
+			}, 1);
+		}
 	}
 }
 
 function asyncCallbacks() {
-	let activeCall: AnimationCall,
-		nextCall: AnimationCall;
-	// Callbacks and complete that might read the DOM again.
-
-	// Progress callback
-	for (activeCall = firstProgress; activeCall; activeCall = nextCall) {
-		nextCall = activeCall._nextProgress;
-		// Pass to an external fn with a try/catch block for optimisation
-		callProgress(activeCall, lastTick);
+	for (const activeCall of progressed) {
+		progressCall(activeCall);
 	}
-	// Complete animations, including complete callback or looping
-	for (activeCall = firstComplete; activeCall; activeCall = nextCall) {
-		nextCall = activeCall._nextComplete;
-		/* If this call has finished tweening, pass it to complete() to handle call cleanup. */
+	progressed.clear();
+	for (const activeCall of completed) {
 		completeCall(activeCall);
 	}
+	completed.clear();
 }
 
 /**************
@@ -85,6 +85,14 @@ function asyncCallbacks() {
  **************/
 
 const FRAME_TIME = 1000 / 60,
+	/**
+	 * Animations with a Complete callback.
+	 */
+	completed = new Set<AnimationCall>(),
+	/**
+	 * Animations with a Progress callback.
+	 */
+	progressed = new Set<AnimationCall>(),
 	/**
 	 * Shim for window.performance in case it doesn't exist
 	 */
@@ -124,15 +132,7 @@ let ticking: boolean,
 	 * A background WebWorker that sends us framerate messages when we're in
 	 * the background. Without this we cannot maintain frame accuracy.
 	 */
-	worker: Worker,
-	/**
-	 * The first animation with a Progress callback.
-	 */
-	firstProgress: AnimationCall,
-	/**
-	 * The first animation with a Complete callback.
-	 */
-	firstComplete: AnimationCall;
+	worker: Worker;
 
 /**
  * The time that the last animation frame ran at. Set from tick(), and used
@@ -228,12 +228,8 @@ export function tick(timestamp?: number | boolean) {
 			defaultEasing = defaults.easing,
 			defaultDuration = defaults.duration;
 		let activeCall: AnimationCall,
-			nextCall: AnimationCall,
-			lastProgress: AnimationCall,
-			lastComplete: AnimationCall;
+			nextCall: AnimationCall;
 
-		firstProgress = null;
-		firstComplete = null;
 		if (deltaTime >= defaults.minFrameTime || !lastTick) {
 			lastTick = timeCurrent;
 
@@ -330,7 +326,7 @@ export function tick(timestamp?: number | boolean) {
 						options._first = activeCall;
 						if (options.begin) {
 							// Pass to an external fn with a try/catch block for optimisation
-							callBegin(activeCall);
+							beginCall(activeCall);
 							// Only called once, even if reversed or repeated
 							options.begin = undefined;
 						}
@@ -338,19 +334,9 @@ export function tick(timestamp?: number | boolean) {
 				}
 				if (speed !== 1) {
 					// On the first frame we may have a shorter delta
-					const delta = Math.min(deltaTime, timeCurrent - timeStart);
-					activeCall.timeStart = timeStart += delta * (1 - speed);
+					// const delta = Math.min(deltaTime, timeCurrent - timeStart);
+					activeCall.timeStart = timeStart += Math.min(deltaTime, timeCurrent - timeStart) * (1 - speed);
 				}
-
-				if (options._first === activeCall && options.progress) {
-					activeCall._nextProgress = undefined;
-					if (lastProgress) {
-						lastProgress._nextProgress = lastProgress = activeCall;
-					} else {
-						firstProgress = lastProgress = activeCall;
-					}
-				}
-
 				const activeEasing = activeCall.easing != null ? activeCall.easing : options.easing != null ? options.easing : defaultEasing,
 					millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart,
 					duration = activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaultDuration,
@@ -358,13 +344,11 @@ export function tick(timestamp?: number | boolean) {
 					tweens = activeCall.tweens,
 					reverse = flags & AnimationFlags.REVERSE; // tslint:disable-line:no-bitwise
 
+				if (activeCall.progress || (options._first === activeCall && options.progress)) {
+					progressed.add(activeCall);
+				}
 				if (percentComplete === 1) {
-					activeCall._nextComplete = undefined;
-					if (lastComplete) {
-						lastComplete._nextComplete = lastComplete = activeCall;
-					} else {
-						firstComplete = lastComplete = activeCall;
-					}
+					completed.add(activeCall);
 				}
 				// tslint:disable-next-line:forin
 				for (const property in tweens) {
@@ -424,8 +408,8 @@ export function tick(timestamp?: number | boolean) {
 					}
 				}
 			}
-			if (firstProgress || firstComplete) {
-				if (document.hidden) {
+			if (progressed.size || completed.size) {
+				if (!document.hidden) {
 					asyncCallbacks();
 				} else if (worker) {
 					worker.postMessage("");

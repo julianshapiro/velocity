@@ -117,4 +117,4 @@ export function propertyAction(args?: any[], elements?: VelocityResult, promiseH
 	}
 }
 
-registerAction(["style", propertyAction], true);
+registerAction(["property", propertyAction], true);
