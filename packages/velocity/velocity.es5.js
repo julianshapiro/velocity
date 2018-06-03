@@ -2778,6 +2778,227 @@ registerAction(["pause", pauseResume], true);
 registerAction(["resume", pauseResume], true);
 
 // Project
+/**
+ * Get or set a style of Nomralised property value on one or more elements.
+ * If there is no value passed then it will get, otherwise we will set.
+ *
+ * NOTE: When using "get" this will not touch the Promise as it is never
+ * returned to the user.
+ *
+ * This can fail to set, and will reject the Promise if it does so.
+ *
+ * Velocity(elements, "style", "property", "value") => elements;
+ * Velocity(elements, "style", {"property": "value", ...}) => elements;
+ * Velocity(element, "style", "property") => "value";
+ * Velocity(elements, "style", "property") => ["value", ...];
+ */
+function propertyAction(args, elements, promiseHandler, action) {
+    var property = args[0],
+        value = args[1];
+    if (!property) {
+        console.warn("VelocityJS: Cannot access a non-existant property!");
+        return null;
+    }
+    // GET
+    if (value === undefined && !isPlainObject(property)) {
+        if (Array.isArray(property)) {
+            if (elements.length === 1) {
+                var result = {};
+                var _iteratorNormalCompletion = true;
+                var _didIteratorError = false;
+                var _iteratorError = undefined;
+
+                try {
+                    for (var _iterator = property[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                        var prop = _step.value;
+
+                        result[prop] = fixColors(getPropertyValue(elements[0], prop));
+                    }
+                } catch (err) {
+                    _didIteratorError = true;
+                    _iteratorError = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion && _iterator.return) {
+                            _iterator.return();
+                        }
+                    } finally {
+                        if (_didIteratorError) {
+                            throw _iteratorError;
+                        }
+                    }
+                }
+
+                return result;
+            } else {
+                var _result = [];
+                var _iteratorNormalCompletion2 = true;
+                var _didIteratorError2 = false;
+                var _iteratorError2 = undefined;
+
+                try {
+                    for (var _iterator2 = elements[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                        var element = _step2.value;
+
+                        var res = {};
+                        var _iteratorNormalCompletion3 = true;
+                        var _didIteratorError3 = false;
+                        var _iteratorError3 = undefined;
+
+                        try {
+                            for (var _iterator3 = property[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                                var _prop = _step3.value;
+
+                                res[_prop] = fixColors(getPropertyValue(element, _prop));
+                            }
+                        } catch (err) {
+                            _didIteratorError3 = true;
+                            _iteratorError3 = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                                    _iterator3.return();
+                                }
+                            } finally {
+                                if (_didIteratorError3) {
+                                    throw _iteratorError3;
+                                }
+                            }
+                        }
+
+                        _result.push(res);
+                    }
+                } catch (err) {
+                    _didIteratorError2 = true;
+                    _iteratorError2 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                            _iterator2.return();
+                        }
+                    } finally {
+                        if (_didIteratorError2) {
+                            throw _iteratorError2;
+                        }
+                    }
+                }
+
+                return _result;
+            }
+        } else {
+            // If only a single animation is found and we're only targetting a
+            // single element, then return the value directly
+            if (elements.length === 1) {
+                return fixColors(getPropertyValue(elements[0], property));
+            }
+            var _result2 = [];
+            var _iteratorNormalCompletion4 = true;
+            var _didIteratorError4 = false;
+            var _iteratorError4 = undefined;
+
+            try {
+                for (var _iterator4 = elements[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+                    var _element = _step4.value;
+
+                    _result2.push(fixColors(getPropertyValue(_element, property)));
+                }
+            } catch (err) {
+                _didIteratorError4 = true;
+                _iteratorError4 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                        _iterator4.return();
+                    }
+                } finally {
+                    if (_didIteratorError4) {
+                        throw _iteratorError4;
+                    }
+                }
+            }
+
+            return _result2;
+        }
+    }
+    // SET
+    var error = [];
+    if (isPlainObject(property)) {
+        for (var propertyName in property) {
+            if (property.hasOwnProperty(propertyName)) {
+                var _iteratorNormalCompletion5 = true;
+                var _didIteratorError5 = false;
+                var _iteratorError5 = undefined;
+
+                try {
+                    for (var _iterator5 = elements[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                        var _element2 = _step5.value;
+
+                        var propertyValue = property[propertyName];
+                        if (isString(propertyValue) || isNumber(propertyValue)) {
+                            setPropertyValue(_element2, propertyName, property[propertyName]);
+                        } else {
+                            error.push("Cannot set a property \"" + propertyName + "\" to an unknown type: " + (typeof propertyValue === "undefined" ? "undefined" : _typeof(propertyValue)));
+                            console.warn("VelocityJS: Cannot set a property \"" + propertyName + "\" to an unknown type:", propertyValue);
+                        }
+                    }
+                } catch (err) {
+                    _didIteratorError5 = true;
+                    _iteratorError5 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                            _iterator5.return();
+                        }
+                    } finally {
+                        if (_didIteratorError5) {
+                            throw _iteratorError5;
+                        }
+                    }
+                }
+            }
+        }
+    } else if (isString(value) || isNumber(value)) {
+        var _iteratorNormalCompletion6 = true;
+        var _didIteratorError6 = false;
+        var _iteratorError6 = undefined;
+
+        try {
+            for (var _iterator6 = elements[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                var _element3 = _step6.value;
+
+                setPropertyValue(_element3, property, String(value));
+            }
+        } catch (err) {
+            _didIteratorError6 = true;
+            _iteratorError6 = err;
+        } finally {
+            try {
+                if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                    _iterator6.return();
+                }
+            } finally {
+                if (_didIteratorError6) {
+                    throw _iteratorError6;
+                }
+            }
+        }
+    } else {
+        error.push("Cannot set a property \"" + property + "\" to an unknown type: " + (typeof value === "undefined" ? "undefined" : _typeof(value)));
+        console.warn("VelocityJS: Cannot set a property \"" + property + "\" to an unknown type:", value);
+    }
+    if (promiseHandler) {
+        if (error.length) {
+            promiseHandler._rejecter(error.join(", "));
+        } else if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
+            elements.then(promiseHandler._resolver);
+        } else {
+            promiseHandler._resolver(elements);
+        }
+    }
+}
+registerAction(["style", propertyAction], true);
+
+// Project
 registerAction(["reverse", function (args, elements, promiseHandler, action) {
         // NOTE: Code needs to split out before here - but this is needed to prevent it being overridden
         throw new SyntaxError("VelocityJS: The 'reverse' action is built in and private.");
@@ -2864,139 +3085,7 @@ function stop(args, elements, promiseHandler, action) {
 registerAction(["stop", stop], true);
 
 // Project
-/**
- * Get or set a style of Nomralised property value on one or more elements.
- * If there is no value passed then it will get, otherwise we will set.
- *
- * NOTE: When using "get" this will not touch the Promise as it is never
- * returned to the user.
- *
- * This can fail to set, and will reject the Promise if it does so.
- *
- * Velocity(elements, "style", "property", "value") => elements;
- * Velocity(elements, "style", {"property": "value", ...}) => elements;
- * Velocity(element, "style", "property") => "value";
- * Velocity(elements, "style", "property") => ["value", ...];
- */
-function styleAction(args, elements, promiseHandler, action) {
-    var property = args[0],
-        value = args[1];
-    if (!property) {
-        console.warn("VelocityJS: Cannot access a non-existant property!");
-        return null;
-    }
-    // GET
-    if (value === undefined && !isPlainObject(property)) {
-        // If only a single animation is found and we're only targetting a
-        // single element, then return the value directly
-        if (elements.length === 1) {
-            return fixColors(getPropertyValue(elements[0], property));
-        }
-        var result = [];
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
-
-        try {
-            for (var _iterator = elements[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                var element = _step.value;
-
-                result.push(fixColors(getPropertyValue(element, property)));
-            }
-        } catch (err) {
-            _didIteratorError = true;
-            _iteratorError = err;
-        } finally {
-            try {
-                if (!_iteratorNormalCompletion && _iterator.return) {
-                    _iterator.return();
-                }
-            } finally {
-                if (_didIteratorError) {
-                    throw _iteratorError;
-                }
-            }
-        }
-
-        return result;
-    }
-    // SET
-    var error = [];
-    if (isPlainObject(property)) {
-        for (var propertyName in property) {
-            if (property.hasOwnProperty(propertyName)) {
-                var _iteratorNormalCompletion2 = true;
-                var _didIteratorError2 = false;
-                var _iteratorError2 = undefined;
-
-                try {
-                    for (var _iterator2 = elements[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                        var _element = _step2.value;
-
-                        var propertyValue = property[propertyName];
-                        if (isString(propertyValue) || isNumber(propertyValue)) {
-                            setPropertyValue(_element, propertyName, property[propertyName]);
-                        } else {
-                            error.push("Cannot set a property \"" + propertyName + "\" to an unknown type: " + (typeof propertyValue === "undefined" ? "undefined" : _typeof(propertyValue)));
-                            console.warn("VelocityJS: Cannot set a property \"" + propertyName + "\" to an unknown type:", propertyValue);
-                        }
-                    }
-                } catch (err) {
-                    _didIteratorError2 = true;
-                    _iteratorError2 = err;
-                } finally {
-                    try {
-                        if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                            _iterator2.return();
-                        }
-                    } finally {
-                        if (_didIteratorError2) {
-                            throw _iteratorError2;
-                        }
-                    }
-                }
-            }
-        }
-    } else if (isString(value) || isNumber(value)) {
-        var _iteratorNormalCompletion3 = true;
-        var _didIteratorError3 = false;
-        var _iteratorError3 = undefined;
-
-        try {
-            for (var _iterator3 = elements[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-                var _element2 = _step3.value;
-
-                setPropertyValue(_element2, property, String(value));
-            }
-        } catch (err) {
-            _didIteratorError3 = true;
-            _iteratorError3 = err;
-        } finally {
-            try {
-                if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                    _iterator3.return();
-                }
-            } finally {
-                if (_didIteratorError3) {
-                    throw _iteratorError3;
-                }
-            }
-        }
-    } else {
-        error.push("Cannot set a property \"" + property + "\" to an unknown type: " + (typeof value === "undefined" ? "undefined" : _typeof(value)));
-        console.warn("VelocityJS: Cannot set a property \"" + property + "\" to an unknown type:", value);
-    }
-    if (promiseHandler) {
-        if (error.length) {
-            promiseHandler._rejecter(error.join(", "));
-        } else if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
-            elements.then(promiseHandler._resolver);
-        } else {
-            promiseHandler._resolver(elements);
-        }
-    }
-}
-registerAction(["style", styleAction], true);
+registerAction(["style", propertyAction], true);
 
 // Project
 /**

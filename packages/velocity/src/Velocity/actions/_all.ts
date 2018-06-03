@@ -7,6 +7,7 @@
 import "./finish";
 import "./option";
 import "./pauseResume";
+import "./property";
 import "./reverse";
 import "./stop";
 import "./style";
