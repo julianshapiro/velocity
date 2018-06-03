@@ -38,6 +38,8 @@ try {
 	globalPromise = Promise;
 } catch {/**/}
 
+const noPromiseOption = ", if that is deliberate then pass `promiseRejectEmpty:false` as an option";
+
 /**
  * Patch a VelocityResult with a Promise.
  */
@@ -198,6 +200,7 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 					delete result.catch;
 					delete (result as any).finally;
 					resolve(result);
+					patchPromise(result.promise, result);
 				} else {
 					resolve(result);
 				}
@@ -205,23 +208,21 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 		});
 		if (elements) {
 			patchPromise(promise, elements);
-			promise.then((result) => {
-				patchPromise(result.promise, result);
-			});
 		}
 	}
-	const promiseRejectEmpty: boolean = getValue(optionsMap && optionsMap.promiseRejectEmpty, defaults.promiseRejectEmpty);
-
 	if (promise) {
+		const optionPromiseRejectEmpty = optionsMap && optionsMap.promiseRejectEmpty,
+			promiseRejectEmpty: boolean = getValue(optionPromiseRejectEmpty, defaults.promiseRejectEmpty);
+
 		if (!elements && !isAction) {
 			if (promiseRejectEmpty) {
-				rejecter("Velocity: No elements supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+				rejecter(`Velocity: No elements supplied${isBoolean(optionPromiseRejectEmpty) ? "" : noPromiseOption}. Aborting.`);
 			} else {
 				resolver();
 			}
 		} else if (!propertiesMap) {
 			if (promiseRejectEmpty) {
-				rejecter("Velocity: No properties supplied, if that is deliberate then pass `promiseRejectEmpty:false` as an option. Aborting.");
+				rejecter(`Velocity: No properties supplied${isBoolean(optionPromiseRejectEmpty) ? "" : noPromiseOption}. Aborting.`);
 			} else {
 				resolver();
 			}
@@ -406,7 +407,7 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 				if (isReverse) {
 					const lastAnimation = Data(element).lastAnimationList[options.queue as string];
 
-					propertiesMap = lastAnimation && lastAnimation.tweens;
+					propertiesMap = lastAnimation && lastAnimation.tweens as any;
 					if (!propertiesMap) {
 						console.error(`VelocityJS: Attempting to reverse an animation on an element with no previous animation:`, element);
 						continue;

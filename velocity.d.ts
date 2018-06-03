@@ -289,7 +289,8 @@ export type VelocityPropertyFn = (
 export type VelocityPropertyValueFn = (
 	this: HTMLorSVGElement,
 	index?: number,
-	total?: number) => number | string;
+	total?: number,
+	propertyName?: string) => number | string;
 
 /**
  * A property value can be a string or a number. If it is a number then it will
@@ -772,8 +773,8 @@ export type VelocitySequence = {
 	easing?: VelocityEasingType;
 	[percent: number]: Properties<VelocitySequenceProperty>;
 } | {
-		[percent: string]: Properties<VelocitySequenceProperty>;
-	}; // Needs to be like this to prevent warnings.
+	[percent: string]: Properties<VelocitySequenceProperty>;
+}; // Needs to be like this to prevent warnings.
 
 /**
  * Global per-Element data. This is persistent between animations, and freed
