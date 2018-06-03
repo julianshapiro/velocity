@@ -317,13 +317,13 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 				options.mobileHA = true;
 			}
 			if (!isReverse) {
-				if (optionsMap.display != null) {
-					(propertiesMap as Properties<VelocityProperty>).display = optionsMap.display as string;
-					console.error(`Deprecated "options.display" used, this is now a property:`, optionsMap.display);
+				if (optionsMap["display"] != null) {
+					(propertiesMap as Properties<VelocityProperty>).display = optionsMap["display"] as string;
+					console.error(`Deprecated "options.display" used, this is now a property:`, optionsMap["display"]);
 				}
-				if (optionsMap.visibility != null) {
-					(propertiesMap as Properties<VelocityProperty>).visibility = optionsMap.visibility as string;
-					console.error(`Deprecated "options.visibility" used, this is now a property:`, optionsMap.visibility);
+				if (optionsMap["visibility"] != null) {
+					(propertiesMap as Properties<VelocityProperty>).visibility = optionsMap["visibility"] as string;
+					console.error(`Deprecated "options.visibility" used, this is now a property:`, optionsMap["visibility"]);
 				}
 			}
 			// TODO: Allow functional options for different options per element
