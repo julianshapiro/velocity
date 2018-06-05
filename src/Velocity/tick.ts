@@ -7,7 +7,7 @@
  */
 
 // Typedefs
-import {AnimationCall, AnimationFlags, TweenStep, VelocityCallback, VelocityProgress} from "../../velocity.d";
+import {AnimationCall, AnimationFlags, TweenStep} from "../../velocity.d";
 
 // Project
 import {now} from "../utility";

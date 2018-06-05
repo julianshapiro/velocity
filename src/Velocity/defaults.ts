@@ -7,7 +7,7 @@
  */
 
 // Typedefs
-import {StrictVelocityOptions, VelocityCallback, VelocityEasingType} from "../../velocity.d";
+import {StrictVelocityOptions, VelocityCallbackFn, VelocityEasingType} from "../../velocity.d";
 
 // Project
 import {isBoolean} from "../types";
@@ -30,8 +30,8 @@ export const defaults: StrictVelocityOptions & {reset?: () => void} = {
 
 // NOTE: Add the variable here, then add the default state in "reset" below.
 let cache: boolean,
-	begin: VelocityCallback,
-	complete: VelocityCallback,
+	begin: VelocityCallbackFn,
+	complete: VelocityCallbackFn,
 	delay: number,
 	duration: number,
 	easing: VelocityEasingType,
@@ -82,10 +82,10 @@ Object.defineProperties(defaults, {
 	},
 	begin: {
 		enumerable: true,
-		get(): VelocityCallback {
+		get(): VelocityCallbackFn {
 			return begin;
 		},
-		set(value: VelocityCallback) {
+		set(value: VelocityCallbackFn) {
 			value = validateBegin(value);
 			if (value !== undefined) {
 				begin = value;
@@ -94,10 +94,10 @@ Object.defineProperties(defaults, {
 	},
 	complete: {
 		enumerable: true,
-		get(): VelocityCallback {
+		get(): VelocityCallbackFn {
 			return complete;
 		},
-		set(value: VelocityCallback) {
+		set(value: VelocityCallbackFn) {
 			value = validateComplete(value);
 			if (value !== undefined) {
 				complete = value;
