@@ -9,7 +9,7 @@
  */
 
 // Typedefs
-import {VelocityCallback, VelocityEasingFn, VelocityEasingType, VelocityProgress} from "../../velocity.d";
+import {VelocityCallbackFn, VelocityEasingFn, VelocityEasingType, VelocityProgressFn} from "../../velocity.d";
 
 // Project
 import {Duration} from "../constants";
@@ -51,7 +51,7 @@ export function validateCache(value: boolean): boolean {
 /**
  * Validate a <code>begin</code> option.
  */
-export function validateBegin(value: VelocityCallback): VelocityCallback {
+export function validateBegin(value: VelocityCallbackFn): VelocityCallbackFn {
 	if (isFunction(value)) {
 		return value;
 	}
@@ -63,7 +63,7 @@ export function validateBegin(value: VelocityCallback): VelocityCallback {
 /**
  * Validate a <code>complete</code> option.
  */
-export function validateComplete(value: VelocityCallback, noError?: true): VelocityCallback {
+export function validateComplete(value: VelocityCallbackFn, noError?: true): VelocityCallbackFn {
 	if (isFunction(value)) {
 		return value;
 	}
@@ -180,7 +180,7 @@ export function validateLoop(value: number | boolean): number | true {
 /**
  * Validate a <code>progress</code> option.
  */
-export function validateProgress(value: VelocityProgress): VelocityProgress {
+export function validateProgress(value: VelocityProgressFn): VelocityProgressFn {
 	if (isFunction(value)) {
 		return value;
 	}
