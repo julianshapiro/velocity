@@ -60,7 +60,7 @@ namespace VelocityStatic {
 	/**
 	 * Velocity option defaults, which can be overriden by the user.
 	 */
-	export const defaults: StrictVelocityOptions & {reset?: () => void} = DefaultObject;
+	export const defaults: StrictVelocityOptions & {reset?: () => void} = DefaultObject as any;
 
 	/**
 	 * Used to patch any object to allow Velocity chaining. In order to chain an
@@ -181,5 +181,7 @@ for (const property in VelocityStatic) {
 		}
 	}
 }
+
+Object.freeze(Velocity);
 
 export default Velocity; // tslint:disable-line:no-default-export

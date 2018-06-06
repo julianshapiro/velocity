@@ -25,8 +25,8 @@ declare global {
 	}
 }
 
-export const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-	isAndroid = /Android/i.test(navigator.userAgent),
+export const $ = ((window as any).jQuery || (window as any).Zepto),
+	$qunitStage = document.getElementById("qunit-stage"),
 	defaultStyles = {
 		opacity: 1,
 		width: 1,
@@ -51,8 +51,6 @@ export const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Oper
 		delay: 0,
 		mobileHA: true,
 	},
-	$ = ((window as any).jQuery || (window as any).Zepto),
-	$qunitStage = document.getElementById("qunit-stage"),
 	asyncCheckDuration = (defaultOptions.duration as number) / 2,
 	completeCheckDuration = (defaultOptions.duration as number) * 2,
 	IE = (() => {

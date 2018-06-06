@@ -1316,29 +1316,13 @@ export interface VelocityState {
 	 * The mobileHA option's behavior changes on older Android devices
 	 * (Gingerbread, versions 2.3.3-2.3.7).
 	 */
-	readonly isAndroid: boolean;
-
-	/**
-	 * The mobileHA option's behavior changes on older Android devices
-	 * (Gingerbread, versions 2.3.3-2.3.7).
-	 */
 	readonly isGingerbread: boolean;
-
-	/**
-	 * Chrome browser
-	 */
-	readonly isChrome: boolean;
-
-	/**
-	 * Firefox browser
-	 */
-	readonly isFirefox: boolean;
 
 	/**
 	 * Create a cached element for re-use when checking for CSS property
 	 * prefixes.
 	 */
-	readonly prefixElement: HTMLDivElement;
+	readonly prefixElement?: HTMLDivElement;
 
 	/**
 	 * Retrieve the appropriate scroll anchor and property name for the
