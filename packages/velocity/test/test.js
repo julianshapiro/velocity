@@ -12,8 +12,8 @@
 
 	Velocity = Velocity && Velocity.hasOwnProperty('default') ? Velocity['default'] : Velocity;
 
-	var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-	    isAndroid = /Android/i.test(navigator.userAgent),
+	var $ = window.jQuery || window.Zepto,
+	    $qunitStage = document.getElementById("qunit-stage"),
 	    defaultStyles = {
 	    opacity: 1,
 	    width: 1,
@@ -38,8 +38,6 @@
 	    delay: 0,
 	    mobileHA: true
 	},
-	    $ = window.jQuery || window.Zepto,
-	    $qunitStage = document.getElementById("qunit-stage"),
 	    asyncCheckDuration = defaultOptions.duration / 2,
 	    completeCheckDuration = defaultOptions.duration * 2,
 	    IE = function () {

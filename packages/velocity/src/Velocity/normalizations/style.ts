@@ -115,18 +115,20 @@ function getSetStyle(propertyName: string) {
 const rxVendors = /^(webkit|moz|ms|o)[A-Z]/,
 	prefixElement = State.prefixElement;
 
-for (const propertyName in prefixElement.style) {
-	if (rxVendors.test(propertyName)) {
-		const unprefixed = propertyName.replace(/^[a-z]+([A-Z])/, ($, letter: string) => letter.toLowerCase());
+if (prefixElement) {
+	for (const propertyName in prefixElement.style) {
+		if (rxVendors.test(propertyName)) {
+			const unprefixed = propertyName.replace(/^[a-z]+([A-Z])/, ($, letter: string) => letter.toLowerCase());
 
-		if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
-			const addUnit = rxAddPx.test(unprefixed) ? "px" : undefined;
+			if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
+				const addUnit = rxAddPx.test(unprefixed) ? "px" : undefined;
 
-			registerNormalization(["Element", unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit]);
+				registerNormalization(["Element", unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit]);
+			}
+		} else if (!hasNormalization(["Element", propertyName])) {
+			const addUnit = rxAddPx.test(propertyName) ? "px" : undefined;
+
+			registerNormalization(["Element", propertyName, getSetStyle(propertyName), addUnit]);
 		}
-	} else if (!hasNormalization(["Element", propertyName])) {
-		const addUnit = rxAddPx.test(propertyName) ? "px" : undefined;
-
-		registerNormalization(["Element", propertyName, getSetStyle(propertyName), addUnit]);
 	}
 }

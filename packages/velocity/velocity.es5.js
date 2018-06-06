@@ -10,6 +10,30 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
   return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
 };
 
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
 var defineProperty = function (obj, key, value) {
   if (key in obj) {
     Object.defineProperty(obj, key, {
@@ -757,9 +781,6 @@ function validateSync(value) {
 }
 
 // Project
-var defaults$1 = {
-    mobileHA: true
-};
 // NOTE: Add the variable here, then add the default state in "reset" below.
 var cache$1 = void 0,
     begin = void 0,
@@ -777,11 +798,14 @@ var cache$1 = void 0,
     repeat = void 0,
     speed = void 0,
     sync = void 0;
-// IMPORTANT: Make sure any new defaults get added to the actions/set.ts list
-Object.defineProperties(defaults$1, {
-    reset: {
-        enumerable: true,
-        value: function value() {
+var defaults$1 = function () {
+    function defaults$$1() {
+        classCallCheck(this, defaults$$1);
+    }
+
+    createClass(defaults$$1, null, [{
+        key: "reset",
+        value: function reset() {
             cache$1 = DEFAULT_CACHE;
             begin = undefined;
             complete = undefined;
@@ -798,194 +822,185 @@ Object.defineProperties(defaults$1, {
             speed = DEFAULT_SPEED;
             sync = DEFAULT_SYNC;
         }
-    },
-    cache: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "cache",
+        get: function get$$1() {
             return cache$1;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateCache(value);
             if (value !== undefined) {
                 cache$1 = value;
             }
         }
-    },
-    begin: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "begin",
+        get: function get$$1() {
             return begin;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateBegin(value);
             if (value !== undefined) {
                 begin = value;
             }
         }
-    },
-    complete: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "complete",
+        get: function get$$1() {
             return complete;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateComplete(value);
             if (value !== undefined) {
                 complete = value;
             }
         }
-    },
-    delay: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "delay",
+        get: function get$$1() {
             return delay;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateDelay(value);
             if (value !== undefined) {
                 delay = value;
             }
         }
-    },
-    duration: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "duration",
+        get: function get$$1() {
             return duration;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateDuration(value);
             if (value !== undefined) {
                 duration = value;
             }
         }
-    },
-    easing: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "easing",
+        get: function get$$1() {
             return easing;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateEasing(value, duration);
             if (value !== undefined) {
                 easing = value;
             }
         }
-    },
-    fpsLimit: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "fpsLimit",
+        get: function get$$1() {
             return fpsLimit;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateFpsLimit(value);
             if (value !== undefined) {
                 fpsLimit = value;
                 minFrameTime = FUZZY_MS_PER_SECOND / value;
             }
         }
-    },
-    loop: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "loop",
+        get: function get$$1() {
             return loop;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateLoop(value);
             if (value !== undefined) {
                 loop = value;
             }
         }
-    },
-    mobileHA: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "mobileHA",
+        get: function get$$1() {
             return mobileHA;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             if (isBoolean(value)) {
                 mobileHA = value;
             }
         }
-    },
-    minFrameTime: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "minFrameTime",
+        get: function get$$1() {
             return minFrameTime;
         }
-    },
-    promise: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "promise",
+        get: function get$$1() {
             return promise;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validatePromise(value);
             if (value !== undefined) {
                 promise = value;
             }
         }
-    },
-    promiseRejectEmpty: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "promiseRejectEmpty",
+        get: function get$$1() {
             return promiseRejectEmpty;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validatePromiseRejectEmpty(value);
             if (value !== undefined) {
                 promiseRejectEmpty = value;
             }
         }
-    },
-    queue: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "queue",
+        get: function get$$1() {
             return queue;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateQueue(value);
             if (value !== undefined) {
                 queue = value;
             }
         }
-    },
-    repeat: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "repeat",
+        get: function get$$1() {
             return repeat;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateRepeat(value);
             if (value !== undefined) {
                 repeat = value;
             }
         }
-    },
-    speed: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "repeatAgain",
+        get: function get$$1() {
+            return repeat;
+        }
+    }, {
+        key: "speed",
+        get: function get$$1() {
             return speed;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateSpeed(value);
             if (value !== undefined) {
                 speed = value;
             }
         }
-    },
-    sync: {
-        enumerable: true,
-        get: function get() {
+    }, {
+        key: "sync",
+        get: function get$$1() {
             return sync;
         },
-        set: function set(value) {
+        set: function set$$1(value) {
             value = validateSync(value);
             if (value !== undefined) {
                 sync = value;
             }
         }
-    }
-});
+    }]);
+    return defaults$$1;
+}();
+Object.freeze(defaults$1);
 // Reset to our default values, currently everything is undefined.
 defaults$1.reset();
 
@@ -1068,10 +1083,7 @@ var isClient = window && window === window.window,
 var State = {
     isClient: isClient,
     isMobile: isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-    isAndroid: isClient && /Android/i.test(navigator.userAgent),
     isGingerbread: isClient && /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
-    isChrome: isClient && window.chrome,
-    isFirefox: isClient && /Firefox/i.test(navigator.userAgent),
     prefixElement: isClient && document.createElement("div"),
     windowScrollAnchor: windowScrollAnchor,
     scrollAnchor: windowScrollAnchor ? window : !isClient || document.documentElement || document.body.parentNode || document.body,
@@ -3755,18 +3767,20 @@ function getSetStyle(propertyName) {
  */
 var rxVendors = /^(webkit|moz|ms|o)[A-Z]/,
     prefixElement = State.prefixElement;
-for (var propertyName in prefixElement.style) {
-    if (rxVendors.test(propertyName)) {
-        var unprefixed = propertyName.replace(/^[a-z]+([A-Z])/, function ($, letter) {
-            return letter.toLowerCase();
-        });
-        {
-            var addUnit = rxAddPx.test(unprefixed) ? "px" : undefined;
-            registerNormalization(["Element", unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit]);
+if (prefixElement) {
+    for (var propertyName in prefixElement.style) {
+        if (rxVendors.test(propertyName)) {
+            var unprefixed = propertyName.replace(/^[a-z]+([A-Z])/, function ($, letter) {
+                return letter.toLowerCase();
+            });
+            {
+                var addUnit = rxAddPx.test(unprefixed) ? "px" : undefined;
+                registerNormalization(["Element", unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit]);
+            }
+        } else if (!hasNormalization(["Element", propertyName])) {
+            var _addUnit = rxAddPx.test(propertyName) ? "px" : undefined;
+            registerNormalization(["Element", propertyName, getSetStyle(propertyName), _addUnit]);
         }
-    } else if (!hasNormalization(["Element", propertyName])) {
-        var _addUnit = rxAddPx.test(propertyName) ? "px" : undefined;
-        registerNormalization(["Element", propertyName, getSetStyle(propertyName), _addUnit]);
     }
 }
 
@@ -3975,6 +3989,7 @@ var _loop = function _loop(property) {
 for (var property in VelocityStatic) {
     _loop(property);
 }
+Object.freeze(Velocity$$1);
 
 // Project
 var rxPercents = /(\d*\.\d+|\d+\.?|from|to)/g;
@@ -4784,6 +4799,7 @@ var _loop$1 = function _loop(property) {
 for (var property$1 in VelocityStatic$1) {
     _loop$1(property$1);
 }
+Object.freeze(Velocity$2);
 
 export default Velocity$2;
 //# sourceMappingURL=velocity.es5.js.map
