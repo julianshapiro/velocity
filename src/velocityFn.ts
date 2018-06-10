@@ -126,10 +126,6 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 		 */
 		animations: AnimationCall[],
 		/**
-		 * Stagger delays the start of sequential elements in an animation.
-		 */
-		hasStagger: number | VelocityOptionFn<number> = 0,
-		/**
 		 * The promise that is returned.
 		 */
 		promise: Promise<VelocityResult>,
@@ -321,10 +317,10 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 				options.mobileHA = true;
 			}
 			if (optionsMap.drag === true) {
-				options.drag = optionsMap.drag;
+				options.drag = true;
 			}
 			if (isNumber(optionsMap.stagger) || isFunction(optionsMap.stagger)) {
-				hasStagger = options.stagger = optionsMap.stagger;
+				options.stagger = optionsMap.stagger;
 			}
 			if (!isReverse) {
 				if (optionsMap["display"] != null) {
@@ -379,6 +375,7 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 			if (complete !== undefined) {
 				options.complete = complete;
 			}
+			options.delay = defaults.delay;
 			options.loop = defaults.loop;
 			options.repeat = options.repeatAgain = defaults.repeat;
 		}
@@ -433,15 +430,15 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 
 				options._total++;
 				animations.push(animation);
-				if (hasStagger) {
-					if (isFunction(hasStagger)) {
-						const num = hasStagger.call(element, index, elements.length, elements, "stagger");
+				if (options.stagger) {
+					if (isFunction(options.stagger)) {
+						const num = optionCallback(options.stagger, element, index, elements.length, elements, "stagger");
 
 						if (isNumber(num)) {
-							animation.delay = getValue(options.delay, defaults.delay) + num;
+							animation.delay = options.delay + num;
 						}
 					} else {
-						animation.delay = getValue(options.delay, defaults.delay) + (hasStagger * index);
+						animation.delay = options.delay + (options.stagger * index);
 					}
 				}
 				if (options.drag) {
@@ -475,4 +472,15 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 
 	/* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
 	return elements || promise as any;
+}
+
+/**
+ * Call an option callback in a try/catch block and report an error if needed.
+ */
+function optionCallback<T>(fn: VelocityOptionFn<T>, element: HTMLorSVGElement, index: number, length: number, elements: HTMLorSVGElement[], option: string): T {
+	try {
+		return fn.call(element, index, length, elements, option);
+	} catch (e) {
+		console.error(`VelocityJS: Exception when calling '${option}' callback:`, e);
+	}
 }

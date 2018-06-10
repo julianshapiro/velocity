@@ -1822,7 +1822,7 @@ function findPattern(parts, propertyName) {
                         unit = num[3],
                         change = num[1] ? num[1][0] + unit : undefined,
                         changeOrUnit = change || unit;
-                    if (!units.includes(changeOrUnit)) {
+                    if (digits && !units.includes(changeOrUnit)) {
                         // Will be an empty string at the least.
                         units.push(changeOrUnit);
                     }
@@ -4327,11 +4327,6 @@ function Velocity$1() {
     animations = void 0,
 
     /**
-     * Stagger delays the start of sequential elements in an animation.
-     */
-    hasStagger = 0,
-
-    /**
      * The promise that is returned.
      */
     promise = void 0,
@@ -4511,10 +4506,10 @@ function Velocity$1() {
                 options.mobileHA = true;
             }
             if (optionsMap.drag === true) {
-                options.drag = optionsMap.drag;
+                options.drag = true;
             }
             if (isNumber(optionsMap.stagger) || isFunction(optionsMap.stagger)) {
-                hasStagger = options.stagger = optionsMap.stagger;
+                options.stagger = optionsMap.stagger;
             }
             if (!isReverse) {
                 if (optionsMap["display"] != null) {
@@ -4565,6 +4560,7 @@ function Velocity$1() {
             if (complete !== undefined) {
                 options.complete = complete;
             }
+            options.delay = defaults$$1.delay;
             options.loop = defaults$$1.loop;
             options.repeat = options.repeatAgain = defaults$$1.repeat;
         }
@@ -4608,14 +4604,14 @@ function Velocity$1() {
                 var animation = Object.assign({}, rootAnimation, { element: element, _flags: rootAnimation._flags | flags });
                 options._total++;
                 animations.push(animation);
-                if (hasStagger) {
-                    if (isFunction(hasStagger)) {
-                        var num = hasStagger.call(element, index, elements.length, elements, "stagger");
+                if (options.stagger) {
+                    if (isFunction(options.stagger)) {
+                        var num = optionCallback(options.stagger, element, index, elements.length, elements, "stagger");
                         if (isNumber(num)) {
-                            animation.delay = getValue(options.delay, defaults$$1.delay) + num;
+                            animation.delay = options.delay + num;
                         }
                     } else {
-                        animation.delay = getValue(options.delay, defaults$$1.delay) + hasStagger * index;
+                        animation.delay = options.delay + options.stagger * index;
                     }
                 }
                 if (options.drag) {
@@ -4648,6 +4644,16 @@ function Velocity$1() {
      ***************/
     /* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
     return elements || promise;
+}
+/**
+ * Call an option callback in a try/catch block and report an error if needed.
+ */
+function optionCallback(fn, element, index, length, elements, option) {
+    try {
+        return fn.call(element, index, length, elements, option);
+    } catch (e) {
+        console.error("VelocityJS: Exception when calling '" + option + "' callback:", e);
+    }
 }
 
 // Project
