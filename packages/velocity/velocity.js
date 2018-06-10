@@ -4333,6 +4333,11 @@
       animations = void 0,
 
       /**
+       * Stagger delays the start of sequential elements in an animation.
+       */
+      hasStagger = 0,
+
+      /**
        * The promise that is returned.
        */
       promise = void 0,
@@ -4511,6 +4516,12 @@
                   /* Note: You can read more about the use of mobileHA in Velocity's documentation: velocity-animate/#mobileHA. */
                   options.mobileHA = true;
               }
+              if (optionsMap.drag === true) {
+                  options.drag = optionsMap.drag;
+              }
+              if (isNumber(optionsMap.stagger) || isFunction(optionsMap.stagger)) {
+                  hasStagger = options.stagger = optionsMap.stagger;
+              }
               if (!isReverse) {
                   if (optionsMap["display"] != null) {
                       propertiesMap.display = optionsMap["display"];
@@ -4586,57 +4597,49 @@
               timeStart: 0
           };
           animations = [];
-          var _iteratorNormalCompletion = true;
-          var _didIteratorError = false;
-          var _iteratorError = undefined;
-
-          try {
-              for (var _iterator = elements[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                  var element = _step.value;
-
-                  var flags = 0;
-                  if (isNode(element)) {
-                      // TODO: This needs to check for valid animation targets, not just Elements
-                      if (isReverse) {
-                          var lastAnimation = Data(element).lastAnimationList[options.queue];
-                          propertiesMap = lastAnimation && lastAnimation.tweens;
-                          if (!propertiesMap) {
-                              console.error("VelocityJS: Attempting to reverse an animation on an element with no previous animation:", element);
-                              continue;
+          for (var index = 0; index < elements.length; index++) {
+              var element = elements[index];
+              var flags = 0;
+              if (isNode(element)) {
+                  // TODO: This needs to check for valid animation targets, not just Elements
+                  if (isReverse) {
+                      var lastAnimation = Data(element).lastAnimationList[options.queue];
+                      propertiesMap = lastAnimation && lastAnimation.tweens;
+                      if (!propertiesMap) {
+                          console.error("VelocityJS: Attempting to reverse an animation on an element with no previous animation:", element);
+                          continue;
+                      }
+                      flags |= 64 /* REVERSE */ & ~(lastAnimation._flags & 64 /* REVERSE */); // tslint:disable-line:no-bitwise
+                  }
+                  var animation = Object.assign({}, rootAnimation, { element: element, _flags: rootAnimation._flags | flags });
+                  options._total++;
+                  animations.push(animation);
+                  if (hasStagger) {
+                      if (isFunction(hasStagger)) {
+                          var num = hasStagger.call(element, index, elements.length, elements, "stagger");
+                          if (isNumber(num)) {
+                              animation.delay = getValue(options.delay, defaults$$1.delay) + num;
                           }
-                          flags |= 64 /* REVERSE */ & ~(lastAnimation._flags & 64 /* REVERSE */); // tslint:disable-line:no-bitwise
-                      }
-                      var animation = Object.assign({}, rootAnimation, { element: element, _flags: rootAnimation._flags | flags });
-                      options._total++;
-                      animations.push(animation);
-                      if (maybeSequence) {
-                          expandSequence(animation, maybeSequence);
-                      } else if (isReverse) {
-                          // In this case we're using the previous animation, so
-                          // it will be expanded correctly when that one runs.
-                          animation.tweens = propertiesMap;
                       } else {
-                          animation.tweens = Object.create(null);
-                          expandProperties(animation, propertiesMap);
+                          animation.delay = getValue(options.delay, defaults$$1.delay) + hasStagger * index;
                       }
-                      queue$1(element, animation, options.queue);
                   }
-              }
-          } catch (err) {
-              _didIteratorError = true;
-              _iteratorError = err;
-          } finally {
-              try {
-                  if (!_iteratorNormalCompletion && _iterator.return) {
-                      _iterator.return();
+                  if (options.drag) {
+                      animation.duration = options.duration - options.duration * Math.max(1 - (index + 1) / elements.length, 0.75);
                   }
-              } finally {
-                  if (_didIteratorError) {
-                      throw _iteratorError;
+                  if (maybeSequence) {
+                      expandSequence(animation, maybeSequence);
+                  } else if (isReverse) {
+                      // In this case we're using the previous animation, so
+                      // it will be expanded correctly when that one runs.
+                      animation.tweens = propertiesMap;
+                  } else {
+                      animation.tweens = Object.create(null);
+                      expandProperties(animation, propertiesMap);
                   }
+                  queue$1(element, animation, options.queue);
               }
           }
-
           if (State.isTicking === false) {
               // If the animation tick isn't running, start it. (Velocity shuts it
               // off when there are no active calls to process.)

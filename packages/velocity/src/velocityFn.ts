@@ -9,12 +9,12 @@
 // Typedefs
 import {
 	AnimationCall, AnimationFlags, HTMLorSVGElement, Properties, StrictVelocityOptions,
-	VelocityElements, VelocityObjectArgs, VelocityOptions, VelocityPromise, VelocityProperty,
-	VelocityResult,
+	VelocityElements, VelocityObjectArgs, VelocityOptionFn, VelocityOptions, VelocityPromise,
+	VelocityProperty, VelocityResult,
 } from "./../velocity.d";
 
 // Project
-import {isBoolean, isFunction, isNode, isPlainObject, isString, isVelocityResult, isWrapped} from "./types";
+import {isBoolean, isFunction, isNode, isNumber, isPlainObject, isString, isVelocityResult, isWrapped} from "./types";
 import {cloneArray, defineProperty, getValue} from "./utility";
 import {Data} from "./Velocity/data";
 import {
@@ -125,6 +125,10 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 		 * element's animations needs to be to the currently-running ones.
 		 */
 		animations: AnimationCall[],
+		/**
+		 * Stagger delays the start of sequential elements in an animation.
+		 */
+		hasStagger: number | VelocityOptionFn<number> = 0,
 		/**
 		 * The promise that is returned.
 		 */
@@ -316,6 +320,12 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 				/* Note: You can read more about the use of mobileHA in Velocity's documentation: velocity-animate/#mobileHA. */
 				options.mobileHA = true;
 			}
+			if (optionsMap.drag === true) {
+				options.drag = optionsMap.drag;
+			}
+			if (isNumber(optionsMap.stagger) || isFunction(optionsMap.stagger)) {
+				hasStagger = options.stagger = optionsMap.stagger;
+			}
 			if (!isReverse) {
 				if (optionsMap["display"] != null) {
 					(propertiesMap as Properties<VelocityProperty>).display = optionsMap["display"] as string;
@@ -400,7 +410,8 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 		};
 
 		animations = [];
-		for (const element of elements) {
+		for (let index = 0; index < elements.length; index++) {
+			const element = elements[index];
 			let flags = 0;
 
 			if (isNode(element)) { // TODO: This needs to check for valid animation targets, not just Elements
@@ -422,6 +433,20 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 
 				options._total++;
 				animations.push(animation);
+				if (hasStagger) {
+					if (isFunction(hasStagger)) {
+						const num = hasStagger.call(element, index, elements.length, elements, "stagger");
+
+						if (isNumber(num)) {
+							animation.delay = getValue(options.delay, defaults.delay) + num;
+						}
+					} else {
+						animation.delay = getValue(options.delay, defaults.delay) + (hasStagger * index);
+					}
+				}
+				if (options.drag) {
+					animation.duration = options.duration - (options.duration * Math.max(1 - (index + 1) / elements.length, 0.75));
+				}
 				if (maybeSequence) {
 					expandSequence(animation, maybeSequence);
 				} else if (isReverse) {
