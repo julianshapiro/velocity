@@ -1094,9 +1094,9 @@ export interface VelocityOptions {
 	delay?: "fast" | "normal" | "slow" | number;
 
 	/**
-	 * TODO: Not currently implimented.
-	 *
-	 * @deprecated
+	 * Reduce the duration of each successive element so they drag into final
+	 * state. The first quarter of the elements will get a reduced duration (ie.
+	 * they will finish faster) in a smooth way.
 	 */
 	drag?: boolean;
 
@@ -1206,11 +1206,10 @@ export interface VelocityOptions {
 	speed?: number;
 
 	/**
-	 * TODO: Not currently implimented.
-	 *
-	 * @deprecated
+	 * Supply a delay in ms, and every element in the animation will get this
+	 * delay multiplied by its index added to it.
 	 */
-	stagger?: string | number;
+	stagger?: number | VelocityOptionFn<number>;
 
 	/**
 	 * When adding animations to elements each element has its own queue of
@@ -1513,7 +1512,22 @@ export type VelocityElements = HTMLorSVGElement | HTMLorSVGElement[];
  * @returns When getting a value it must return a string, otherwise the return
  * value is ignored.
  */
-export type VelocityNormalizationsFn = ((element: HTMLorSVGElement, propertyValue: string) => void) & ((element: HTMLorSVGElement) => string);
+export type VelocityNormalizationsFn =
+	((
+		element: HTMLorSVGElement,
+		propertyValue: string) => void)
+	& ((
+		element: HTMLorSVGElement) => string);
+
+/**
+ * A callback to allow us to generate an option value.
+ */
+export type VelocityOptionFn<T> = (
+	this: HTMLorSVGElement,
+	index?: number,
+	total?: number,
+	elements?: VelocityElements,
+	option?: string) => T;
 
 /**
  * A callback used for progress tracking.
