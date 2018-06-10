@@ -219,7 +219,7 @@ export function findPattern(parts: ReadonlyArray<string>, propertyName: string):
 						change = num[1] ? num[1][0] + unit : undefined,
 						changeOrUnit = change || unit;
 
-					if (!units.includes(changeOrUnit)) {
+					if (digits && !units.includes(changeOrUnit)) {
 						// Will be an empty string at the least.
 						units.push(changeOrUnit);
 					}
