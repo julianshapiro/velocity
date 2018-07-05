@@ -396,7 +396,7 @@ export interface Velocity<T = VelocityElements> {
 	 * <code>jQuery</code>, <code>Zepto</code>, and several classes that return
 	 * Nodes or lists of Nodes.
 	 */
-	patch(proto: any, global?: boolean);
+	patch(proto: any, global?: boolean): void;
 
 	/**
 	 * Set to true, 1 or 2 (most verbose) to output debug info to console.
@@ -562,7 +562,7 @@ export interface Velocity<T = VelocityElements> {
 	 * @param name The name of the easing to add.
 	 * @param easing The function to call when this easing is used.
 	 */
-	(action: "registerEasing", name: string, easing: VelocityEasingFn);
+	(action: "registerEasing", name: string, easing: VelocityEasingFn): void;
 
 	/**
 	 * Register a new normalization handler. This is the interface between
@@ -599,14 +599,14 @@ export interface Velocity<T = VelocityElements> {
 	 * @param name The sequence name.
 	 * @param sequence The animation steps to perform.
 	 */
-	(action: "registerSequence", name: string, sequence: VelocitySequence);
+	(action: "registerSequence", name: string, sequence: VelocitySequence): void;
 
 	/**
 	 * Register a named animation sequence to be used elsewhere.
 	 *
 	 * @param sequences Multiple named sequences to add.
 	 */
-	(action: "registerSequence", sequences: {[name: string]: VelocitySequence});
+	(action: "registerSequence", sequences: {[name: string]: VelocitySequence}): void;
 
 	/**
 	 * Reverse the most recent animations on the supplied elements.
