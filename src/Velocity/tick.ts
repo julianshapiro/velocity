@@ -13,6 +13,7 @@ import {AnimationCall, AnimationFlags, TweenStep} from "../../velocity.d";
 import {now} from "../utility";
 import Velocity from "../velocity";
 import {completeCall} from "./complete";
+import {removeNestedCalc} from "./css/removeNestedCalc";
 import {setPropertyValue} from "./css/setPropertyValue";
 import {Data} from "./data";
 import {defaults} from "./defaults";
@@ -69,6 +70,9 @@ function progressCall(activeCall: AnimationCall) {
 	}
 }
 
+/**
+ * Call callbacks, potentially run async with the main animation thread.
+ */
 function asyncCallbacks() {
 	for (const activeCall of progressed) {
 		progressCall(activeCall);
@@ -393,8 +397,8 @@ export function tick(timestamp?: number | boolean) {
 							}
 						}
 						if (property !== "tween") {
-							if (percentComplete === 1 && currentValue.startsWith("calc(0 + ")) {
-								currentValue = currentValue.replace(/^calc\(0[^\d]* \+ ([^\(\)]+)\)$/, "$1");
+							if (percentComplete === 1) {
+								currentValue = removeNestedCalc(currentValue);
 							}
 							// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
 							setPropertyValue(activeCall.element, property, currentValue, tween.fn);
