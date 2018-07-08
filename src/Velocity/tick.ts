@@ -370,8 +370,9 @@ export function tick(timestamp?: number | boolean) {
 						}
 						const tweenFrom: TweenStep = sequence[best],
 							tweenTo: TweenStep = sequence[best + 1] || tweenFrom,
-							tweenPercent = (percentComplete - tweenFrom.percent) / (tweenTo.percent - tweenFrom.percent),
-							easing = tweenTo.easing || linearEasing;
+							rawPercent = (percentComplete - tweenFrom.percent) / (tweenTo.percent - tweenFrom.percent),
+							tweenPercent = reverse ? 1 - rawPercent : rawPercent,
+							easing = tweenTo.easing || activeEasing || linearEasing;
 
 						for (; i < pattern.length; i++) {
 							const startValue = tweenFrom[i];
@@ -385,9 +386,9 @@ export function tick(timestamp?: number | boolean) {
 									currentValue += startValue;
 								} else {
 									// All easings must deal with numbers except for our internal ones.
-									const result = easing(reverse ? 1 - tweenPercent : tweenPercent, startValue as number, endValue as number, property);
+									const result = easing(tweenPercent, startValue as number, endValue as number, property);
 
-									currentValue += pattern[i] === true ? Math.round(result) : result;
+									currentValue += pattern[i] !== true ? result : Math.round(result);
 								}
 							}
 						}
