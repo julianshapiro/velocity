@@ -51,7 +51,7 @@
   ],
   "devDependencies": {
     "@types/qunit": "^2.5.1",
-    "auto-changelog": "^1.7.1",
+    "auto-changelog": "^1.7.2",
     "babel-core": "^6.26.3",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-polyfill": "^6.26.0",
