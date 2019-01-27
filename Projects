@@ -1,0 +1,7 @@
+Version two is an almost complete refactoring of the base code, plus breaking changes that can't be made in current updates - either because they change undefined behaviour (that might be relied on), or they change internals (again - that might be relied on).
+
+The biggest breaking change for using Velocity will be dropping support for obsolete browsers. Where compatibility can be kept it will be, but it will always be possible to support older browsers via the use of forcefeeding strings, and judicious use of polyfills - the onus will be on the coder to decide if they need to support them however.
+
+Internally Velocity is changing to Typescript (http://typescript.org/), which still looks mostly like modern Javascript so should be understandable. It also uses nodejs + grunt to build (install https://nodejs.org/en/ - then open a command prompt in the source folder, and type npm install, followed by grunt to build - you can also use grunt watch to have it build updates as you edit source files).
+
+Version 2 is currently on the develop branch (https://github.com/julianshapiro/velocity/tree/develop) where every push should still pass all tests and be usable for testing.
