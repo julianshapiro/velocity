@@ -50,7 +50,7 @@ export function defineProperty(proto: any, name: string, value: any, readonly?: 
  * first value that is valid.
  */
 export function getValue<T>(...args: T[]): T {
-	for (const arg of arguments) {
+	for (const arg of args) {
 		if (arg !== undefined && arg === arg) {
 			return arg;
 		}
