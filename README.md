@@ -21,13 +21,13 @@ NPM: https://www.npmjs.com/package/velocity-react
 ### Velocity (CDN, choose one of them):
 ```html
 <script src="//cdn.jsdelivr.net/npm/velocity-animate@2.0/velocity.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.3/velocity.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.6/velocity.min.js"></script>
 ```
 
-### Velocity UI pack (CDN, choose one of them): 
+### Velocity UI pack (CDN, choose one of them):
 ```html
 <script src="//cdn.jsdelivr.net/npm/velocity-animate@2.0/velocity.ui.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.3/velocity.ui.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/2.0.6/velocity.ui.min.js"></script>
 ```
 
 > Please note that JSDelivr can automatically supply the latest release, while CloudFlare needs to ask for a specific version.
@@ -43,7 +43,7 @@ If using the `.velocity(...)` chained function in libraries such as jQuery or Ze
 Ask on [StackOverflow](http://stackoverflow.com/tags/velocity.js) (make sure you add the `[velocity.js]` and the `[javascript]` or `[typescript]` tags).
 
 ## Updates
-- **[2.0](https://github.com/julianshapiro/velocity/compare/1.5.0...2.0.0)**: Typescript update and complete refactoring.
+- **[2.0](https://github.com/julianshapiro/velocity/compare/1.5.0...2.0.6)**: Typescript update and complete refactoring.
 - **[1.5](https://github.com/julianshapiro/velocity/compare/1.4.0...1.5.0)**: Bugfixes, IE9 compatibility fixes.
 - **[1.4](https://github.com/julianshapiro/velocity/compare/1.3.0...1.4.0)**: Pause / Resume (per element or global).<br>
 Forcefed string animation (just have matching number spaces) including unit conversions and colour names (ie `background:["rgba(red,0.1)", "blue"]`).
