@@ -3898,7 +3898,7 @@
   registerNormalization(["Element", "tween", getSetTween]);
 
   // Automatically generated
-  var VERSION = "2.0.5";
+  var VERSION = "2.0.6";
 
   // Project
   var Velocity$$1 = Velocity$1;
