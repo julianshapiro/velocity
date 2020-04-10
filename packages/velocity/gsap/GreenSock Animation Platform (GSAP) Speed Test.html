@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<!-- saved from url=(0035)https://greensock.com/js/speed.html -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+        <title>GreenSock Animation Platform (GSAP) Speed Test</title>
+        <meta name="viewport" content="width=620, maximum-scale=1, user-scalable=false"/>
+        <link href="./GreenSock Animation Platform (GSAP) Speed Test_files/css" rel="stylesheet" type="text/css"/>
+
+        <link rel="shortcut icon" type="image/ico" href="https://greensock.com/forums/favicon.ico"/>
+        <style type="text/css">
+
+            html, body {
+                overflow:hidden;
+            }
+            body {
+                background-color:#000000;
+                margin:0px;
+                padding:0px;
+                color:#CCCCCC;
+                font-family: Signika Negative, Asap, sans-serif;
+                font-weight: 300;
+                font-size: 17px;
+                line-height: 150%;
+            }
+            h1 {
+                font-family: Signika Negative, Asap, sans-serif;
+                font-weight: 300;
+                font-size:48px;
+                margin: 10px 0 0 0;
+                padding: 0;
+                line-height:115%;
+            }
+            a, a:hover, a:visited {
+                color:#71B200;
+            }
+            #footer {
+                position:fixed;
+                bottom:0px;
+                background-color:#555;
+                left:0px;
+                width:100%;
+                padding:10px 10px 10px 5px;
+                z-index:1000;
+            }
+            #fps {
+                float:right;
+                background-color:#CCC;
+                padding:6px;
+                margin-right:14px;
+                color:#CC0000;
+                border-radius: 5px;
+                border-color:#000000;
+                border-style:solid;
+                border-width:1px;
+                font-size:24px;
+            }
+            #start {
+                width:100px;
+            }
+            #footer form li {
+                display:block;
+                float:left;
+                margin:10px 5px 5px 5px;
+            }
+            #instructions {
+                width:70%;
+                margin-left:15%;
+                padding-top:50px;
+                padding-bottom:60px;
+                opacity:0;
+            }
+            #container {
+                position:absolute;
+                top:0;
+                left:0;
+                width:100%;
+                height:100%;
+                overflow:hidden;
+                z-index:-100;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="footer">
+            <div id="fps" style="background-color: rgb(204, 204, 204); color: rgb(204, 0, 0); border-color: rgb(0, 0, 0); border-width: 1px; padding-bottom: 6px; padding-top: 6px;">28.5 fps</div>
+            <form id="form">
+                <li>
+                    Dots:
+                    <select id="dotQuantity" size="1">
+                        <option value="1">1</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                        <option value="300">300</option>
+                        <option value="400">400</option>
+                        <option value="500" selected="selected">500</option>
+                        <option value="750">750</option>
+                        <option value="1000">1000</option>
+                        <option value="1250">1250</option>
+                        <option value="1500">1500</option>
+                        <option value="2000">2000</option>
+                        <option value="2500">2500</option>
+                        <option value="3000">3000</option>
+                    </select>
+                </li>
+                <li style="display:none">
+                    Duration:
+                    <select id="duration" size="1">
+                        <option value="0.5">0.5 seconds</option>
+                        <option value="0.75" selected="selected">0.75 seconds</option>
+                        <option value="1">1 second</option>
+                        <option value="5">5 seconds</option>
+                    </select>
+                </li>
+                <li>
+                    Engine:
+                    <select id="engine" size="1">
+                        <option value="jquery">jQuery 3</option>
+                        <option value="gsap">GSAP</option>
+                        <option value="jqueryGSAP">jquery.gsap.js plugin</option>
+                        <option value="anime">anime</option>
+                        <option value="mootools">MooTools</option>
+                        <option value="dojo">Dojo</option>
+                        <option value="tweenjs">TweenJS</option>
+                        <option value="webanimations" class="webanimations">Web Animations</option>
+                        <option value="zepto">Zepto</option>
+                        <option value="velocity" selected="selected">Velocity</option>
+                        <option value="gsap">----------</option>
+                        <option value="gsaptransform">GSAP (translate/scale)</option>
+                        <option value="zeptotransform">Zepto (translate/scale)</option>
+                        <option value="animetransform">anime (translate/scale)</option>
+                        <option value="webanimationstransform" class="webanimations">Web Animations (translate/scale)</option>
+                    </select>
+                </li>
+                <li>
+                    <button id="start" type="button" value="test" style="line-height:150%;"> START </button>
+                </li>
+            </form>
+        </div>
+
+        <div id="instructions" style="opacity: 1; visibility: inherit;">
+            <h1>HTML5 Animation Speed Test</h1>
+            <p>Stress test the performance of various common JavaScript libraries and
+                compare them with GSAP (<a href="http://greensock.com/gsap-js/">GreenSock Animation Platform</a>). This test does <strong>not</strong> use a canvas element
+                (although it certainly could) - it simply animates the left, top,
+                width, and height css properties of standard image elements. There are also versions of the GSAP, Zepto, anime, and Web Animations tests that use transforms ("translate/scale") instead so that you can compare performance.
+                The goal was to be extremely fair and use the same code for everything except the actual animation. No tricks.
+                Look at the source for yourself or run your own tests to confirm.</p>
+            <p>Choose the number of dots you'd like to animate and then choose the
+                engine and click the "START" button below. Watch the <strong>fps</strong> in the lower right
+                (higher is better - it reflects how many times the main thread updated over the past 1 second).
+                As more dots are animated, you'll see the performance gap widen. Try to push things until the fps drops below 30fps. When the
+                CPU isn't breaking a sweat, fps should hover around 100fps in most modern browsers.</p>
+            <p>Note: Zepto uses CSS3 transitions which won't work in some browsers (like IE9). Also beware that some browsers incorrectly fire requestAnimationFrame events even when the browser clearly isn't updating the screen and/or they handle JS in a different thread, thus 10fps transitions may inaccurately report in JS as running at 50fps. So focus on the actual animation of the starfield and how smooth it is (or isn't). </p>
+        </div>
+
+        <div id="container"></div>
+
+        <script src="../velocity.js"></script>
+        <!--<script src="https://cdn.jsdelivr.net/velocity/1.5.0/velocity.min.js"></script>-->
+        <script src="./GreenSock Animation Platform (GSAP) Speed Test_files/web-animations-basic.min.js.download"></script>
+        <script src="./GreenSock Animation Platform (GSAP) Speed Test_files/jquery-3.0.0.min.js.download" type="text/javascript"></script>
+        <script type="text/javascript" src="./GreenSock Animation Platform (GSAP) Speed Test_files/CSSPlugin.min.js.download"></script>
+        <script type="text/javascript" src="./GreenSock Animation Platform (GSAP) Speed Test_files/jquery.gsap.min.js.download"></script>
+        <script type="text/javascript" src="./GreenSock Animation Platform (GSAP) Speed Test_files/TweenLite.min.js.download"></script>
+        <script type="text/javascript" src="./GreenSock Animation Platform (GSAP) Speed Test_files/mootools-core-1.4.5-full-compat-yc.js.download"></script>
+        <script src="./GreenSock Animation Platform (GSAP) Speed Test_files/dojo.js.download"></script>
+        <script src="./GreenSock Animation Platform (GSAP) Speed Test_files/easing.js.download"></script>
+        <script src="./GreenSock Animation Platform (GSAP) Speed Test_files/easeljs-0.4.2.min.js.download"></script>
+        <script src="./GreenSock Animation Platform (GSAP) Speed Test_files/tweenjs-0.2.0.min.js.download"></script>
+        <script src="./GreenSock Animation Platform (GSAP) Speed Test_files/CSSPlugin.js.download"></script>
+        <script src="./GreenSock Animation Platform (GSAP) Speed Test_files/Ease.js.download"></script>
+        <script src="./GreenSock Animation Platform (GSAP) Speed Test_files/zepto.min.js.download"></script>
+        <script>define = null; //anime doesn't define itself properly unless we do this.</script>
+        <script src="./GreenSock Animation Platform (GSAP) Speed Test_files/anime.min.js.download"></script>
+        <script language="JavaScript" type="text/javascript">
+            jQuery(function() {
+
+                var fps = document.getElementById("fps"),
+                        button = document.getElementById("start"),
+                        dotQtyInput = document.getElementById("dotQuantity"),
+                        durInput = document.getElementById("duration"),
+                        engineInput = document.getElementById("engine"),
+                        instructions = document.getElementById("instructions"),
+                        container = document.getElementById("container"),
+                        ticker = TweenLite.ticker,
+                        inProgress = false,
+                        tests = {},
+                        size, centerX, centerY, dots, rawDots, currentTest, startTime, startFrame, prevUpdate, duration, startingCSS, fpsActive;
+
+                /**
+                 * The goal of this test is to compare how various animation engines perform under pressure, taking relatively common
+                 * animation tasks and running a lot of them at once to see raw performance. The goal is NOT to figure out the most
+                 * efficient way to move dots in a starfield pattern.
+                 *
+                 * The same code runs everything except the actual tweens themselves. Every test in the "test"
+                 * object has 4 properties:
+                 *
+                 *         - milliseconds [boolean] - true if the duration should be defined in milliseconds
+                 *
+                 *         - wrapDot [function] - when each dot <img> is created, it is passed to the wrapDot() method
+                 *                                and whatever is returned gets stored in the array of dots to tween. This
+                 *                                is useful to improve performance of things like jQuery because
+                 *                                instead of passing the dom element to the tween() method (which would require
+                 *                                jQuery to then query the dom and wrap the element in an engine-specific object
+                 *                                before calling animate() on it), a native object can be used. Basically it lets you
+                 *                                cache the dot's wrapper for better performance.
+                 *
+                 *         - tween [function] - This is the core of the whole test. tween() is called for each dot, and the dot is
+                 *                              passed as a parameter. The tween() function should set the dot's cssText to the
+                 *                              startingCSS value (which just places the dot in the middle of the screen and sets its
+                 *                              width/height to 1px) and then after a random delay between 0 and the duration of the tween,
+                 *                              it should tween the dot at a random angle, altering the left/top values accordingly as
+                 *                              well as the width/height to 32px. Then, after the tween is done, it should call the tween()
+                 *                              method again for that dot. So the same dot will just continuously tween outward from the
+                 *                              center at random angles and at random delay values.
+                 *
+                 *         - stop [function] - This function is called when the user stops the test. The dot is passed as a parameter.
+                 *                             The function should immediately stop/kill the tween(s) of that dot (or all dots - that's fine too).
+                 *
+                 * I don't claim to be an expert at the various other tweening engines out there, so if there are optimizations
+                 * that could be made to make them run better, please let me know. I tried to keep things as fair as possible.
+                 *
+                 * Also, if anyone knows how to make a more accurate fps counter that works well with transitions, let me know - currently
+                 * several browsers incorrectly dispatch requestAnimationFrame events even when the screen isn't being refreshed, giving
+                 * an artificially high frame rate readout. And some browers don't repaint the screen each time all the elements' styles
+                 * are updated, thus motion can appear a bit jerky even when the fps counter says you're getting a good frame rate.
+                 **/
+
+
+                //Velocity
+                tests.velocity = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        return [dot];
+                    },
+                    tween: function(dot) {
+                        //dot.style.position = "absolute";
+                        //"position:absolute; left:" + centerX + "px; top:" + centerY + "px; width:" + size + "; height:" + size + ";";
+                        dot[0].style.cssText = startingCSS;
+                        var angle = Math.random() * Math.PI * 2;
+                        Velocity(dot, {
+                            left: [Math.cos(angle) * radius + centerX, centerX],
+                            top: [Math.sin(angle) * radius + centerY, centerY],
+                            width: ["32px", size],
+                            height: ["32px", size]
+                        }, {
+                            duration: duration,
+                            delay: Math.random() * duration,
+                            easing: "easeInCubic",
+                            complete: tests.velocity.tween
+                        });
+                    },
+                    stop: function(dot) {
+                        Velocity(dot, "stop");
+                    },
+                    nativeSize: false
+                };
+
+                //jQuery
+                tests.jquery = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        return jQuery(dot); //wrap the dot in a jQuery object in order to perform better (that way, we don't need to query the dom each time we tween - we can just call animate() directly on the jQuery object)
+                    },
+                    tween: function(dot) {
+                        dot[0].style.cssText = startingCSS;
+                        var angle = Math.random() * Math.PI * 2;
+                        dot.delay(Math.random() * duration).animate({
+                            left: Math.cos(angle) * radius + centerX,
+                            top: Math.sin(angle) * radius + centerY,
+                            width: 32,
+                            height: 32}, duration, "cubicIn", function() {
+                            tests.jquery.tween(dot)
+                        });
+                    },
+                    stop: function(dot) {
+                        dot.stop(true);
+                    },
+                    nativeSize: false
+                };
+
+                //jquery.gsap.js plugin
+                tests.jqueryGSAP = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        return jQuery(dot); //wrap the dot in a jQuery object in order to perform better (that way, we don't need to query the dom each time we tween - we can just call animate() directly on the jQuery object)
+                    },
+                    tween: function(dot) {
+                        dot[0].style.cssText = startingCSS;
+                        var angle = Math.random() * Math.PI * 2;
+                        dot.animate({left: Math.cos(angle) * radius + centerX,
+                            top: Math.sin(angle) * radius + centerY,
+                            width: 32,
+                            height: 32,
+                            delay: Math.random() * duration / 1000}, duration, "easeInCubic", function() {
+                            tests.jqueryGSAP.tween(dot)
+                        });
+                    },
+                    stop: function(dot) {
+                        dot.stop(true);
+                    },
+                    nativeSize: false
+                };
+
+
+                //GSAP (TweenLite) top/left/width/height
+                tests.gsap = {
+                    milliseconds: false,
+                    wrapDot: function(dot) {
+                        return dot; //no wrapping necessary
+                    },
+                    tween: function(dot) {
+                        var angle = Math.random() * Math.PI * 2;
+                        dot.style.cssText = startingCSS;
+                        TweenLite.to(dot, duration, {css: {left: Math.cos(angle) * radius + centerX,
+                                top: Math.sin(angle) * radius + centerY,
+                                width: 32,
+                                height: 32},
+                            delay: Math.random() * duration,
+                            ease: Cubic.easeIn,
+                            overwrite: "none",
+                            onComplete: tests.gsap.tween,
+                            onCompleteParams: [dot]});
+                    },
+                    stop: function(dot) {
+                        TweenLite.killTweensOf(dot);
+                    },
+                    nativeSize: false
+                };
+
+                //GSAP (TweenLite) translateX/translateY/scale
+                tests.gsaptransform = {
+                    milliseconds: false,
+                    wrapDot: function(dot) {
+                        return dot; //no wrapping necessary
+                    },
+                    tween: function(dot) {
+                        TweenLite.set(dot, {css: {x: 0, y: 0, scale: 0.06, force3d: true}});
+                        var angle = Math.random() * Math.PI * 2;
+                        TweenLite.to(dot, duration, {css: {x: (Math.cos(angle) * radius),
+                                y: (Math.sin(angle) * radius),
+                                scaleX: 2,
+                                scaleY: 2},
+                            delay: Math.random() * duration,
+                            ease: Cubic.easeIn,
+                            overwrite: "none",
+                            onComplete: tests.gsaptransform.tween,
+                            onCompleteParams: [dot]});
+                    },
+                    stop: function(dot) {
+                        TweenLite.killTweensOf(dot);
+                    },
+                    nativeSize: true
+                };
+
+
+                //Anime top/left/width/height
+                tests.anime = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        return dot; //no wrapping necessary
+                    },
+                    tween: function(dot) {
+                        var angle = Math.random() * Math.PI * 2;
+                        dot.style.cssText = startingCSS;
+                        anime({targets: dot, duration: duration,
+                            left: Math.cos(angle) * radius + centerX,
+                            top: Math.sin(angle) * radius + centerY,
+                            width: 32,
+                            height: 32,
+                            delay: Math.random() * duration,
+                            easing: "easeInCubic",
+                            complete: function() {
+                                tests.anime.tween(dot);
+                            }});
+                    },
+                    stop: function(dot) {
+                        anime.remove(dot);
+                    },
+                    nativeSize: false
+                };
+
+                //Anime transforms
+                tests.animetransform = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        return dot; //no wrapping necessary
+                    },
+                    tween: function(dot) {
+                        dot.style.cssText = "position:absolute; top:" + centerY + "px; left:" + centerX + "px; transform: none;";
+                        //anime({targets:dot, position:"absolute", top:centerY, left:centerX, translateX:0, translateY:0, scale:1, duration:0}); //zero-duration animations don't seem to work. Had to set cssText instead (above).
+                        var angle = Math.random() * Math.PI * 2;
+                        anime({targets: dot, duration: duration,
+                            translateX: (Math.cos(angle) * radius),
+                            translateY: (Math.sin(angle) * radius),
+                            scale: 32,
+                            delay: Math.random() * duration,
+                            easing: "easeInCubic",
+                            complete: function() {
+                                tests.animetransform.tween(dot);
+                            }});
+                    },
+                    stop: function(dot) {
+                        anime.remove(dot);
+                    },
+                    nativeSize: false
+                };
+
+
+                //Web Animations
+                tests.webanimations = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        return dot; //no wrapping necessary
+                    },
+                    tween: function(dot) {
+                        dot.style.cssText = startingCSS;
+                        var angle = Math.random() * Math.PI * 2,
+                                delay = Math.random() * duration,
+                                anim = dot.anim = dot.animate([{left: centerX + "px", top: centerY + "px", width: "1px", height: "1px"}, {
+                                        left: (Math.cos(angle) * radius + centerX) + "px",
+                                        top: (Math.sin(angle) * radius + centerY) + "px",
+                                        width: "32px",
+                                        height: "32px"
+                                    }], {duration: duration, delay: delay, fill: "forwards", easing: "cubic-bezier(0.550, 0.055, 0.675, 0.190)"});
+                        //anim.play();
+                        anim.onfinish = function() {
+                            tests.webanimations.tween(dot);
+                        };
+                    },
+                    stop: function(dot) {
+                        dot.anim.onfinish = null; //otherwise it'll call the onfinish when cancelled, and the loop will continue.
+                        dot.anim.cancel();
+                    },
+                    nativeSize: false
+                };
+
+                //Web Animations (transforms)
+                tests.webanimationstransform = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        return dot; //no wrapping necessary
+                    },
+                    tween: function(dot) {
+                        dot.style.cssText = startingCSS;
+                        var angle = Math.random() * Math.PI * 2,
+                                delay = Math.random() * duration,
+                                anim = dot.anim = dot.animate([{transform: "translate(0px, 0px) scale(1)", left: centerX + "px", top: centerY + "px"}, {
+                                        transform: "translate(" + (Math.cos(angle) * radius) + "px, " + (Math.sin(angle) * radius) + "px) scale(32)", left: centerX + "px", top: centerY + "px"
+                                    }], {duration: duration, delay: delay, fill: "forwards", easing: "cubic-bezier(0.550, 0.055, 0.675, 0.190)"});
+                        //anim.play();
+                        anim.onfinish = function() {
+                            tests.webanimationstransform.tween(dot);
+                        };
+                    },
+                    stop: function(dot) {
+                        dot.anim.onfinish = null; //otherwise it'll call the onfinish when cancelled, and the loop will continue.
+                        dot.anim.cancel();
+                    },
+                    nativeSize: false
+                };
+
+                //MooTools
+                tests.mootools = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        var m = new Fx.Morph(dot, {duration: duration, transition: Fx.Transitions.Cubic.easeIn, onComplete: function() {
+                                tests.mootools.tween(m);
+                            }});
+                        return m;
+                    },
+                    tween: function(dot) {
+                        dot.element.style.cssText = startingCSS;
+                        var angle = Math.random() * Math.PI * 2;
+                        setTimeout(function() {
+                            if (inProgress)
+                                dot.start({//I couldn't find a way to delay a Morph, so setTimeout was my only option. If anyone knows a better way, please let me know.
+                                    left: Math.cos(angle) * radius + centerX + "px",
+                                    top: Math.sin(angle) * radius + centerY + "px",
+                                    width: "32px",
+                                    height: "32px"});
+                        }, Math.random() * duration);
+                    },
+                    stop: function(dot) {
+                        dot.cancel();
+                    },
+                    nativeSize: false
+                };
+
+
+                //Dojo
+                tests.dojo = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        return {dot: dot, anim: null}; //must record the animation instance so that we can stop() it later
+                    },
+                    tween: function(dot) {
+                        dot.dot.style.cssText = startingCSS;
+                        var angle = Math.random() * Math.PI * 2;
+                        dot.anim = dojo.animateProperty({node: dot.dot,
+                            properties: {
+                                left: Math.cos(angle) * radius + centerX,
+                                top: Math.sin(angle) * radius + centerY,
+                                width: 32,
+                                height: 32},
+                            easing: dojo.fx.easing.cubicIn,
+                            delay: Math.random() * duration,
+                            duration: duration}).play();
+                        dot.anim.onEnd = function() {
+                            tests.dojo.tween(dot);
+                        }
+                    },
+                    stop: function(dot) {
+                        dot.anim.stop();
+                    },
+                    nativeSize: false
+                };
+
+                //TweenJS
+                CSSPlugin.install();
+                Ticker.setFPS(100); //ensures that TweenJS refreshes at the same rate as GSAP for maximum smoothness
+                tests.tweenjs = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        return dot; //no wrapping necessary
+                    },
+                    tween: function(dot) {
+                        dot.style.cssText = startingCSS;
+                        var angle = Math.random() * Math.PI * 2;
+                        Tween.get(dot).wait(Math.random() * duration).to({
+                            left: Math.cos(angle) * radius + centerX,
+                            top: Math.sin(angle) * radius + centerY,
+                            width: 32,
+                            height: 32
+                        }, duration, Ease.cubicIn).call(tests.tweenjs.tween, [dot]);
+                    },
+                    stop: function(dot) {
+                        Tween.removeTweens(dot);
+                    },
+                    nativeSize: false
+                };
+
+                //Zepto using top/left/width/height (css transitions)
+                tests.zepto = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        return Zepto(dot); //wrap the dot in a jQuery object in order to perform better (that way, we don't need to query the dom each time we tween - we can just call animate() directly on the jQuery object)
+                    },
+                    tween: function(dot) {
+                        dot[0].style.cssText = startingCSS;
+                        //Zepto's delay feature performs TERRIBLY under pressure, so we use a setTimeout() instead to improve performance.
+                        setTimeout(function() {
+                            if (!dot.isKilled) { //Zepto doesn't have a feature that allows us to kill tweens, so we simply set our own "isKilled" property to true when the tween is supposed to be killed and then stop the recursion thereafter which gives us a somewhat similar effect.
+                                var angle = Math.random() * Math.PI * 2;
+                                dot.animate({left: Math.cos(angle) * radius + centerX,
+                                    top: Math.sin(angle) * radius + centerY,
+                                    width: 32,
+                                    height: 32}, duration, "cubic-bezier(0.550, 0.055, 0.675, 0.190)", function() {
+                                    tests.zepto.tween(dot)
+                                });
+                            }
+                        }, duration * Math.random());
+                    },
+                    stop: function(dot) {
+                        dot.isKilled = true;
+                    },
+                    nativeSize: false
+                };
+
+                //Zepto using translateX/translateY/scale (css transitions)
+                tests.zeptotransform = {
+                    milliseconds: true,
+                    wrapDot: function(dot) {
+                        return Zepto(dot); //wrap the dot in a jQuery object in order to perform better (that way, we don't need to query the dom each time we tween - we can just call animate() directly on the jQuery object)
+                    },
+                    tween: function(dot) {
+                        //I couldn't just set the css() reliably with Zepto (it failed), so I was forced to use a zero-duration animate() call. It's fair, though, because we actually do a zero-duration tween for TweenLite too.
+                        dot.animate({translateX: "0px", translateY: "0px", rotateY: "0rad", rotateX: "0rad", scale: "0.06,0.06"}, 0);
+                        //Zepto's delay feature performs TERRIBLY under pressure, so we use a setTimeout() instead to improve performance.
+                        setTimeout(function() {
+                            if (!dot.isKilled) { //Zepto doesn't have a feature that allows us to kill tweens, so we simply set our own "isKilled" property to true when the tween is supposed to be killed and then stop the recursion thereafter which gives us a somewhat similar effect.
+                                var angle = Math.random() * Math.PI * 2;
+                                dot.animate({translateX: (Math.cos(angle) * radius) + "px",
+                                    translateY: (Math.sin(angle) * radius) + "px",
+                                    scale: "2,2",
+                                    delay: duration * Math.random()}, duration, "cubic-bezier(0.550, 0.055, 0.675, 0.190)", function() {
+                                    tests.zeptotransform.tween(dot)
+                                });
+                            }
+                        }, duration * Math.random());
+                    },
+                    stop: function(dot) {
+                        dot.isKilled = true;
+                    },
+                    nativeSize: true
+                };
+
+
+
+                function toggleTest() {
+                    inProgress = !inProgress;
+                    var i;
+                    if (inProgress) {
+
+                        currentTest = tests[engineInput.value];
+                        size = (currentTest.nativeSize ? "16px" : "1px");
+                        centerX = jQuery(window).width() / 2;
+                        centerY = (jQuery(window).height() / 2) - 30;
+                        startingCSS = "position:absolute; left:" + centerX + "px; top:" + centerY + "px; width:" + size + "; height:" + size + ";";
+                        radius = Math.sqrt(centerX * centerX + centerY * centerY);
+                        duration = Number(durInput.value);
+                        if (currentTest.milliseconds) {
+                            duration *= 1000;
+                        }
+
+                        if (jQuery.gsap) {
+                            jQuery.gsap.enabled((engineInput.value === "jqueryGSAP"));
+                        }
+
+                        createDots();
+                        i = dots.length;
+                        while (--i > -1) {
+                            currentTest.tween(dots[i]);
+                        }
+
+                        startTime = prevUpdate = ticker.time;
+                        startFrame = ticker.frame;
+                        //ticker.addEventListener("tick", updateFPS, this);
+
+                        dotQtyInput.disabled = engineInput.disabled = true;
+
+                        //adjust the fps style and fade out the instructions
+                        button.innerHTML = " STOP ";
+                        fps.innerHTML = "-- fps";
+                        fps.style.backgroundColor = "#FFFFFF";
+                        fps.style.borderColor = fps.style.color = "#FF0000";
+                        fps.style.borderWidth = "3px";
+                        fps.style.paddingTop = fps.style.paddingBottom = "4px";
+                        TweenLite.to(instructions, 0.7, {css: {autoAlpha: 0}, overwrite: "all"});
+                        TweenLite.delayedCall(1, activateFPS); //wait a little bit to allow the dots to fill the screen before starting to report the FPS
+
+                    } else {
+                        //adjust the fps style and fade in the instructions
+                        //ticker.removeEventListener("tick", updateFPS);
+                        fps.style.backgroundColor = "#CCCCCC";
+                        fps.style.color = "#CC0000";
+                        fps.style.borderColor = "#000000";
+                        fps.style.borderWidth = "1px";
+                        fps.style.paddingTop = fps.style.paddingBottom = "6px";
+                        button.innerHTML = " START ";
+                        TweenLite.to(instructions, 0.7, {css: {autoAlpha: 1}, delay: 0.2});
+
+                        dotQtyInput.disabled = engineInput.disabled = false;
+
+                        //stop the tweens and remove the dots.
+                        i = dots.length;
+                        while (--i > -1) {
+                            currentTest.stop(dots[i]);
+                            container.removeChild(rawDots[i]); //removes dot(s)
+                        }
+                        dots = null;
+                        rawDots = null;
+                        fpsActive = false;
+                        TweenLite.killTweensOf(activateFPS);
+                        clearInterval(fpsIntervalID);
+                    }
+                }
+
+                function createDots() {
+                    var i = Number(dotQtyInput.value), dot;
+                    dots = [];
+                    rawDots = [];
+                    while (--i > -1) {
+                        dot = document.createElement("img");
+                        dot.src = "img/dot.png";
+                        dot.width = 1;
+                        dot.height = 1;
+                        dot.id = "dot" + i;
+                        dot.style.cssText = startingCSS;
+                        container.appendChild(dot);
+                        rawDots.push(dot);
+                        dots.push(currentTest.wrapDot(dot));
+                    }
+                }
+
+                jQuery("#start").click(toggleTest);
+                jQuery("#dotQuantity,#duration,#engine").change(function(e) {
+                    if (inProgress) {
+                        toggleTest();
+                        toggleTest();
+                    }
+                });
+                jQuery.easing.cubicIn = $.easing.cubicIn = function(p, n, firstNum, diff) { //we need to add the standard CubicIn ease to jQuery
+                    return firstNum + p * p * p * diff;
+                }
+                //jQuery.fx.interval = 10; //ensures that jQuery refreshes at roughly 100fps like GSAP, TweenJS, and most of the others to be more even/fair.
+                TweenLite.to(instructions, 0, {css: {opacity: 0}, immediateRender: true});
+                TweenLite.to(instructions, 0.7, {css: {opacity: 1}, delay: 0.25});
+
+                if (typeof (document.getElementById("start").animate) !== "function") { //if the browser doesn't support WAAPI natively, remove it from the list.
+                    jQuery(".webanimations").remove();
+                }
+
+                function activateFPS() {
+                    fpsActive = true;
+                    frames = 0;
+                    lastUpdate = getTime();
+                    fpsIntervalID = setInterval(updateFPS, 10);
+                }
+
+                var getTime = Date.now || function() {
+                    return new Date().getTime();
+                },
+                        lastUpdate, frames, fpsIntervalID;
+
+                function updateFPS() {
+                    frames++;
+                    var elapsed = getTime() - lastUpdate;
+                    if (fpsActive && elapsed > 1000) {
+                        fps.innerHTML = Number(frames / elapsed * 1000).toFixed(1) + " fps";
+                        lastUpdate += elapsed;
+                        frames = 0;
+                    }
+                }
+
+
+            });
+
+        </script>
+
+
+    </body></html>
