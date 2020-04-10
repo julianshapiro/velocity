@@ -11,13 +11,13 @@
  */
 
 // Typedefs
-import {HTMLorSVGElement, VelocityNormalizationsFn} from "../../../velocity.d";
+import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../../velocity.d";
 
 // Project
-import {isFunction, isString} from "../../types";
-import {registerAction} from "../actions/actions";
-import {Data} from "../data";
-import {ClassConstructor, constructorCache, constructors, NoCacheNormalizations, Normalizations, NormalizationUnits} from "./normalizationsObject";
+import { isFunction, isString } from "../../types";
+import { registerAction } from "../actions/actions";
+import { Data } from "../data";
+import { ClassConstructor, constructorCache, constructors, NoCacheNormalizations, Normalizations, NormalizationUnits } from "./normalizationsObject";
 
 /**
  * Used to register a normalization. This should never be called by users
@@ -60,7 +60,7 @@ export function registerNormalization(
 				index = constructors.indexOf(constructorCache.get(constructor));
 			} else {
 				for (const property in window) {
-					if (window[property] === constructor) {
+					if ((window[property] as any) === constructor) {
 						index = constructors.indexOf(property);
 						if (index < 0) {
 							index = constructors.push(property) - 1;
@@ -105,7 +105,7 @@ export function hasNormalization(args?: [ClassConstructor | string, string]): bo
 			index = constructors.indexOf(constructorCache.get(constructor));
 		} else {
 			for (const property in window) {
-				if (window[property] === constructor) {
+				if ((window[property] as any) === constructor) {
 					index = constructors.indexOf(property);
 					break;
 				}

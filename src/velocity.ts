@@ -13,20 +13,20 @@ import {
 } from "./../velocity.d";
 
 // Project
-import {defineProperty} from "./utility";
-import {Actions as ActionsObject} from "./Velocity/actions/actions";
-import {defaults as DefaultObject} from "./Velocity/defaults";
-import {Easings as EasingsObject} from "./Velocity/easing/easings";
-import {patch as patchFn} from "./Velocity/patch";
-import {SequencesObject} from "./Velocity/sequencesObject";
-import {State as StateObject} from "./Velocity/state";
-import {Velocity as VelocityFn} from "./velocityFn";
+import { defineProperty } from "./utility";
+import { Actions as ActionsObject } from "./Velocity/actions/actions";
+import { defaults as DefaultObject } from "./Velocity/defaults";
+import { Easings as EasingsObject } from "./Velocity/easing/easings";
+import { patch as patchFn } from "./Velocity/patch";
+import { SequencesObject } from "./Velocity/sequencesObject";
+import { State as StateObject } from "./Velocity/state";
+import { Velocity as VelocityFn } from "./velocityFn";
 
 // Build the entire library, even optional bits.
 import "./Velocity/_all";
 
 // Constants
-import {VERSION} from "../version";
+import { VERSION } from "../version";
 const Velocity: VelocityPublic = VelocityFn as any;
 
 /**
@@ -40,17 +40,17 @@ namespace VelocityStatic {
 	 * All external method calls should be using actions rather than sub-calls
 	 * of Velocity itself.
 	 */
-	export const Actions: {[name: string]: VelocityActionFn} = ActionsObject;
+	export const Actions: { [name: string]: VelocityActionFn } = ActionsObject;
 
 	/**
 	 * Our known easing functions.
 	 */
-	export const Easings: {[name: string]: VelocityEasingFn} = EasingsObject;
+	export const Easings: { [name: string]: VelocityEasingFn } = EasingsObject;
 
 	/**
 	 * The currently registered sequences.
 	 */
-	export const Sequences: {[name: string]: SequenceList} = SequencesObject;
+	export const Sequences: { [name: string]: SequenceList } = SequencesObject;
 
 	/**
 	 * Current internal state of Velocity.
@@ -60,7 +60,7 @@ namespace VelocityStatic {
 	/**
 	 * Velocity option defaults, which can be overriden by the user.
 	 */
-	export const defaults: StrictVelocityOptions & {reset?: () => void} = DefaultObject as any;
+	export const defaults: StrictVelocityOptions & { reset?: () => void } = DefaultObject as any;
 
 	/**
 	 * Used to patch any object to allow Velocity chaining. In order to chain an
@@ -144,8 +144,8 @@ if (window) {
 	 * both act on wrapped DOM elements and stand alone for targeting raw DOM
 	 * elements.
 	 */
-	const jQuery: {fn: any} = (window as any).jQuery,
-		Zepto: {fn: any} = (window as any).Zepto;
+	const jQuery: { fn: any } = (window as any).jQuery,
+		Zepto: { fn: any } = (window as any).Zepto;
 
 	patchFn(window, true);
 	patchFn(Element && Element.prototype);
@@ -170,7 +170,7 @@ for (const property in VelocityStatic) {
 						return VelocityStatic[property];
 					},
 					set(value) {
-						VelocityStatic[property] = value;
+						(VelocityStatic[property] as any) = value;
 					},
 				}, true);
 				break;

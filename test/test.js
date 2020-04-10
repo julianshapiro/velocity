@@ -94,7 +94,11 @@
 	        result = void 0;
 	    return function () {
 	        if (!done) {
-	            result = func.apply(this, arguments);
+	            for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+	                args[_key] = arguments[_key];
+	            }
+
+	            result = func.apply(this, args);
 	            func = done = true; // Don't care about type, just let the GC collect if possible
 	        }
 	        return result;
