@@ -7,10 +7,10 @@
  */
 
 // Typedefs
-import {VelocityEasingFn} from "../../../velocity.d";
+import { VelocityEasingFn } from "../../../velocity.d";
 
 // Project
-import {registerEasing} from "./easings";
+import { registerEasing } from "./easings";
 
 /**
  * Fix to a range of <code>0 <= num <= 1</code>.
@@ -39,7 +39,7 @@ function getSlope(aT, aA1, aA2) {
 	return 3 * A(aA1, aA2) * aT * aT + 2 * B(aA1, aA2) * aT + C(aA1);
 }
 
-export function generateBezier(mX1: number, mY1: number, mX2: number, mY2: number): VelocityEasingFn {
+export function generateBezier(...args: [number, number, number, number]): VelocityEasingFn {
 	const NEWTON_ITERATIONS = 4,
 		NEWTON_MIN_SLOPE = 0.001,
 		SUBDIVISION_PRECISION = 0.0000001,
@@ -48,21 +48,23 @@ export function generateBezier(mX1: number, mY1: number, mX2: number, mY2: numbe
 		kSampleStepSize = 1 / (kSplineTableSize - 1),
 		float32ArraySupported = "Float32Array" in window;
 
-	/* Must contain four arguments. */
-	if (arguments.length !== 4) {
+	/* Must contain four args. */
+	if (args.length !== 4) {
 		return;
 	}
 
-	/* Arguments must be numbers. */
+	/* Args must be numbers. */
 	for (let i = 0; i < 4; ++i) {
-		if (typeof arguments[i] !== "number" || isNaN(arguments[i]) || !isFinite(arguments[i])) {
+		if (typeof args[i] !== "number" || isNaN(args[i]) || !isFinite(args[i])) {
 			return;
 		}
 	}
 
 	/* X values must be in the [0, 1] range. */
-	mX1 = fixRange(mX1);
-	mX2 = fixRange(mX2);
+	const mX1 = fixRange(args[0]);
+	const mY1 = args[1];
+	const mX2 = fixRange(args[2]);
+	const mY2 = args[3];
 
 	const mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
 
@@ -155,7 +157,7 @@ export function generateBezier(mX1: number, mY1: number, mX2: number, mY2: numbe
 		};
 
 	(f as any).getControlPoints = () => {
-		return [{x: mX1, y: mY1}, {x: mX2, y: mY2}];
+		return [{ x: mX1, y: mY1 }, { x: mX2, y: mY2 }];
 	};
 	f.toString = () => {
 		return str;

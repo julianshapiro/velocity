@@ -6,7 +6,7 @@
 
 import "qunit";
 
-import Velocity, {ElementData, VelocityOptions, VelocityProperties} from "velocity-animate";
+import Velocity, { ElementData, VelocityOptions, VelocityProperties } from "velocity-animate";
 
 declare global {
 	interface QUnit {
@@ -78,7 +78,7 @@ let asyncCount = 0;
 
 QUnit.config.reorder = false;
 
-export function applyStartValues(element: HTMLElement, startValues: {[name: string]: string}) {
+export function applyStartValues(element: HTMLElement, startValues: { [name: string]: string }) {
 	$.each(startValues, (property, startValue) => {
 		element.style[property] = startValue;
 	});
@@ -96,7 +96,7 @@ export function getPropertyValue(element: HTMLElement, property: string): string
 	return Velocity(element, "style", property);
 }
 
-export function getTarget(startValues?: {[name: string]: string}): HTMLDivElement {
+export function getTarget(startValues?: { [name: string]: string }): HTMLDivElement {
 	const div = document.createElement("div") as HTMLDivElement;
 
 	div.className = "target";
@@ -119,9 +119,9 @@ export function once(func): typeof func {
 	let done: boolean,
 		result: any;
 
-	return function(this: any) {
+	return function(this: any, ...args: any[]) {
 		if (!done) {
-			result = func.apply(this, arguments);
+			result = func.apply(this, args);
 			func = done = true; // Don't care about type, just let the GC collect if possible
 		}
 

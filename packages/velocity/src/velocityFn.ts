@@ -14,29 +14,29 @@ import {
 } from "./../velocity.d";
 
 // Project
-import {isBoolean, isFunction, isNode, isNumber, isPlainObject, isString, isVelocityResult, isWrapped} from "./types";
-import {cloneArray, defineProperty, getValue} from "./utility";
-import {Data} from "./Velocity/data";
+import { isBoolean, isFunction, isNode, isNumber, isPlainObject, isString, isVelocityResult, isWrapped } from "./types";
+import { cloneArray, defineProperty, getValue } from "./utility";
+import { Data } from "./Velocity/data";
 import {
 	validateBegin, validateComplete, validateDelay, validateDuration, validateEasing,
 	validateLoop, validateProgress, validateQueue, validateRepeat, validateSpeed, validateSync,
 } from "./Velocity/options";
-import {patch as patchFn} from "./Velocity/patch";
-import {queue} from "./Velocity/queue";
-import {expandSequence} from "./Velocity/sequences";
-import {tick} from "./Velocity/tick";
-import {expandProperties} from "./Velocity/tweens";
+import { patch as patchFn } from "./Velocity/patch";
+import { queue } from "./Velocity/queue";
+import { expandSequence } from "./Velocity/sequences";
+import { tick } from "./Velocity/tick";
+import { expandProperties } from "./Velocity/tweens";
 
-import {Actions as ActionsObject} from "./Velocity/actions/actions";
-import {defaults as DefaultObject} from "./Velocity/defaults";
-import {SequencesObject} from "./Velocity/sequencesObject";
-import {State as StateObject} from "./Velocity/state";
+import { Actions as ActionsObject } from "./Velocity/actions/actions";
+import { defaults as DefaultObject } from "./Velocity/defaults";
+import { SequencesObject } from "./Velocity/sequencesObject";
+import { State as StateObject } from "./Velocity/state";
 
 let globalPromise: PromiseConstructor;
 
 try {
 	globalPromise = Promise;
-} catch {/**/}
+} catch {/**/ }
 
 const noPromiseOption = ", if that is deliberate then pass `promiseRejectEmpty:false` as an option";
 
@@ -68,16 +68,12 @@ export function Velocity(this: VelocityElements, propertyMap: string | Propertie
 export function Velocity(this: VelocityElements, propertyMap: string | Properties<VelocityProperty>, easing?: string | number[], complete?: () => void): VelocityResult;
 export function Velocity(this: VelocityElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
 /* tslint:enable:max-line-length */
-export function Velocity(this: VelocityElements | void, ...argsList: any[]): VelocityResult {
+export function Velocity(this: VelocityElements | void, ...args: any[]): VelocityResult {
 	const
 		/**
 		 * A shortcut to the default options.
 		 */
 		defaults = DefaultObject,
-		/**
-		 * Shortcut to arguments for file size.
-		 */
-		args = arguments,
 		/**
 		 * Cache of the first argument - this is used often enough to be saved.
 		 */
@@ -134,7 +130,7 @@ export function Velocity(this: VelocityElements | void, ...argsList: any[]): Vel
 		// Used when there was an issue with one or more of the Velocity arguments
 		rejecter: (reason: any) => void;
 
-	//console.log(`Velocity`, _arguments)
+	//console.log(`Velocity`, args)
 	// First get the elements, and the animations connected to the last call if
 	// this is chained.
 	// TODO: Clean this up a bit
