@@ -7,7 +7,7 @@
  */
 
 // Typedefs
-import { AnimationCall, AnimationFlags, TweenStep } from "../../velocity";
+import { AnimationCall, AnimationFlags, TweenStep } from "../velocity";
 
 // Project
 import { now } from "../utility";
@@ -27,11 +27,11 @@ import { validateTweens } from "./tweens";
  * benefit from JIT compiling while still having a try/catch block.
  */
 export function beginCall(activeCall: AnimationCall) {
-	const callback = activeCall.begin || activeCall.options.begin;
+	const callback = activeCall.begin || activeCall.options!.begin;
 
 	if (callback) {
 		try {
-			const elements = activeCall.elements;
+			const elements = activeCall.elements!;
 
 			callback.call(elements, elements, activeCall);
 		} catch (error) {
@@ -47,19 +47,20 @@ export function beginCall(activeCall: AnimationCall) {
  * benefit from JIT compiling while still having a try/catch block.
  */
 function progressCall(activeCall: AnimationCall) {
-	const callback = activeCall.progress || activeCall.options.progress;
+	const callback = activeCall.progress || activeCall.options!.progress;
 
 	if (callback) {
 		try {
-			const elements = activeCall.elements,
-				percentComplete = activeCall.percentComplete,
-				options = activeCall.options,
-				tweenValue = activeCall.tween;
+			const elements = activeCall.elements!;
+			const percentComplete = activeCall.percentComplete!;
+			const options = activeCall.options!;
+			const tweenValue = activeCall.tween;
+			const duration = activeCall.duration ?? options.duration ?? defaults.duration;
 
 			callback.call(elements,
 				elements,
 				percentComplete,
-				Math.max(0, activeCall.timeStart + (activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaults.duration) - lastTick),
+				Math.max(0, activeCall.timeStart! + duration - lastTick),
 				tweenValue !== undefined ? tweenValue : String(percentComplete * 100),
 				activeCall);
 		} catch (error) {
@@ -88,55 +89,55 @@ function asyncCallbacks() {
  Timing
  **************/
 
-const FRAME_TIME = 1000 / 60,
-	/**
-	 * Animations with a Complete callback.
-	 */
-	completed = new Set<AnimationCall>(),
-	/**
-	 * Animations with a Progress callback.
-	 */
-	progressed = new Set<AnimationCall>(),
-	/**
-	 * Shim for window.performance in case it doesn't exist
-	 */
-	performance = (() => {
-		const perf = window.performance || {} as Performance;
+const FRAME_TIME = 1000 / 60;
+/**
+ * Animations with a Complete callback.
+ */
+const completed = new Set<AnimationCall>();
+/**
+ * Animations with a Progress callback.
+ */
+const progressed = new Set<AnimationCall>();
+/**
+ * Shim for window.performance in case it doesn't exist
+ */
+const performance = (() => {
+	const perf = window.performance || {} as Performance;
 
-		if (typeof perf.now !== "function") {
-			const nowOffset = perf.timing && perf.timing.navigationStart ? perf.timing.navigationStart : now();
+	if (typeof perf.now !== "function") {
+		const nowOffset = perf.timing?.navigationStart ? perf.timing.navigationStart : now();
 
-			perf.now = () => {
-				return now() - nowOffset;
-			};
-		}
+		perf.now = () => {
+			return now() - nowOffset;
+		};
+	}
 
-		return perf;
-	})(),
-	/**
-	 * Proxy function for when rAF is not available.
-	 *
-	 * This should hopefully never be used as the browsers often throttle
-	 * this to less than one frame per second in the background, making it
-	 * completely unusable.
-	 */
-	rAFProxy = (callback: FrameRequestCallback) => {
-		return setTimeout(callback, Math.max(0, FRAME_TIME - (performance.now() - lastTick)));
-	},
-	/**
-	 * Either requestAnimationFrame, or a shim for it.
-	 */
-	rAFShim = window.requestAnimationFrame || rAFProxy;
+	return perf;
+})();
+/**
+ * Proxy function for when rAF is not available.
+ *
+ * This should hopefully never be used as the browsers often throttle
+ * this to less than one frame per second in the background, making it
+ * completely unusable.
+ */
+const rAFProxy = (callback: FrameRequestCallback) => {
+	return setTimeout(callback, Math.max(0, FRAME_TIME - (performance.now() - lastTick)));
+};
+/**
+ * Either requestAnimationFrame, or a shim for it.
+ */
+const rAFShim = window.requestAnimationFrame || rAFProxy;
 
 /**
  * Set if we are currently inside a tick() to prevent double-calling.
  */
-let ticking: boolean,
-	/**
-	 * A background WebWorker that sends us framerate messages when we're in
-	 * the background. Without this we cannot maintain frame accuracy.
-	 */
-	worker: Worker;
+let ticking: boolean;
+/**
+ * A background WebWorker that sends us framerate messages when we're in
+ * the background. Without this we cannot maintain frame accuracy.
+ */
+let worker: Worker;
 
 /**
  * The time that the last animation frame ran at. Set from tick(), and used
@@ -226,13 +227,13 @@ export function tick(timestamp?: number | boolean) {
 	 the first RAF tick pass so that elements being immediately consecutively animated -- instead of simultaneously animated
 	 by the same Velocity call -- are properly batched into the same initial RAF tick and consequently remain in sync thereafter. */
 	if (timestamp !== false) {
-		const timeCurrent = performance.now(),
-			deltaTime = lastTick ? timeCurrent - lastTick : FRAME_TIME,
-			defaultSpeed = defaults.speed,
-			defaultEasing = defaults.easing,
-			defaultDuration = defaults.duration;
-		let activeCall: AnimationCall,
-			nextCall: AnimationCall;
+		const timeCurrent = performance.now();
+		const deltaTime = lastTick ? timeCurrent - lastTick : FRAME_TIME;
+		const defaultSpeed = defaults.speed;
+		const defaultEasing = defaults.easing;
+		const defaultDuration = defaults.duration;
+		let activeCall: AnimationCall;
+		let nextCall: AnimationCall;
 
 		if (deltaTime >= defaults.minFrameTime || !lastTick) {
 			lastTick = timeCurrent;
@@ -246,9 +247,9 @@ export function tick(timestamp?: number | boolean) {
 				validateTweens(State.firstNew);
 			}
 			// Iterate through each active call.
-			for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = activeCall._next) {
-				const element = activeCall.element,
-					data = Data(element);
+			for (activeCall = State.first!; activeCall && activeCall !== State.firstNew; activeCall = activeCall._next!) {
+				const element = activeCall.element!;
+				const data = Data(element);
 
 				// Check to see if this element has been deleted midway
 				// through the animation. If it's gone then end this
@@ -259,9 +260,9 @@ export function tick(timestamp?: number | boolean) {
 					continue;
 				}
 				// Don't bother getting until we can use these.
-				const options = activeCall.options,
-					flags = activeCall._flags;
-				let timeStart = activeCall.timeStart;
+				const options = activeCall.options!;
+				const flags = activeCall._flags;
+				let timeStart = activeCall.timeStart!;
 
 				// If this is the first time that this call has been
 				// processed by tick() then we assign timeStart now so that
@@ -281,37 +282,37 @@ export function tick(timestamp?: number | boolean) {
 				if (flags & AnimationFlags.PAUSED) { // tslint:disable-line:no-bitwise
 					// Update the time start to accomodate the paused
 					// completion amount.
-					activeCall.timeStart += deltaTime;
+					activeCall.timeStart! += deltaTime;
 					continue;
 				}
 				// Check if this animation is ready - if it's synced then it
 				// needs to wait for all other animations in the sync
 				if (!(flags & AnimationFlags.READY)) { // tslint:disable-line:no-bitwise
 					activeCall._flags |= AnimationFlags.READY; // tslint:disable-line:no-bitwise
-					options._ready++;
+					options._ready!++;
 				}
 			}
 			// Need to split the loop, as ready sync animations must all get
 			// the same start time.
-			for (activeCall = State.first; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
+			for (activeCall = State.first!; activeCall && activeCall !== State.firstNew; activeCall = nextCall) {
 				const flags = activeCall._flags;
 
-				nextCall = activeCall._next;
+				nextCall = activeCall._next!;
 				if (!(flags & AnimationFlags.READY) || (flags & AnimationFlags.PAUSED)) { // tslint:disable-line:no-bitwise
 					continue;
 				}
-				const options = activeCall.options;
+				const options = activeCall.options!;
 
-				if ((flags & AnimationFlags.SYNC) && options._ready < options._total) { // tslint:disable-line:no-bitwise
-					activeCall.timeStart += deltaTime;
+				if ((flags & AnimationFlags.SYNC) && options._ready! < options._total!) { // tslint:disable-line:no-bitwise
+					activeCall.timeStart! += deltaTime;
 					continue;
 				}
-				const speed = activeCall.speed != null ? activeCall.speed : options.speed != null ? options.speed : defaultSpeed;
-				let timeStart = activeCall.timeStart;
+				const speed = activeCall.speed ?? options.speed ?? defaultSpeed;
+				let timeStart = activeCall.timeStart!;
 
 				// Don't bother getting until we can use these.
 				if (!(flags & AnimationFlags.STARTED)) { // tslint:disable-line:no-bitwise
-					const delay = activeCall.delay != null ? activeCall.delay : options.delay;
+					const delay = activeCall.delay ?? options.delay;
 
 					// Make sure anything we've delayed doesn't start
 					// animating yet, there might still be an active delay
@@ -326,7 +327,7 @@ export function tick(timestamp?: number | boolean) {
 					// The begin callback is fired once per call, not once
 					// per element, and is passed the full raw DOM element
 					// set as both its context and its first argument.
-					if (options._started++ === 0) {
+					if (options._started!++ === 0) {
 						options._first = activeCall;
 						if (options.begin) {
 							// Pass to an external fn with a try/catch block for optimisation
@@ -341,12 +342,12 @@ export function tick(timestamp?: number | boolean) {
 					// const delta = Math.min(deltaTime, timeCurrent - timeStart);
 					activeCall.timeStart = timeStart += Math.min(deltaTime, timeCurrent - timeStart) * (1 - speed);
 				}
-				const activeEasing = activeCall.easing != null ? activeCall.easing : options.easing != null ? options.easing : defaultEasing,
-					millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart,
-					duration = activeCall.duration != null ? activeCall.duration : options.duration != null ? options.duration : defaultDuration,
-					percentComplete = activeCall.percentComplete = Velocity.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1),
-					tweens = activeCall.tweens,
-					reverse = flags & AnimationFlags.REVERSE; // tslint:disable-line:no-bitwise
+				const activeEasing = activeCall.easing ?? options.easing ?? defaultEasing;
+				const millisecondsEllapsed = activeCall.ellapsedTime = timeCurrent - timeStart;
+				const duration = activeCall.duration ?? options.duration ?? defaultDuration;
+				const percentComplete = activeCall.percentComplete = Velocity.mock ? 1 : Math.min(millisecondsEllapsed / duration, 1);
+				const tweens = activeCall.tweens;
+				const reverse = flags & AnimationFlags.REVERSE; // tslint:disable-line:no-bitwise
 
 				if (activeCall.progress || (options._first === activeCall && options.progress)) {
 					progressed.add(activeCall);
@@ -357,26 +358,26 @@ export function tick(timestamp?: number | boolean) {
 				// tslint:disable-next-line:forin
 				for (const property in tweens) {
 					// For every element, iterate through each property.
-					const tween = tweens[property],
-						sequence = tween.sequence,
-						pattern = sequence.pattern;
-					let currentValue = "",
-						i = 0;
+					const tween = tweens[property];
+					const sequence = tween.sequence!;
+					const pattern = sequence.pattern;
+					let currentValue = "";
+					let i = 0;
 
 					if (pattern) {
-						const easingComplete = (tween.easing || activeEasing)(percentComplete, 0, 1, property);
+						const easingComplete = (tween.easing || activeEasing!)(percentComplete, 0, 1, property);
 						let best = 0;
 
 						for (let j = 0; j < sequence.length - 1; j++) {
-							if (sequence[j].percent < easingComplete) {
+							if (sequence[j].percent! < easingComplete) {
 								best = j;
 							}
 						}
-						const tweenFrom: TweenStep = sequence[best],
-							tweenTo: TweenStep = sequence[best + 1] || tweenFrom,
-							rawPercent = (percentComplete - tweenFrom.percent) / (tweenTo.percent - tweenFrom.percent),
-							tweenPercent = reverse ? 1 - rawPercent : rawPercent,
-							easing = tweenTo.easing || activeEasing || linearEasing;
+						const tweenFrom: TweenStep = sequence[best];
+						const tweenTo: TweenStep = sequence[best + 1] || tweenFrom;
+						const rawPercent = (percentComplete - tweenFrom.percent!) / (tweenTo.percent! - tweenFrom.percent!);
+						const tweenPercent = reverse ? 1 - rawPercent : rawPercent;
+						const easing = tweenTo.easing || activeEasing || linearEasing;
 
 						for (; i < pattern.length; i++) {
 							const startValue = tweenFrom[i];
@@ -401,7 +402,7 @@ export function tick(timestamp?: number | boolean) {
 								currentValue = removeNestedCalc(currentValue);
 							}
 							// TODO: To solve an IE<=8 positioning bug, the unit type must be dropped when setting a property value of 0 - add normalisations to legacy
-							setPropertyValue(activeCall.element, property, currentValue, tween.fn);
+							setPropertyValue(activeCall.element!, property, currentValue, tween.fn);
 						} else {
 							// Skip the fake 'tween' property as that is only
 							// passed into the progress callback.

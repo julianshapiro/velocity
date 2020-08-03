@@ -10,11 +10,11 @@
 import {
 	AnimationCall, AnimationFlags, HTMLorSVGElement, Properties, Sequence,
 	VelocityProperty, VelocityPropertyFn, VelocityPropertyValueFn, VelocityResult, VelocityTween,
-} from "../../velocity";
+} from "../velocity";
 
 // Project
 import { isFunction, isNumber, isString } from "../types";
-import { cloneArray, getValue } from "../utility";
+import { cloneArray } from "../utility";
 import Velocity from "../velocity";
 import { camelCase } from "./camelCase";
 import { fixColors } from "./css/fixColors";
@@ -26,30 +26,33 @@ import { getNormalization, getNormalizationUnit } from "./normalizations/normali
 import { validateEasing } from "./options";
 import { State } from "./state";
 
+type CommandType = {
+	[type: string]: (
+		value: any,
+		element: HTMLorSVGElement,
+		elements: VelocityResult,
+		elementArrayIndex: number,
+		propertyName: string,
+		tween: VelocityTween
+	) => string;
+};
+
 // Constants
-const rxHex = /^#([A-f\d]{3}){1,2}$/i,
-	commands: {
-		[type: string]: (
-			value: any,
-			element: HTMLorSVGElement,
-			elements: VelocityResult,
-			elementArrayIndex: number,
-			propertyName: string,
-			tween: VelocityTween) => string;
-	} = {
-		function: (value, element, elements, elementArrayIndex, propertyName, tween) => {
-			return (value as any as VelocityPropertyValueFn).call(element, elementArrayIndex, elements.length, propertyName);
-		},
-		number: (value, element, elements, elementArrayIndex, propertyName, tween) => {
-			return String(value) + getNormalizationUnit(tween.fn);
-		},
-		string: (value, element, elements, elementArrayIndex, propertyName, tween) => {
-			return fixColors(value);
-		},
-		undefined: (value, element, elements, elementArrayIndex, propertyName, tween) => {
-			return fixColors(getPropertyValue(element, propertyName, tween.fn) || "");
-		},
-	};
+const rxHex = /^#([A-f\d]{3}){1,2}$/i;
+const commands: CommandType = {
+	function: (value, element, elements, elementArrayIndex, propertyName, _tween) => {
+		return String((value as any as VelocityPropertyValueFn).call(element, elementArrayIndex, elements.length, propertyName));
+	},
+	number: (value, _element, _elements, _elementArrayIndex, _propertyName, tween) => {
+		return String(value) + getNormalizationUnit(tween.fn);
+	},
+	string: (value, _element, _elements, _elementArrayIndex, _propertyName, _tween) => {
+		return fixColors(value);
+	},
+	undefined: (_value, element, _elements, _elementArrayIndex, propertyName, tween) => {
+		return fixColors(getPropertyValue(element, propertyName, tween.fn) || "");
+	},
+};
 
 /**
  * Expand a VelocityProperty argument into a valid sparse Tween array. This
@@ -57,18 +60,18 @@ const rxHex = /^#([A-f\d]{3}){1,2}$/i,
  * faster to access.
  */
 export function expandProperties(animation: AnimationCall, properties: Properties<VelocityProperty>) {
-	const tweens = animation.tweens = Object.create(null),
-		elements = animation.elements,
-		element = animation.element,
-		elementArrayIndex = elements.indexOf(element as any),
-		data = Data(element),
-		queue = getValue(animation.queue, animation.options.queue),
-		duration = getValue(animation.options.duration, defaults.duration);
+	const tweens = animation.tweens = Object.create(null);
+	const elements = animation.elements!;
+	const element = animation.element!;
+	const elementArrayIndex = elements.indexOf(element as any);
+	const data = Data(element);
+	const queue = animation.queue ?? animation.options!.queue;
+	const duration = animation.options!.duration ?? defaults.duration;
 
 	for (const property in properties) {
 		if (properties.hasOwnProperty(property)) {
-			const propertyName = camelCase(property),
-				fn = getNormalization(element, propertyName);
+			const propertyName = camelCase(property);
+			const fn = getNormalization(element, propertyName);
 			let valueData = properties[property];
 
 			if (!fn && propertyName !== "tween") {
@@ -84,10 +87,10 @@ export function expandProperties(animation: AnimationCall, properties: Propertie
 				continue;
 			}
 			const tween: VelocityTween = tweens[propertyName] = {} as any;
-			let endValue: string,
-				startValue: string;
+			let endValue: string;
+			let startValue: string | undefined;
 
-			tween.fn = fn;
+			tween.fn = fn!;
 			if (isFunction(valueData)) {
 				// If we have a function as the main argument then resolve
 				// it first, in case it returns an array that needs to be
@@ -97,8 +100,8 @@ export function expandProperties(animation: AnimationCall, properties: Propertie
 			if (Array.isArray(valueData)) {
 				// valueData is an array in the form of
 				// [ endValue, [, easing] [, startValue] ]
-				const arr1 = valueData[1],
-					arr2 = valueData[2];
+				const arr1 = valueData[1];
+				const arr2 = valueData[2];
 
 				endValue = valueData[0] as any;
 				if ((isString(arr1) && (/^[\d-]/.test(arr1) || rxHex.test(arr1))) || isFunction(arr1) || isNumber(arr1)) {
@@ -114,7 +117,7 @@ export function expandProperties(animation: AnimationCall, properties: Propertie
 			}
 			tween.end = commands[typeof endValue](endValue, element, elements, elementArrayIndex, propertyName, tween) as any;
 			if (startValue != null || (queue === false || data.queueList[queue] === undefined)) {
-				tween.start = commands[typeof startValue](startValue, element, elements, elementArrayIndex, propertyName, tween) as any;
+				tween.start = commands[typeof startValue!](startValue!, element, elements, elementArrayIndex, propertyName, tween) as any;
 				explodeTween(propertyName, tween, duration);
 			}
 		}
@@ -122,8 +125,8 @@ export function expandProperties(animation: AnimationCall, properties: Propertie
 }
 
 // TODO: Needs a better match for "translate3d" etc - a number must be preceded by some form of break...
-const rxToken = /((?:[+\-*/]=)?(?:[+-]?\d*\.\d+|[+-]?\d+)[a-z%]*|(?:.(?!$|[+-]?\d|[+\-*/]=[+-]?\d))+.|.)/g,
-	rxNumber = /^([+\-*/]=)?([+-]?\d*\.\d+|[+-]?\d+)(.*)$/;
+const rxToken = /((?:[+\-*/]=)?(?:[+-]?\d*\.\d+|[+-]?\d+)[a-z%]*|(?:.(?!$|[+-]?\d|[+\-*/]=[+-]?\d))+.|.)/g;
+const rxNumber = /^([+\-*/]=)?([+-]?\d*\.\d+|[+-]?\d+)(.*)$/;
 
 /**
  * Find a pattern between multiple strings, return a VelocitySequence with
@@ -135,10 +138,10 @@ const rxToken = /((?:[+\-*/]=)?(?:[+-]?\d*\.\d+|[+-]?\d+)[a-z%]*|(?:.(?!$|[+-]?\
  * - If already in a calc then nest another layer.
  * If in an rgba() then the first three numbers are rounded.
  */
-export function findPattern(parts: ReadonlyArray<string>, propertyName: string): Sequence {
-	const partsLength = parts.length,
-		tokens: string[][] = [],
-		indexes: number[] = [];
+export function findPattern(parts: ReadonlyArray<string>, propertyName: string): Sequence | undefined {
+	const partsLength = parts.length;
+	const tokens: string[][] = [];
+	const indexes: number[] = [];
 	let numbers: boolean;
 
 	// First tokenise the strings - these have all values, we will pull
@@ -148,63 +151,63 @@ export function findPattern(parts: ReadonlyArray<string>, propertyName: string):
 			if (parts[part] === "") {
 				tokens[part] = [""];
 			} else {
-				tokens[part] = cloneArray(parts[part].match(rxToken));
+				tokens[part] = cloneArray(parts[part].match(rxToken)!);
 			}
 			indexes[part] = 0;
 			// If it matches more than one thing then we've got a number.
-			numbers = numbers || tokens[part].length > 1;
+			numbers = numbers! || tokens[part].length > 1;
 			//console.log(`tokens:`, parts[part], tokens[part])
 		} else {
 			// We have an incomplete lineup, it will get tried again later...
 			return;
 		}
 	}
-	const sequence: Sequence = [] as any,
-		pattern = (sequence.pattern = []) as (string | boolean)[],
-		addString = (text: string) => {
-			if (isString(pattern[pattern.length - 1])) {
-				pattern[pattern.length - 1] += text;
-			} else if (text) {
-				pattern.push(text);
-				for (let part = 0; part < partsLength; part++) {
-					(sequence[part] as any[]).push(null);
-				}
-			}
-		},
-		returnStringType = () => {
-			if (numbers || pattern.length > 1) {
-				//console.error(`Velocity: Trying to pattern match mis-matched strings "${propertyName}":`, parts);
-				return;
-			}
-			const isDisplay = propertyName === "display",
-				isVisibility = propertyName === "visibility";
-
+	const sequence: Sequence = [] as any;
+	const pattern = (sequence.pattern = []) as (string | boolean)[];
+	const addString = (text: string) => {
+		if (isString(pattern[pattern.length - 1])) {
+			pattern[pattern.length - 1] += text;
+		} else if (text) {
+			pattern.push(text);
 			for (let part = 0; part < partsLength; part++) {
-				const value = parts[part];
-
-				sequence[part][0] = value;
-				// Don't care about duration...
-				sequence[part].easing = validateEasing((isDisplay && value === "none") || (isVisibility && value === "hidden") || (!isDisplay && !isVisibility) ? "at-end" : "at-start", 400);
+				(sequence[part] as any[]).push(null);
 			}
-			pattern[0] = false;
+		}
+	};
+	const returnStringType = () => {
+		if (numbers || pattern.length > 1) {
+			//console.error(`Velocity: Trying to pattern match mis-matched strings "${propertyName}":`, parts);
+			return;
+		}
+		const isDisplay = propertyName === "display";
+		const isVisibility = propertyName === "visibility";
 
-			return sequence;
-		};
+		for (let part = 0; part < partsLength; part++) {
+			const value = parts[part];
+
+			sequence[part][0] = value;
+			// Don't care about duration...
+			sequence[part].easing = validateEasing((isDisplay && value === "none") || (isVisibility && value === "hidden") || (!isDisplay && !isVisibility) ? "at-end" : "at-start", 400);
+		}
+		pattern[0] = false;
+
+		return sequence;
+	};
 	let more = true;
 
 	for (let part = 0; part < partsLength; part++) {
 		sequence[part] = [];
 	}
 	while (more) {
-		const bits: ([number, string] | [number, string, boolean])[] = [],
-			units: string[] = [];
-		let text: string,
-			isUnitless = false,
-			hasNumbers = false;
+		const bits: ([number, string] | [number, string, boolean])[] = [];
+		const units: string[] = [];
+		let text: string | undefined;
+		let isUnitless = false;
+		let hasNumbers = false;
 
 		for (let part = 0; part < partsLength; part++) {
-			const index = indexes[part]++,
-				token = tokens[part][index];
+			const index = indexes[part]++;
+			const token = tokens[part][index];
 
 			if (token) {
 				const num = token.match(rxNumber); // [ignore, change, number, unit]
@@ -214,10 +217,10 @@ export function findPattern(parts: ReadonlyArray<string>, propertyName: string):
 					if (text) {
 						return returnStringType();
 					}
-					const digits = parseFloat(num[2]),
-						unit = num[3],
-						change = num[1] ? num[1][0] + unit : undefined,
-						changeOrUnit = change || unit;
+					const digits = parseFloat(num[2]);
+					const unit = num[3];
+					const change = num[1] ? num[1][0] + unit : undefined;
+					const changeOrUnit = change || unit;
 
 					if (digits && !units.includes(changeOrUnit)) {
 						// Will be an empty string at the least.
@@ -258,7 +261,7 @@ export function findPattern(parts: ReadonlyArray<string>, propertyName: string):
 			}
 		}
 		if (text) {
-			addString(text);
+			addString(text!);
 		} else if (units.length) {
 			if (units.length === 2 && isUnitless && !hasNumbers) {
 				// If we only have two units, and one is empty, and it's only empty on "0", then treat us as having one unit
@@ -266,8 +269,8 @@ export function findPattern(parts: ReadonlyArray<string>, propertyName: string):
 			}
 			if (units.length === 1) {
 				// All the same units, so append number then unit.
-				const unit = units[0],
-					firstLetter = unit[0];
+				const unit = units[0];
+				const firstLetter = unit[0];
 
 				switch (firstLetter) {
 					case "+":
@@ -291,10 +294,10 @@ export function findPattern(parts: ReadonlyArray<string>, propertyName: string):
 				const patternCalc = pattern.length - 1; // Store the beginning of our calc.
 
 				for (let i = 0; i < units.length; i++) {
-					const unit = units[i],
-						firstLetter = unit[0],
-						isComplex = firstLetter === "*" || firstLetter === "/",
-						isMaths = isComplex || firstLetter === "+" || firstLetter === "-";
+					const unit = units[i];
+					const firstLetter = unit[0];
+					const isComplex = firstLetter === "*" || firstLetter === "/";
+					const isMaths = isComplex || firstLetter === "+" || firstLetter === "-";
 
 					if (isComplex) {
 						// TODO: Not sure this should be done automatically!
@@ -306,12 +309,12 @@ export function findPattern(parts: ReadonlyArray<string>, propertyName: string):
 					}
 					pattern.push(false);
 					for (let part = 0; part < partsLength; part++) {
-						const bit = bits[part],
-							value = bit[1] === unit
-								? bit[0]
-								: bit.length === 3
-									? sequence[part - 1][sequence[part - 1].length - 1]
-									: isComplex ? 1 : 0;
+						const bit = bits[part];
+						const value = bit[1] === unit
+							? bit[0]
+							: bit.length === 3
+								? sequence[part - 1][sequence[part - 1].length - 1]
+								: isComplex ? 1 : 0;
 
 						(sequence[part] as any[]).push(value);
 					}
@@ -349,14 +352,14 @@ export function findPattern(parts: ReadonlyArray<string>, propertyName: string):
  * Convert a string-based tween with start and end strings, into a pattern
  * based tween with arrays.
  */
-function explodeTween(propertyName: string, tween: VelocityTween, duration: number, starting?: boolean) {
-	const startValue: string = tween.start,
-		endValue: string = tween.end;
+function explodeTween(propertyName: string, tween: VelocityTween, _duration: number, starting?: boolean) {
+	const startValue: string = tween.start!;
+	const endValue: string = tween.end!;
 
 	if (!isString(endValue) || !isString(startValue)) {
 		return;
 	}
-	let sequence: Sequence = findPattern([startValue, endValue], propertyName);
+	let sequence: Sequence = findPattern([startValue, endValue], propertyName)!;
 
 	if (!sequence && starting) {
 		// This little piece will take a startValue, split out the
@@ -365,13 +368,13 @@ function explodeTween(propertyName: string, tween: VelocityTween, duration: numb
 		// original start numbers as a repeating sequence.
 		// Finally this function will run again with the new
 		// startValue and a now matching pattern.
-		const startNumbers = startValue.match(/\d\.?\d*/g) || ["0"],
-			count = startNumbers.length;
+		const startNumbers = startValue.match(/\d\.?\d*/g) || ["0"];
+		const count = startNumbers.length;
 		let index = 0;
 
 		sequence = findPattern([endValue.replace(/\d+\.?\d*/g, () => {
 			return startNumbers[index++ % count];
-		}), endValue], propertyName);
+		}), endValue], propertyName)!;
 	}
 	if (sequence) {
 		if (Velocity.debug) {
@@ -405,9 +408,9 @@ export function validateTweens(activeCall: AnimationCall) {
 	if (activeCall._flags & AnimationFlags.EXPANDED) { // tslint:disable-line:no-bitwise
 		return;
 	}
-	const element = activeCall.element,
-		tweens = activeCall.tweens,
-		duration = getValue(activeCall.options.duration, defaults.duration);
+	const element = activeCall.element;
+	const tweens = activeCall.tweens;
+	const duration = activeCall.options!.duration ?? defaults.duration;
 
 	// tslint:disable-next-line:forin
 	for (const propertyName in tweens) {
@@ -415,7 +418,7 @@ export function validateTweens(activeCall: AnimationCall) {
 
 		if (tween.start == null) {
 			// Get the start value as it's not been passed in
-			const startValue = getPropertyValue(activeCall.element, propertyName);
+			const startValue = getPropertyValue(activeCall.element!, propertyName);
 
 			if (isString(startValue)) {
 				tween.start = fixColors(startValue) as any;

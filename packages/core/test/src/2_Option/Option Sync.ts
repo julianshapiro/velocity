@@ -6,14 +6,14 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {asyncTests, defaultProperties, getTarget, sleep} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { asyncTests, defaultProperties, getTarget, sleep } from "../utilities";
 import "./_module";
 
 QUnit.test("Sync", (assert) => {
 	asyncTests(assert, 1, async (done) => {
-		const $target = getTarget(),
-			$targetSet = [getTarget(), $target, getTarget()];
+		const $target = getTarget();
+		const $targetSet = [getTarget(), $target, getTarget()];
 		let complete = false;
 
 		Velocity($target, defaultProperties, {
@@ -33,8 +33,8 @@ QUnit.test("Sync", (assert) => {
 	});
 
 	asyncTests(assert, 1, async (done) => {
-		const $target = getTarget(),
-			$targetSet = [getTarget(), $target, getTarget()];
+		const $target = getTarget();
+		const $targetSet = [getTarget(), $target, getTarget()];
 		let complete = false;
 
 		Velocity($target, defaultProperties, {

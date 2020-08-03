@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { VelocityEasingFn } from "../../../velocity";
+import { VelocityEasingFn } from "../../velocity";
 
 // Project
 import { isFunction, isString } from "../../types";
@@ -19,9 +19,9 @@ export const Easings: { [name: string]: VelocityEasingFn } = {};
  * directly, instead it should be called via an action:<br/>
  * <code>Velocity("registerEasing", "name", VelocityEasingFn);</code>
  */
-export function registerEasing(args?: [string, VelocityEasingFn]) {
-	const name: string = args[0],
-		callback = args[1];
+export function registerEasing(args: [string, VelocityEasingFn]) {
+	const name: string = args[0];
+	const callback = args[1];
 
 	if (!isString(name)) {
 		console.warn(`VelocityJS: Trying to set 'registerEasing' name to an invalid value:`, name);
@@ -34,27 +34,27 @@ export function registerEasing(args?: [string, VelocityEasingFn]) {
 	}
 }
 
-registerAction(["registerEasing", registerEasing], true);
+registerAction(["registerEasing", registerEasing as any], true);
 
 /**
  * Linear easing, used for sequence parts that don't have an actual easing
  * function.
  */
-export function linearEasing(percentComplete, startValue, endValue, property) {
+export function linearEasing(percentComplete: number, startValue: number, endValue: number) {
 	return startValue + percentComplete * (endValue - startValue);
 }
 
 /**
  * Swing is the default for jQuery and Velocity.
  */
-export function swingEasing(percentComplete, startValue, endValue) {
+export function swingEasing(percentComplete: number, startValue: number, endValue: number) {
 	return startValue + (0.5 - Math.cos(percentComplete * Math.PI) / 2) * (endValue - startValue);
 }
 
 /**
  * A less exaggerated version of easeInOutElastic.
  */
-export function springEasing(percentComplete, startValue, endValue) {
+export function springEasing(percentComplete: number, startValue: number, endValue: number) {
 	return startValue + (1 - (Math.cos(percentComplete * 4.5 * Math.PI) * Math.exp(-percentComplete * 6))) * (endValue - startValue);
 }
 

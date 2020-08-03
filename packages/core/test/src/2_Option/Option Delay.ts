@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {asyncTests, defaultOptions, defaultProperties, getNow, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { asyncTests, defaultOptions, defaultProperties, getNow, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("Delay", (assert) => {

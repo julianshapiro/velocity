@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {defaultProperties, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { defaultProperties, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("'velocity-animating' Classname", (assert) => {

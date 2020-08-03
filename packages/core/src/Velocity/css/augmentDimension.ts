@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement } from "../../../velocity";
+import { HTMLorSVGElement } from "../../velocity";
 
 // Project
 import { getPropertyValue } from "./getPropertyValue";
@@ -22,8 +22,8 @@ export function augmentDimension(element: HTMLorSVGElement, name: "width" | "hei
 	if (isBorderBox === wantInner) {
 		// in box-sizing mode, the CSS width / height accessors already
 		// give the outerWidth / outerHeight.
-		const sides = name === "width" ? ["Left", "Right"] : ["Top", "Bottom"],
-			fields = [`padding${sides[0]}`, `padding${sides[1]}`, `border${sides[0]}Width`, `border${sides[1]}Width`];
+		const sides = name === "width" ? ["Left", "Right"] : ["Top", "Bottom"];
+		const fields = [`padding${sides[0]}`, `padding${sides[1]}`, `border${sides[0]}Width`, `border${sides[1]}Width`];
 		let augment = 0;
 
 		for (const field of fields) {

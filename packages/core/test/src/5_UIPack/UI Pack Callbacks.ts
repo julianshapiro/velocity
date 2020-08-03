@@ -6,13 +6,13 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { getTarget } from "../utilities";
 import "./_module";
 
 QUnit.skip("Callbacks", (assert) => {
-	const done = assert.async(2),
-		$targets = [getTarget(), getTarget()];
+	const done = assert.async(2);
+	const $targets = [getTarget(), getTarget()];
 
 	assert.expect(3);
 	Velocity($targets, "transition.bounceIn", {

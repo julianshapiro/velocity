@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {Data, defaultProperties, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { Data, defaultProperties, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("End Value Setting", (assert) => {

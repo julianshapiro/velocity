@@ -7,7 +7,7 @@
  */
 
 // Typedefs
-import { VelocityPromise, VelocityResult } from "../../../velocity";
+import { VelocityPromise, VelocityResult } from "../../velocity";
 
 // Project
 import { isNumber, isPlainObject, isString, isVelocityResult } from "../../types";
@@ -30,9 +30,9 @@ import { registerAction } from "./actions";
  * Velocity(element, "style", "property") => "value";
  * Velocity(elements, "style", "property") => ["value", ...];
  */
-export function propertyAction(args?: any[], elements?: VelocityResult, promiseHandler?: VelocityPromise, action?: string): any {
-	const property = args[0],
-		value = args[1];
+export function propertyAction(args: any[], elements: VelocityResult, promiseHandler: VelocityPromise, _action: string): any {
+	const property = args[0];
+	const value = args[1];
 
 	if (!property) {
 		console.warn(`VelocityJS: Cannot access a non-existant property!`);
@@ -51,7 +51,7 @@ export function propertyAction(args?: any[], elements?: VelocityResult, promiseH
 
 				return result;
 			} else {
-				const result = [];
+				const result: any[] = [];
 
 				for (const element of elements) {
 					const res = {};
@@ -71,7 +71,7 @@ export function propertyAction(args?: any[], elements?: VelocityResult, promiseH
 			if (elements.length === 1) {
 				return fixColors(getPropertyValue(elements[0], property));
 			}
-			const result = [];
+			const result: any[] = [];
 
 			for (const element of elements) {
 				result.push(fixColors(getPropertyValue(element, property)));
@@ -108,10 +108,12 @@ export function propertyAction(args?: any[], elements?: VelocityResult, promiseH
 	}
 	if (promiseHandler) {
 		if (error.length) {
-			promiseHandler._rejecter(error.join(", "));
-		} else if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
+			if (promiseHandler._rejecter) {
+				promiseHandler._rejecter(error.join(", "));
+			}
+		} else if (isVelocityResult(elements) && elements.velocity?.animations && elements.then) {
 			elements.then(promiseHandler._resolver);
-		} else {
+		} else if (promiseHandler._resolver) {
 			promiseHandler._resolver(elements);
 		}
 	}

@@ -6,30 +6,30 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {defaultProperties, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { defaultProperties, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("FPS Limit", async (assert) => {
 	let count: number;
-	const $target = getTarget(),
-		frameRates = [5, 15, 30, 60],
-		testFrame = (frameRate) => {
-			let counter = 0;
+	const $target = getTarget();
+	const frameRates = [5, 15, 30, 60];
+	const testFrame = (frameRate) => {
+		let counter = 0;
 
-			Velocity.defaults.fpsLimit = frameRate;
-			// Test if the frame rate is assigned succesfully.
-			assert.equal(frameRate, Velocity.defaults.fpsLimit, "Setting global fps limit to " + frameRate);
+		Velocity.defaults.fpsLimit = frameRate;
+		// Test if the frame rate is assigned succesfully.
+		assert.equal(frameRate, Velocity.defaults.fpsLimit, "Setting global fps limit to " + frameRate);
 
-			return Velocity($target, defaultProperties,
-				{
-					duration: 1000,
-					progress() {
-						counter++;
-					},
-				})
-				.then(() => counter);
-		};
+		return Velocity($target, defaultProperties,
+			{
+				duration: 1000,
+				progress() {
+					counter++;
+				},
+			})
+			.then(() => counter);
+	};
 
 	assert.expect(frameRates.length * 2);
 	// Test if the limit is working for 60, 30, 15 and 5 fps.

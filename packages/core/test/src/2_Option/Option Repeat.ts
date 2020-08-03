@@ -6,17 +6,17 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {asyncTests, defaultProperties, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { asyncTests, defaultProperties, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("Repeat", (assert) => {
 	asyncTests(assert, 4, (done) => {
-		const testOptions = {repeat: 2, delay: 100, duration: 100},
-			start = Date.now();
-		let begin = 0,
-			complete = 0,
-			repeat = 0;
+		const testOptions = { repeat: 2, delay: 100, duration: 100 };
+		const start = Date.now();
+		let begin = 0;
+		let complete = 0;
+		let repeat = 0;
 
 		Velocity(getTarget(), defaultProperties, {
 			repeat: testOptions.repeat,

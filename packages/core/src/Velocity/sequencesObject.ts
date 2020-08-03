@@ -5,6 +5,6 @@
  */
 
 // Typedefs
-import { SequenceList } from "../../velocity";
+import { SequenceList } from "../velocity";
 
 export const SequencesObject: { [name: string]: SequenceList } = {};

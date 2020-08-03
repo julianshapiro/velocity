@@ -5,23 +5,23 @@
  */
 
 // Constants
-const rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi,
-	rxColor3 = /#([a-f\d])([a-f\d])([a-f\d])/gi,
-	rxColorName = /(rgba?\(\s*)?(\b[a-z]+\b)/g,
-	rxRGB = /rgb(a?)\(([^\)]+)\)/gi,
-	rxSpaces = /\s+/g;
+const rxColor6 = /#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/gi;
+const rxColor3 = /#([a-f\d])([a-f\d])([a-f\d])/gi;
+const rxColorName = /(rgba?\(\s*)?(\b[a-z]+\b)/g;
+const rxRGB = /rgb(a?)\(([^\)]+)\)/gi;
+const rxSpaces = /\s+/g;
 
 /**
  * This is the list of color names -> rgb values. The object is in here so
  * that the actual name conversion can be in a separate file and not
  * included for custom builds.
  */
-export const ColorNames: {[name: string]: string} = {};
+export const ColorNames: { [name: string]: string } = {};
 
 /**
  * Convert a hex list to an rgba value. Designed to be used in replace.
  */
-function makeRGBA(ignore: any, r: string, g: string, b: string): string {
+function makeRGBA(_ignore: any, r: string, g: string, b: string): string {
 	return `rgba(${parseInt(r, 16)},${parseInt(g, 16)},${parseInt(b, 16)},1)`;
 }
 
@@ -42,7 +42,7 @@ export function fixColors(str: string): string {
 
 			return $0;
 		})
-		.replace(rxRGB, ($0, $1, $2: string) => {
+		.replace(rxRGB, (_$0, $1, $2: string) => {
 			return `rgba(${$2.replace(rxSpaces, "") + ($1 ? "" : ",1")})`;
 		});
 }

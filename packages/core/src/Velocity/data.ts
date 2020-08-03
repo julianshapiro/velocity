@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { ElementData, HTMLorSVGElement } from "../../velocity";
+import { ElementData, HTMLorSVGElement } from "../velocity";
 
 // Project
 import { isString } from "../types";
@@ -24,14 +24,14 @@ export function Data(element: HTMLorSVGElement): ElementData {
 	if (data) {
 		return data;
 	}
-	const window = element.ownerDocument.defaultView;
+	const window = element.ownerDocument.defaultView!;
 	let types = 0;
 
 	for (let index = 0; index < constructors.length; index++) {
 		const constructor = constructors[index];
 
 		if (isString(constructor)) {
-			if (element instanceof window[constructor]) {
+			if (window && element instanceof window[constructor]) {
 				types |= 1 << index; // tslint:disable-line:no-bitwise
 			}
 		} else if (element instanceof constructor) {
@@ -42,7 +42,7 @@ export function Data(element: HTMLorSVGElement): ElementData {
 	const newData: ElementData = {
 		types,
 		count: 0,
-		computedStyle: null,
+		computedStyle: undefined,
 		cache: {} as any,
 		queueList: {},
 		lastAnimationList: {},

@@ -1,8 +1,16 @@
 {
-  "name": "root",
-  "license": "MIT",
-  "private": true,
-  "devDependencies": {
-    "lerna": "^3.22.1"
-  }
+	"name": "root",
+	"license": "MIT",
+	"private": true,
+	"husky": {
+		"hooks": {
+			"pre-commit": "tsdx lint"
+		}
+	},
+	"devDependencies": {
+		"husky": "^4.2.5",
+		"lerna": "^3.22.1",
+		"tslib": "^2.0.0",
+		"typescript": "^3.9.7"
+	}
 }

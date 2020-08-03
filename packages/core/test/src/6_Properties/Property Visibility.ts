@@ -6,15 +6,15 @@
 
 import "qunit";
 
-import Velocity, {VelocityResult} from "velocity-animate";
-import {getTarget, once} from "../utilities";
+import Velocity, { VelocityResult } from "@velocityjs/core";
+import { getTarget, once } from "../utilities";
 import "./_module";
 
 QUnit.test("Visibility", (assert) => {
 	const done = assert.async(4);
 
 	Velocity(getTarget(), "style", "visibility", "hidden")
-		.velocity({visibility: "visible"}, {
+		.velocity({ visibility: "visible" }, {
 			progress: once((elements: VelocityResult) => {
 				assert.equal(elements.velocity("style", "visibility"), "visible", "Visibility:'visible' was set immediately.");
 
@@ -32,7 +32,7 @@ QUnit.test("Visibility", (assert) => {
 			done();
 		});
 
-	Velocity(getTarget(), {visibility: "hidden"}, {
+	Velocity(getTarget(), { visibility: "hidden" }, {
 		progress: once((elements: VelocityResult) => {
 			assert.notEqual(elements.velocity("style", "visibility"), "visible", "Visibility:'hidden' was not set immediately.");
 

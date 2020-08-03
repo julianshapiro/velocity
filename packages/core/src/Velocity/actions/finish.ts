@@ -7,11 +7,10 @@
  */
 
 // Typedefs
-import { AnimationCall, AnimationFlags, VelocityPromise, VelocityResult } from "../../../velocity";
+import { AnimationCall, AnimationFlags, VelocityPromise, VelocityResult } from "../../velocity";
 
 // Project
 import { isVelocityResult } from "../../types";
-import { getValue } from "../../utility";
 import { completeCall } from "../complete";
 import { setPropertyValue } from "../css/setPropertyValue";
 import { defaults } from "../defaults";
@@ -27,16 +26,16 @@ import { registerAction } from "./actions";
  */
 function checkAnimationShouldBeFinished(animation: AnimationCall, queueName: false | string, defaultQueue: false | string) {
 	validateTweens(animation);
-	if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
+	if (queueName === undefined || queueName === (animation.queue ?? animation.options?.queue ?? defaultQueue)) {
 		if (!(animation._flags & AnimationFlags.STARTED)) { // tslint:disable-line:no-bitwise
 			// Copied from tick.ts - ensure that the animation is completely
 			// valid and run begin() before complete().
-			const options = animation.options;
+			const options = animation.options!;
 
 			// The begin callback is fired once per call, not once per
 			// element, and is passed the full raw DOM element set as both
 			// its context and its first argument.
-			if (options._started++ === 0) {
+			if (options._started!++ === 0) {
 				options._first = animation;
 				if (options.begin) {
 					// Pass to an external fn with a try/catch block for optimisation
@@ -49,11 +48,11 @@ function checkAnimationShouldBeFinished(animation: AnimationCall, queueName: fal
 		}
 		// tslint:disable-next-line:forin
 		for (const property in animation.tweens) {
-			const tween = animation.tweens[property],
-				sequence = tween.sequence,
-				pattern = sequence.pattern;
-			let currentValue = "",
-				i = 0;
+			const tween = animation.tweens[property];
+			const sequence = tween.sequence!;
+			const pattern = sequence.pattern;
+			let currentValue = "";
+			let i = 0;
 
 			if (pattern) {
 				const endValues = sequence[sequence.length - 1];
@@ -64,7 +63,7 @@ function checkAnimationShouldBeFinished(animation: AnimationCall, queueName: fal
 					currentValue += endValue == null ? pattern[i] : endValue;
 				}
 			}
-			setPropertyValue(animation.element, property, currentValue, tween.fn);
+			setPropertyValue(animation.element!, property, currentValue, tween.fn);
 		}
 		completeCall(animation);
 	}
@@ -84,13 +83,13 @@ function checkAnimationShouldBeFinished(animation: AnimationCall, queueName: fal
  * An final argument may be passed in to clear an element's remaining queued
  * calls. This may only be the value `true`.
  */
-function finish(args: any[], elements: VelocityResult, promiseHandler?: VelocityPromise): void {
-	const queueName: string | false = validateQueue(args[0], true),
-		defaultQueue: false | string = defaults.queue,
-		finishAll = args[queueName === undefined ? 0 : 1] === true;
+function finish(args: any[], elements: VelocityResult, promiseHandler: VelocityPromise): void {
+	const queueName: string | false = validateQueue(args[0], true)!;
+	const defaultQueue: false | string = defaults.queue;
+	const finishAll = args[queueName === undefined ? 0 : 1] === true;
 
-	if (isVelocityResult(elements) && elements.velocity.animations) {
-		for (const animation of elements.velocity.animations) {
+	if (isVelocityResult(elements) && elements.velocity?.animations) {
+		for (const animation of elements.velocity!.animations) {
 			checkAnimationShouldBeFinished(animation, queueName, defaultQueue);
 		}
 	} else {
@@ -98,16 +97,16 @@ function finish(args: any[], elements: VelocityResult, promiseHandler?: Velocity
 			validateTweens(State.firstNew);
 		}
 		for (let activeCall = State.first, nextCall: AnimationCall; activeCall && (finishAll || activeCall !== State.firstNew); activeCall = nextCall || State.firstNew) {
-			nextCall = activeCall._next;
-			if (!elements || elements.includes(activeCall.element)) {
+			nextCall = activeCall._next!;
+			if (!elements || elements.includes(activeCall.element!)) {
 				checkAnimationShouldBeFinished(activeCall, queueName, defaultQueue);
 			}
 		}
 	}
 	if (promiseHandler) {
-		if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
+		if (isVelocityResult(elements) && elements.velocity?.animations && elements.then) {
 			elements.then(promiseHandler._resolver);
-		} else {
+		} else if (promiseHandler._resolver) {
 			promiseHandler._resolver(elements);
 		}
 	}

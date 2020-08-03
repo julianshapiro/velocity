@@ -7,7 +7,7 @@
 /**
  * Cache every camelCase match to avoid repeating lookups.
  */
-const cache: {[property: string]: string} = {};
+const cache: { [property: string]: string } = {};
 
 /**
  * Camelcase a property name into its JavaScript notation (e.g.
@@ -21,5 +21,5 @@ export function camelCase(property: string): string {
 		return fixed;
 	}
 
-	return cache[property] = property.replace(/-([a-z])/g, ($: string, letter: string) => letter.toUpperCase());
+	return cache[property] = property.replace(/-([a-z])/g, (_$: string, letter: string) => letter.toUpperCase());
 }

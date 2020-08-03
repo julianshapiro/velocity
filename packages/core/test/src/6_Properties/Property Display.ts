@@ -6,15 +6,15 @@
 
 import "qunit";
 
-import Velocity, {VelocityResult} from "velocity-animate";
-import {getTarget, once} from "../utilities";
+import Velocity, { VelocityResult } from "@velocityjs/core";
+import { getTarget, once } from "../utilities";
 import "./_module";
 
 QUnit.test("Display", (assert) => {
 	const done = assert.async(5);
 
 	Velocity(getTarget(), "style", "display", "none")
-		.velocity({display: "block"}, {
+		.velocity({ display: "block" }, {
 			progress: once((elements: VelocityResult) => {
 				assert.equal(elements.velocity("style", "display"), "block", "Display:'block' was set immediately.");
 
@@ -39,7 +39,7 @@ QUnit.test("Display", (assert) => {
 			done();
 		});
 
-	Velocity(getTarget(), {display: "none"}, {
+	Velocity(getTarget(), { display: "none" }, {
 		progress: once((elements: VelocityResult) => {
 			assert.notEqual(elements.velocity("style", "display"), "none", "Display:'none' was not set immediately.");
 

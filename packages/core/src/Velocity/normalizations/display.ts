@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement } from "../../../velocity";
+import { HTMLorSVGElement } from "../../velocity";
 
 // Project
 import { computePropertyValue } from "../css/getPropertyValue";
@@ -13,11 +13,11 @@ import { Data } from "../data";
 import { registerNormalization } from "./normalizations";
 
 // Constants
-export const inlineRx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
-	listItemRx = /^(li)$/i,
-	tableRowRx = /^(tr)$/i,
-	tableRx = /^(table)$/i,
-	tableRowGroupRx = /^(tbody)$/i;
+export const inlineRx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|let|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i;
+export const listItemRx = /^(li)$/i;
+export const tableRowRx = /^(tr)$/i;
+export const tableRx = /^(table)$/i;
+export const tableRowGroupRx = /^(tbody)$/i;
 
 /**
  * Display has an extra value of "auto" that works out the correct value
@@ -32,8 +32,8 @@ function display(element: HTMLorSVGElement, propertyValue?: string): string | vo
 		return computePropertyValue(element, "display");
 	}
 	if (propertyValue === "auto") {
-		const nodeName = element && element.nodeName,
-			data = Data(element);
+		const nodeName = element?.nodeName;
+		const data = Data(element);
 
 		if (inlineRx.test(nodeName)) {
 			propertyValue = "inline";

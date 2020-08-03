@@ -5,11 +5,12 @@
  */
 
 // Typedefs
-import { VelocityNormalizationsFn } from "../../../../velocity";
+import { VelocityNormalizationsFn } from "../../../velocity";
 
 // Project
 import { isFunction, isString } from "../../../types";
 import { registerNormalization } from "../normalizations";
+import { ucFirst } from "../../../utility";
 
 /**
  * Get/set an attribute.
@@ -17,15 +18,14 @@ import { registerNormalization } from "../normalizations";
 function getAttribute(name: string) {
 	return ((element: Element, propertyValue?: string): string | void => {
 		if (propertyValue === undefined) {
-			return element.getAttribute(name);
+			return element.getAttribute(name)!;
 		}
 		element.setAttribute(name, propertyValue);
 	}) as VelocityNormalizationsFn;
 }
 
-const base = document.createElement("div"),
-	rxSubtype = /^SVG(.*)Element$/,
-	rxElement = /Element$/;
+const rxSubtype = /^SVG(.*)Element$/;
+const rxElement = /Element$/;
 
 Object.getOwnPropertyNames(window)
 	.forEach((property) => {
@@ -33,7 +33,9 @@ Object.getOwnPropertyNames(window)
 
 		if (subtype && subtype[1] !== "SVG") { // Don't do SVGSVGElement.
 			try {
-				const element = subtype[1] ? document.createElementNS("http://www.w3.org/2000/svg", (subtype[1] || "svg").toLowerCase()) : document.createElement("svg");
+				const element = subtype[1]
+					? document.createElementNS("http://www.w3.org/2000/svg", (subtype[1] || "svg").toLowerCase())
+					: document.createElement("svg");
 
 				// tslint:disable-next-line:forin
 				for (const attribute in element) {
@@ -42,13 +44,12 @@ Object.getOwnPropertyNames(window)
 					const value = element[attribute];
 
 					if (isString(attribute)
-						&& !(attribute[0] === "o" && attribute[1] === "n")
-						&& attribute !== attribute.toUpperCase()
+						&& !(attribute[0] === "o" && attribute[1] === "n") // event handlers - onXYZ
+						&& attribute !== attribute.toUpperCase() // constants
 						&& !rxElement.test(attribute)
-						&& !(attribute in base)
 						&& !isFunction(value)) {
 						// TODO: Should this all be set on the generic SVGElement, it would save space and time, but not as powerful
-						registerNormalization([property, attribute, getAttribute(attribute)]);
+						registerNormalization([property, `svg${ucFirst(attribute)}`, getAttribute(attribute)]);
 					}
 				}
 			} catch (e) {

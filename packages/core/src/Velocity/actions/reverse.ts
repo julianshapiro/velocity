@@ -7,12 +7,12 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement, VelocityPromise, VelocityResult } from "../../../velocity";
+import { HTMLorSVGElement, VelocityPromise, VelocityResult } from "../../velocity";
 
 // Project
 import { registerAction } from "./actions";
 
-registerAction(["reverse", (args?: any[], elements?: HTMLorSVGElement[] | VelocityResult, promiseHandler?: VelocityPromise, action?: string) => {
+registerAction(["reverse", (_args: any[], _elements: HTMLorSVGElement[] | VelocityResult, _promiseHandler: VelocityPromise, _action: string) => {
 	// NOTE: Code needs to split out before here - but this is needed to prevent it being overridden
 	throw new SyntaxError("VelocityJS: The 'reverse' action is built in and private.");
 }], true);

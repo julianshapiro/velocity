@@ -7,7 +7,7 @@
  */
 
 // Typedefs
-import { AnimationCall, HTMLorSVGElement } from "../../velocity";
+import { AnimationCall, HTMLorSVGElement } from "../velocity";
 
 // Project
 import { isString } from "../types";
@@ -33,8 +33,8 @@ function animate(animation: AnimationCall) {
 	if (!State.firstNew) {
 		State.firstNew = animation;
 	}
-	const element = animation.element,
-		data = Data(element);
+	const element = animation.element!;
+	const data = Data(element);
 
 	if (!data.count++) {
 
@@ -87,13 +87,13 @@ export function queue(element: HTMLorSVGElement, animation: AnimationCall, queue
  *
  * @returns the next animation that is starting.
  */
-export function dequeue(element: HTMLorSVGElement, queueName?: string | boolean, skip?: boolean): AnimationCall {
+export function dequeue(element: HTMLorSVGElement, queueName?: string | boolean, skip?: boolean): AnimationCall | undefined {
 	if (queueName !== false) {
 		if (!isString(queueName)) {
 			queueName = "";
 		}
-		const data = Data(element),
-			animation = data.queueList[queueName];
+		const data = Data(element);
+		const animation = data.queueList[queueName]!;
 
 		if (animation) {
 			data.queueList[queueName] = animation._next || null;
@@ -115,9 +115,9 @@ export function dequeue(element: HTMLorSVGElement, queueName?: string | boolean,
  * mark us as finished.
  */
 export function freeAnimationCall(animation: AnimationCall): void {
-	const next = animation._next,
-		prev = animation._prev,
-		queueName = animation.queue == null ? animation.options.queue : animation.queue;
+	const next = animation._next;
+	const prev = animation._prev;
+	const queueName = animation.queue == null ? animation.options!.queue : animation.queue;
 
 	if (State.firstNew === animation) {
 		State.firstNew = next;
@@ -133,7 +133,7 @@ export function freeAnimationCall(animation: AnimationCall): void {
 		next._prev = prev;
 	}
 	if (queueName) {
-		const data = Data(animation.element);
+		const data = Data(animation.element!);
 
 		if (data) {
 			animation._next = animation._prev = undefined;

@@ -6,10 +6,9 @@
  * Get or set a value from one or more running animations.
  */
 
-import { AnimationCall, AnimationFlags, VelocityPromise, VelocityResult } from "../../../velocity";
+import { AnimationCall, AnimationFlags, VelocityPromise, VelocityResult } from "../../velocity";
 
-import { isVelocityResult } from "../../types";
-import { getValue } from "../../utility";
+import { isVelocityResult, isString } from "../../types";
 import { defaults } from "../defaults";
 import {
 	validateBegin, validateCache, validateComplete, validateDelay, validateDuration,
@@ -39,12 +38,15 @@ const animationFlags: { [key: string]: number } = {
  * NOTE: When using "get" this will not touch the Promise as it is never
  * returned to the user.
  */
-function option(args?: any[], elements?: VelocityResult, promiseHandler?: VelocityPromise, action?: string): any {
-	const key = args[0],
-		queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined,
-		queueName = queue === "false" ? false : validateQueue(queue, true);
-	let animations: AnimationCall[],
-		value = args[1];
+function option(args: any[], elements: VelocityResult, promiseHandler?: VelocityPromise, action?: string): any {
+	if (!args || !isString(action)) {
+		return;
+	}
+	const key = args[0];
+	const queue = action.indexOf(".") >= 0 ? action.replace(/^.*\./, "") : undefined;
+	const queueName = queue === "false" ? false : validateQueue(queue, true);
+	let animations: AnimationCall[];
+	let value = args[1];
 
 	if (!key) {
 		console.warn(`VelocityJS: Cannot access a non-existant key!`);
@@ -53,13 +55,13 @@ function option(args?: any[], elements?: VelocityResult, promiseHandler?: Veloci
 	}
 	// If we're chaining the return value from Velocity then we are only
 	// interested in the values related to that call
-	if (isVelocityResult(elements) && elements.velocity.animations) {
-		animations = elements.velocity.animations;
+	if (isVelocityResult(elements) && elements.velocity?.animations) {
+		animations = elements!.velocity!.animations;
 	} else {
 		animations = [];
 
 		for (let activeCall = State.first; activeCall; activeCall = activeCall._next) {
-			if (elements.indexOf(activeCall.element) >= 0 && getValue(activeCall.queue, activeCall.options.queue) === queueName) {
+			if (elements.indexOf(activeCall.element!) >= 0 && (activeCall.queue ?? activeCall.options?.queue) === queueName) {
 				animations.push(activeCall);
 			}
 		}
@@ -67,12 +69,12 @@ function option(args?: any[], elements?: VelocityResult, promiseHandler?: Veloci
 		// single running animation, then instead treat them as a single
 		// animation.
 		if (elements.length > 1 && animations.length > 1) {
-			let i = 1,
-				options = animations[0].options;
+			let i = 1;
+			let options = animations[0].options;
 
 			while (i < animations.length) {
 				if (animations[i++].options !== options) {
-					options = null;
+					options = undefined;
 					break;
 				}
 			}
@@ -84,13 +86,13 @@ function option(args?: any[], elements?: VelocityResult, promiseHandler?: Veloci
 	}
 	// GET
 	if (value === undefined) {
-		const result = [],
-			flag = animationFlags[key];
+		const result: any[] = [];
+		const flag = animationFlags[key];
 
 		for (const animation of animations) {
 			if (flag === undefined) {
 				// A normal key to get.
-				result.push(getValue(animation[key], animation.options[key]));
+				result.push(animation[key] ?? animation.options![key]);
 			} else {
 				// A flag that we're checking against.
 				result.push((animation._flags & flag) === 0); // tslint:disable-line:no-bitwise
@@ -105,7 +107,7 @@ function option(args?: any[], elements?: VelocityResult, promiseHandler?: Veloci
 		return result;
 	}
 	// SET
-	let isPercentComplete: boolean;
+	let isPercentComplete = false;
 
 	switch (key) {
 		case "cache":
@@ -163,15 +165,15 @@ function option(args?: any[], elements?: VelocityResult, promiseHandler?: Veloci
 	}
 	for (const animation of animations) {
 		if (isPercentComplete) {
-			animation.timeStart = lastTick - (getValue(animation.duration, animation.options.duration, defaults.duration) * value);
+			animation.timeStart = lastTick - ((animation.duration ?? animation.options!.duration ?? defaults.duration) * value);
 		} else {
 			animation[key] = value;
 		}
 	}
 	if (promiseHandler) {
-		if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
-			elements.then(promiseHandler._resolver);
-		} else {
+		if (isVelocityResult(elements) && elements.velocity?.animations && elements.then) {
+			elements!.then(promiseHandler._resolver);
+		} else if (promiseHandler._resolver) {
 			promiseHandler._resolver(elements);
 		}
 	}

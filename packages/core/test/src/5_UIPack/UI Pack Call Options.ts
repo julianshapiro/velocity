@@ -6,18 +6,18 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {completeCheckDuration, defaultOptions, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { completeCheckDuration, defaultOptions, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.skip("Call Options", (assert) => {
-	const done = assert.async(2),
-		UICallOptions1 = {
-			delay: 123,
-			duration: defaultOptions.duration,
-			easing: "spring", // Should get ignored
-		},
-		$target1 = getTarget();
+	const done = assert.async(2);
+	const UICallOptions1 = {
+		delay: 123,
+		duration: defaultOptions.duration,
+		easing: "spring", // Should get ignored
+	};
+	const $target1 = getTarget();
 
 	//assert.expect(1);
 	Velocity($target1, "transition.slideLeftIn", UICallOptions1);

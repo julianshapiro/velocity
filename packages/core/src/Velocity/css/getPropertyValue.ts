@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../../velocity";
+import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../velocity";
 
 // Project
 import Velocity from "../../velocity";
@@ -25,10 +25,10 @@ function getWidthHeight(element: HTMLorSVGElement, property: "width" | "height")
 
 // TODO: This is still a complete mess
 export function computePropertyValue(element: HTMLorSVGElement, property: string): string {
-	const data = Data(element),
-		// If computedStyle is cached, use it. If not then get the correct one
-		// for the element to support cross-iframe boundaries.
-		computedStyle = data.computedStyle ? data.computedStyle : data.window.getComputedStyle(element, null);
+	const data = Data(element);
+	// If computedStyle is cached, use it. If not then get the correct one
+	// for the element to support cross-iframe boundaries.
+	const computedStyle = data.computedStyle ? data.computedStyle : data.window.getComputedStyle(element, null);
 	let computedValue: string | number = 0;
 
 	if (!data.computedStyle) {
@@ -67,6 +67,8 @@ export function computePropertyValue(element: HTMLorSVGElement, property: string
 	 property, which reverts to "auto", left's value is 0 relative to its parent element, but is often non-zero relative
 	 to its *containing* (not parent) element, which is the nearest "position:relative" ancestor or the viewport (and always the viewport in the case of "position:fixed"). */
 	if (computedValue === "auto") {
+		let topLeft = false;
+
 		switch (property) {
 			case "width":
 			case "height":
@@ -75,7 +77,7 @@ export function computePropertyValue(element: HTMLorSVGElement, property: string
 
 			case "top":
 			case "left":
-				const topLeft = true;
+				topLeft = true;
 			case "right":
 			case "bottom":
 				const position = getPropertyValue(element, "position");
@@ -108,7 +110,7 @@ export function getPropertyValue(element: HTMLorSVGElement, propertyName: string
 	if (NoCacheNormalizations.has(propertyName)) {
 		skipCache = true;
 	}
-	if (!skipCache && data && data.cache[propertyName] != null) {
+	if (!skipCache && data?.cache[propertyName] != null) {
 		propertyValue = data.cache[propertyName];
 	} else {
 		fn = fn || getNormalization(element, propertyName);
@@ -120,8 +122,8 @@ export function getPropertyValue(element: HTMLorSVGElement, propertyName: string
 		}
 	}
 	if (Velocity.debug >= 2) {
-		console.info(`Get "${propertyName}": "${propertyValue}"`, element);
+		console.info(`Get "${propertyName}": "${propertyValue!}"`, element);
 	}
 
-	return propertyValue;
+	return propertyValue!;
 }

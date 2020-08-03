@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { AnimationCall, SequenceList, VelocitySequence, VelocityTween } from "../../velocity";
+import { AnimationCall, SequenceList, VelocitySequence, VelocityTween } from "../velocity";
 
 // Project
 import { isNumber, isPlainObject, isString } from "../types";
@@ -23,12 +23,12 @@ import { DEFAULT_DURATION } from "../constants";
 const rxPercents = /(\d*\.\d+|\d+\.?|from|to)/g;
 
 export function expandSequence(animation: AnimationCall, sequence: SequenceList) {
-	const tweens = animation.tweens = Object.create(null),
-		element = animation.element;
+	const tweens = animation.tweens = Object.create(null);
+	const element = animation.element;
 
 	for (const propertyName in sequence.tweens) {
 		if (sequence.tweens.hasOwnProperty(propertyName)) {
-			const fn = getNormalization(element, propertyName);
+			const fn = getNormalization(element!, propertyName);
 
 			if (!fn && propertyName !== "tween") {
 				if (Velocity.debug) {
@@ -49,16 +49,16 @@ export function expandSequence(animation: AnimationCall, sequence: SequenceList)
  * directly, instead it should be called via an action:<br/>
  * <code>Velocity("registerSequence", ""name", VelocitySequence);</code>
  */
-export function registerSequence(args?: [string, VelocitySequence] | [{ [name: string]: VelocitySequence }]) {
+export function registerSequence(args: [string, VelocitySequence] | [{ [name: string]: VelocitySequence }]): SequenceList | null {
 	if (isPlainObject(args[0])) {
 		for (const name in (args[0] as { [name: string]: VelocitySequence })) {
 			if (args[0].hasOwnProperty(name)) {
-				registerSequence([name, args[0][name]]);
+				return registerSequence([name, args[0][name]]);
 			}
 		}
 	} else if (isString(args[0])) {
-		const name = args[0] as string,
-			sequence = args[1] as VelocitySequence;
+		const name = args[0] as string;
+		const sequence = args[1] as VelocitySequence;
 
 		if (!isString(name)) {
 			console.warn(`VelocityJS: Trying to set 'registerSequence' name to an invalid value:`, name);
@@ -68,12 +68,12 @@ export function registerSequence(args?: [string, VelocitySequence] | [{ [name: s
 			if (SequencesObject[name]) {
 				console.warn(`VelocityJS: Replacing named sequence:`, name);
 			}
-			const percents: { [key: string]: string[] } = {},
-				steps: string[] = new Array(100),
-				properties: string[] = [],
-				percentages: string[] = [],
-				sequenceList: SequenceList = SequencesObject[name] = {} as any,
-				duration = validateDuration((sequence as any).duration);
+			const percents: { [key: string]: string[] } = {};
+			const steps: string[] = new Array(100);
+			const properties: string[] = [];
+			const percentages: string[] = [];
+			const sequenceList: SequenceList = SequencesObject[name] = {} as any;
+			const duration = validateDuration((sequence as any).duration);
 
 			sequenceList.tweens = {};
 			if (isNumber(duration)) {
@@ -114,8 +114,8 @@ export function registerSequence(args?: [string, VelocitySequence] | [{ [name: s
 			}
 			const orderedPercents = Object.keys(percents)
 				.sort((a, b) => {
-					const a1 = parseFloat(a),
-						b1 = parseFloat(b);
+					const a1 = parseFloat(a);
+					const b1 = parseFloat(b);
 
 					return a1 > b1 ? 1 : a1 < b1 ? -1 : 0;
 				});
@@ -124,8 +124,8 @@ export function registerSequence(args?: [string, VelocitySequence] | [{ [name: s
 				steps.push.apply(percents[key]);
 			});
 			for (const property of properties) {
-				const parts: string[] = [],
-					propertyName = camelCase(property);
+				const parts: string[] = [];
+				const propertyName = camelCase(property);
 
 				for (const key of orderedPercents) {
 					for (const value of percents[key]) {
@@ -159,8 +159,12 @@ export function registerSequence(args?: [string, VelocitySequence] | [{ [name: s
 					}
 				}
 			}
+
+			return sequenceList;
 		}
 	}
+
+	return null;
 }
 
-registerAction(["registerSequence", registerSequence], true);
+registerAction(["registerSequence", registerSequence as any], true);

@@ -6,13 +6,13 @@
 
 import "qunit";
 
-import Velocity, {VelocityResult} from "velocity-animate";
-import {defaultOptions, defaultProperties, getNow, getTarget} from "../utilities";
+import Velocity, { VelocityResult } from "@velocityjs/core";
+import { defaultOptions, defaultProperties, getNow, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("Promises", (assert) => {
-	const done = assert.async(10),
-		start = getNow();
+	const done = assert.async(10);
+	const start = getNow();
 	let result: VelocityResult;
 
 	assert.expect(10);

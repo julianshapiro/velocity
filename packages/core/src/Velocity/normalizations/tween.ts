@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement } from "../../../velocity";
+import { HTMLorSVGElement } from "../../velocity";
 
 // Project
 import { registerNormalization } from "./normalizations";
@@ -13,10 +13,10 @@ import { registerNormalization } from "./normalizations";
 /**
  * A fake normalization used to allow the "tween" property easy access.
  */
-function getSetTween(element: HTMLorSVGElement, propertyValue?: string) {
+function getSetTween(_element: HTMLorSVGElement, propertyValue?: string) {
 	if (propertyValue === undefined) {
 		return "";
 	}
 }
 
-registerNormalization(["Element", "tween", getSetTween]);
+registerNormalization(["Element", "tween", getSetTween as any]);

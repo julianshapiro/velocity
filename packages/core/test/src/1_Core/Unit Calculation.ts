@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {asyncTests, getPropertyValue, getTarget, sleep} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { asyncTests, getPropertyValue, getTarget, sleep } from "../utilities";
 import "./_module";
 
 QUnit.test("Unit Calculation", (assert) => {
@@ -33,10 +33,10 @@ QUnit.test("Unit Calculation", (assert) => {
 	asyncTests(assert, 2, async (done) => {
 		const $target = getTarget();
 
-		Velocity($target, {left: "500px"}, {duration: 10});
+		Velocity($target, { left: "500px" }, { duration: 10 });
 		await sleep(100);
 		assert.equal(getPropertyValue($target, "left"), "500px", "Finished animated value with given pixels should be the same.");
-		Velocity($target, {left: "0px"}, {duration: 10});
+		Velocity($target, { left: "0px" }, { duration: 10 });
 		await sleep(100);
 		assert.equal(getPropertyValue($target, "left"), "0px", "Finished animated value with 0px should be the same.");
 
@@ -58,9 +58,9 @@ QUnit.test("Unit Calculation", (assert) => {
 	asyncTests(assert, 1, async (done) => {
 		const $target = getTarget();
 
-		Velocity($target, {left: "500px"}, {duration: 10});
+		Velocity($target, { left: "500px" }, { duration: 10 });
 		await sleep(100);
-		Velocity($target, {left: 0}, {duration: 10});
+		Velocity($target, { left: 0 }, { duration: 10 });
 		await sleep(1000);
 		assert.equal(getPropertyValue($target, "left"), "0px", "Finished animated value given as number 0 should be the same as 0px.");
 
@@ -70,10 +70,10 @@ QUnit.test("Unit Calculation", (assert) => {
 	asyncTests(assert, 2, async (done) => {
 		const $target = getTarget();
 
-		Velocity($target, {left: 500}, {duration: 10});
+		Velocity($target, { left: 500 }, { duration: 10 });
 		await sleep(100);
 		assert.equal(getPropertyValue($target, "left"), "500px", "Finished animated value with given pixels should be the same.");
-		Velocity($target, {left: 0}, {duration: 10});
+		Velocity($target, { left: 0 }, { duration: 10 });
 		await sleep(100);
 		assert.equal(getPropertyValue($target, "left"), "0px", "Omitted pixels (px) when given animation should run properly.");
 

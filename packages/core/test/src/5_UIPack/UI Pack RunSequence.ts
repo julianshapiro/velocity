@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {defaultProperties, getPropertyValue, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { defaultProperties, getPropertyValue, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.skip("RunSequence", (assert) => {

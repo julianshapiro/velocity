@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {$qunitStage, applyStartValues, Data, defaultProperties, defaultStyles, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { $qunitStage, applyStartValues, Data, defaultProperties, defaultStyles, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.todo("Start Value Calculation", (assert) => {
@@ -39,8 +39,8 @@ QUnit.todo("Start Value Calculation", (assert) => {
 	assert.equal(Data($target2).cache.color, parseFloat(defaultStyles.colorGreen as any), "Defined hooked start value was calculated.");
 
 	/* Properties that shouldn't cause start values to be unit-converted. */
-	const testPropertiesEndNoConvert = {paddingLeft: "20px", height: "40px", paddingRight: "75%"},
-		$target3 = getTarget();
+	const testPropertiesEndNoConvert = { paddingLeft: "20px", height: "40px", paddingRight: "75%" };
+	const $target3 = getTarget();
 
 	applyStartValues($target3, testStartValues);
 	Velocity($target3, testPropertiesEndNoConvert);
@@ -50,12 +50,12 @@ QUnit.todo("Start Value Calculation", (assert) => {
 	//			 "Start value #3 was pattern matched.");
 
 	/* Properties that should cause start values to be unit-converted. */
-	const testPropertiesEndConvert = {paddingLeft: "20%", height: "40%", lineHeight: "0.5em", wordSpacing: "2rem", marginLeft: "10vw", marginTop: "5vh", marginBottom: "100px"},
-		parentWidth = $qunitStage.clientWidth,
-		parentHeight = $qunitStage.clientHeight,
-		parentFontSize = Velocity($qunitStage, "style", "fontSize"),
-		remSize = parseFloat(Velocity(document.body, "style", "fontSize") as any),
-		$target4 = getTarget();
+	const testPropertiesEndConvert = { paddingLeft: "20%", height: "40%", lineHeight: "0.5em", wordSpacing: "2rem", marginLeft: "10vw", marginTop: "5vh", marginBottom: "100px" };
+	const parentWidth = $qunitStage.clientWidth;
+	const parentHeight = $qunitStage.clientHeight;
+	const parentFontSize = Velocity($qunitStage, "style", "fontSize");
+	const remSize = parseFloat(Velocity(document.body, "style", "fontSize") as any);
+	const $target4 = getTarget();
 
 	applyStartValues($target4, testStartValues);
 	Velocity($target4, testPropertiesEndConvert);
@@ -81,8 +81,8 @@ QUnit.todo("Start Value Calculation", (assert) => {
 	// TODO: Tests for auto-parameters as the units are no longer converted.
 
 	/* jQuery TRBL deferring. */
-	const testPropertiesTRBL = {left: "1000px"},
-		$TRBLContainer = document.createElement("div");
+	const testPropertiesTRBL = { left: "1000px" };
+	const $TRBLContainer = document.createElement("div");
 
 	$TRBLContainer.setAttribute("id", "TRBLContainer");
 	$TRBLContainer.style.marginLeft = testPropertiesTRBL.left;

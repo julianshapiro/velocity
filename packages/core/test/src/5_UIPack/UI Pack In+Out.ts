@@ -6,32 +6,32 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {asyncCheckDuration, completeCheckDuration, defaultOptions, getPropertyValue, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { asyncCheckDuration, completeCheckDuration, defaultOptions, getPropertyValue, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.skip("In/Out", (assert) => {
-	const done = assert.async(2),
-		$target1 = getTarget(),
-		$target2 = getTarget(),
-		$target3 = getTarget(),
-		$target4 = getTarget(),
-		$target5 = getTarget(),
-		$target6 = getTarget();
+	const done = assert.async(2);
+	const $target1 = getTarget();
+	const $target2 = getTarget();
+	const $target3 = getTarget();
+	const $target4 = getTarget();
+	const $target5 = getTarget();
+	const $target6 = getTarget();
 
 	Velocity($target1, "transition.bounceIn", defaultOptions.duration);
 
-//	Velocity($target2, "transition.bounceIn", {duration: defaultOptions.duration, display: "inline"});
-//
-//	Velocity($target3, "transition.bounceOut", defaultOptions.duration);
-//
-//	Velocity($target4, "transition.bounceOut", {duration: defaultOptions.duration, display: null});
-//
-//	$target5.style.visibility = "hidden";
-//	Velocity($target5, "transition.bounceIn", {duration: defaultOptions.duration, visibility: "visible"});
-//
-//	$target6.style.visibility = "visible";
-//	Velocity($target6, "transition.bounceOut", {duration: defaultOptions.duration, visibility: "hidden"});
+	//	Velocity($target2, "transition.bounceIn", {duration: defaultOptions.duration, display: "inline"});
+	//
+	//	Velocity($target3, "transition.bounceOut", defaultOptions.duration);
+	//
+	//	Velocity($target4, "transition.bounceOut", {duration: defaultOptions.duration, display: null});
+	//
+	//	$target5.style.visibility = "hidden";
+	//	Velocity($target5, "transition.bounceIn", {duration: defaultOptions.duration, visibility: "visible"});
+	//
+	//	$target6.style.visibility = "visible";
+	//	Velocity($target6, "transition.bounceOut", {duration: defaultOptions.duration, visibility: "hidden"});
 
 	assert.expect(8);
 	setTimeout(() => {

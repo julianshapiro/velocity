@@ -6,16 +6,16 @@
 
 import "qunit";
 
-import Velocity, {HTMLorSVGElement} from "velocity-animate";
-import {getTarget} from "../utilities";
+import Velocity, { HTMLorSVGElement } from "@velocityjs/core";
+import { getTarget } from "../utilities";
 import "./_module";
 
 QUnit.skip("GenericReordering", (assert) => {
 	//	function genericReordering(element: HTMLorSVGElement, propertyValue?: string): string | void {
 	//		if (propertyValue === undefined) {
 	//			propertyValue = Velocity(element, "style", "textShadow");
-	//			const split = propertyValue.split(/\s/g),
-	//				firstPart = split[0];
+	//			const split = propertyValue.split(/\s/g);
+	//			const firstPart = split[0];
 	//			let newValue = "";
 	//
 	//			if (Velocity.CSS.ColorNames[firstPart]) {

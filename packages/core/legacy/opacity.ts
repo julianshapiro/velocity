@@ -15,8 +15,8 @@ namespace VelocityStatic.CSS {
 		function opacity(element: HTMLorSVGElement, propertyValue: string): boolean;
 		function opacity(element: HTMLorSVGElement, propertyValue?: string): string | boolean {
 			if (propertyValue === undefined) {
-				let filterValue: number | string = getPropertyValue(element, "filter"),
-					extracted = filterValue.toString().match(/alpha\(opacity=(.*)\)/i);
+				let filterValue: number | string = getPropertyValue(element, "filter");
+				let extracted = filterValue.toString().match(/alpha\(opacity=(.*)\)/i);
 
 				return String(extracted ? parseInt(extracted[1]) / 100 : 1);
 			}

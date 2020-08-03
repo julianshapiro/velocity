@@ -7,10 +7,11 @@
  */
 
 // Typedefs
-import { VelocityEasingFn } from "../../../velocity";
+import { VelocityEasingFn } from "../../velocity";
 
 // Project
 import { registerEasing } from "./easings";
+import invariant from 'tiny-invariant';
 
 /**
  * Fix to a range of <code>0 <= num <= 1</code>.
@@ -19,45 +20,42 @@ function fixRange(num: number) {
 	return Math.min(Math.max(num, 0), 1);
 }
 
-function A(aA1, aA2) {
+function A(aA1: number, aA2: number) {
 	return 1 - 3 * aA2 + 3 * aA1;
 }
 
-function B(aA1, aA2) {
+function B(aA1: number, aA2: number) {
 	return 3 * aA2 - 6 * aA1;
 }
 
-function C(aA1) {
+function C(aA1: number) {
 	return 3 * aA1;
 }
 
-function calcBezier(aT, aA1, aA2) {
+function calcBezier(aT: number, aA1: number, aA2: number) {
 	return ((A(aA1, aA2) * aT + B(aA1, aA2)) * aT + C(aA1)) * aT;
 }
 
-function getSlope(aT, aA1, aA2) {
+function getSlope(aT: number, aA1: number, aA2: number) {
 	return 3 * A(aA1, aA2) * aT * aT + 2 * B(aA1, aA2) * aT + C(aA1);
 }
 
 export function generateBezier(...args: [number, number, number, number]): VelocityEasingFn {
-	const NEWTON_ITERATIONS = 4,
-		NEWTON_MIN_SLOPE = 0.001,
-		SUBDIVISION_PRECISION = 0.0000001,
-		SUBDIVISION_MAX_ITERATIONS = 10,
-		kSplineTableSize = 11,
-		kSampleStepSize = 1 / (kSplineTableSize - 1),
-		float32ArraySupported = "Float32Array" in window;
+	const NEWTON_ITERATIONS = 4;
+	const NEWTON_MIN_SLOPE = 0.001;
+	const SUBDIVISION_PRECISION = 0.0000001;
+	const SUBDIVISION_MAX_ITERATIONS = 10;
+	const kSplineTableSize = 11;
+	const kSampleStepSize = 1 / (kSplineTableSize - 1);
+	const float32ArraySupported = "Float32Array" in window;
 
 	/* Must contain four args. */
-	if (args.length !== 4) {
-		return;
-	}
+	invariant(args.length === 4, "Must have four arguments to create a bezier easing");
 
 	/* Args must be numbers. */
 	for (let i = 0; i < 4; ++i) {
-		if (typeof args[i] !== "number" || isNaN(args[i]) || !isFinite(args[i])) {
-			return;
-		}
+		invariant(typeof args[i] === "number" && !isNaN(args[i]) && isFinite(args[i]),
+			"All arguments must be numbers to create a bezier easing");
 	}
 
 	/* X values must be in the [0, 1] range. */
@@ -90,7 +88,9 @@ export function generateBezier(...args: [number, number, number, number]): Veloc
 	}
 
 	function binarySubdivide(aX, aA, aB) {
-		let currentX, currentT, i = 0;
+		let currentX: number;
+		let currentT: number;
+		let i = 0;
 
 		do {
 			currentT = aA + (aB - aA) / 2;
@@ -105,10 +105,10 @@ export function generateBezier(...args: [number, number, number, number]): Veloc
 		return currentT;
 	}
 
-	function getTForX(aX) {
+	function getTForX(aX: number) {
 		const lastSample = kSplineTableSize - 1;
-		let intervalStart = 0,
-			currentSample = 1;
+		let intervalStart = 0;
+		let currentSample = 1;
 
 		for (; currentSample !== lastSample && mSampleValues[currentSample] <= aX; ++currentSample) {
 			intervalStart += kSampleStepSize;
@@ -116,9 +116,9 @@ export function generateBezier(...args: [number, number, number, number]): Veloc
 
 		--currentSample;
 
-		const dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]),
-			guessForT = intervalStart + dist * kSampleStepSize,
-			initialSlope = getSlope(guessForT, mX1, mX2);
+		const dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample + 1] - mSampleValues[currentSample]);
+		const guessForT = intervalStart + dist * kSampleStepSize;
+		const initialSlope = getSlope(guessForT, mX1, mX2);
 
 		if (initialSlope >= NEWTON_MIN_SLOPE) {
 			return newtonRaphsonIterate(aX, guessForT);
@@ -138,23 +138,23 @@ export function generateBezier(...args: [number, number, number, number]): Veloc
 		}
 	}
 
-	const str = `generateBezier(${[mX1, mY1, mX2, mY2]})`,
-		f = (percentComplete: number, startValue: number, endValue: number, property?: string) => {
-			if (!precomputed) {
-				precompute();
-			}
-			if (percentComplete === 0) {
-				return startValue;
-			}
-			if (percentComplete === 1) {
-				return endValue;
-			}
-			if (mX1 === mY1 && mX2 === mY2) {
-				return startValue + percentComplete * (endValue - startValue);
-			}
+	const str = `generateBezier(${[mX1, mY1, mX2, mY2]})`;
+	const f = (percentComplete: number, startValue: number, endValue: number, _property?: string) => {
+		if (!precomputed) {
+			precompute();
+		}
+		if (percentComplete === 0) {
+			return startValue;
+		}
+		if (percentComplete === 1) {
+			return endValue;
+		}
+		if (mX1 === mY1 && mX2 === mY2) {
+			return startValue + percentComplete * (endValue - startValue);
+		}
 
-			return startValue + calcBezier(getTForX(percentComplete), mY1, mY2) * (endValue - startValue);
-		};
+		return startValue + calcBezier(getTForX(percentComplete), mY1, mY2) * (endValue - startValue);
+	};
 
 	(f as any).getControlPoints = () => {
 		return [{ x: mX1, y: mY1 }, { x: mX2, y: mY2 }];
@@ -167,9 +167,9 @@ export function generateBezier(...args: [number, number, number, number]): Veloc
 }
 
 /* Common easings */
-const easeIn = generateBezier(0.42, 0, 1, 1),
-	easeOut = generateBezier(0, 0, 0.58, 1),
-	easeInOut = generateBezier(0.42, 0, 0.58, 1);
+const easeIn = generateBezier(0.42, 0, 1, 1);
+const easeOut = generateBezier(0, 0, 0.58, 1);
+const easeInOut = generateBezier(0.42, 0, 0.58, 1);
 
 registerEasing(["ease", generateBezier(0.25, 0.1, 0.25, 1)]);
 registerEasing(["easeIn", easeIn]);

@@ -7,14 +7,14 @@
  */
 
 // Typedefs
-import { StrictVelocityOptions, VelocityCallbackFn, VelocityEasingFn } from "../../velocity";
+import { StrictVelocityOptions } from "../velocity";
 
 // Project
 import { isBoolean } from "../types";
 import {
 	validateBegin, validateCache, validateComplete, validateDelay, validateDuration,
 	validateEasing, validateFpsLimit, validateLoop, validatePromise, validatePromiseRejectEmpty,
-	validateQueue, validateRepeat, validateSpeed, validateSync,
+	validateQueue, validateRepeat, validateSpeed, validateSync, validateProgress,
 } from "./options";
 
 // Constants
@@ -24,204 +24,190 @@ import {
 	DEFAULT_SPEED, DEFAULT_SYNC, FUZZY_MS_PER_SECOND,
 } from "../constants";
 
-// NOTE: Add the variable here, then add the default state in "reset" below.
-let cache: boolean,
-	begin: VelocityCallbackFn,
-	complete: VelocityCallbackFn,
-	delay: number,
-	duration: number,
-	easing: VelocityEasingFn,
-	fpsLimit: number,
-	loop: number | true,
-	mobileHA: boolean,
-	minFrameTime: number,
-	promise: boolean,
-	promiseRejectEmpty: boolean,
-	queue: string | false,
-	repeat: number | true,
-	speed: number,
-	sync: boolean;
+type RequiredVelocityOptions = Required<StrictVelocityOptions>;
 
-export abstract class defaults implements StrictVelocityOptions {
-	static reset() {
-		cache = DEFAULT_CACHE;
-		begin = undefined;
-		complete = undefined;
-		delay = DEFAULT_DELAY;
-		duration = DEFAULT_DURATION;
-		easing = validateEasing(DEFAULT_EASING, DEFAULT_DURATION);
-		fpsLimit = DEFAULT_FPSLIMIT;
-		loop = DEFAULT_LOOP;
-		minFrameTime = FUZZY_MS_PER_SECOND / DEFAULT_FPSLIMIT;
-		promise = DEFAULT_PROMISE;
-		promiseRejectEmpty = DEFAULT_PROMISE_REJECT_EMPTY;
-		queue = DEFAULT_QUEUE;
-		repeat = DEFAULT_REPEAT;
-		speed = DEFAULT_SPEED;
-		sync = DEFAULT_SYNC;
+class Defaults implements StrictVelocityOptions {
+	#cache!: RequiredVelocityOptions["cache"];
+	#begin!: StrictVelocityOptions["begin"];
+	#complete!: StrictVelocityOptions["complete"];
+	#delay!: RequiredVelocityOptions["delay"];
+	#duration!: RequiredVelocityOptions["duration"];
+	#easing!: StrictVelocityOptions["easing"];
+	#fpsLimit!: RequiredVelocityOptions["fpsLimit"];
+	#loop!: RequiredVelocityOptions["loop"];
+	#mobileHA!: RequiredVelocityOptions["mobileHA"];
+	#minFrameTime!: RequiredVelocityOptions["minFrameTime"];
+	#progress!: RequiredVelocityOptions["progress"];
+	#promise!: RequiredVelocityOptions["promise"];
+	#promiseRejectEmpty!: RequiredVelocityOptions["promiseRejectEmpty"];
+	#queue!: RequiredVelocityOptions["queue"];
+	#repeat!: RequiredVelocityOptions["repeat"];
+	#speed!: RequiredVelocityOptions["speed"];
+	#sync!: RequiredVelocityOptions["sync"];
+
+	constructor() {
+		this.reset();
 	}
 
-	static get cache(): boolean {
-		return cache;
+	reset() {
+		this.#cache = DEFAULT_CACHE;
+		this.#begin = undefined;
+		this.#complete = undefined;
+		this.#delay = DEFAULT_DELAY;
+		this.#duration = DEFAULT_DURATION;
+		this.#easing = validateEasing(DEFAULT_EASING, DEFAULT_DURATION);
+		this.#fpsLimit = DEFAULT_FPSLIMIT;
+		this.#loop = DEFAULT_LOOP;
+		this.#minFrameTime = FUZZY_MS_PER_SECOND / DEFAULT_FPSLIMIT;
+		this.#promise = DEFAULT_PROMISE;
+		this.#promiseRejectEmpty = DEFAULT_PROMISE_REJECT_EMPTY;
+		this.#queue = DEFAULT_QUEUE;
+		this.#repeat = DEFAULT_REPEAT;
+		this.#speed = DEFAULT_SPEED;
+		this.#sync = DEFAULT_SYNC;
 	}
 
-	static set cache(value: boolean) {
-		value = validateCache(value);
-		if (value !== undefined) {
-			cache = value;
-		}
+	// cache
+	get cache() {
+		return this.#cache;
+	}
+	set cache(value) {
+		this.#cache = validateCache(value) ?? this.#cache;
 	}
 
-	static get begin(): VelocityCallbackFn {
-		return begin;
+	// begin
+	get begin() {
+		return this.#begin;
 	}
-	static set begin(value: VelocityCallbackFn) {
-		value = validateBegin(value);
-		if (value !== undefined) {
-			begin = value;
-		}
+	set begin(value) {
+		this.#begin = validateBegin(value) ?? this.#begin;
 	}
 
-	static get complete(): VelocityCallbackFn {
-		return complete;
+	// complete
+	get complete() {
+		return this.#complete;
+	}
+	set complete(value) {
+		this.#complete = validateComplete(value) ?? this.#complete;
 	}
 
-	static set complete(value: VelocityCallbackFn) {
-		value = validateComplete(value);
-		if (value !== undefined) {
-			complete = value;
-		}
+	// delay
+	get delay() {
+		return this.#delay;
+	}
+	set delay(value) {
+		this.#delay = validateDelay(value) ?? this.#delay;
 	}
 
-	static get delay(): number {
-		return delay;
+	// duration
+	get duration() {
+		return this.#duration;
 	}
-	static set delay(value: number) {
-		value = validateDelay(value);
-		if (value !== undefined) {
-			delay = value;
-		}
+	set duration(value) {
+		this.#duration = validateDuration(value) ?? this.#duration;
 	}
 
-	static get duration(): number {
-		return duration;
+	// easing
+	get easing() {
+		return this.#easing;
 	}
-	static set duration(value: number) {
-		value = validateDuration(value);
-		if (value !== undefined) {
-			duration = value;
-		}
+	set easing(value) {
+		this.#easing = validateEasing(value, this.#duration) ?? this.#easing;
 	}
 
-	static get easing(): VelocityEasingFn {
-		return easing;
+	// fpsLimit
+	get fpsLimit() {
+		return this.#fpsLimit;
 	}
-	static set easing(value: VelocityEasingFn) {
-		value = validateEasing(value, duration);
-		if (value !== undefined) {
-			easing = value;
-		}
+	set fpsLimit(value) {
+		this.#fpsLimit = validateFpsLimit(value) ?? this.#fpsLimit;
 	}
 
-	static get fpsLimit(): number | false {
-		return fpsLimit;
+	// loop
+	get loop() {
+		return this.#loop;
 	}
-	static set fpsLimit(value: number | false) {
-		value = validateFpsLimit(value);
-		if (value !== undefined) {
-			fpsLimit = value;
-			minFrameTime = FUZZY_MS_PER_SECOND / value;
-		}
+	set loop(value) {
+		this.#loop = validateLoop(value) ?? this.#loop;
 	}
 
-	static get loop(): number | true {
-		return loop;
+	// mobileHA
+	get mobileHA() {
+		return this.#mobileHA;
 	}
-	static set loop(value: number | true) {
-		value = validateLoop(value);
-		if (value !== undefined) {
-			loop = value;
-		}
-	}
-
-	static get mobileHA(): boolean {
-		return mobileHA;
-	}
-	static set mobileHA(value: boolean) {
+	set mobileHA(value) {
 		if (isBoolean(value)) {
-			mobileHA = value;
+			this.#mobileHA = value;
 		}
 	}
 
-	static get minFrameTime(): number | false {
-		return minFrameTime;
+	// minFrameTime
+	get minFrameTime() {
+		return this.#minFrameTime;
 	}
 
-	static get promise(): boolean {
-		return promise;
+	// promise
+	get progress() {
+		return this.#progress;
 	}
-	static set promise(value: boolean) {
-		value = validatePromise(value);
-		if (value !== undefined) {
-			promise = value;
-		}
+	set progress(value) {
+		this.#progress = validateProgress(value) ?? this.#progress;
 	}
 
-	static get promiseRejectEmpty(): boolean {
-		return promiseRejectEmpty;
+	// promise
+	get promise() {
+		return this.#promise;
 	}
-	static set promiseRejectEmpty(value: boolean) {
-		value = validatePromiseRejectEmpty(value);
-		if (value !== undefined) {
-			promiseRejectEmpty = value;
-		}
+	set promise(value) {
+		this.#promise = validatePromise(value) ?? this.#promise;
 	}
 
-	static get queue(): string | false {
-		return queue;
+	// promiseRejectEmpty
+	get promiseRejectEmpty() {
+		return this.#promiseRejectEmpty;
 	}
-	static set queue(value: string | false) {
-		value = validateQueue(value);
-		if (value !== undefined) {
-			queue = value;
-		}
+	set promiseRejectEmpty(value) {
+		this.#promiseRejectEmpty = validatePromiseRejectEmpty(value) ?? this.#promiseRejectEmpty;
 	}
 
-	static get repeat(): number | true {
-		return repeat;
+	// queue
+	get queue() {
+		return this.#queue;
 	}
-	static set repeat(value: number | true) {
-		value = validateRepeat(value);
-		if (value !== undefined) {
-			repeat = value;
-		}
+	set queue(value) {
+		this.#queue = validateQueue(value) ?? this.#queue;
 	}
 
-	static get repeatAgain(): number | true {
-		return repeat;
+	// repeat
+	get repeat() {
+		return this.#repeat;
+	}
+	set repeat(value) {
+		this.#repeat = validateRepeat(value) ?? this.#repeat;
 	}
 
-	static get speed(): number {
-		return speed;
+	// repeatAgain
+	get repeatAgain() {
+		return this.#repeat;
 	}
-	static set speed(value: number) {
-		value = validateSpeed(value);
-		if (value !== undefined) {
-			speed = value;
-		}
+
+	// speed
+	get speed() {
+		return this.#speed;
 	}
-	static get sync(): boolean {
-		return sync;
+	set speed(value) {
+		this.#speed = validateSpeed(value) ?? this.#speed;
 	}
-	static set sync(value: boolean) {
-		value = validateSync(value);
-		if (value !== undefined) {
-			sync = value;
-		}
+
+	// sync
+	get sync() {
+		return this.#sync;
+	}
+	set sync(value) {
+		this.#sync = validateSync(value) ?? this.#sync;
 	}
 }
 
-Object.freeze(defaults);
+export const defaults = new Defaults();
 
-// Reset to our default values, currently everything is undefined.
-defaults.reset();
+Object.freeze(defaults);

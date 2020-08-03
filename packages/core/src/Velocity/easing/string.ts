@@ -8,7 +8,7 @@
  */
 
 // Project
-import {registerEasing} from "./easings";
+import { registerEasing } from "./easings";
 
 /**
  * Easing function that sets to the specified value immediately after the

@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {asyncTests, defaultOptions, defaultProperties, getNow, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { asyncTests, defaultOptions, defaultProperties, getNow, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("Duration", (assert) => {
@@ -31,10 +31,10 @@ QUnit.test("Duration", (assert) => {
 	asyncTests(assert, 1, (done) => {
 		const start = getNow();
 
-		Velocity(getTarget(), {width: ["200px", "500px"]}, {
+		Velocity(getTarget(), { width: ["200px", "500px"] }, {
 			duration: testDuration,
 		})
-			.velocity({width: ["500px", "200px"]}, {
+			.velocity({ width: ["500px", "200px"] }, {
 				duration: testDuration,
 				complete(elements, activeCall) {
 					const time = getNow() - start;
@@ -49,8 +49,8 @@ QUnit.test("Duration", (assert) => {
 	asyncTests(assert, 1, (done) => {
 		const start = getNow();
 
-		Velocity(getTarget(), {width: ["200px", "500px"]})
-			.velocity({width: ["500px", "200px"]})
+		Velocity(getTarget(), { width: ["200px", "500px"] })
+			.velocity({ width: ["500px", "200px"] })
 			.then(() => {
 				const time = getNow() - start;
 

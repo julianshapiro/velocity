@@ -1,7 +1,8 @@
 {
-	"name": "@velocityjs/animate",
+	"name": "@velocityjs/core",
 	"version": "2.0.6",
-	"description": "Accelerated JavaScript animation.",
+	"repository": "julianshapiro/velocity",
+	"description": "Accelerated JavaScript animation",
 	"keywords": [
 		"velocity",
 		"animation",
@@ -13,64 +14,33 @@
 		"javascript"
 	],
 	"homepage": "http://velocityjs.org",
-	"bugs": {
-		"url": "http://github.com/julianshapiro/velocity/issues"
-	},
+	"bugs": "http://github.com/julianshapiro/velocity/issues",
+	"contributors": [
+		"Julian Shapiro (http://julian.com/)",
+		"Ryc O'Chet (https://github.com/Rycochet)"
+	],
 	"license": "MIT",
-	"authors": [
-		{
-			"name": "Julian Shapiro",
-			"url": "http://julian.com/"
-		},
-		{
-			"name": "Ryc O'Chet",
-			"url": "https://github.com/Rycochet"
-		}
-	],
-	"scripts": {
-		"start": "rollup -w -c --environment BUILD,TEST",
-		"build": "rollup -c --environment BUILD,MINIFY,TEST",
-		"lint": "tslint src/**/*.ts src-ui/**/*.ts test/src/**/*.ts",
-		"test": "rollup -c --environment TEST",
-		"version": "npm run build && auto-changelog && git add ."
-	},
-	"main": "velocity.min.js",
-	"module": "velocity.es5.js",
-	"types": "velocity.d.ts",
-	"repository": "julianshapiro/velocity",
+	"main": "dist/index.js",
+	"module": "dist/animate.esm.js",
+	"typings": "dist/index.d.ts",
 	"files": [
-		"velocity.js",
-		"velocity.d.ts",
-		"velocity.es5.js",
-		"velocity.es5.js.map",
-		"velocity.js.map",
-		"velocity.min.js",
-		"velocity.ui.js",
-		"velocity.ui.js.map",
-		"velocity.ui.min.js"
+		"dist",
+		"src"
 	],
+	"engines": {
+		"node": ">=10"
+	},
+	"scripts": {
+		"start": "tsdx watch",
+		"build": "tsdx build",
+		"test": "tsdx test",
+		"lint": "tsdx lint",
+		"prepare": "tsdx build"
+	},
+	"dependencies": {
+		"tiny-invariant": "^1.1.0"
+	},
 	"devDependencies": {
-		"@types/qunit": "^2.5.2",
-		"@velocityjs/animate": "^2.0.6",
-		"auto-changelog": "^1.8.0",
-		"babel-core": "^6.26.3",
-		"babel-plugin-external-helpers": "^6.22.0",
-		"babel-polyfill": "^6.26.0",
-		"babel-preset-env": "^1.7.0",
-		"markdown": "^0.5.0",
-		"octonode": "^0.9.3",
-		"qunit": "^2.6.1",
-		"qunit-assert-close": "^2.1.2",
-		"rollup": "^0.63.5",
-		"rollup-plugin-babel": "^3.0.7",
-		"rollup-plugin-license": "^0.7.0",
-		"rollup-plugin-sourcemaps": "^0.4.2",
-		"rollup-plugin-strip-banner": "^0.2.0",
-		"rollup-plugin-terser": "^1.0.1",
-		"rollup-plugin-tslint": "^0.1.34",
-		"rollup-plugin-typescript2": "^0.16.1",
-		"rollup-plugin-uglify": "^4.0.0",
-		"tslint": "^5.11.0",
-		"typescript": "^3.0.1"
+		"tsdx": "^0.13.2"
 	}
 }

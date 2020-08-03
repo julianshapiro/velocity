@@ -1,0 +1,50 @@
+{
+	"name": "@velocityjs/animate",
+	"version": "2.0.6",
+	"repository": "julianshapiro/velocity",
+	"description": "Accelerated JavaScript animation",
+	"keywords": [
+		"velocity",
+		"animation",
+		"jquery",
+		"animate",
+		"ui",
+		"velocity.js",
+		"velocityjs",
+		"javascript"
+	],
+	"homepage": "http://velocityjs.org",
+	"bugs": "http://github.com/julianshapiro/velocity/issues",
+	"contributors": [
+		"Julian Shapiro (http://julian.com/)",
+		"Ryc O'Chet (https://github.com/Rycochet)"
+	],
+	"license": "MIT",
+	"main": "dist/index.js",
+	"module": "dist/animate.esm.js",
+	"typings": "dist/index.d.ts",
+	"files": [
+		"dist",
+		"src"
+	],
+	"engines": {
+		"node": ">=10"
+	},
+	"scripts": {
+		"start": "tsdx watch",
+		"build": "tsdx build",
+		"test": "tsdx test",
+		"lint": "tsdx lint",
+		"prepare": "tsdx build"
+	},
+	"dependencies": {
+		"@velocityjs/core": "*",
+		"@velocityjs/dom": "*",
+		"@velocityjs/jquery": "*",
+		"@velocityjs/ui": "*",
+		"@velocityjs/zepto": "*"
+	},
+	"devDependencies": {
+		"tsdx": "^0.13.2"
+	}
+}

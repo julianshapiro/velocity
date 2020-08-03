@@ -6,16 +6,16 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {Data, defaultProperties, defaultStyles, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { Data, defaultProperties, defaultStyles, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.todo("Forcefeeding", (assert) => {
 	/* Note: Start values are always converted into pixels. W test the conversion ratio we already know to avoid additional work. */
-	const testStartWidth = "1rem",
-		testStartWidthToPx = "16px",
-		testStartHeight = "10px",
-		$target = getTarget();
+	const testStartWidth = "1rem";
+	const testStartWidthToPx = "16px";
+	const testStartHeight = "10px";
+	const $target = getTarget();
 
 	Velocity($target, {
 		width: [100, "linear", testStartWidth],

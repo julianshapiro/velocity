@@ -7,7 +7,7 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement, VelocityResult } from "../velocity";
+import { HTMLorSVGElement, VelocityResult } from "./velocity";
 
 /**
  * Check if a variable is a boolean.

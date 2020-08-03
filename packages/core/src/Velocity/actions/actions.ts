@@ -7,7 +7,7 @@
  */
 
 // Typedefs
-import { VelocityActionFn } from "../../../velocity";
+import { VelocityActionFn } from "../../velocity";
 
 // Project
 import { isFunction, isString, propertyIsEnumerable } from "../../types";
@@ -21,9 +21,9 @@ export const Actions: { [name: string]: VelocityActionFn } = {};
  * directly, instead it should be called via  an action:<br/>
  * <code>Velocity("registerAction", "name", VelocityActionFn);</code>
  */
-export function registerAction(args?: [string, VelocityActionFn], internal?: boolean) {
-	const name: string = args[0],
-		callback = args[1];
+export function registerAction(args: [string, VelocityActionFn], internal?: boolean) {
+	const name: string = args[0];
+	const callback = args[1];
 
 	if (!isString(name)) {
 		console.warn(`VelocityJS: Trying to set 'registerAction' name to an invalid value:`, name);

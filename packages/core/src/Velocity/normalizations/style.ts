@@ -9,7 +9,7 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../../velocity";
+import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../velocity";
 
 // Project
 import { ALL_VENDOR_PREFIXES } from "../../constants";
@@ -112,23 +112,23 @@ function getSetStyle(propertyName: string) {
 /**
  * Vendor prefixes. Chrome / Safari, Firefox, IE / Edge, Opera.
  */
-const rxVendors = /^(webkit|moz|ms|o)[A-Z]/,
-	prefixElement = State.prefixElement;
+const rxVendors = /^(webkit|moz|ms|o)[A-Z]/;
+const prefixElement = State.prefixElement;
 
 if (prefixElement) {
 	for (const propertyName in prefixElement.style) {
 		if (rxVendors.test(propertyName)) {
-			const unprefixed = propertyName.replace(/^[a-z]+([A-Z])/, ($, letter: string) => letter.toLowerCase());
+			const unprefixed = propertyName.replace(/^[a-z]+([A-Z])/, (_$, letter: string) => letter.toLowerCase());
 
 			if (ALL_VENDOR_PREFIXES || isString(prefixElement.style[unprefixed])) {
 				const addUnit = rxAddPx.test(unprefixed) ? "px" : undefined;
 
-				registerNormalization(["Element", unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit]);
+				registerNormalization(["Element", unprefixed, getSetPrefixed(propertyName, unprefixed), addUnit!]);
 			}
 		} else if (!hasNormalization(["Element", propertyName])) {
 			const addUnit = rxAddPx.test(propertyName) ? "px" : undefined;
 
-			registerNormalization(["Element", propertyName, getSetStyle(propertyName), addUnit]);
+			registerNormalization(["Element", propertyName, getSetStyle(propertyName), addUnit!]);
 		}
 	}
 }

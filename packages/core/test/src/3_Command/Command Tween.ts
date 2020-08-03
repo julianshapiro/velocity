@@ -6,13 +6,13 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("Tween", (assert) => {
-	const $target1 = getTarget(),
-		startOpacity = $target1.style.opacity;
+	const $target1 = getTarget();
+	const startOpacity = $target1.style.opacity;
 
 	assert.expect(11);
 
@@ -27,7 +27,7 @@ QUnit.test("Tween", (assert) => {
 	assert.equal($target1.style.opacity, startOpacity, "Ensure that the element is not altered.");
 
 	assert.equal(typeof Velocity($target1, "tween", 0.5, "opacity", [1, 0], "linear"), "string", "Calling a single property returns a value.");
-	assert.equal(typeof Velocity($target1, "tween", 0.5, {opacity: [1, 0]}, "linear"), "object", "Calling a propertiesMap returns an object.");
-	assert.deepEqual($target1.velocity("tween", 0.5, {opacity: [1, 0]}, "linear"), Velocity($target1, "tween", 0.5, {opacity: [1, 0]}, "linear"),
+	assert.equal(typeof Velocity($target1, "tween", 0.5, { opacity: [1, 0] }, "linear"), "object", "Calling a propertiesMap returns an object.");
+	assert.deepEqual($target1.velocity("tween", 0.5, { opacity: [1, 0] }, "linear"), Velocity($target1, "tween", 0.5, { opacity: [1, 0] }, "linear"),
 		"Calling directly returns the same as a chain.");
 });

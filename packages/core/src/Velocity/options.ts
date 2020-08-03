@@ -9,7 +9,7 @@
  */
 
 // Typedefs
-import { VelocityCallbackFn, VelocityEasingFn, VelocityEasingType, VelocityProgressFn } from "../../velocity";
+import { VelocityCallbackFn, VelocityEasingFn, VelocityEasingType, VelocityProgressFn } from "../velocity";
 
 // Project
 import { Duration } from "../constants";
@@ -23,7 +23,7 @@ import { generateStep } from "./easing/step";
  * Parse a duration value and return an ms number. Optionally return a
  * default value if the number is not valid.
  */
-export function parseDuration(duration: "fast" | "normal" | "slow" | number, def?: "fast" | "normal" | "slow" | number): number {
+export function parseDuration(duration?: "fast" | "normal" | "slow" | number, def?: "fast" | "normal" | "slow" | number): number | undefined {
 	if (isNumber(duration)) {
 		return duration;
 	}
@@ -33,13 +33,15 @@ export function parseDuration(duration: "fast" | "normal" | "slow" | number, def
 				.replace("s", "000"));
 	}
 
-	return def == null ? undefined : parseDuration(def);
+	return def == null
+		? undefined
+		: parseDuration(def);
 }
 
 /**
  * Validate a <code>cache</code> option.
  */
-export function validateCache(value: boolean): boolean {
+export function validateCache(value: boolean): boolean | undefined {
 	if (isBoolean(value)) {
 		return value;
 	}
@@ -51,7 +53,7 @@ export function validateCache(value: boolean): boolean {
 /**
  * Validate a <code>begin</code> option.
  */
-export function validateBegin(value: VelocityCallbackFn): VelocityCallbackFn {
+export function validateBegin(value?: VelocityCallbackFn): VelocityCallbackFn | undefined {
 	if (isFunction(value)) {
 		return value;
 	}
@@ -63,7 +65,7 @@ export function validateBegin(value: VelocityCallbackFn): VelocityCallbackFn {
 /**
  * Validate a <code>complete</code> option.
  */
-export function validateComplete(value: VelocityCallbackFn, noError?: true): VelocityCallbackFn {
+export function validateComplete(value?: VelocityCallbackFn, noError?: true): VelocityCallbackFn | undefined {
 	if (isFunction(value)) {
 		return value;
 	}
@@ -75,8 +77,8 @@ export function validateComplete(value: VelocityCallbackFn, noError?: true): Vel
 /**
  * Validate a <code>delay</code> option.
  */
-export function validateDelay(value: "fast" | "normal" | "slow" | number): number {
-	const parsed = parseDuration(value);
+export function validateDelay(value?: "fast" | "normal" | "slow" | number): number | undefined {
+	const parsed = parseDuration(value)!;
 
 	if (!isNaN(parsed)) {
 		return parsed;
@@ -89,8 +91,8 @@ export function validateDelay(value: "fast" | "normal" | "slow" | number): numbe
 /**
  * Validate a <code>duration</code> option.
  */
-export function validateDuration(value: "fast" | "normal" | "slow" | number, noError?: true): number {
-	const parsed = parseDuration(value);
+export function validateDuration(value?: "fast" | "normal" | "slow" | number, noError?: true): number | undefined {
+	const parsed = parseDuration(value)!;
 
 	if (!isNaN(parsed) && parsed >= 0) {
 		return parsed;
@@ -103,7 +105,7 @@ export function validateDuration(value: "fast" | "normal" | "slow" | number, noE
 /**
  * Validate a <code>easing</code> option.
  */
-export function validateEasing(value: VelocityEasingType, duration: number, noError?: true): VelocityEasingFn {
+export function validateEasing(value?: VelocityEasingType, duration?: number, noError?: true): VelocityEasingFn | undefined {
 	if (isString(value)) {
 		// Named easing
 		return Easings[value];
@@ -117,7 +119,7 @@ export function validateEasing(value: VelocityEasingType, duration: number, noEr
 			// Steps
 			return generateStep(value[0]);
 		}
-		if (value.length === 2) {
+		if (value.length === 2 && isNumber(duration)) {
 			// springRK4 must be passed the animation's duration.
 			// Note: If the springRK4 array contains non-numbers,
 			// generateSpringRK4() returns an easing function generated with
@@ -127,7 +129,7 @@ export function validateEasing(value: VelocityEasingType, duration: number, noEr
 		if (value.length === 4) {
 			// Note: If the bezier array contains non-numbers, generateBezier()
 			// returns undefined.
-			return generateBezier.apply(null, value) || false;
+			return generateBezier.apply(null, value as [number, number, number, number]) || false;
 		}
 	}
 	if (value != null && !noError) {
@@ -138,7 +140,7 @@ export function validateEasing(value: VelocityEasingType, duration: number, noEr
 /**
  * Validate a <code>fpsLimit</code> option.
  */
-export function validateFpsLimit(value: number | false): number {
+export function validateFpsLimit(value?: number | false): number | undefined {
 	if (value === false) {
 		return 0;
 	} else {
@@ -156,7 +158,7 @@ export function validateFpsLimit(value: number | false): number {
 /**
  * Validate a <code>loop</code> option.
  */
-export function validateLoop(value: number | boolean): number | true {
+export function validateLoop(value?: number | boolean): number | true | undefined {
 	switch (value) {
 		case false:
 			return 0;
@@ -180,7 +182,7 @@ export function validateLoop(value: number | boolean): number | true {
 /**
  * Validate a <code>progress</code> option.
  */
-export function validateProgress(value: VelocityProgressFn): VelocityProgressFn {
+export function validateProgress(value?: VelocityProgressFn): VelocityProgressFn | undefined {
 	if (isFunction(value)) {
 		return value;
 	}
@@ -192,7 +194,7 @@ export function validateProgress(value: VelocityProgressFn): VelocityProgressFn 
 /**
  * Validate a <code>promise</code> option.
  */
-export function validatePromise(value: boolean): boolean {
+export function validatePromise(value?: boolean): boolean | undefined {
 	if (isBoolean(value)) {
 		return value;
 	}
@@ -204,7 +206,7 @@ export function validatePromise(value: boolean): boolean {
 /**
  * Validate a <code>promiseRejectEmpty</code> option.
  */
-export function validatePromiseRejectEmpty(value: boolean): boolean {
+export function validatePromiseRejectEmpty(value?: boolean): boolean | undefined {
 	if (isBoolean(value)) {
 		return value;
 	}
@@ -216,7 +218,7 @@ export function validatePromiseRejectEmpty(value: boolean): boolean {
 /**
  * Validate a <code>queue</code> option.
  */
-export function validateQueue(value: string | false, noError?: true): string | false {
+export function validateQueue(value?: string | false, noError?: true): string | false | undefined {
 	if (value === false || isString(value)) {
 		return value;
 	}
@@ -228,7 +230,7 @@ export function validateQueue(value: string | false, noError?: true): string | f
 /**
  * Validate a <code>repeat</code> option.
  */
-export function validateRepeat(value: number | boolean): number | true {
+export function validateRepeat(value?: number | boolean): number | true | undefined {
 	switch (value) {
 		case false:
 			return 0;
@@ -252,7 +254,7 @@ export function validateRepeat(value: number | boolean): number | true {
 /**
  * Validate a <code>speed</code> option.
  */
-export function validateSpeed(value: number): number {
+export function validateSpeed(value?: number): number | undefined {
 	if (isNumber(value)) {
 		return value;
 	}
@@ -264,7 +266,7 @@ export function validateSpeed(value: number): number {
 /**
  * Validate a <code>sync</code> option.
  */
-export function validateSync(value: boolean): boolean {
+export function validateSync(value?: boolean): boolean | undefined {
 	if (isBoolean(value)) {
 		return value;
 	}

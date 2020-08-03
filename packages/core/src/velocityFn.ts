@@ -11,17 +11,16 @@ import {
 	AnimationCall, AnimationFlags, HTMLorSVGElement, Properties, StrictVelocityOptions,
 	VelocityElements, VelocityObjectArgs, VelocityOptionFn, VelocityOptions, VelocityPromise,
 	VelocityProperty, VelocityResult,
-} from "../velocity";
+} from "./velocity";
 
 // Project
 import { isBoolean, isFunction, isNode, isNumber, isPlainObject, isString, isVelocityResult, isWrapped } from "./types";
-import { cloneArray, defineProperty, getValue } from "./utility";
+import { cloneArray, defineProperty } from "./utility";
 import { Data } from "./Velocity/data";
 import {
 	validateBegin, validateComplete, validateDelay, validateDuration, validateEasing,
 	validateLoop, validateProgress, validateQueue, validateRepeat, validateSpeed, validateSync,
 } from "./Velocity/options";
-import { patch as patchFn } from "./Velocity/patch";
 import { queue } from "./Velocity/queue";
 import { expandSequence } from "./Velocity/sequences";
 import { tick } from "./Velocity/tick";
@@ -32,11 +31,15 @@ import { defaults as DefaultObject } from "./Velocity/defaults";
 import { SequencesObject } from "./Velocity/sequencesObject";
 import { State as StateObject } from "./Velocity/state";
 
-let globalPromise: PromiseConstructor;
+import invariant from "tiny-invariant";
+
+let globalPromise: PromiseConstructor | undefined;
 
 try {
 	globalPromise = Promise;
-} catch {/**/ }
+} catch {
+	// If it's not globally available then do without Promises...
+}
 
 const noPromiseOption = ", if that is deliberate then pass `promiseRejectEmpty:false` as an option";
 
@@ -69,66 +72,65 @@ export function Velocity(this: VelocityElements, propertyMap: string | Propertie
 export function Velocity(this: VelocityElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): VelocityResult;
 /* tslint:enable:max-line-length */
 export function Velocity(this: VelocityElements | void, ...args: any[]): VelocityResult {
-	const
-		/**
-		 * A shortcut to the default options.
-		 */
-		defaults = DefaultObject,
-		/**
-		 * Cache of the first argument - this is used often enough to be saved.
-		 */
-		args0 = args[0] as VelocityObjectArgs,
-		/**
-		 * To allow for expressive CoffeeScript code, Velocity supports an
-		 * alternative syntax in which "elements" (or "e"), "properties" (or
-		 * "p"), and "options" (or "o") objects are defined on a container
-		 * object that's passed in as Velocity's sole argument.
-		 *
-		 * Note: Some browsers automatically populate arguments with a
-		 * "properties" object. We detect it by checking for its default
-		 * "names" property.
-		 */
-		// TODO: Confirm which browsers - if <=IE8 the we can drop completely
-		syntacticSugar = isPlainObject(args0) && (args0.p || ((isPlainObject(args0.properties) && !(args0.properties as any).names) || isString(args0.properties)));
-	let
-		/**
-		 *  When Velocity is called via the utility function (Velocity()),
-		 * elements are explicitly passed in as the first parameter. Thus,
-		 * argument positioning varies.
-		 */
-		argumentIndex: number = 0,
-		/**
-		 * The list of elements, extended with Promise and Velocity.
-		 */
-		elements: VelocityResult,
-		/**
-		 * The properties being animated. This can be a string, in which case it
-		 * is either a function for these elements, or it is a "named" animation
-		 * sequence to use instead. Named sequences start with either "callout."
-		 * or "transition.". When used as a callout the values will be reset
-		 * after finishing. When used as a transtition then there is no special
-		 * handling after finishing.
-		 */
-		propertiesMap: string | Properties<VelocityProperty>,
-		/**
-		 * Options supplied, this will be mapped and validated into
-		 * <code>options</code>.
-		 */
-		optionsMap: VelocityOptions,
-		/**
-		 * If called via a chain then this contains the <b>last</b> calls
-		 * animations. If this does not have a value then any access to the
-		 * element's animations needs to be to the currently-running ones.
-		 */
-		animations: AnimationCall[],
-		/**
-		 * The promise that is returned.
-		 */
-		promise: Promise<VelocityResult>,
-		// Used when the animation is finished
-		resolver: (value?: VelocityResult) => void,
-		// Used when there was an issue with one or more of the Velocity arguments
-		rejecter: (reason: any) => void;
+	/**
+	 * A shortcut to the default options.
+	 */
+	const defaults = DefaultObject;
+	/**
+	 * Cache of the first argument - this is used often enough to be saved.
+	 */
+	const args0 = args[0] as VelocityObjectArgs;
+	/**
+	 * To allow for expressive CoffeeScript code, Velocity supports an
+	 * alternative syntax in which "elements" (or "e"), "properties" (or
+	 * "p"), and "options" (or "o") objects are defined on a container
+	 * object that's passed in as Velocity's sole argument.
+	 *
+	 * Note: Some browsers automatically populate arguments with a
+	 * "properties" object. We detect it by checking for its default
+	 * "names" property.
+	 */
+	// TODO: Confirm which browsers - if <=IE8 the we can drop completely
+	const syntacticSugar = isPlainObject(args0) && (args0.p || ((isPlainObject(args0.properties) && !(args0.properties as any).names) || isString(args0.properties)));
+
+	/**
+	 *  When Velocity is called via the utility function (Velocity()),
+	 * elements are explicitly passed in as the first parameter. Thus,
+	 * argument positioning varies.
+	 */
+	let argumentIndex: number = 0;
+	/**
+	 * The list of elements, extended with Promise and Velocity.
+	 */
+	let elements: VelocityResult;
+	/**
+	 * The properties being animated. This can be a string, in which case it
+	 * is either a function for these elements, or it is a "named" animation
+	 * sequence to use instead. Named sequences start with either "callout."
+	 * or "transition.". When used as a callout the values will be reset
+	 * after finishing. When used as a transtition then there is no special
+	 * handling after finishing.
+	 */
+	let propertiesMap: string | Properties<VelocityProperty>;
+	/**
+	 * Options supplied, this will be mapped and validated into
+	 * <code>options</code>.
+	 */
+	let optionsMap: VelocityOptions | undefined;
+	/**
+	 * If called via a chain then this contains the <b>last</b> calls
+	 * animations. If this does not have a value then any access to the
+	 * element's animations needs to be to the currently-running ones.
+	 */
+	let animations: AnimationCall[] | undefined;
+	/**
+	 * The promise that is returned.
+	 */
+	let promise: Promise<VelocityResult> | undefined;
+	// Used when the animation is finished
+	let resolver: (value?: VelocityResult) => void;
+	// Used when there was an issue with one or more of the Velocity arguments
+	let rejecter: (reason: any) => void;
 
 	//console.log(`Velocity`, args)
 	// First get the elements, and the animations connected to the last call if
@@ -143,10 +145,10 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 		// previous Velocity() call then grab the animations it's related to.
 		elements = cloneArray(this as HTMLorSVGElement[]) as VelocityResult;
 		if (isVelocityResult(this)) {
-			animations = (this as VelocityResult).velocity.animations;
+			animations = (this as VelocityResult).velocity?.animations;
 		}
 	} else if (syntacticSugar) {
-		elements = cloneArray(args0.elements || args0.e) as VelocityResult;
+		elements = cloneArray(args0.elements || args0.e!) as VelocityResult;
 		argumentIndex++;
 	} else if (isNode(args0)) {
 		elements = cloneArray([args0]) as VelocityResult;
@@ -155,32 +157,34 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 		elements = cloneArray(args0) as VelocityResult;
 		argumentIndex++;
 	}
+	// @ts-ignore
+	invariant(elements, "Can't find any elements to affect");
 	// Allow elements to be chained.
 	if (elements) {
 		defineProperty(elements, "velocity", Velocity.bind(elements));
 		if (animations) {
-			defineProperty(elements.velocity, "animations", animations);
+			defineProperty(elements.velocity, "animations", animations!);
 		}
 	}
 	// Next get the propertiesMap and options.
 	if (syntacticSugar) {
-		propertiesMap = getValue(args0.properties, args0.p);
+		propertiesMap = (args0.properties ?? args0.p) || {};
 	} else {
 		// TODO: Should be possible to call Velocity("pauseAll") - currently not possible
 		propertiesMap = args[argumentIndex++] as string | Properties<VelocityProperty>;
 	}
 	// Get any options map passed in as arguments first, expand any direct
 	// options if possible.
-	const isReverse = propertiesMap === "reverse",
-		isAction = !isReverse && isString(propertiesMap),
-		maybeSequence = isAction && SequencesObject[propertiesMap as string],
-		opts = syntacticSugar ? getValue(args0.options, args0.o) : args[argumentIndex];
+	const isReverse = propertiesMap === "reverse";
+	const isAction = !isReverse && isString(propertiesMap);
+	const maybeSequence = isAction && SequencesObject[propertiesMap as string];
+	const opts = syntacticSugar ? (args0.options ?? args0.o) : args[argumentIndex];
 
 	if (isPlainObject(opts)) {
 		optionsMap = opts;
 	}
 	// Create the promise if supported and wanted.
-	if (globalPromise && getValue(optionsMap && optionsMap.promise, defaults.promise)) {
+	if (globalPromise && (optionsMap?.promise ?? defaults.promise)) {
 		promise = new globalPromise((resolve, reject) => {
 			rejecter = reject;
 			// IMPORTANT:
@@ -190,8 +194,8 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 			// these values for the duration of the resolve.
 			// Due to being an async call, they should be back to "normal"
 			// before the <code>.then()</code> function gets called.
-			resolver = (result: VelocityResult) => {
-				if (isVelocityResult(result) && result.promise) {
+			resolver = (result?: VelocityResult) => {
+				if (isVelocityResult(result) && result?.promise) {
 					delete result.then;
 					delete result.catch;
 					delete (result as any).finally;
@@ -207,8 +211,13 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 		}
 	}
 	if (promise) {
-		const optionPromiseRejectEmpty = optionsMap && optionsMap.promiseRejectEmpty,
-			promiseRejectEmpty: boolean = getValue(optionPromiseRejectEmpty, defaults.promiseRejectEmpty);
+		const optionPromiseRejectEmpty = optionsMap?.promiseRejectEmpty;
+		const promiseRejectEmpty: boolean = optionPromiseRejectEmpty ?? defaults.promiseRejectEmpty;
+
+		// @ts-ignore
+		invariant(rejecter, "Rejector function doesn't exist");
+		// @ts-ignore
+		invariant(resolver, "Resolver function doesn't exist");
 
 		if (!elements && !isAction) {
 			if (promiseRejectEmpty) {
@@ -231,12 +240,12 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 	// NOTE: Can't use isAction here due to type inference - there are callbacks
 	// between so the type isn't considered safe.
 	if (isAction) {
-		const actionArgs: any[] = [],
-			promiseHandler: VelocityPromise = promise && {
-				_promise: promise,
-				_resolver: resolver,
-				_rejecter: rejecter,
-			};
+		const actionArgs: any[] = [];
+		const promiseHandler: VelocityPromise | undefined = promise && {
+			_promise: promise,
+			_resolver: resolver! as any,
+			_rejecter: rejecter! as any,
+		};
 
 		while (argumentIndex < args.length) {
 			actionArgs.push(args[argumentIndex++]);
@@ -248,11 +257,11 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 		// There is one special case - "reverse" - which is handled differently,
 		// by being stored on the animation and then expanded when the animation
 		// starts.
-		const action = (propertiesMap as string).replace(/\..*$/, ""),
-			callback = ActionsObject[action];
+		const action = (propertiesMap as string).replace(/\..*$/, "");
+		const callback = ActionsObject[action];
 
 		if (callback) {
-			const result = callback(actionArgs, elements, promiseHandler, propertiesMap as string);
+			const result = callback(actionArgs, elements, promiseHandler!, propertiesMap as string);
 
 			if (result !== undefined) {
 				return result;
@@ -260,26 +269,24 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 
 			return elements || promise as any;
 		} else if (!maybeSequence) {
-			console.error(`VelocityJS: First argument (${propertiesMap}) was not a property map, a known action, or a registered redirect. Aborting.`);
-
-			return;
+			throw new Error(`VelocityJS: First argument (${propertiesMap}) was not a property map, a known action, or a registered redirect. Aborting.`);
 		}
 	}
-	let hasValidDuration: boolean;
+	let hasValidDuration: boolean = false;
 
 	if (isPlainObject(propertiesMap) || isReverse || maybeSequence) {
 		/**
 		 * The options for this set of animations.
 		 */
-		const options: StrictVelocityOptions = {};
+		const options: Partial<StrictVelocityOptions> = {};
 		let isSync = defaults.sync;
 
 		// Private options first - set as non-enumerable, and starting with an
 		// underscore so we can filter them out.
 		if (promise) {
 			defineProperty(options, "_promise", promise);
-			defineProperty(options, "_rejecter", rejecter);
-			defineProperty(options, "_resolver", resolver);
+			defineProperty(options, "_rejecter", rejecter!);
+			defineProperty(options, "_resolver", resolver!);
 		}
 		defineProperty(options, "_ready", 0);
 		defineProperty(options, "_started", 0);
@@ -288,23 +295,23 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 
 		// Now check the optionsMap
 		if (isPlainObject(optionsMap)) {
-			const validDuration = validateDuration(optionsMap.duration);
+			const validDuration = validateDuration(optionsMap.duration!);
 
 			hasValidDuration = validDuration !== undefined;
-			options.duration = getValue(validDuration, defaults.duration);
-			options.delay = getValue(validateDelay(optionsMap.delay), defaults.delay);
+			options.duration = validDuration ?? defaults.duration;
+			options.delay = validateDelay(optionsMap.delay!) ?? defaults.delay;
 			// Need the extra fallback here in case it supplies an invalid
 			// easing that we need to overrride with the default.
-			options.easing = validateEasing(getValue(optionsMap.easing, defaults.easing), options.duration) || validateEasing(defaults.easing, options.duration);
-			options.loop = getValue(validateLoop(optionsMap.loop), defaults.loop);
-			options.repeat = options.repeatAgain = getValue(validateRepeat(optionsMap.repeat), defaults.repeat);
+			options.easing = validateEasing(optionsMap.easing ?? defaults.easing, options.duration) || validateEasing(defaults.easing, options.duration);
+			options.loop = validateLoop(optionsMap.loop) ?? defaults.loop;
+			options.repeat = options.repeatAgain = validateRepeat(optionsMap.repeat) ?? defaults.repeat;
 			if (optionsMap.speed != null) {
-				options.speed = getValue(validateSpeed(optionsMap.speed), 1);
+				options.speed = validateSpeed(optionsMap.speed) ?? 1;
 			}
 			if (isBoolean(optionsMap.promise)) {
 				options.promise = optionsMap.promise;
 			}
-			options.queue = getValue(validateQueue(optionsMap.queue), defaults.queue);
+			options.queue = validateQueue(optionsMap.queue) ?? defaults.queue;
 			if (optionsMap.mobileHA && !StateObject.isGingerbread) {
 				/* When set to true, and if this is a mobile device, mobileHA automatically enables hardware acceleration (via a null transform hack)
 				 on animating elements. HA is removed from the element at the completion of its animation. */
@@ -329,10 +336,10 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 				}
 			}
 			// TODO: Allow functional options for different options per element
-			const optionsBegin = validateBegin(optionsMap.begin),
-				optionsComplete = validateComplete(optionsMap.complete),
-				optionsProgress = validateProgress(optionsMap.progress),
-				optionsSync = validateSync(optionsMap.sync);
+			const optionsBegin = validateBegin(optionsMap.begin);
+			const optionsComplete = validateComplete(optionsMap.complete);
+			const optionsProgress = validateProgress(optionsMap.progress);
+			const optionsSync = validateSync(optionsMap.sync!);
 
 			if (optionsBegin != null) {
 				options.begin = optionsBegin;
@@ -359,7 +366,7 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 			}
 			if (!isFunction(args[argumentIndex + offset])) {
 				// Despite coming before Complete, we can't pass a fn easing
-				const easing = validateEasing(args[argumentIndex + offset], getValue(options && validateDuration(options.duration), defaults.duration) as number, true);
+				const easing = validateEasing(args[argumentIndex + offset], validateDuration(options?.duration) ?? defaults.duration, true);
 
 				if (easing !== undefined) {
 					offset++;
@@ -392,7 +399,7 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 		// unless the sync:true option is used.
 
 		const rootAnimation: AnimationCall = {
-			options,
+			options: options as StrictVelocityOptions,
 			elements,
 			_prev: undefined,
 			_next: undefined,
@@ -400,7 +407,7 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 			percentComplete: 0,
 			ellapsedTime: 0,
 			timeStart: 0,
-		};
+		} as AnimationCall;
 
 		animations = [];
 		for (let index = 0; index < elements.length; index++) {
@@ -421,24 +428,24 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 				const animation: AnimationCall = {
 					...rootAnimation,
 					element,
-					_flags: rootAnimation._flags | flags, // tslint:disable-line:no-bitwise
+					_flags: (rootAnimation._flags || 0) | flags, // tslint:disable-line:no-bitwise
 				};
 
-				options._total++;
+				options._total!++;
 				animations.push(animation);
 				if (options.stagger) {
 					if (isFunction(options.stagger)) {
 						const num = optionCallback(options.stagger, element, index, elements.length, elements, "stagger");
 
 						if (isNumber(num)) {
-							animation.delay = options.delay + num;
+							animation.delay = options.delay! + num;
 						}
 					} else {
-						animation.delay = options.delay + (options.stagger * index);
+						animation.delay = options.delay! + (options.stagger * index);
 					}
 				}
 				if (options.drag) {
-					animation.duration = options.duration - (options.duration * Math.max(1 - (index + 1) / elements.length, 0.75));
+					animation.duration = options.duration! - (options.duration! * Math.max(1 - (index + 1) / elements.length, 0.75));
 				}
 				if (maybeSequence) {
 					expandSequence(animation, maybeSequence);
@@ -450,7 +457,7 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 					animation.tweens = Object.create(null);
 					expandProperties(animation, propertiesMap);
 				}
-				queue(element, animation, options.queue);
+				queue(element, animation, options.queue!);
 			}
 		}
 		if (StateObject.isTicking === false) {
@@ -473,10 +480,12 @@ export function Velocity(this: VelocityElements | void, ...args: any[]): Velocit
 /**
  * Call an option callback in a try/catch block and report an error if needed.
  */
-function optionCallback<T>(fn: VelocityOptionFn<T>, element: HTMLorSVGElement, index: number, length: number, elements: HTMLorSVGElement[], option: string): T {
+function optionCallback<T>(fn: VelocityOptionFn<T>, element: HTMLorSVGElement, index: number, length: number, elements: HTMLorSVGElement[], option: string): T | undefined {
 	try {
 		return fn.call(element, index, length, elements, option);
 	} catch (e) {
 		console.error(`VelocityJS: Exception when calling '${option}' callback:`, e);
+
+		return undefined;
 	}
 }

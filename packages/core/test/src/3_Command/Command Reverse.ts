@@ -6,15 +6,15 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {asyncTests, defaultProperties, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { asyncTests, defaultProperties, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("Reverse", (assert) => {
-	const $target = getTarget(),
-		opacity = $target.velocity("style", "opacity"),
-		// Browsers don't always suffix, but Velocity does.
-		width = $target.velocity("style", "width") === "0" ? "0px" : $target.velocity("style", "width");
+	const $target = getTarget();
+	const opacity = $target.velocity("style", "opacity");
+	// Browsers don't always suffix, but Velocity does.
+	const width = $target.velocity("style", "width") === "0" ? "0px" : $target.velocity("style", "width");
 
 	asyncTests(assert, 2, (done) => {
 		Velocity($target, defaultProperties, {

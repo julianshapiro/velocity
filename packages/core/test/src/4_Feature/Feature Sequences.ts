@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {asyncCheckDuration, asyncTests, defaultProperties, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { asyncCheckDuration, asyncTests, defaultProperties, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.todo("Sequences", (assert) => {

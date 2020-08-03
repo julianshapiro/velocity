@@ -7,7 +7,7 @@
  */
 
 // Typedefs
-import { VelocityEasingFn } from "../../../velocity";
+import { VelocityEasingFn } from "../../velocity";
 
 // Constants
 const cache: { [steps: number]: VelocityEasingFn } = {};

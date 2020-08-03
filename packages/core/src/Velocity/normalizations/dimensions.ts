@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../../velocity";
+import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../velocity";
 
 // Project
 import { augmentDimension } from "../css/augmentDimension";

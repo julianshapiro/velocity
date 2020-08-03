@@ -6,18 +6,18 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {getPropertyValue, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { getPropertyValue, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.skip("Packaged Effect: slideUp/Down", (assert) => {
-	const done = assert.async(4),
-		$target1 = getTarget(),
-		$target2 = getTarget(),
-		initialStyles = {
-			display: "none",
-			paddingTop: "123px",
-		};
+	const done = assert.async(4);
+	const $target1 = getTarget();
+	const $target2 = getTarget();
+	const initialStyles = {
+		display: "none",
+		paddingTop: "123px",
+	};
 
 	$target1.style.display = initialStyles.display;
 	$target1.style.paddingTop = initialStyles.paddingTop;

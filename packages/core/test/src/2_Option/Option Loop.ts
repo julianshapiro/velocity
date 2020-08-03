@@ -6,18 +6,18 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {asyncTests, defaultProperties, getNow, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { asyncTests, defaultProperties, getNow, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("Loop", (assert) => {
 	asyncTests(assert, 4, (done) => {
-		const testOptions = {loop: 2, delay: 100, duration: 100},
-			start = getNow();
-		let begin = 0,
-			complete = 0,
-			loop = 0,
-			lastPercentComplete = 2;
+		const testOptions = { loop: 2, delay: 100, duration: 100 };
+		const start = getNow();
+		let begin = 0;
+		let complete = 0;
+		let loop = 0;
+		let lastPercentComplete = 2;
 
 		Velocity(getTarget(), defaultProperties,
 			{

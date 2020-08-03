@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity, {VelocityResult} from "velocity-animate";
-import {asyncCheckDuration, asyncTests, defaultProperties, getTarget, once} from "../utilities";
+import Velocity, { VelocityResult } from "@velocityjs/core";
+import { asyncCheckDuration, asyncTests, defaultProperties, getTarget, once } from "../utilities";
 import "./_module";
 
 QUnit.test("Easing", (assert) => {
@@ -16,7 +16,7 @@ QUnit.test("Easing", (assert) => {
 
 		try {
 			success = true;
-			Velocity(getTarget(), defaultProperties, {easing: "fake"});
+			Velocity(getTarget(), defaultProperties, { easing: "fake" });
 		} catch (e) {
 			success = false;
 		}
@@ -30,8 +30,8 @@ QUnit.test("Easing", (assert) => {
 
 		try {
 			success = true;
-			Velocity(getTarget(), defaultProperties, {easing: ["a" as any, 0.5, 0.5, 0.5]});
-			Velocity(getTarget(), defaultProperties, {easing: [0.5, 0.5, 0.5]});
+			Velocity(getTarget(), defaultProperties, { easing: ["a" as any, 0.5, 0.5, 0.5] });
+			Velocity(getTarget(), defaultProperties, { easing: [0.5, 0.5, 0.5] });
 		} catch (e) {
 			success = false;
 		}
@@ -43,9 +43,9 @@ QUnit.test("Easing", (assert) => {
 	asyncTests(assert, 1, (done) => {
 		// TODO: Use a "tween" action?
 		/* Ensure that a properly-formatted bezier curve array returns a bezier function. */
-		const easingBezierArray = [0.27, -0.65, 0.78, 0.19],
-			easingBezierTestPercent = 0.25,
-			easingBezierTestValue = -0.23;
+		const easingBezierArray = [0.27, -0.65, 0.78, 0.19];
+		const easingBezierTestPercent = 0.25;
+		const easingBezierTestValue = -0.23;
 
 		Velocity(getTarget(), defaultProperties, {
 			easing: easingBezierArray,
@@ -59,10 +59,10 @@ QUnit.test("Easing", (assert) => {
 
 	asyncTests(assert, 1, (done) => {
 		/* Ensure that a properly-formatted spring RK4 array returns a bezier function. */
-		const easingSpringRK4Array = [250, 12],
-			easingSpringRK4TestPercent = 0.25,
-			easingSpringRK4TestValue = 0.928, // TODO: Check accuracy
-			easingSpringRK4TestDuration = 992;
+		const easingSpringRK4Array = [250, 12];
+		const easingSpringRK4TestPercent = 0.25;
+		const easingSpringRK4TestValue = 0.928; // TODO: Check accuracy
+		const easingSpringRK4TestDuration = 992;
 
 		Velocity(getTarget(), defaultProperties, {
 			duration: 150,
@@ -88,9 +88,9 @@ QUnit.test("Easing", (assert) => {
 
 	asyncTests(assert, 1, (done) => {
 		/* Ensure that a properly-formatted step easing array returns a step function. */
-		const easingStepArray = [4],
-			easingStepTestPercent = 0.35,
-			easingStepTestValue = 0.25;
+		const easingStepArray = [4];
+		const easingStepTestPercent = 0.35;
+		const easingStepTestValue = 0.25;
 
 		Velocity(getTarget(), defaultProperties, {
 			easing: easingStepArray,
@@ -102,7 +102,7 @@ QUnit.test("Easing", (assert) => {
 	});
 
 	asyncTests(assert, 3, (done) => {
-		Velocity(getTarget(), {opacity: [0, "during", 1]}, {
+		Velocity(getTarget(), { opacity: [0, "during", 1] }, {
 			duration: asyncCheckDuration,
 			begin(elements) {
 				assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'during').");
@@ -119,7 +119,7 @@ QUnit.test("Easing", (assert) => {
 	});
 
 	asyncTests(assert, 3, (done) => {
-		Velocity(getTarget(), {opacity: [0, "at-start", 1]}, {
+		Velocity(getTarget(), { opacity: [0, "at-start", 1] }, {
 			duration: asyncCheckDuration,
 			begin(elements) {
 				assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'at-start').");
@@ -136,7 +136,7 @@ QUnit.test("Easing", (assert) => {
 	});
 
 	asyncTests(assert, 3, (done) => {
-		Velocity(getTarget(), {opacity: [0, "at-end", 1]}, {
+		Velocity(getTarget(), { opacity: [0, "at-end", 1] }, {
 			duration: asyncCheckDuration,
 			begin(elements) {
 				assert.equal(elements.velocity("style", "opacity"), 1, "Correct begin value (easing:'at-end').");

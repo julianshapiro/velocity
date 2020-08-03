@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {asyncTests, defaultOptions, defaultProperties, getPropertyValue, getTarget, sleep} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { asyncTests, defaultOptions, defaultProperties, getPropertyValue, getTarget, sleep } from "../utilities";
 import "./_module";
 
 QUnit.test("Stop", async (assert) => {
@@ -22,8 +22,8 @@ QUnit.test("Stop", async (assert) => {
 		const $target = getTarget();
 
 		Velocity($target, defaultProperties, defaultOptions);
-		Velocity($target, {top: 0}, defaultOptions);
-		Velocity($target, {width: 0}, defaultOptions);
+		Velocity($target, { top: 0 }, defaultOptions);
+		Velocity($target, { width: 0 }, defaultOptions);
 		Velocity($target, "stop");
 		assert.ok(true, "Calling on an element that is animating doesn't cause an error.");
 
@@ -31,10 +31,10 @@ QUnit.test("Stop", async (assert) => {
 	});
 
 	asyncTests(assert, 1, async (done) => {
-		const $target = getTarget(),
-			startOpacity = getPropertyValue($target, "opacity");
+		const $target = getTarget();
+		const startOpacity = getPropertyValue($target, "opacity");
 
-		Velocity($target, {opacity: [0, 1]}, defaultOptions);
+		Velocity($target, { opacity: [0, 1] }, defaultOptions);
 		await sleep(defaultOptions.duration as number / 2);
 		Velocity($target, "stop");
 		assert.close(parseFloat(getPropertyValue($target, "opacity")), parseFloat(startOpacity) / 2, 0.1, "Animation runs until stopped.");
@@ -46,7 +46,7 @@ QUnit.test("Stop", async (assert) => {
 		const $target = getTarget();
 		let begin = false;
 
-		Velocity($target, {opacity: [0, 1]}, {
+		Velocity($target, { opacity: [0, 1] }, {
 			delay: 1000,
 			begin() {
 				begin = true;
@@ -61,16 +61,16 @@ QUnit.test("Stop", async (assert) => {
 
 	asyncTests(assert, 2, async (done) => {
 		const $target = getTarget();
-		let complete1 = false,
-			complete2 = false;
+		let complete1 = false;
+		let complete2 = false;
 
-		Velocity($target, {opacity: [0, 1]}, {
+		Velocity($target, { opacity: [0, 1] }, {
 			queue: "test1",
 			complete() {
 				complete1 = true;
 			},
 		});
-		Velocity($target, {opacity: [0, 1]}, {
+		Velocity($target, { opacity: [0, 1] }, {
 			queue: "test2",
 			complete() {
 				complete2 = true;
@@ -86,15 +86,15 @@ QUnit.test("Stop", async (assert) => {
 
 	asyncTests(assert, 1, async (done) => {
 		const $target = getTarget();
-		let begin1 = false,
-			begin2 = false;
+		let begin1 = false;
+		let begin2 = false;
 
-		Velocity($target, {opacity: [0, 1]}, {
+		Velocity($target, { opacity: [0, 1] }, {
 			begin() {
 				begin1 = true;
 			},
 		});
-		Velocity($target, {width: "500px"}, {
+		Velocity($target, { width: "500px" }, {
 			begin() {
 				begin2 = true;
 			},
@@ -107,17 +107,17 @@ QUnit.test("Stop", async (assert) => {
 	});
 
 	asyncTests(assert, 2, async (done) => {
-		const $target = getTarget(),
-			anim = Velocity($target, {opacity: [0, 1]}, {
-				queue: "test",
-				begin() {
-					begin1 = true;
-				},
-			});
-		let begin1 = false,
-			begin2 = false;
+		const $target = getTarget();
+		const anim = Velocity($target, { opacity: [0, 1] }, {
+			queue: "test",
+			begin() {
+				begin1 = true;
+			},
+		});
+		let begin1 = false;
+		let begin2 = false;
 
-		Velocity($target, {opacity: [0, 1]}, {
+		Velocity($target, { opacity: [0, 1] }, {
 			begin() {
 				begin2 = true;
 			},

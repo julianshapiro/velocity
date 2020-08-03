@@ -7,11 +7,10 @@
  */
 
 // Typedefs
-import { AnimationCall, AnimationFlags, VelocityPromise, VelocityResult } from "../../../velocity";
+import { AnimationCall, AnimationFlags, VelocityPromise, VelocityResult } from "../../velocity";
 
 // Project
 import { isVelocityResult } from "../../types";
-import { getValue } from "../../utility";
 import { completeCall } from "../complete";
 import { defaults } from "../defaults";
 import { validateQueue } from "../options";
@@ -25,7 +24,7 @@ import { registerAction } from "./actions";
  */
 function checkAnimationShouldBeStopped(animation: AnimationCall, queueName: false | string, defaultQueue: false | string) {
 	validateTweens(animation);
-	if (queueName === undefined || queueName === getValue(animation.queue, animation.options.queue, defaultQueue)) {
+	if (queueName === undefined || queueName === (animation.queue ?? animation.options?.queue ?? defaultQueue)) {
 		animation._flags |= AnimationFlags.STOPPED; // tslint:disable-line:no-bitwise
 		completeCall(animation);
 	}
@@ -49,12 +48,12 @@ function checkAnimationShouldBeStopped(animation: AnimationCall, queueName: fals
  * behavior is intended to take effect *immediately*, regardless of the
  * element's current queue state.
  */
-function stop(args: any[], elements: VelocityResult, promiseHandler?: VelocityPromise, action?: string): void {
-	const queueName: string | false = validateQueue(args[0], true),
-		defaultQueue: false | string = defaults.queue,
-		finishAll = args[queueName === undefined ? 0 : 1] === true;
+function stop(args: any[], elements: VelocityResult, promiseHandler: VelocityPromise, _action: string): void {
+	const queueName: string | false = validateQueue(args[0], true)!;
+	const defaultQueue: false | string = defaults.queue;
+	const finishAll = args[queueName === undefined ? 0 : 1] === true;
 
-	if (isVelocityResult(elements) && elements.velocity.animations) {
+	if (isVelocityResult(elements) && elements.velocity?.animations) {
 		for (const animation of elements.velocity.animations) {
 			checkAnimationShouldBeStopped(animation, queueName, defaultQueue);
 		}
@@ -63,16 +62,16 @@ function stop(args: any[], elements: VelocityResult, promiseHandler?: VelocityPr
 			validateTweens(State.firstNew);
 		}
 		for (let activeCall = State.first, nextCall: AnimationCall; activeCall && (finishAll || activeCall !== State.firstNew); activeCall = nextCall || State.firstNew) {
-			nextCall = activeCall._next;
-			if (!elements || elements.includes(activeCall.element)) {
+			nextCall = activeCall._next!;
+			if (!elements || elements.includes(activeCall.element!)) {
 				checkAnimationShouldBeStopped(activeCall, queueName, defaultQueue);
 			}
 		}
 	}
 	if (promiseHandler) {
-		if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
+		if (isVelocityResult(elements) && elements.velocity?.animations && elements.then) {
 			elements.then(promiseHandler._resolver);
-		} else {
+		} else if (promiseHandler._resolver) {
 			promiseHandler._resolver(elements);
 		}
 	}

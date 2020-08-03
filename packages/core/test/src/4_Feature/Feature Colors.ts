@@ -6,14 +6,14 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { getTarget } from "../utilities";
 import "./_module";
 
 QUnit.skip("Colors (Shorthands)", (assert) => {
 	const $target = getTarget();
 
-	Velocity($target, {borderColor: "#7871c2", color: ["#297dad", "spring", "#5ead29"]});
+	Velocity($target, { borderColor: "#7871c2", color: ["#297dad", "spring", "#5ead29"] });
 
 	//	assert.equal(Data($target).style.borderColorRed.endValue, 120, "Hex #1a component.");
 	//	assert.equal(Data($target).style.borderColorGreen.endValue, 113, "Hex #1b component.");

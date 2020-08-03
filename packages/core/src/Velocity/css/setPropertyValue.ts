@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../../velocity";
+import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../velocity";
 
 // Project
 import Velocity from "../../velocity";
@@ -18,12 +18,12 @@ import { NoCacheNormalizations } from "../normalizations/normalizationsObject";
  * normalizations.
  */
 export function setPropertyValue(element: HTMLorSVGElement, propertyName: string, propertyValue: any, fn?: VelocityNormalizationsFn) {
-	const noCache = NoCacheNormalizations.has(propertyName),
-		data = !noCache && Data(element);
+	const noCache = NoCacheNormalizations.has(propertyName);
+	const data = !noCache && Data(element)!;
 
 	if (noCache || (data && data.cache[propertyName] !== propertyValue)) {
 		// By setting it to undefined we force a true "get" later
-		if (!noCache) {
+		if (!noCache && data) {
 			data.cache[propertyName] = propertyValue || undefined;
 		}
 		fn = fn || getNormalization(element, propertyName);

@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement } from "../velocity";
+import { HTMLorSVGElement } from "./velocity";
 
 // Project
 import { isNode } from "./types";
@@ -46,18 +46,6 @@ export function defineProperty(proto: any, name: string, value: any, readonly?: 
 }
 
 /**
- * When there are multiple locations for a value pass them all in, then get the
- * first value that is valid.
- */
-export function getValue<T>(...args: T[]): T {
-	for (const arg of args) {
-		if (arg !== undefined && arg === arg) {
-			return arg;
-		}
-	}
-}
-
-/**
  * Shim to get the current milliseconds - on anything except old IE it'll use
  * Date.now() and save creating an object. If that doesn't exist then it'll
  * create one that gets GC.
@@ -87,4 +75,11 @@ export function sanitizeElements(elements: HTMLorSVGElement | HTMLorSVGElement[]
 	return isNode(elements)
 		? [elements] as HTMLorSVGElement[]
 		: elements as HTMLorSVGElement[];
+}
+
+/**
+ * Returns a copy of the string with the first letter capitalised.
+ */
+export function ucFirst(str: string) {
+	return str.charAt(0).toUpperCase() + str.slice(1);
 }

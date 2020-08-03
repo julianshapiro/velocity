@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {asyncTests, getPropertyValue, getTarget, sleep} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { asyncTests, getPropertyValue, getTarget, sleep } from "../utilities";
 import "./_module";
 
 QUnit.test("Pause + Resume", async (assert) => {
@@ -26,7 +26,7 @@ QUnit.test("Pause + Resume", async (assert) => {
 		const $target = getTarget();
 		let progress = false;
 
-		Velocity($target, {opacity: 0}, {
+		Velocity($target, { opacity: 0 }, {
 			duration: 250,
 			progress() {
 				progress = true;
@@ -47,7 +47,7 @@ QUnit.test("Pause + Resume", async (assert) => {
 	asyncTests(assert, 3, async (done) => {
 		const $target = getTarget();
 
-		Velocity($target, {opacity: 0}, {duration: 250, delay: 250});
+		Velocity($target, { opacity: 0 }, { duration: 250, delay: 250 });
 		Velocity($target, "pause");
 		await sleep(500);
 		assert.equal(getPropertyValue($target, "opacity"), "1", "Delayed property value unchanged after pause.");
@@ -63,7 +63,7 @@ QUnit.test("Pause + Resume", async (assert) => {
 	asyncTests(assert, 1, async (done) => {
 		const $target = getTarget();
 
-		Velocity($target, {opacity: 0}, {queue: "test", duration: 250});
+		Velocity($target, { opacity: 0 }, { queue: "test", duration: 250 });
 		Velocity("pause", "test");
 		await sleep(300);
 		assert.equal(getPropertyValue($target, "opacity"), "1", "Pause 'queue' works globally.");
@@ -74,7 +74,7 @@ QUnit.test("Pause + Resume", async (assert) => {
 	asyncTests(assert, 1, async (done) => {
 		const $target = getTarget();
 
-		Velocity($target, {opacity: 0})
+		Velocity($target, { opacity: 0 })
 			.velocity("pause");
 		await sleep(300);
 		assert.equal(getPropertyValue($target, "opacity"), "1", "Chained pause only pauses chained tweens.");

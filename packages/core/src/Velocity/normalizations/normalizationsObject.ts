@@ -11,7 +11,7 @@
  */
 
 // Typedefs
-import { VelocityNormalizationsFn } from "../../../velocity";
+import { VelocityNormalizationsFn } from "../../velocity";
 
 /**
  * The highest type index for finding the best normalization for a property.

@@ -11,7 +11,7 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../../velocity";
+import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../velocity";
 
 // Project
 import { isFunction, isString } from "../../types";
@@ -36,13 +36,13 @@ import { ClassConstructor, constructorCache, constructors, NoCacheNormalizations
  * for performance!
  */
 export function registerNormalization(
-	args?: [ClassConstructor | string, string, VelocityNormalizationsFn]
+	args: [ClassConstructor | string, string, VelocityNormalizationsFn]
 		| [ClassConstructor | string, string, VelocityNormalizationsFn, boolean]
 		| [ClassConstructor | string, string, VelocityNormalizationsFn, string]
 		| [ClassConstructor | string, string, VelocityNormalizationsFn, string, boolean]) {
-	const constructor = args[0],
-		name: string = args[1],
-		callback = args[2];
+	const constructor = args[0];
+	const name: string = args[1];
+	const callback = args[2];
 
 	if ((isString(constructor) && !(window[constructor] instanceof Object))
 		|| (!isString(constructor) && !(constructor instanceof Object))) {
@@ -52,12 +52,12 @@ export function registerNormalization(
 	} else if (!isFunction(callback)) {
 		console.warn(`VelocityJS: Trying to set 'registerNormalization' callback to an invalid value:`, name, callback);
 	} else {
-		let index = constructors.indexOf(constructor),
-			nextArg = 3;
+		let index = constructors.indexOf(constructor);
+		let nextArg = 3;
 
 		if (index < 0 && !isString(constructor)) {
 			if (constructorCache.has(constructor)) {
-				index = constructors.indexOf(constructorCache.get(constructor));
+				index = constructors.indexOf(constructorCache.get(constructor)!);
 			} else {
 				for (const property in window) {
 					if ((window[property] as any) === constructor) {
@@ -95,14 +95,14 @@ export function registerNormalization(
 /**
  * Used to check if a normalisation exists on a specific class.
  */
-export function hasNormalization(args?: [ClassConstructor | string, string]): boolean {
-	const constructor = args[0],
-		name: string = args[1];
+export function hasNormalization(args: [ClassConstructor | string, string]): boolean {
+	const constructor = args[0];
+	const name: string = args[1];
 	let index = constructors.indexOf(constructor);
 
 	if (index < 0 && !isString(constructor)) {
 		if (constructorCache.has(constructor)) {
-			index = constructors.indexOf(constructorCache.get(constructor));
+			index = constructors.indexOf(constructorCache.get(constructor)!);
 		} else {
 			for (const property in window) {
 				if ((window[property] as any) === constructor) {
@@ -136,16 +136,15 @@ export function getNormalizationUnit(fn: VelocityNormalizationsFn) {
  */
 export function getNormalization(element: HTMLorSVGElement, propertyName: string) {
 	const data = Data(element);
-	let fn: VelocityNormalizationsFn;
 
-	for (let index = constructors.length - 1, types = data.types; !fn && index >= 0; index--) {
+	for (let index = constructors.length - 1, types = data.types; index >= 0; index--) {
 		if (types & (1 << index)) { // tslint:disable-line:no-bitwise
-			fn = Normalizations[index][propertyName];
+			return Normalizations[index][propertyName];
 		}
 	}
 
-	return fn;
+	return undefined;
 }
 
-registerAction(["registerNormalization", registerNormalization]);
-registerAction(["hasNormalization", hasNormalization]);
+registerAction(["registerNormalization", registerNormalization as any]);
+registerAction(["hasNormalization", hasNormalization as any]);

@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity, {VelocityResult} from "velocity-animate";
-import {asyncTests, defaultProperties, getNow, getTarget} from "../utilities";
+import Velocity, { VelocityResult } from "@velocityjs/core";
+import { asyncTests, defaultProperties, getNow, getTarget } from "../utilities";
 import "./_module";
 
 interface ExtendedVelocityExtended extends VelocityResult {
@@ -16,9 +16,9 @@ interface ExtendedVelocityExtended extends VelocityResult {
 }
 
 QUnit.test("Speed", (assert) => {
-	const delay = 200,
-		duration = 400,
-		startDelay = getNow();
+	const delay = 200;
+	const duration = 400;
+	const startDelay = getNow();
 
 	asyncTests(assert, 1, (done) => {
 		Velocity.defaults.speed = 3;
@@ -39,8 +39,8 @@ QUnit.test("Speed", (assert) => {
 				elements.__start = getNow();
 			},
 			complete(elements: ExtendedVelocityExtended) {
-				const actual = getNow() - elements.__start,
-					expected = duration / 3;
+				const actual = getNow() - elements.__start;
+				const expected = duration / 3;
 
 				assert.close(actual, expected, 32, `Velocity.defaults.speed change is respected. (\xD73, ${Math.floor(actual - expected)}ms \xB132ms)`);
 
@@ -57,8 +57,8 @@ QUnit.test("Speed", (assert) => {
 				elements.__start = getNow();
 			},
 			complete(elements: ExtendedVelocityExtended) {
-				const actual = getNow() - elements.__start,
-					expected = duration / 2;
+				const actual = getNow() - elements.__start;
+				const expected = duration / 2;
 
 				assert.close(actual, expected, 32, `Double speed animation lasts half as long. (\xD72, ${Math.floor(actual - expected)}ms \xB132ms)`);
 
@@ -76,8 +76,8 @@ QUnit.test("Speed", (assert) => {
 				elements.__start = startDelay;
 			},
 			complete(elements: ExtendedVelocityExtended) {
-				const actual = getNow() - elements.__start,
-					expected = (duration + delay) / 2;
+				const actual = getNow() - elements.__start;
+				const expected = (duration + delay) / 2;
 
 				assert.close(actual, expected, 32, `Delayed animation includes speed for delay. (\xD72, ${Math.floor(actual - expected)}ms \xB132ms)`);
 
@@ -95,8 +95,8 @@ QUnit.test("Speed", (assert) => {
 				elements.__start = startDelay;
 			},
 			complete(elements: ExtendedVelocityExtended) {
-				const actual = getNow() - elements.__start,
-					expected = (duration - delay) / 2;
+				const actual = getNow() - elements.__start;
+				const expected = (duration - delay) / 2;
 
 				assert.close(actual, expected, 32, `Negative delay animation includes speed for delay. (\xD72, ${Math.floor(actual - expected)}ms \xB132ms)`);
 
@@ -113,8 +113,8 @@ QUnit.test("Speed", (assert) => {
 				elements.__start = getNow();
 			},
 			complete(elements: ExtendedVelocityExtended) {
-				const actual = getNow() - elements.__start,
-					expected = duration * 2;
+				const actual = getNow() - elements.__start;
+				const expected = duration * 2;
 
 				// TODO: Really not happy with the allowed range - it sits around 40ms, but should be closer to 16ms
 				assert.close(actual, expected, 64, `Half speed animation lasts twice as long. (\xD7\xBD, ${Math.floor(actual - expected)}ms \xB164ms)`);

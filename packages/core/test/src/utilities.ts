@@ -6,7 +6,7 @@
 
 import "qunit";
 
-import Velocity, { ElementData, VelocityOptions, VelocityProperties } from "velocity-animate";
+import Velocity, { ElementData, VelocityOptions, VelocityProperties } from "@velocityjs/core";
 
 declare global {
 	interface QUnit {
@@ -25,53 +25,53 @@ declare global {
 	}
 }
 
-export const $ = ((window as any).jQuery || (window as any).Zepto),
-	$qunitStage = document.getElementById("qunit-stage"),
-	defaultStyles = {
-		opacity: 1,
-		width: 1,
-		height: 1,
-		marginBottom: 1,
-		colorGreen: 200,
-		textShadowBlur: 3,
-	},
-	defaultProperties: VelocityProperties = {
-		opacity: String(defaultStyles.opacity / 2),
-		width: defaultStyles.width * 2 + "px",
-		height: defaultStyles.height * 2 + "px",
-	},
-	defaultOptions: VelocityOptions = {
-		queue: "",
-		duration: 300,
-		easing: "swing",
-		begin: null,
-		complete: null,
-		progress: null,
-		loop: false,
-		delay: 0,
-		mobileHA: true,
-	},
-	asyncCheckDuration = (defaultOptions.duration as number) / 2,
-	completeCheckDuration = (defaultOptions.duration as number) * 2,
-	IE = (() => {
-		if ((document as any).documentMode) {
-			return (document as any).documentMode as number;
-		} else {
-			for (let i = 7; i > 0; i--) {
-				let div = document.createElement("div");
+export const $ = ((window as any).jQuery || (window as any).Zepto);
+export const $qunitStage = document.getElementById("qunit-stage");
+export const defaultStyles = {
+	opacity: 1,
+	width: 1,
+	height: 1,
+	marginBottom: 1,
+	colorGreen: 200,
+	textShadowBlur: 3,
+};
+export const defaultProperties: VelocityProperties = {
+	opacity: String(defaultStyles.opacity / 2),
+	width: defaultStyles.width * 2 + "px",
+	height: defaultStyles.height * 2 + "px",
+};
+export const defaultOptions: VelocityOptions = {
+	queue: "",
+	duration: 300,
+	easing: "swing",
+	begin: null,
+	complete: null,
+	progress: null,
+	loop: false,
+	delay: 0,
+	mobileHA: true,
+};
+export const asyncCheckDuration = (defaultOptions.duration as number) / 2;
+export const completeCheckDuration = (defaultOptions.duration as number) * 2;
+export const IE = (() => {
+	if ((document as any).documentMode) {
+		return (document as any).documentMode as number;
+	} else {
+		for (let i = 7; i > 0; i--) {
+			let div: HTMLDivElement | null = document.createElement("div");
 
-				div.innerHTML = `<!${"--"}[if IE ${i}]><span></span><![endif]-->`;
-				if (div.getElementsByTagName("span").length) {
-					div = null;
-
-					return i;
-				}
+			div.innerHTML = `<!${"--"}[if IE ${i}]><span></span><![endif]-->`;
+			if (div.getElementsByTagName("span").length) {
 				div = null;
-			}
-		}
 
-		return undefined;
-	})();
+				return i;
+			}
+			div = null;
+		}
+	}
+
+	return undefined;
+})();
 
 const targets: HTMLDivElement[] = [];
 let asyncCount = 0;
@@ -89,7 +89,7 @@ export function Data(element): ElementData {
 }
 
 export function getNow(): number {
-	return performance && performance.now ? performance.now() : Date.now();
+	return performance?.now ? performance.now() : Date.now();
 }
 
 export function getPropertyValue(element: HTMLElement, property: string): string {
@@ -116,8 +116,8 @@ export function getTarget(startValues?: { [name: string]: string }): HTMLDivElem
 }
 
 export function once(func): typeof func {
-	let done: boolean,
-		result: any;
+	let done: boolean;
+	let result: any;
 
 	return function(this: any, ...args: any[]) {
 		if (!done) {

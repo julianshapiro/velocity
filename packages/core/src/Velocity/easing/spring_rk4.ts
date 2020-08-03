@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { VelocityEasingFn } from "../../../velocity";
+import { VelocityEasingFn } from "../../velocity";
 
 interface springState {
 	x: number;
@@ -44,12 +44,12 @@ function springIntegrateState(state: springState, dt: number) {
 	const a = {
 		dx: state.v,
 		dv: springAccelerationForState(state),
-	},
-		b = springEvaluateStateWithDerivative(state, dt * 0.5, a),
-		c = springEvaluateStateWithDerivative(state, dt * 0.5, b),
-		d = springEvaluateStateWithDerivative(state, dt, c),
-		dxdt = 1 / 6 * (a.dx + 2 * (b.dx + c.dx) + d.dx),
-		dvdt = 1 / 6 * (a.dv + 2 * (b.dv + c.dv) + d.dv);
+	};
+	const b = springEvaluateStateWithDerivative(state, dt * 0.5, a);
+	const c = springEvaluateStateWithDerivative(state, dt * 0.5, b);
+	const d = springEvaluateStateWithDerivative(state, dt, c);
+	const dxdt = 1 / 6 * (a.dx + 2 * (b.dx + c.dx) + d.dx);
+	const dvdt = 1 / 6 * (a.dv + 2 * (b.dv + c.dv) + d.dv);
 
 	state.x = state.x + dxdt * dt;
 	state.v = state.v + dvdt * dt;
@@ -65,28 +65,28 @@ export function generateSpringRK4(tension: number, friction: number, duration?: 
 		v: 0,
 		tension: parseFloat(tension as any) || 500,
 		friction: parseFloat(friction as any) || 20,
-	},
-		path = [0],
-		tolerance = 1 / 10000,
-		DT = 16 / 1000,
-		haveDuration = duration != null; // deliberate "==", as undefined == null != 0
-	let timeLapsed = 0,
-		dt: number,
-		lastState: springState;
+	};
+	const path = [0];
+	const tolerance = 1 / 10000;
+	const DT = 16 / 1000;
+	const haveDuration = duration != null; // deliberate "==", as undefined == null != 0
+	let timeLapsed = 0;
+	let dt: number;
+	let lastState: springState;
 
 	/* Calculate the actual time it takes for this animation to complete with the provided conditions. */
 	if (haveDuration) {
 		/* Run the simulation without a duration. */
 		timeLapsed = generateSpringRK4(initState.tension, initState.friction);
 		/* Compute the adjusted time delta. */
-		dt = (timeLapsed as number) / duration * DT;
+		dt = (timeLapsed as number) / duration! * DT;
 	} else {
 		dt = DT;
 	}
 
 	while (true) {
 		/* Next/step function .*/
-		lastState = springIntegrateState(lastState || initState, dt);
+		lastState = springIntegrateState(lastState! || initState, dt);
 		/* Store the position. */
 		path.push(1 + lastState.x);
 		timeLapsed += 16;

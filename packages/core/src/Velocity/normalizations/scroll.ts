@@ -5,7 +5,7 @@
  */
 
 // Typedefs
-import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../../velocity";
+import { HTMLorSVGElement, VelocityNormalizationsFn } from "../../velocity";
 
 // Project
 import { getPropertyValue } from "../css/getPropertyValue";
@@ -64,13 +64,13 @@ function scroll(direction: "Height" | "Width", end: "Top" | "Left"): VelocityNor
 	return ((element: HTMLorSVGElement, propertyValue?: string): string | void => {
 		if (propertyValue == null) {
 			// Make sure we have these values cached.
-			getPropertyValue(element, "client" + direction, null, true);
-			getPropertyValue(element, "scroll" + direction, null, true);
+			getPropertyValue(element, "client" + direction, null as any, true);
+			getPropertyValue(element, "scroll" + direction, null as any, true);
 
 			return element["scroll" + end] + "px";
 		}
-		const value = parseFloat(propertyValue),
-			unit = propertyValue.replace(String(value), "");
+		const value = parseFloat(propertyValue);
+		const unit = propertyValue.replace(String(value), "");
 
 		switch (unit) {
 			case "":
@@ -79,8 +79,8 @@ function scroll(direction: "Height" | "Width", end: "Top" | "Left"): VelocityNor
 				break;
 
 			case "%":
-				const client = parseFloat(getPropertyValue(element, "client" + direction)),
-					scrollValue = parseFloat(getPropertyValue(element, "scroll" + direction));
+				const client = parseFloat(getPropertyValue(element, "client" + direction));
+				const scrollValue = parseFloat(getPropertyValue(element, "scroll" + direction));
 
 				element["scroll" + end] = Math.max(0, scrollValue - client) * value / 100;
 				break;

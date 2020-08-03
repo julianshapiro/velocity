@@ -6,8 +6,8 @@
 
 import "qunit";
 
-import Velocity, {VelocityOptions, VelocityResult} from "velocity-animate";
-import {Data, defaultProperties, getTarget} from "../utilities";
+import Velocity, { VelocityOptions, VelocityResult } from "@velocityjs/core";
+import { Data, defaultProperties, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("Arguments", (assert) => {
@@ -80,11 +80,11 @@ QUnit.test("Arguments", (assert) => {
 	assert.equal(result.velocity.animations[0].options.duration, testOptions.duration,
 		"Overload variation #8: Velocity(element, {properties}, {OPTIONS})");
 
-	Velocity({elements: [getTarget()], properties: defaultProperties, options: testOptions});
+	Velocity({ elements: [getTarget()], properties: defaultProperties, options: testOptions });
 	assert.equal(result.velocity.animations[0].options.duration, testOptions.duration,
 		"Overload variation #9: Velocity({elements:[elements], properties:{properties}, options:{OPTIONS})");
 
-	Velocity({elements: [getTarget()], properties: "stop", options: testOptions});
+	Velocity({ elements: [getTarget()], properties: "stop", options: testOptions });
 	assert.equal(result.velocity.animations[0].options.duration, testOptions.duration,
 		"Overload variation #10: Velocity({elements:[elements], properties:\"ACTION\", options:{OPTIONS})");
 

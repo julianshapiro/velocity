@@ -5,19 +5,19 @@
  */
 
 // Typedefs
-import { VelocityState } from "../../velocity";
+import { VelocityState } from "../velocity";
 
 // Constants
 import { CLASSNAME } from "../constants";
 
-const isClient = window && window === window.window,
-	windowScrollAnchor = isClient && window.pageYOffset !== undefined;
+const isClient = window && window === window.window;
+const windowScrollAnchor = isClient && window.pageYOffset !== undefined;
 
 export const State: VelocityState = {
 	isClient,
 	isMobile: isClient && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
 	isGingerbread: isClient && /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
-	prefixElement: isClient && document.createElement("div"),
+	prefixElement: isClient ? document.createElement("div") : undefined,
 	windowScrollAnchor,
 	scrollAnchor: windowScrollAnchor ? window : (!isClient || document.documentElement || document.body.parentNode || document.body),
 	scrollPropertyLeft: windowScrollAnchor ? "pageXOffset" : "scrollLeft",

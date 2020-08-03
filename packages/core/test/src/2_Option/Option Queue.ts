@@ -6,19 +6,19 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {Data, defaultProperties, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { Data, defaultProperties, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("Queue", (assert) => {
-	const done = assert.async(4),
-		testQueue = "custom",
-		$target = getTarget(),
-		ignore = $target.velocity("style", "display"), // Force data creation
-		data = Data($target);
-	let anim1: boolean,
-		anim2: boolean,
-		anim3: boolean;
+	const done = assert.async(4);
+	const testQueue = "custom";
+	const $target = getTarget();
+	const ignore = $target.velocity("style", "display"); // Force data creation
+	const data = Data($target);
+	let anim1: boolean;
+	let anim2: boolean;
+	let anim3: boolean;
 
 	assert.expect(7);
 

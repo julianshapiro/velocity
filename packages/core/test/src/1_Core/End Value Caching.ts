@@ -6,13 +6,13 @@
 
 import "qunit";
 
-import Velocity from "velocity-animate";
-import {Data, defaultProperties, getTarget} from "../utilities";
+import Velocity from "@velocityjs/core";
+import { Data, defaultProperties, getTarget } from "../utilities";
 import "./_module";
 
 QUnit.test("End Value Caching", (assert) => {
-	const done = assert.async(2),
-		newProperties = {height: "50px", width: "250px"};
+	const done = assert.async(2);
+	const newProperties = { height: "50px", width: "250px" };
 
 	assert.expect(4);
 
