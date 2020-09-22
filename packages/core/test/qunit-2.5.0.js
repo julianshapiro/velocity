@@ -5098,7 +5098,7 @@
   								textDelete = textDelete.substring(commonlength);
   							}
 
-  							// Factor out any common suffixies.
+  							// Factor out any common suffixes.
   							commonlength = this.diffCommonSuffix(textInsert, textDelete);
   							if (commonlength !== 0) {
   								diffs[pointer][1] = textInsert.substring(textInsert.length - commonlength) + diffs[pointer][1];
