@@ -1,4 +1,4 @@
-﻿# Velocity beta
+﻿# Velocity beta Animation
 
 [![npm](https://img.shields.io/npm/v/velocity-animate.svg)](https://www.npmjs.com/package/velocity-animate) [![npm (tag)](https://img.shields.io/npm/v/velocity-animate/beta.svg)](https://www.npmjs.com/package/velocity-animate) [![cdnjs version](https://img.shields.io/cdnjs/v/velocity.svg)](https://cdnjs.com/libraries/velocity) [![npm downloads](https://img.shields.io/npm/dm/velocity-animate.svg)](https://www.npmjs.com/package/velocity-animate) [![jsdelivr downloads](https://data.jsdelivr.com/v1/package/npm/velocity-animate/badge)](https://www.jsdelivr.com/package/npm/velocity-animate)
 
