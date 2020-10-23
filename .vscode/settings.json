@@ -1,0 +1,11 @@
+{
+  "files.exclude": {
+    "node_modules": true,
+    "packages\\core\\node_modules": true,
+    "packages\\dom\\node_modules": true,
+    "packages\\easings\\node_modules": true,
+    "packages\\jquery\\node_modules": true,
+    "packages\\ui\\node_modules": true,
+    "packages\\zepto\\node_modules": true
+  }
+}

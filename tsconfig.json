@@ -1,28 +1,21 @@
 {
 	"compilerOptions": {
-		"allowUnreachableCode": true,
-		"allowUnusedLabels": true,
-		"alwaysStrict": false,
-		"forceConsistentCasingInFileNames": true,
-		"noEmitOnError": false,
-		"noImplicitAny": false,
-		"module": "es2015",
-		"moduleResolution": "node",
-		"outDir": "build/",
-		"preserveConstEnums": true,
-		"removeComments": false,
+		"module": "ESNext",
+		"target": "ESNext",
+		"lib": [
+			"DOM",
+			"ESNext"
+		],
+		"importHelpers": true,
+		"declaration": true,
 		"sourceMap": true,
-		"target": "es6",
-		"lib" : [
-			"dom",
-			"es6",
-			"es2016",
-			"scripthost"
-		]
-	},
-	"files": [
-		"src/velocity.ts",
-		"src-ui/velocity.ui.ts",
-		"test/src/test.ts"
-	]
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitAny": false,
+		"noImplicitReturns": false,
+		"noFallthroughCasesInSwitch": false,
+		"moduleResolution": "node",
+		"esModuleInterop": true
+	}
 }

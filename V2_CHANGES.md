@@ -1,4 +1,4 @@
-﻿# Major Changes in Velocity V2
+﻿# Major Changes in Velocity V2 / V3
 
 * APIs for extending Velocity - see the various register* commands in the wiki.
 * Chaining - Chaining is awesome, use it. Chained commands are designed to operate on the chained animation, not on the elements within it.
@@ -6,7 +6,7 @@
 * Delay - You can pass a negative number to start inside the animation rather than just having a delay before it.
 * Display - This is a property, no longer an option.
 * Loop - This no longer copies the animation call, it calls it multiple times.
-* Per-element - Animations are now copied per-element, and not one a one-animation-per-array basis as in other libraries (and old Velocity v1).
+* Per-element - Animations are now copied per-element, and not a one-animation-per-array basis as in other libraries (and old Velocity v1).
 * Repeat - This is almost identical to loop, but only runs one way.
 * RequireJS - The namespace is now "velocity-animate" for consistency with the NPMjs project name.
 * Reverse - Now reverses the last animation at time of adding, not when playing.

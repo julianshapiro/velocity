@@ -1,0 +1,33 @@
+{
+	"include": [
+		"src",
+		"types"
+	],
+	"compilerOptions": {
+		"module": "ESNext",
+		"target": "ESNext",
+		"lib": [
+			"dom",
+			"esnext"
+		],
+		"importHelpers": true,
+		"declaration": true,
+		"sourceMap": true,
+		"rootDir": "./src",
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitAny": false,
+		"noImplicitReturns": false,
+		"noFallthroughCasesInSwitch": false,
+		"moduleResolution": "node",
+		"baseUrl": "./",
+		"paths": {
+			"*": [
+				"src/*",
+				"node_modules/*"
+			]
+		},
+		"esModuleInterop": true
+	}
+}
