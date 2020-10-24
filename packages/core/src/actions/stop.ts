@@ -7,7 +7,7 @@
  */
 
 import type { IAnimation } from "../core/animation";
-import { isVelocityResult } from "../types";
+import { isAnimation } from "../types";
 import { completeCall } from "../core/complete";
 import { defaults } from "../core/defaults";
 import { validateQueue } from "../core/options";
@@ -53,7 +53,7 @@ function stop(this: IActionThis, maybeQueue?: string | boolean, maybeStopAll?: b
 	const defaultQueue: false | string = defaults.queue;
 	const finishAll = maybeQueue === true || maybeStopAll === true;
 
-	if (isVelocityResult(elements) && elements.velocity.animations) {
+	if (isAnimation(elements) && elements.velocity.animations) {
 		for (const animation of elements.velocity.animations) {
 			checkAnimationShouldBeStopped(animation, queueName, defaultQueue);
 		}
@@ -72,7 +72,7 @@ function stop(this: IActionThis, maybeQueue?: string | boolean, maybeStopAll?: b
 		}
 	}
 	if (promiseHandler) {
-		if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
+		if (isAnimation(elements) && elements.velocity.animations && elements.then) {
 			elements.then(promiseHandler._resolver);
 		} else if (promiseHandler._resolver) {
 			promiseHandler._resolver(elements);

@@ -7,7 +7,7 @@
  */
 
 import type { IAnimation } from "../core/animation";
-import { isVelocityResult } from "../types";
+import { isAnimation } from "../types";
 import { completeCall } from "../core/complete";
 import { setPropertyValue } from "../core/css/setPropertyValue";
 import { defaults } from "../core/defaults";
@@ -93,7 +93,7 @@ function finish(this: IActionThis, maybeQueueName?: string | boolean, finishAll?
 	if (maybeQueueName === true) {
 		finishAll = true;
 	}
-	if (isVelocityResult(elements) && elements.velocity.animations) {
+	if (isAnimation(elements) && elements.velocity.animations) {
 		for (const animation of elements.velocity.animations) {
 			checkAnimationShouldBeFinished(animation, queueName, defaultQueue);
 		}
@@ -112,7 +112,7 @@ function finish(this: IActionThis, maybeQueueName?: string | boolean, finishAll?
 		}
 	}
 	if (promiseHandler) {
-		if (isVelocityResult(elements) && elements.velocity.animations && elements.then) {
+		if (isAnimation(elements) && elements.velocity.animations && elements.then) {
 			elements.then(promiseHandler._resolver);
 		} else if (promiseHandler._resolver) {
 			promiseHandler._resolver(elements);

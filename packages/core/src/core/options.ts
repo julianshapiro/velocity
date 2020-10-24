@@ -12,6 +12,11 @@ import { EasingFn, validateEasing, easeSwing, EasingType } from "../easings";
 import { AnimationCall } from "./animationCall";
 
 /**
+ * A callback to allow us to generate an option value.
+ */
+export type OptionFn<T> = T | ((this: ReadonlyArray<KnownElement>, element: KnownElement, index: number, option: keyof IOptions) => T | undefined);
+
+/**
  * Loose options that can be passed to Velocity animations. The Options class
  * tightens these types to reduce processing during animations.
  */
@@ -19,7 +24,7 @@ export interface IOptions {
 	/**
 	 * If the animation is to run backwards.
 	 */
-	backwards?: boolean,
+	backwards?: OptionFn<boolean>,
 
 	/**
 	 * Begin handler. Only the first element to check this callback gets to use
@@ -38,7 +43,7 @@ export interface IOptions {
 	 * @private
 	 * @default true
 	 */
-	cache?: boolean;
+	cache?: OptionFn<boolean>;
 
 	/**
 	 * Complete handler (only the last element in a set gets this).
@@ -58,14 +63,14 @@ export interface IOptions {
 	 * NOTE: If passing a negative number then this will allow you to start with
 	 * the animation partially complete from the start.
 	 */
-	delay?: number | "fast" | "normal" | "slow" | string;
+	delay?: OptionFn<number | "fast" | "normal" | "slow" | string>;
 
 	/**
 	 * Reduce the duration of each successive element so they drag into final
 	 * state. The first quarter of the elements will get a reduced duration (ie.
 	 * they will finish faster) in a smooth way.
 	 */
-	drag?: boolean;
+	drag?: OptionFn<boolean>;
 
 	/**
 	 * How long the animation should run for. This is a millisecond timer, but
@@ -76,7 +81,7 @@ export interface IOptions {
 	 *
 	 * @default 400
 	 */
-	duration?: number | "fast" | "normal" | "slow" | string;
+	duration?: OptionFn<number | "fast" | "normal" | "slow" | string>;
 
 	/**
 	 * Easing is the rate of change over time for an animation. A linear easing
@@ -95,7 +100,7 @@ export interface IOptions {
 	 *
 	 * @default 60
 	 */
-	fpsLimit?: number;
+	fpsLimit?: OptionFn<number>;
 
 	/**
 	 * How many times should this option loop. A loop is defined as a "return to
@@ -105,7 +110,7 @@ export interface IOptions {
 	 *
 	 * @default 0
 	 */
-	loop?: boolean | number;
+	loop?: OptionFn<boolean | number>;
 
 	/**
 	 * The minimum frame time to achieve, the value is normally calculated from
@@ -113,7 +118,7 @@ export interface IOptions {
 	 *
 	 * @default 16.33333333 (1000ms / 60fps)
 	 */
-	minFrameTime?: number;
+	minFrameTime?: OptionFn<number>;
 
 	/**
 	 * Progress handler (only the last element in a set gets this).
@@ -133,7 +138,7 @@ export interface IOptions {
 	 *
 	 * @default true
 	 */
-	promise?: boolean;
+	promise?: OptionFn<boolean>;
 
 	/**
 	 * If promises are turned on, then the promise can reject if there are no
@@ -141,7 +146,7 @@ export interface IOptions {
 	 *
 	 * @default false
 	 */
-	promiseRejectEmpty?: boolean;
+	promiseRejectEmpty?: OptionFn<boolean>;
 
 	/**
 	 * The name of the queue to use. If this is set to <code>false</code> then
@@ -150,7 +155,7 @@ export interface IOptions {
 	 *
 	 * @default ""
 	 */
-	queue?: boolean | string;
+	queue?: OptionFn<boolean | string>;
 
 	/**
 	 * How many times should this animation repeat. A repeat will restart at
@@ -160,7 +165,7 @@ export interface IOptions {
 	 *
 	 * @default 0
 	 */
-	repeat?: boolean | number;
+	repeat?: OptionFn<boolean | number>;
 
 	/**
 	 * The speed to play the animation back at. This number can change while
@@ -168,7 +173,7 @@ export interface IOptions {
 	 *
 	 * @default 0
 	 */
-	speed?: number;
+	speed?: OptionFn<number>;
 
 	/**
 	 * Supply a delay in ms, and every element in the animation will get this
@@ -176,7 +181,7 @@ export interface IOptions {
 	 *
 	 * @default undefined
 	 */
-	stagger?: number | ((this: KnownElement, index: number, total: number, elements: KnownElement, option: string) => number);
+	stagger?: OptionFn<number>;
 
 	/**
 	 * When adding animations to elements each element has its own queue of
@@ -185,7 +190,7 @@ export interface IOptions {
 	 *
 	 * @default true
 	 */
-	sync?: boolean;
+	sync?: OptionFn<boolean>;
 }
 
 /**
@@ -281,7 +286,7 @@ export class Options implements IOptions {
 		}
 	}
 
-	constructor(options: Partial<IOptions> | Options) {
+	constructor(options: Partial<IOptions> | Options, elements?: ReadonlyArray<KnownElement>, index?: number) {
 		if (options instanceof Options) {
 			// So any we don't set are taken from a parent.
 			Object.setPrototypeOf(this, options);
@@ -316,16 +321,33 @@ export class Options implements IOptions {
 			sync,
 		} = options;
 		let parsed: unknown;
+		let value: unknown
 		const warnIfNotUndefined = (key: string, value: any) => {
 			if (value !== undefined) {
 				console.warn(`VelocityJS: Trying to set '${key}' to an invalid value:`, value);
 			}
 		}
+		/**
+		 * Call an option callback in a try/catch block and report an error if needed.
+		 */
+		const optionCallback = <T extends keyof IOptions>(fn: unknown, option: T): IOptions[T] | undefined => {
+			try {
+				if (isFunction(fn) && elements) {
+					return fn.call(elements, elements[index!], index!, option);
+				}
 
-		if (isBoolean(backwards)) {
-			this.backwards = backwards;
+				return fn as IOptions[T]; // This could be wrong, but the next line checks type
+			} catch (e) {
+				console.error(`VelocityJS: Exception when calling '${option}' option callback:`, e);
+			}
+		}
+
+
+		value = optionCallback(backwards, "backwards");
+		if (isBoolean(value)) {
+			this.backwards = value;
 		} else {
-			warnIfNotUndefined("backwards", backwards);
+			warnIfNotUndefined("backwards", value);
 		}
 
 		if (isFunction(begin) || begin === undefined) {
@@ -334,8 +356,9 @@ export class Options implements IOptions {
 			warnIfNotUndefined("begin", begin);
 		}
 
-		if (isBoolean(cache)) {
-			this.cache = cache;
+		value = optionCallback(cache, "cache");
+		if (isBoolean(value)) {
+			this.cache = value;
 		} else {
 			warnIfNotUndefined("cache", cache);
 		}
@@ -346,6 +369,7 @@ export class Options implements IOptions {
 			warnIfNotUndefined("complete", complete);
 		}
 
+		value = optionCallback(delay, "delay");
 		parsed = Options.parseDuration(delay);
 		if (isNumber(parsed)) {
 			this.delay = parsed;
@@ -359,7 +383,8 @@ export class Options implements IOptions {
 			warnIfNotUndefined("drag", drag);
 		}
 
-		parsed = Options.parseDuration(duration);
+		value = optionCallback(duration, "duration");
+		parsed = Options.parseDuration(value);
 		if (isNumber(parsed)) {
 			this.duration = parsed;
 		} else {
@@ -373,20 +398,23 @@ export class Options implements IOptions {
 			warnIfNotUndefined("easing", easing);
 		}
 
-		if (isNumber(fpsLimit) && fpsLimit > 0) {
-			this.fpsLimit = fpsLimit;
+		value = optionCallback(fpsLimit, "fpsLimit");
+		if (isNumber(value) && value > 0) {
+			this.fpsLimit = value;
 		} else {
 			warnIfNotUndefined("fpsLimit", fpsLimit);
 		}
 
-		if ((isInteger(loop) && loop > 0) || isBoolean(loop)) {
-			this.loop = loop || 0;
+		value = optionCallback(loop, "loop");
+		if ((isInteger(value) && value >= 0) || isBoolean(value)) {
+			this.loop = value || 0;
 		} else {
 			warnIfNotUndefined("loop", loop);
 		}
 
-		if (isNumber(minFrameTime)) {
-			this.minFrameTime = minFrameTime;
+		value = optionCallback(minFrameTime, "minFrameTime");
+		if (isNumber(value)) {
+			this.minFrameTime = value;
 		} else {
 			warnIfNotUndefined("minFrameTime", minFrameTime);
 		}
@@ -397,44 +425,51 @@ export class Options implements IOptions {
 			warnIfNotUndefined("progress", progress);
 		}
 
-		if (isBoolean(promise)) {
-			this.promise = promise;
+		value = optionCallback(promise, "promise");
+		if (isBoolean(value)) {
+			this.promise = value;
 		} else {
 			warnIfNotUndefined("promise", promise);
 		}
 
-		if (isBoolean(promiseRejectEmpty)) {
-			this.promiseRejectEmpty = promiseRejectEmpty;
+		value = optionCallback(promiseRejectEmpty, "promiseRejectEmpty");
+		if (isBoolean(value)) {
+			this.promiseRejectEmpty = value;
 		} else {
 			warnIfNotUndefined("promiseRejectEmpty", promiseRejectEmpty);
 		}
 
-		if (isString(queue) || isBoolean(queue)) {
-			this.queue = queue === true ? "" : queue;
+		value = optionCallback(queue, "queue");
+		if (isString(value) || isBoolean(value)) {
+			this.queue = value === true ? "" : value;
 		} else {
 			warnIfNotUndefined("queue", queue);
 		}
 
-		if ((isInteger(repeat) && repeat >= 0) || isBoolean(repeat)) {
-			this.repeat = repeat || 0;
+		value = optionCallback(repeat, "repeat");
+		if ((isInteger(value) && value >= 0) || isBoolean(value)) {
+			this.repeat = value || 0;
 		} else {
 			warnIfNotUndefined("repeat", repeat);
 		}
 
-		if (isNumber(speed)) {
-			this.speed = speed;
+		value = optionCallback(speed, "speed");
+		if (isNumber(value)) {
+			this.speed = value;
 		} else {
 			warnIfNotUndefined("speed", speed);
 		}
 
-		if (isNumber(stagger) || isFunction(stagger) || stagger === undefined) {
-			this.stagger = stagger;
+		value = optionCallback(stagger, "stagger");
+		if (isNumber(value) || value === undefined) {
+			this.stagger = value;
 		} else {
 			warnIfNotUndefined("stagger", stagger);
 		}
 
-		if (isBoolean(sync)) {
-			this.sync = sync;
+		value = optionCallback(sync, "sync");
+		if (isBoolean(value)) {
+			this.sync = value;
 		} else {
 			warnIfNotUndefined("sync", sync);
 		}
@@ -442,9 +477,9 @@ export class Options implements IOptions {
 
 	// All of these have a `!` suffix due to the prototype inheritance!
 	backwards!: boolean;
-	begin!: undefined | IOptions["begin"];
+	begin!: IOptions["begin"];
 	cache!: boolean;
-	complete!: undefined | IOptions["complete"];
+	complete!: IOptions["complete"];
 	delay!: number;
 	drag!: boolean;
 	duration!: number;
@@ -452,12 +487,12 @@ export class Options implements IOptions {
 	fpsLimit!: number;
 	loop!: true | number;
 	minFrameTime!: number;
-	progress!: undefined | IOptions["progress"];
+	progress!: IOptions["progress"];
 	promise!: boolean;
 	promiseRejectEmpty!: boolean;
 	queue!: false | string;
 	repeat!: true | number;
 	speed!: number;
-	stagger?: IOptions["stagger"];
+	stagger?: number;
 	sync!: boolean;
 }

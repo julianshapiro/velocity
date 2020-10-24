@@ -7,7 +7,7 @@
  */
 
 import { AnimationCall, AnimationFlags, VelocityPromise, Animation } from "../velocity";
-import { isVelocityResult } from "../types";
+import { isAnimation } from "../types";
 import { defaults } from "../core/defaults";
 import { validateQueue } from "../core/options";
 import { State } from "../core/state";
@@ -37,7 +37,7 @@ function pauseResume(args: any[], elements: Animation, promiseHandler: VelocityP
 	const queueName = queue === "false" ? false : validateQueue(args[0])!;
 	const defaultQueue = defaults.queue;
 
-	if (isVelocityResult(elements) && elements.velocity?.animations) {
+	if (isAnimation(elements) && elements.velocity?.animations) {
 		for (const animation of elements.velocity.animations) {
 			checkAnimation(animation, queueName, defaultQueue, isPaused);
 		}
@@ -52,7 +52,7 @@ function pauseResume(args: any[], elements: Animation, promiseHandler: VelocityP
 		}
 	}
 	if (promiseHandler) {
-		if (isVelocityResult(elements) && elements.velocity?.animations && elements.then) {
+		if (isAnimation(elements) && elements.velocity?.animations && elements.then) {
 			elements.then(promiseHandler._resolver);
 		} else if (promiseHandler._resolver) {
 			promiseHandler._resolver(elements);

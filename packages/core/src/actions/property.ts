@@ -7,7 +7,7 @@
  */
 
 import type { IAnimation } from "../core/animation";
-import { isNumber, isPlainObject, isString, isVelocityResult } from "../types";
+import { isNumber, isPlainObject, isString, isAnimation } from "../types";
 import { fixColors } from "../core/css/fixColors";
 import { getPropertyValue } from "../core/css/getPropertyValue";
 import { setPropertyValue } from "../core/css/setPropertyValue";
@@ -105,7 +105,7 @@ export function propertyAction(this: IActionThis, property: string | string[], v
 			if (promiseHandler._rejecter) {
 				promiseHandler._rejecter(error.join(", "));
 			}
-		} else if (isVelocityResult(elements) && elements.velocity?.animations && elements.then) {
+		} else if (isAnimation(elements) && elements.velocity?.animations && elements.then) {
 			elements.then(promiseHandler._resolver);
 		} else if (promiseHandler._resolver) {
 			promiseHandler._resolver(elements);

@@ -6,7 +6,7 @@
  * Core "Velocity" function.
  */
 
-import { isFunction, isKnownElement, isNumber, isObjectArgs, isPlainObject, isString, isWrapped } from "./types";
+import { isFunction, isKnownElement, isNumber, isObjectArgs, isPlainObject, isString, isKnownElementArray } from "./types";
 import { defineProperty } from "./utility";
 import { Data } from "./data";
 import { queue } from "./core/queue";
@@ -22,7 +22,6 @@ import { IAnimation, symbolAnimations, symbolCompleted, symbolElements, symbolPr
 import { IOptions, Options } from "./core/options";
 import { AnimationCall, AnimationFlags } from "./core/animationCall";
 import { NormalizationsFn } from "./normalizations";
-import { __createBinding } from "tslib";
 
 /**
  * Internal Sequence property value.
@@ -181,6 +180,7 @@ export interface IElementTypes {
  * jQuery and Zepto provide an array-like
  */
 export type KnownElement = IElementTypes[keyof IElementTypes];
+export type KnownElements = KnownElement | ReadonlyArray<KnownElement>;
 
 /**
  * A callback to allow us to generate a property value for a property name.
@@ -200,17 +200,16 @@ export interface IVelocity {
 	 * the normal Velocity call, but allows chaining on the elements it is
 	 * attached to.
 	 */
-	// readonly velocity: typeof Velocity;
-	(options: VelocityObjectArgs): IAnimation;
-	(elements: KnownElement, propertyMap: string | Properties<VelocityProperty>, options?: IOptions): IAnimation;
-	(elements: TemplateStringsArray, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", complete?: () => void): IAnimation;
-	(elements: KnownElement, propertyMap: string | Properties<VelocityProperty>, complete?: () => void): IAnimation;
-	(elements: KnownElement, propertyMap: string | Properties<VelocityProperty>, easing?: string | number[], complete?: () => void): IAnimation;
-	(elements: KnownElement, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): IAnimation;
-	(this: IAnimation, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", complete?: () => void): IAnimation;
-	(this: IAnimation, propertyMap: string | Properties<VelocityProperty>, complete?: () => void): IAnimation;
-	(this: IAnimation, propertyMap: string | Properties<VelocityProperty>, easing?: string | number[], complete?: () => void): IAnimation;
-	(this: IAnimation, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): IAnimation;
+	(args: VelocityObjectArgs): IAnimation;
+	(elements: KnownElements, propertyMap: string | Properties<VelocityProperty>, options?: IOptions): IAnimation;
+	(elements: KnownElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", complete?: () => void): IAnimation;
+	(elements: KnownElements, propertyMap: string | Properties<VelocityProperty>, complete?: () => void): IAnimation;
+	(elements: KnownElements, propertyMap: string | Properties<VelocityProperty>, easing?: string | number[], complete?: () => void): IAnimation;
+	(elements: KnownElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): IAnimation;
+	(this: IAnimation | KnownElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", complete?: () => void): IAnimation;
+	(this: IAnimation | KnownElements, propertyMap: string | Properties<VelocityProperty>, complete?: () => void): IAnimation;
+	(this: IAnimation | KnownElements, propertyMap: string | Properties<VelocityProperty>, easing?: string | number[], complete?: () => void): IAnimation;
+	(this: IAnimation | KnownElements, propertyMap: string | Properties<VelocityProperty>, duration?: number | "fast" | "normal" | "slow", easing?: string | number[], complete?: () => void): IAnimation;
 }
 
 export type test = IVelocity[never];
@@ -249,13 +248,13 @@ export interface VelocityObjectArgs {
  */
 export const Velocity: Function & IVelocity & IStaticVelocity = function(this: KnownElement | KnownElement[] | void, ...args: unknown[]): any {
 	/** An array-like list of objects to operate on.*/
-	const elements: KnownElement[] | undefined = isKnownElement(args[0])
+	const elements = isKnownElement(args[0])
 		? [args.shift() as KnownElement]
-		: isWrapped(args[0])
+		: isKnownElementArray(args[0])
 			? args.shift() as KnownElement[]
 			: isKnownElement(this)
 				? [this as KnownElement]
-				: isWrapped(this)
+				: isKnownElementArray(this)
 					? this as KnownElement[]
 					: undefined;
 
@@ -271,9 +270,8 @@ export const Velocity: Function & IVelocity & IStaticVelocity = function(this: K
 	/** Used to let us figure out our options to add to the animation. */
 	let baseOptions: Partial<IOptions> = {};
 
-	if (!action) {
+	if (!action) { // Actions all have custom arguments
 		if (isPlainObject(args[1])) {
-			// Passing an options object, can't happen
 			baseOptions = args[1];
 		} else {
 			// Parse the other arguments in case there's options being passed directly
@@ -296,7 +294,7 @@ export const Velocity: Function & IVelocity & IStaticVelocity = function(this: K
 	}
 	const options = new Options(baseOptions);
 
-	/** If we're a chained call then don't nest the data. */
+	/** The elements array, handles nested IAnimations. */
 	const originalElements: KnownElement[] = elements?.hasOwnProperty(symbolElements)
 		? elements[symbolElements]
 		: elements;
@@ -326,6 +324,7 @@ export const Velocity: Function & IVelocity & IStaticVelocity = function(this: K
 				},
 				[symbolResolver]: {
 					value: (value?: unknown) => {
+						// TODO: Figure out a way to handle passing itself as an argument that kills the browser tab
 						delete animation[symbolRejecter];
 						delete animation[symbolResolver];
 						_resolve(value);
@@ -347,13 +346,11 @@ export const Velocity: Function & IVelocity & IStaticVelocity = function(this: K
 		// Velocity's behavior is categorized into "actions". If a string is
 		// passed in instead of a propertiesMap then that will call a function
 		// to do something special to the animation linked.
-		const actionThis: IActionThis = {
+		return action.apply({
 			animation,
-			elements,
+			elements: originalElements,
 			action: args[0] as string,
-		};
-
-		return action.apply(actionThis, args) ?? animation;
+		}, args) ?? animation;
 	}
 
 	// throw new Error(`VelocityJS: First argument (${args[0]}) was not a property map, a known action, or a registered redirect. Aborting.`);
@@ -386,8 +383,6 @@ export const Velocity: Function & IVelocity & IStaticVelocity = function(this: K
 
 		return animation;
 	}
-
-	let hasValidDuration: boolean = false;
 
 	if (isPlainObject(propertiesMap) || isReverse || maybeSequence) {
 		if (isReverse && options.queue === false) {
@@ -447,6 +442,7 @@ export const Velocity: Function & IVelocity & IStaticVelocity = function(this: K
 			}
 		}
 		if (animations) {
+			// Save the list of animations for use elsewhere
 			defineProperty(animation, symbolAnimations, animations);
 		}
 		if (StateObject.isTicking === false) {
@@ -455,11 +451,7 @@ export const Velocity: Function & IVelocity & IStaticVelocity = function(this: K
 			tick(false);
 		}
 	}
-	/***************
-	 Chaining
-	 ***************/
 
-	/* Return the elements back to the call chain, with wrapped elements taking precedence in case Velocity was called via the $.fn. extension. */
 	return animation;
 } as any;
 
@@ -467,16 +459,3 @@ export const Velocity: Function & IVelocity & IStaticVelocity = function(this: K
 defineProperty(Velocity, "version", __VERSION__);
 defineProperty(Velocity, "debug", false, false);
 defineProperty(Velocity, "mock", false, false);
-
-/**
- * Call an option callback in a try/catch block and report an error if needed.
- */
-function optionCallback<T>(fn: VelocityOptionFn<T>, element: KnownElement, index: number, length: number, elements: KnownElement[], option: string): T | undefined {
-	try {
-		return fn.call(element, index, length, elements, option);
-	} catch (e) {
-		console.error(`VelocityJS: Exception when calling '${option}' callback:`, e);
-
-		return undefined;
-	}
-}
